@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  OWNER
+  ADJUSTER
+  ASSISTANT
+}
+
+enum ContactType {
+  CLIENT
+  REFERRAL_SOURCE
+  CARRIER_REP
+  VENDOR
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  APPOINTMENT_SET
+  CONVERTED
+  CLOSED
+}
+
+enum ClaimStatus {
+  NEW
+  IN_REVIEW
+  WAITING_ON_CLIENT
+  WAITING_ON_CARRIER
+  ESTIMATE_SENT
+  NEGOTIATING
+  SETTLED
+  CLOSED
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum DocumentCategory {
+  POLICY
+  CONTRACT
+  ESTIMATE
+  PHOTOS
+  CARRIER_CORRESPONDENCE
+  SETTLEMENT_DOCUMENTS
+  INVOICE
+  OTHER
+}
+
+enum ActivityType {
+  NOTE
+  CALL
+  EMAIL
+  TEXT
+  MEETING
+  INSPECTION
+}
+
+enum SettlementStatus {
+  DEMAND_SENT
+  OFFER_RECEIVED
+  ACCEPTED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  WRITTEN_OFF
+}
+
+enum TemplateType {
+  EMAIL
+  TEXT
+  LETTER
+  CHECKLIST
+}
+
+model Firm {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  contacts          Contact[]
+  carriers          Carrier[]
+  leads             Lead[]
+  properties        Property[]
+  policies          Policy[]
+  claims            Claim[]
+  tasks             Task[]
+  documents         Document[]
+  activities        Activity[]
+  settlementRounds  SettlementRound[]
+  payments          Payment[]
+  feeRules          FeeRule[]
+  invoices          Invoice[]
+  clientStatusLinks ClientStatusLink[]
+  templates         Template[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  firmId    String
+  name      String
+  email     String   @unique
+  role      UserRole @default(ADJUSTER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firm              Firm       @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  assignedLeads     Lead[]
+  assignedClaims    Claim[]
+  assignedTasks     Task[]
+  uploadedDocuments Document[]
+  activities        Activity[]
+
+  @@index([firmId])
+}
+
+model Contact {
+  id        String      @id @default(cuid())
+  firmId    String
+  type      ContactType @default(CLIENT)
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  company   String?
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  firm       Firm       @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  leads      Lead[]
+  claims     Claim[]
+  activities Activity[]
+
+  @@index([firmId])
+}
+
+model Carrier {
+  id        String   @id @default(cuid())
+  firmId    String
+  name      String
+  phone     String?
+  email     String?
+  portalUrl String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firm     Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  policies Policy[]
+  claims   Claim[]
+
+  @@index([firmId])
+}
+
+model Property {
+  id         String   @id @default(cuid())
+  firmId     String
+  address1   String
+  address2   String?
+  city       String
+  state      String
+  postalCode String
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  firm   Firm    @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  leads  Lead[]
+  claims Claim[]
+
+  @@index([firmId])
+}
+
+model Policy {
+  id              String    @id @default(cuid())
+  firmId          String
+  carrierId       String?
+  policyNumber    String
+  claimNumber     String?
+  effectiveDate   DateTime?
+  expirationDate  DateTime?
+  deductibleCents Int?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  firm    Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  carrier Carrier? @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  claims  Claim[]
+
+  @@index([firmId])
+  @@index([carrierId])
+}
+
+model Lead {
+  id               String     @id @default(cuid())
+  firmId           String
+  contactId        String
+  propertyId       String
+  assignedUserId   String?
+  convertedClaimId String?    @unique
+  source           String
+  referralSource   String?
+  lossType         String
+  dateOfLoss       DateTime?
+  status           LeadStatus @default(NEW)
+  followUpDate     DateTime?
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  firm           Firm       @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  contact        Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  property       Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  assignedUser   User?      @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+  convertedClaim Claim?     @relation("LeadConvertedClaim", fields: [convertedClaimId], references: [id], onDelete: SetNull)
+  claim          Claim?     @relation("ClaimSourceLead")
+  tasks          Task[]
+  activities     Activity[]
+  documents      Document[]
+
+  @@index([firmId])
+  @@index([status])
+  @@index([followUpDate])
+}
+
+model Claim {
+  id             String      @id @default(cuid())
+  firmId         String
+  contactId      String
+  propertyId     String
+  policyId       String?
+  carrierId      String?
+  leadId         String?     @unique
+  assignedUserId String?
+  claimNumber    String?
+  lossType       String
+  dateOfLoss     DateTime?
+  reportedDate   DateTime?
+  inspectionDate DateTime?
+  deadlineDate   DateTime?
+  status         ClaimStatus @default(NEW)
+  nextStep       String?
+  publicSummary  String?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  firm              Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  contact           Contact            @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  property          Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  policy            Policy?            @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  carrier           Carrier?           @relation(fields: [carrierId], references: [id], onDelete: SetNull)
+  lead              Lead?              @relation("ClaimSourceLead", fields: [leadId], references: [id], onDelete: SetNull)
+  convertedFromLead Lead?              @relation("LeadConvertedClaim")
+  assignedUser      User?              @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+  tasks             Task[]
+  documents         Document[]
+  activities        Activity[]
+  settlementRounds  SettlementRound[]
+  payments          Payment[]
+  invoices          Invoice[]
+  statusLinks       ClientStatusLink[]
+
+  @@index([firmId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  firmId         String
+  claimId        String?
+  leadId         String?
+  assignedUserId String?
+  title          String
+  notes          String?
+  status         TaskStatus   @default(OPEN)
+  priority       TaskPriority @default(NORMAL)
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  firm         Firm   @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim        Claim? @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  lead         Lead?  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedUser User?  @relation(fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  @@index([firmId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Document {
+  id                  String           @id @default(cuid())
+  firmId              String
+  claimId             String?
+  leadId              String?
+  uploadedByUserId    String?
+  category            DocumentCategory @default(OTHER)
+  title               String
+  fileName            String?
+  filePath            String?
+  mimeType            String?
+  sizeBytes           Int?
+  notes               String?
+  requestedFromClient Boolean          @default(false)
+  receivedAt          DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  firm           Firm   @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim          Claim? @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  lead           Lead?  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  uploadedByUser User?  @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([firmId])
+  @@index([category])
+}
+
+model Activity {
+  id         String       @id @default(cuid())
+  firmId     String
+  claimId    String?
+  leadId     String?
+  contactId  String?
+  userId     String?
+  type       ActivityType @default(NOTE)
+  subject    String
+  body       String?
+  occurredAt DateTime     @default(now())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  firm    Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim   Claim?   @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  lead    Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([firmId])
+  @@index([occurredAt])
+}
+
+model SettlementRound {
+  id                  String           @id @default(cuid())
+  firmId              String
+  claimId             String
+  roundNumber         Int
+  demandAmountCents   Int?
+  offerAmountCents    Int?
+  acceptedAmountCents Int?
+  status              SettlementStatus @default(OFFER_RECEIVED)
+  offeredAt           DateTime?
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  firm  Firm  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([firmId])
+  @@index([claimId])
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  firmId      String
+  claimId     String
+  invoiceId   String?
+  amountCents Int
+  paidAt      DateTime?
+  checkNumber String?
+  payee       String
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  firm    Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim   Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([firmId])
+  @@index([claimId])
+}
+
+model FeeRule {
+  id                    String   @id @default(cuid())
+  firmId                String
+  name                  String
+  percentageBasisPoints Int
+  appliesTo             String   @default("Accepted settlement")
+  active                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  firm     Firm      @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([firmId])
+}
+
+model Invoice {
+  id                       String        @id @default(cuid())
+  firmId                   String
+  claimId                  String
+  feeRuleId                String?
+  invoiceNumber            String
+  status                   InvoiceStatus @default(DRAFT)
+  settlementAmountCents    Int
+  feePercentageBasisPoints Int
+  feeAmountCents           Int
+  amountPaidCents          Int           @default(0)
+  issuedAt                 DateTime?
+  dueAt                    DateTime?
+  paidAt                   DateTime?
+  notes                    String?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  firm     Firm      @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim    Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  feeRule  FeeRule?  @relation(fields: [feeRuleId], references: [id], onDelete: SetNull)
+  payments Payment[]
+
+  @@unique([firmId, invoiceNumber])
+  @@index([firmId])
+  @@index([status])
+  @@index([dueAt])
+}
+
+model ClientStatusLink {
+  id           String    @id @default(cuid())
+  firmId       String
+  claimId      String
+  token        String    @unique
+  isActive     Boolean   @default(true)
+  lastViewedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  firm  Firm  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  claim Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([firmId])
+  @@index([claimId])
+}
+
+model Template {
+  id        String       @id @default(cuid())
+  firmId    String
+  name      String
+  type      TemplateType @default(EMAIL)
+  subject   String?
+  body      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  firm Firm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  @@index([firmId])
+  @@index([type])
+}
