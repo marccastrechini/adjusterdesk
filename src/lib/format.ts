@@ -71,6 +71,42 @@ export function labelFromEnum(value?: string | null) {
     .join(" ");
 }
 
+export function invoiceAmountDue(invoice: { feeAmountCents: number; amountPaidCents: number }) {
+  return Math.max(invoice.feeAmountCents - invoice.amountPaidCents, 0);
+}
+
+export function isInvoiceOverdue(invoice: {
+  status: string;
+  dueAt?: Date | string | null;
+  feeAmountCents: number;
+  amountPaidCents: number;
+}) {
+  return !["PAID", "WRITTEN_OFF"].includes(invoice.status) && invoiceAmountDue(invoice) > 0 && isPastDue(invoice.dueAt);
+}
+
+export function invoiceDisplayStatus(invoice: {
+  status: string;
+  dueAt?: Date | string | null;
+  feeAmountCents: number;
+  amountPaidCents: number;
+}) {
+  const status = labelFromEnum(invoice.status);
+  if (invoice.status === "OVERDUE") return status;
+  return isInvoiceOverdue(invoice) ? `${status}, overdue` : status;
+}
+
+export function invoiceStatusTone(invoice: {
+  status: string;
+  dueAt?: Date | string | null;
+  feeAmountCents: number;
+  amountPaidCents: number;
+}) {
+  if (invoice.status === "PAID") return "green";
+  if (isInvoiceOverdue(invoice) || invoice.status === "OVERDUE") return "red";
+  if (invoice.status === "DRAFT") return "slate";
+  return "amber";
+}
+
 export function isPastDue(date?: Date | string | null) {
   if (!date) return false;
   const due = new Date(date);

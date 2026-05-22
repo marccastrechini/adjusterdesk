@@ -1,7 +1,7 @@
 import { ClaimTabs } from "@/components/claim-tabs";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createInvoice, createSettlementRound, recordPayment } from "@/lib/actions";
-import { formatDate, formatMoney, formatPercentFromBasisPoints, fullName, labelFromEnum } from "@/lib/format";
+import { formatDate, formatMoney, formatPercentFromBasisPoints, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
 import { invoiceStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
 
@@ -54,7 +54,7 @@ export default async function ClaimMoneyPage({ params }: PageProps) {
             )}
           </Section>
 
-          <Section title="Payments and checks">
+          <Section title="Settlement checks and fee payments">
             {claim.payments.length === 0 ? (
               <EmptyState title="No payments" message="Record settlement checks or invoice payments as they arrive." />
             ) : (
@@ -64,7 +64,9 @@ export default async function ClaimMoneyPage({ params }: PageProps) {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="font-semibold text-slate-950">{payment.payee}</p>
-                        <p className="mt-1 text-sm text-slate-600">Paid {formatDate(payment.paidAt)} · Check {payment.checkNumber ?? "not set"}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {payment.invoice ? `Fee payment for ${payment.invoice.invoiceNumber}` : "Settlement check"} · Paid {formatDate(payment.paidAt)} · Check {payment.checkNumber ?? "not set"}
+                        </p>
                       </div>
                       <p className="text-lg font-semibold text-slate-950">{formatMoney(payment.amountCents)}</p>
                     </div>
@@ -86,14 +88,14 @@ export default async function ClaimMoneyPage({ params }: PageProps) {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold text-slate-950">{invoice.invoiceNumber}</p>
-                          <Badge tone={invoice.status === "PAID" ? "green" : invoice.status === "OVERDUE" ? "red" : "amber"}>{labelFromEnum(invoice.status)}</Badge>
+                          <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
                         </div>
                         <p className="mt-1 text-sm text-slate-600">Issued {formatDate(invoice.issuedAt)} · Due {formatDate(invoice.dueAt)}</p>
                       </div>
                       <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[430px] lg:text-right">
                         <p>Settlement {formatMoney(invoice.settlementAmountCents)}</p>
                         <p>Fee {formatPercentFromBasisPoints(invoice.feePercentageBasisPoints)}</p>
-                        <p>Due {formatMoney(invoice.feeAmountCents - invoice.amountPaidCents)}</p>
+                        <p>Due {formatMoney(invoiceAmountDue(invoice))}</p>
                       </div>
                     </div>
                   </Card>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
-import { formatDate, formatMoney, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, propertyAddress } from "@/lib/format";
 import { getMoneyData } from "@/lib/queries";
 
 export default async function MoneyPage() {
@@ -35,14 +35,14 @@ export default async function MoneyPage() {
                       <Link href={`/claims/${invoice.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">
                         {invoice.invoiceNumber} · {fullName(invoice.claim.contact)}
                       </Link>
-                      <Badge tone={invoice.status === "OVERDUE" ? "red" : invoice.status === "DRAFT" ? "slate" : "amber"}>{labelFromEnum(invoice.status)}</Badge>
+                      <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">{propertyAddress(invoice.claim.property)} · Due {formatDate(invoice.dueAt)}</p>
                   </div>
                   <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[430px] lg:text-right">
                     <p>Invoice {formatMoney(invoice.feeAmountCents)}</p>
                     <p>Paid {formatMoney(invoice.amountPaidCents)}</p>
-                    <p>Open {formatMoney(invoice.feeAmountCents - invoice.amountPaidCents)}</p>
+                    <p>Open {formatMoney(invoiceAmountDue(invoice))}</p>
                   </div>
                 </div>
               </Card>
@@ -51,7 +51,7 @@ export default async function MoneyPage() {
         )}
       </Section>
 
-      <Section title="Recent checks and payments">
+      <Section title="Recent checks and fee payments">
         {payments.length === 0 ? (
           <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
         ) : (
@@ -63,7 +63,9 @@ export default async function MoneyPage() {
                     <Link href={`/claims/${payment.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">
                       {payment.payee}
                     </Link>
-                    <p className="mt-1 text-sm text-slate-600">{fullName(payment.claim.contact)} · Paid {formatDate(payment.paidAt)} · Check {payment.checkNumber ?? "not set"}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {fullName(payment.claim.contact)} · {payment.invoice ? `Fee payment for ${payment.invoice.invoiceNumber}` : "Settlement check"} · Paid {formatDate(payment.paidAt)} · Check {payment.checkNumber ?? "not set"}
+                    </p>
                   </div>
                   <p className="text-lg font-semibold text-slate-950">{formatMoney(payment.amountCents)}</p>
                 </div>

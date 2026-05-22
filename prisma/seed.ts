@@ -395,7 +395,7 @@ async function main() {
       },
     });
 
-    await tx.lead.create({
+    const olderLead = await tx.lead.create({
       data: {
         firmId: firm.id,
         contactId: olderLeadContact.id,
@@ -451,6 +451,16 @@ async function main() {
           status: TaskStatus.OPEN,
           priority: TaskPriority.NORMAL,
           dueDate: daysFromNow(4, 13),
+        },
+        {
+          firmId: firm.id,
+          leadId: olderLead.id,
+          assignedUserId: owner.id,
+          title: "Call Nina Campbell about smoke damage photos",
+          notes: "Second touch after photos were sent by text.",
+          status: TaskStatus.OPEN,
+          priority: TaskPriority.HIGH,
+          dueDate: daysFromNow(-1, 11),
         },
         {
           firmId: firm.id,
@@ -646,6 +656,16 @@ async function main() {
         },
         {
           firmId: firm.id,
+          leadId: olderLead.id,
+          contactId: olderLeadContact.id,
+          userId: owner.id,
+          type: ActivityType.TEXT,
+          subject: "Photos received by text",
+          body: "Nina sent smoke damage photos and needs a follow-up call about next steps.",
+          occurredAt: daysFromNow(-2, 16),
+        },
+        {
+          firmId: firm.id,
           claimId: priyaClaim.id,
           contactId: priya.id,
           userId: adjuster.id,
@@ -775,6 +795,12 @@ async function main() {
           firmId: firm.id,
           claimId: martinezClaim.id,
           token: "martinez-roof-demo",
+          isActive: true,
+        },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          token: "priya-smoke-demo",
           isActive: true,
         },
       ],

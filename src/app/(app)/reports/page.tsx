@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
-import { formatDate, formatMoney, fullName, labelFromEnum } from "@/lib/format";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
 import { getReportsData } from "@/lib/queries";
 
 export default async function ReportsPage() {
@@ -20,7 +20,7 @@ export default async function ReportsPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Open claims by status">
+        <Section title="Claims by status">
           <div className="grid gap-3">
             {claimsByStatus.map((item) => (
               <Card key={item.status} className="flex items-center justify-between">
@@ -92,9 +92,12 @@ export default async function ReportsPage() {
               <Card key={invoice.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <Link href={`/claims/${invoice.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">{invoice.invoiceNumber} · {fullName(invoice.claim.contact)}</Link>
-                  <p className="mt-1 text-sm text-slate-600">Due {formatDate(invoice.dueAt)} · {labelFromEnum(invoice.status)}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                    <span>Due {formatDate(invoice.dueAt)}</span>
+                    <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
+                  </div>
                 </div>
-                <p className="text-lg font-semibold text-slate-950">{formatMoney(invoice.feeAmountCents - invoice.amountPaidCents)}</p>
+                <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
               </Card>
             ))}
           </div>

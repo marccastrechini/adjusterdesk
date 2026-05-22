@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, FileText } from "lucide-react";
 import { toggleTask } from "@/lib/actions";
-import { formatDate, formatMoney, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getTodayData } from "@/lib/queries";
 import { Badge, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
 
@@ -41,7 +41,7 @@ function TaskList({ tasks, empty }: { tasks: Awaited<ReturnType<typeof getTodayD
 
 export default async function TodayPage() {
   const data = await getTodayData();
-  const openReceivableCents = data.unpaidInvoices.reduce((sum, invoice) => sum + invoice.feeAmountCents - invoice.amountPaidCents, 0);
+  const openReceivableCents = data.unpaidInvoices.reduce((sum, invoice) => sum + invoiceAmountDue(invoice), 0);
 
   return (
     <>
@@ -54,7 +54,7 @@ export default async function TodayPage() {
         <StatCard label="Overdue tasks" value={data.overdueTasks.length} detail="Open items past their due date" />
         <StatCard label="Due today" value={data.dueTodayTasks.length} detail="Calls, reminders, and follow-ups" />
         <StatCard label="Waiting on carrier" value={data.waitingOnCarrierClaims.length} detail="Claims needing carrier response" />
-        <StatCard label="Open receivables" value={formatMoney(openReceivableCents)} detail="Sent or overdue invoices" />
+        <StatCard label="Open receivables" value={formatMoney(openReceivableCents)} detail="Sent, partially paid, or overdue invoices" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -126,9 +126,12 @@ export default async function TodayPage() {
                       <Link href={`/claims/${invoice.claim.id}/money`} className="font-medium text-slate-950 hover:text-teal-800">
                         {invoice.invoiceNumber} · {fullName(invoice.claim.contact)}
                       </Link>
-                      <p className="mt-1 text-sm text-slate-600">Due {formatDate(invoice.dueAt)} · {labelFromEnum(invoice.status)}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                        <span>Due {formatDate(invoice.dueAt)}</span>
+                        <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
+                      </div>
                     </div>
-                    <p className="text-lg font-semibold text-slate-950">{formatMoney(invoice.feeAmountCents - invoice.amountPaidCents)}</p>
+                    <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
                   </div>
                 </Card>
               ))}

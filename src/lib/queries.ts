@@ -65,7 +65,7 @@ export async function getTodayData() {
         take: 8,
       }),
       prisma.claim.findMany({
-        where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED] }, deadlineDate: { gte: start, lte: addDays(30) } },
+        where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] }, deadlineDate: { gte: start, lte: addDays(30) } },
         include: { contact: true, property: true, assignedUser: true },
         orderBy: { deadlineDate: "asc" },
         take: 8,
@@ -196,7 +196,7 @@ export async function getClaim(id: string) {
       documents: { include: { uploadedByUser: true }, orderBy: { createdAt: "desc" } },
       activities: { include: { user: true, contact: true }, orderBy: { occurredAt: "desc" } },
       settlementRounds: { orderBy: { roundNumber: "asc" } },
-      payments: { orderBy: { paidAt: "desc" } },
+      payments: { include: { invoice: true }, orderBy: { paidAt: "desc" } },
       invoices: { include: { feeRule: true }, orderBy: { createdAt: "desc" } },
       statusLinks: { orderBy: { createdAt: "desc" } },
     },
@@ -216,7 +216,7 @@ export async function getMoneyData() {
     }),
     prisma.payment.findMany({
       where: { firmId: firm.id },
-      include: { claim: { include: { contact: true } } },
+      include: { claim: { include: { contact: true } }, invoice: true },
       orderBy: { paidAt: "desc" },
       take: 10,
     }),
@@ -253,7 +253,7 @@ export async function getReportsData() {
       orderBy: { dueDate: "asc" },
     }),
     prisma.claim.findMany({
-      where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED] }, deadlineDate: { gte: start, lte: addDays(30) } },
+      where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] }, deadlineDate: { gte: start, lte: addDays(30) } },
       include: { contact: true, carrier: true },
       orderBy: { deadlineDate: "asc" },
     }),
