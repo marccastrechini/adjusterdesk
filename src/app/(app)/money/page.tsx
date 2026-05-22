@@ -24,7 +24,7 @@ export default async function MoneyPage() {
 
       <Section title="Receivables">
         {openInvoices.length === 0 ? (
-          <EmptyState title="No open receivables" message="There are no sent, partially paid, draft, or overdue invoices." />
+          <EmptyState title="No open receivables" message="There are no draft, sent, partially paid, or overdue invoices." />
         ) : (
           <div className="grid gap-3">
             {openInvoices.map((invoice) => (

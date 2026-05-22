@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
-import { BriefcaseBusiness, ChevronDown } from "lucide-react";
+import { BriefcaseBusiness } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { labelFromEnum } from "@/lib/format";
 
 export function AppShell({
   children,
   firmName,
   userName,
+  userRole,
 }: {
   children: ReactNode;
   firmName: string;
   userName: string;
+  userRole: string;
 }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -35,10 +38,10 @@ export function AppShell({
               <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Workspace</p>
               <p className="text-sm font-semibold text-slate-950">{firmName}</p>
             </div>
-            <button className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-              <span>{userName}</span>
-              <ChevronDown className="h-4 w-4" aria-hidden="true" />
-            </button>
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
+              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Demo user</p>
+              <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
+            </div>
           </header>
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
             <div className="mx-auto grid max-w-7xl gap-6">{children}</div>

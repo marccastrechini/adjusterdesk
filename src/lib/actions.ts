@@ -538,7 +538,7 @@ export async function createUser(formData: FormData) {
       name: requiredText.parse(formData.get("name")?.toString()),
       email: requiredText.parse(formData.get("email")?.toString()),
       role: (formData.get("role")?.toString() as UserRole) || UserRole.ADJUSTER,
-      active: formData.get("active") !== "off",
+      active: formData.get("active") === "on",
     },
   });
 

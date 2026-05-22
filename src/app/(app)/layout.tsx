@@ -8,7 +8,7 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
   const { firm, user } = await getDemoContext();
 
   return (
-    <AppShell firmName={firm.name} userName={user.name}>
+    <AppShell firmName={firm.name} userName={user.name} userRole={user.role}>
       {children}
     </AppShell>
   );

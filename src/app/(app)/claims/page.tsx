@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download, Plus } from "lucide-react";
 import { claimStatusOptions } from "@/lib/options";
-import { formatDate, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
+import { formatDate, formatMoney, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getClaims } from "@/lib/queries";
 import { Badge, ButtonLink, Card, EmptyState, inputClassName, PageHeader, selectClassName, SubmitButton } from "@/components/ui";
 
@@ -66,7 +66,7 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
                   <div className="grid gap-1 text-sm text-slate-600 sm:grid-cols-3 xl:min-w-[420px] xl:text-right">
                     <p>Assigned: {claim.assignedUser?.name ?? "Unassigned"}</p>
                     <p>Open tasks: {openTasks}</p>
-                    <p>Receivable: {openInvoiceCents > 0 ? `$${Math.round(openInvoiceCents / 100).toLocaleString()}` : "$0"}</p>
+                    <p>Receivable: {formatMoney(openInvoiceCents)}</p>
                   </div>
                 </div>
               </Card>

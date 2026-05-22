@@ -85,6 +85,16 @@ async function main() {
       },
     });
 
+    await tx.user.create({
+      data: {
+        firmId: firm.id,
+        name: "Avery Chen",
+        email: "avery@harboradjusting.example",
+        role: UserRole.ASSISTANT,
+        active: false,
+      },
+    });
+
     const gulfCoast = await tx.carrier.create({
       data: {
         firmId: firm.id,
@@ -101,6 +111,15 @@ async function main() {
         name: "Sun State Insurance",
         phone: "(888) 555-0155",
         email: "desk@sunstate.example",
+      },
+    });
+
+    const coastalShield = await tx.carrier.create({
+      data: {
+        firmId: firm.id,
+        name: "Coastal Shield Insurance",
+        phone: "(866) 555-0118",
+        email: "propertyclaims@coastalshield.example",
       },
     });
 
@@ -124,6 +143,18 @@ async function main() {
         lastName: "Martinez",
         email: "elena.martinez@example.com",
         phone: "(727) 555-0133",
+      },
+    });
+
+    const priya = await tx.contact.create({
+      data: {
+        firmId: firm.id,
+        type: ContactType.CLIENT,
+        firstName: "Priya",
+        lastName: "Shah",
+        email: "priya.shah@example.com",
+        phone: "(727) 555-0114",
+        notes: "Owns a small duplex and prefers email summaries.",
       },
     });
 
@@ -171,6 +202,17 @@ async function main() {
       },
     });
 
+    const priyaProperty = await tx.property.create({
+      data: {
+        firmId: firm.id,
+        address1: "216 Orange Street",
+        city: "Clearwater",
+        state: "FL",
+        postalCode: "33756",
+        notes: "Duplex smoke cleanup and kitchen cabinet damage.",
+      },
+    });
+
     const haleProperty = await tx.property.create({
       data: {
         firmId: firm.id,
@@ -203,6 +245,19 @@ async function main() {
         effectiveDate: daysFromNow(-120),
         expirationDate: daysFromNow(245),
         deductibleCents: cents(5000),
+      },
+    });
+
+    const priyaPolicy = await tx.policy.create({
+      data: {
+        firmId: firm.id,
+        carrierId: coastalShield.id,
+        policyNumber: "CSI-DP-771204",
+        claimNumber: "CSI-25-00441",
+        effectiveDate: daysFromNow(-300),
+        expirationDate: daysFromNow(65),
+        deductibleCents: cents(2500),
+        notes: "Dwelling policy for a small rental property.",
       },
     });
 
@@ -279,6 +334,27 @@ async function main() {
         status: ClaimStatus.WAITING_ON_CARRIER,
         nextStep: "Follow up with Sun State on roof estimate review.",
         publicSummary: "The carrier is reviewing the estimate and inspection photos.",
+      },
+    });
+
+    const priyaClaim = await tx.claim.create({
+      data: {
+        firmId: firm.id,
+        contactId: priya.id,
+        propertyId: priyaProperty.id,
+        policyId: priyaPolicy.id,
+        carrierId: coastalShield.id,
+        assignedUserId: adjuster.id,
+        claimNumber: "CSI-25-00441",
+        lossType: "Fire smoke damage",
+        dateOfLoss: daysFromNow(-64),
+        reportedDate: daysFromNow(-62),
+        inspectionDate: daysFromNow(-56),
+        deadlineDate: daysFromNow(6),
+        status: ClaimStatus.SETTLED,
+        nextStep: "Collect the remaining fee balance and mark invoice AD-1000 paid.",
+        publicSummary: "Settlement payment was issued. The office is tracking the remaining fee balance.",
+        notes: "Smoke cleanup claim added to make receivables and reports more realistic.",
       },
     });
 
@@ -375,6 +451,16 @@ async function main() {
           status: TaskStatus.OPEN,
           priority: TaskPriority.NORMAL,
           dueDate: daysFromNow(4, 13),
+        },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          assignedUserId: assistant.id,
+          title: "Call Priya about remaining fee balance",
+          notes: "Confirm when the second invoice payment will be mailed.",
+          status: TaskStatus.OPEN,
+          priority: TaskPriority.NORMAL,
+          dueDate: daysFromNow(1, 11),
         },
         {
           firmId: firm.id,
@@ -480,6 +566,30 @@ async function main() {
           notes: "Requested from client for status page.",
           requestedFromClient: true,
         },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          uploadedByUserId: assistant.id,
+          category: DocumentCategory.SETTLEMENT_DOCUMENTS,
+          title: "Signed settlement release",
+          fileName: "settlement-release.pdf",
+          filePath: "storage/uploads/demo-settlement-release.pdf",
+          mimeType: "application/pdf",
+          sizeBytes: 144000,
+          receivedAt: daysFromNow(-12),
+        },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          uploadedByUserId: adjuster.id,
+          category: DocumentCategory.INVOICE,
+          title: "Fee invoice AD-1000",
+          fileName: "invoice-ad-1000.pdf",
+          filePath: "storage/uploads/demo-invoice-ad-1000.pdf",
+          mimeType: "application/pdf",
+          sizeBytes: 88000,
+          receivedAt: daysFromNow(-10),
+        },
       ],
     });
 
@@ -534,6 +644,26 @@ async function main() {
           body: "Reviewed roof photos and requested interior ceiling photos.",
           occurredAt: daysFromNow(-7, 15),
         },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          contactId: priya.id,
+          userId: adjuster.id,
+          type: ActivityType.EMAIL,
+          subject: "Settlement packet sent",
+          body: "Sent final settlement paperwork and fee invoice AD-1000 after the carrier issued payment.",
+          occurredAt: daysFromNow(-10, 10),
+        },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          contactId: priya.id,
+          userId: assistant.id,
+          type: ActivityType.CALL,
+          subject: "Partial invoice payment received",
+          body: "Priya mailed the first payment and expects to send the balance next week.",
+          occurredAt: daysFromNow(-5, 14),
+        },
       ],
     });
 
@@ -559,6 +689,17 @@ async function main() {
           status: SettlementStatus.ACCEPTED,
           offeredAt: daysFromNow(-2, 10),
           notes: "Accepted by client after discussion with adjuster.",
+        },
+        {
+          firmId: firm.id,
+          claimId: priyaClaim.id,
+          roundNumber: 1,
+          demandAmountCents: cents(39000),
+          offerAmountCents: cents(36000),
+          acceptedAmountCents: cents(36000),
+          status: SettlementStatus.ACCEPTED,
+          offeredAt: daysFromNow(-13, 13),
+          notes: "Accepted smoke cleanup settlement after revised cabinet allowance.",
         },
       ],
     });
@@ -589,6 +730,36 @@ async function main() {
         checkNumber: "104928",
         payee: "Sarah Jenkins and Harbor Public Adjusting",
         notes: "Settlement check entered for tracking. Fee invoice remains unpaid.",
+      },
+    });
+
+    const priyaInvoice = await tx.invoice.create({
+      data: {
+        firmId: firm.id,
+        claimId: priyaClaim.id,
+        feeRuleId: feeRule.id,
+        invoiceNumber: "AD-1000",
+        status: InvoiceStatus.PARTIALLY_PAID,
+        settlementAmountCents: cents(36000),
+        feePercentageBasisPoints: 1000,
+        feeAmountCents: cents(3600),
+        amountPaidCents: cents(1200),
+        issuedAt: daysFromNow(-10, 9),
+        dueAt: daysFromNow(-3, 17),
+        notes: "First fee payment received; remaining balance is still open.",
+      },
+    });
+
+    await tx.payment.create({
+      data: {
+        firmId: firm.id,
+        claimId: priyaClaim.id,
+        invoiceId: priyaInvoice.id,
+        amountCents: cents(1200),
+        paidAt: daysFromNow(-5, 13),
+        checkNumber: "2284",
+        payee: "Harbor Public Adjusting",
+        notes: "Partial fee payment for invoice AD-1000.",
       },
     });
 

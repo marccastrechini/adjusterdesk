@@ -34,7 +34,7 @@ export default async function ClaimDocumentsPage({ params }: PageProps) {
                       <p className="mt-1 text-sm text-slate-600">
                         {document.fileName ?? "No file attached"} · {document.uploadedByUser?.name ?? "Office"} · {formatDate(document.receivedAt ?? document.createdAt)}
                       </p>
-                      {document.filePath ? <p className="mt-1 break-all text-xs text-slate-500">Stored at {document.filePath}</p> : null}
+                      {document.filePath ? <p className="mt-1 break-all text-xs text-slate-500">Local file saved for development</p> : null}
                       {document.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{document.notes}</p> : null}
                     </div>
                     {document.requestedFromClient ? <Badge tone="amber">Requested from client</Badge> : null}
