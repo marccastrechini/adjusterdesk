@@ -164,7 +164,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
         </aside>
 
         <Section title="Client view preview" description="A cleaner claim update page for clients, without internal money, task, or file-management screens.">
-          <ClientStatusView firm={firm} claim={claim} statusLink={statusLink} />
+          <ClientStatusView firm={firm} claim={claim} statusLink={statusLink} statusToken={statusLink.token} />
         </Section>
       </div>
     </>

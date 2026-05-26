@@ -1,14 +1,19 @@
 import { ClientStatusView } from "@/components/client-status-view";
-import { Card } from "@/components/ui";
+import { Card, Notice } from "@/components/ui";
 import { getStatusPage } from "@/lib/queries";
 
-type PageProps = { params: Promise<{ token: string }> };
+type PageProps = {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export const dynamic = "force-dynamic";
 
-export default async function StatusPage({ params }: PageProps) {
+export default async function StatusPage({ params, searchParams }: PageProps) {
   const { token } = await params;
+  const query = await searchParams;
   const statusLink = await getStatusPage(token);
+  const uploaded = Array.isArray(query.uploaded) ? query.uploaded[0] : query.uploaded;
 
   if (!statusLink.isActive) {
     return (
@@ -42,7 +47,10 @@ export default async function StatusPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
-      <ClientStatusView firm={statusLink.firm} claim={statusLink.claim} statusLink={statusLink} className="mx-auto max-w-5xl" />
+      <div className="mx-auto grid max-w-5xl gap-4">
+        {uploaded === "1" ? <Notice title="Document sent">Your file was sent to the office.</Notice> : null}
+        <ClientStatusView firm={statusLink.firm} claim={statusLink.claim} statusLink={statusLink} statusToken={statusLink.token} className="w-full" />
+      </div>
     </main>
   );
 }

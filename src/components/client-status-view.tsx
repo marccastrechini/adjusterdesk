@@ -1,5 +1,7 @@
 import type { Activity, Carrier, Claim, ClientStatusLink, Contact, Document as ClaimDocument, Firm, Property, Task, User } from "@/generated/prisma/client";
-import { Badge, Card, EmptyState } from "@/components/ui";
+import { ActionForm } from "@/components/action-form";
+import { Badge, Card, EmptyState, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
+import { uploadStatusDocumentWithState } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 
@@ -23,11 +25,13 @@ export function ClientStatusView({
   firm,
   claim,
   statusLink,
+  statusToken,
   className,
 }: {
   firm: Pick<Firm, "name" | "phone" | "email">;
   claim: StatusClaim;
   statusLink?: Pick<ClientStatusLink, "lastViewedAt"> | null;
+  statusToken: string;
   className?: string;
 }) {
   const latestActivity = claim.activities[0];
@@ -101,6 +105,32 @@ export function ClientStatusView({
                 ))}
               </div>
             )}
+          </Card>
+
+          <Card className="grid gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">Send a document to the office</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Send a file when you are ready. If the office asked for a specific document, choose it from the list below.</p>
+            </div>
+            <ActionForm action={uploadStatusDocumentWithState.bind(null, statusToken)} className="grid gap-3">
+              {requestedDocuments.length > 0 ? (
+                <Field label="This is for" hint="Optional. Pick the request this file answers so the office can match it faster.">
+                  <select name="requestedDocumentId" defaultValue="" className={selectClassName}>
+                    <option value="">No specific request</option>
+                    {requestedDocuments.map((document) => (
+                      <option key={document.id} value={document.id}>{document.title}</option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
+              <Field label="File" hint="Choose one file to send. PDFs and photos work best.">
+                <input name="file" type="file" className={inputClassName} />
+              </Field>
+              <Field label="Title" hint="Optional. Add a short name if you want the office to see something more specific than the file name.">
+                <input name="title" className={inputClassName} placeholder="Roof photos, receipts, policy pages..." />
+              </Field>
+              <SubmitButton>Send document</SubmitButton>
+            </ActionForm>
           </Card>
 
           <Card>

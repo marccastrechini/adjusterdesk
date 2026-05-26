@@ -960,25 +960,71 @@ export async function importCsv(formData: FormData) {
 }
 
 export async function uploadStatusDocument(token: string, formData: FormData) {
-  const statusLink = await prisma.clientStatusLink.findUnique({ where: { token }, include: { claim: true } });
+  const statusLink = await prisma.clientStatusLink.findUnique({
+    where: { token },
+    include: {
+      claim: {
+        include: {
+          documents: { orderBy: { createdAt: "desc" } },
+        },
+      },
+    },
+  });
   if (!statusLink || !statusLink.isActive) throw new Error("Status page is not available.");
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file to upload.");
 
-  const upload = await saveUploadedFile(file);
-  await prisma.document.create({
-    data: {
-      firmId: statusLink.firmId,
-      claimId: statusLink.claimId,
-      category: DocumentCategory.OTHER,
-      title: formData.get("title")?.toString() || file.name,
-      notes: "Uploaded from the client status page.",
-      receivedAt: new Date(),
-      ...upload,
-    },
-  });
+  const requestedDocumentId = formData.get("requestedDocumentId")?.toString() || undefined;
+  const replacementTitle = formData.get("title")?.toString().trim() || undefined;
+  const uploadedNote = "Uploaded from the client status page.";
 
+  if (requestedDocumentId) {
+    const requestedDocument = statusLink.claim.documents.find(
+      (document) => document.id === requestedDocumentId && document.requestedFromClient && document.firmId === statusLink.firmId,
+    );
+
+    if (!requestedDocument) throw new Error("Choose a requested document from this claim.");
+
+    const upload = await saveUploadedFile(file);
+    const mergedNotes = requestedDocument.notes?.includes(uploadedNote) ? requestedDocument.notes : [requestedDocument.notes, uploadedNote].filter(Boolean).join("\n");
+
+    await prisma.document.update({
+      where: { id: requestedDocument.id },
+      data: {
+        title: replacementTitle || requestedDocument.title,
+        fileName: file.name,
+        filePath: upload.filePath,
+        mimeType: upload.mimeType,
+        sizeBytes: upload.sizeBytes,
+        notes: mergedNotes,
+        requestedFromClient: false,
+        receivedAt: new Date(),
+      },
+    });
+  } else {
+    const upload = await saveUploadedFile(file);
+
+    await prisma.document.create({
+      data: {
+        firmId: statusLink.firmId,
+        claimId: statusLink.claimId,
+        category: DocumentCategory.OTHER,
+        title: replacementTitle || file.name,
+        notes: uploadedNote,
+        receivedAt: new Date(),
+        ...upload,
+      },
+    });
+  }
   revalidatePath(`/status/${token}`);
-  redirect(`/status/${token}`);
+  revalidatePath(`/claims/${statusLink.claimId}`);
+  revalidatePath(`/claims/${statusLink.claimId}/client-status`);
+  revalidatePath(`/claims/${statusLink.claimId}/documents`);
+  redirect(`/status/${token}?uploaded=1`);
+}
+
+export async function uploadStatusDocumentWithState(token: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  await uploadStatusDocument(token, formData);
+  return {};
 }
