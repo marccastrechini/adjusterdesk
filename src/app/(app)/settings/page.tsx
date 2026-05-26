@@ -1,5 +1,6 @@
 import { labelFromEnum } from "@/lib/format";
 import { getPilotReadinessData } from "@/lib/queries";
+import { getEnvStatus } from "@/lib/env";
 import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/components/ui";
 
 const settingsCards = [
@@ -25,6 +26,7 @@ const settingsCards = [
 
 export default async function SettingsPage() {
   const { firm, user, users, counts } = await getPilotReadinessData();
+  const envStatus = getEnvStatus();
   const activeUsers = users.filter((entry) => entry.active);
   const inactiveUsers = users.filter((entry) => !entry.active);
   const roleLabels = Array.from(new Set(users.map((entry) => labelFromEnum(entry.role))));
@@ -132,6 +134,40 @@ export default async function SettingsPage() {
             <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
           </ul>
           <p className="text-xs leading-5 text-slate-600">See docs/pilot-deployment-checklist.md for the full practical deployment checklist.</p>
+        </Card>
+      </Section>
+
+      <Section title="Environment status">
+        <Card className="grid gap-4">
+          <p className="text-sm leading-6 text-slate-600">
+            These labels reflect the current runtime configuration. Green-looking local checks are not a substitute for real auth, storage, or backups.
+          </p>
+          <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Demo workspace mode</dt>
+              <dd><Badge tone="amber">{envStatus.demoWorkspaceMode}</Badge></dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Local file storage</dt>
+              <dd><Badge tone="amber">{envStatus.localFileStorage}</Badge></dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Real auth</dt>
+              <dd><Badge tone={envStatus.realAuth === "Configured" ? "green" : "red"}>{envStatus.realAuth}</Badge></dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Production database</dt>
+              <dd><Badge tone={envStatus.productionDatabase === "External database" ? "green" : "amber"}>{envStatus.productionDatabase}</Badge></dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Public status links</dt>
+              <dd><Badge tone="blue">{envStatus.publicStatusLinks}</Badge></dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-sm text-slate-600">Node environment</dt>
+              <dd><Badge tone="blue">{envStatus.nodeEnv}</Badge></dd>
+            </div>
+          </dl>
         </Card>
       </Section>
 
