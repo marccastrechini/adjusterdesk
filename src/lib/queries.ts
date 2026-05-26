@@ -200,6 +200,7 @@ export async function getLeads(params: SearchInput = {}) {
   const { firm, users } = await getDemoContext();
   const search = firstValue(params.q)?.trim();
   const status = firstValue(params.status);
+  const searchParts = search?.split(/\s+/).filter(Boolean) ?? [];
 
   const leads = (await prisma.lead.findMany({
     where: {
@@ -213,6 +214,9 @@ export async function getLeads(params: SearchInput = {}) {
               { lossType: { contains: search } },
               { contact: { firstName: { contains: search } } },
               { contact: { lastName: { contains: search } } },
+              ...(searchParts.length >= 2
+                ? [{ AND: searchParts.map((part) => ({ OR: [{ contact: { firstName: { contains: part } } }, { contact: { lastName: { contains: part } } }] })) }]
+                : []),
               { property: { address1: { contains: search } } },
             ],
           }
