@@ -456,6 +456,30 @@ export async function getUsers() {
   return { firm, user, users };
 }
 
+export async function getPilotReadinessData() {
+  const { firm, user } = await getDemoContext();
+
+  const [users, leadCount, claimCount, documentCount, invoiceCount] = await Promise.all([
+    prisma.user.findMany({ where: { firmId: firm.id }, orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }] }),
+    prisma.lead.count({ where: { firmId: firm.id } }),
+    prisma.claim.count({ where: { firmId: firm.id } }),
+    prisma.document.count({ where: { firmId: firm.id } }),
+    prisma.invoice.count({ where: { firmId: firm.id } }),
+  ]);
+
+  return {
+    firm,
+    user,
+    users,
+    counts: {
+      leads: leadCount,
+      claims: claimCount,
+      documents: documentCount,
+      invoices: invoiceCount,
+    },
+  };
+}
+
 export async function getStatusPage(token: string): Promise<StatusPageLink> {
   const statusLink = await prisma.clientStatusLink.findUnique({
     where: { token },

@@ -85,6 +85,9 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Workspace is running in demo mode.", { exact: true })).toBeVisible();
   await expect(page.getByText("Current firm:")).toBeVisible();
   await expect(page.getByText("Current demo user:")).toBeVisible();
+  await expect(page.getByText("Ready for pilot demo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Lead intake", { exact: true })).toBeVisible();
+  await expect(page.getByText("Real auth and sign-in", { exact: true })).toBeVisible();
 
   await page.goto("/settings/users");
   await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
