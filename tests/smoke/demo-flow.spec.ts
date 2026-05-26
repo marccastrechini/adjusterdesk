@@ -112,6 +112,10 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Task saved", { exact: true })).toBeVisible();
   await expect(page.getByText(claimTaskTitle)).toBeVisible();
 
+  await page.goto(`${claimUrl}/tasks?q=${encodeURIComponent(claimTaskTitle)}&status=OPEN&priority=ALL&due=ALL`);
+  await expect(page.getByText(claimTaskTitle, { exact: true })).toBeVisible();
+  await expect(page.getByText("1 total", { exact: true })).toBeVisible();
+
   await page.goto(`${claimUrl}/communications`);
   await page.locator('select[name="type"]').nth(1).selectOption("CALL");
   await page.locator('input[name="subject"]').fill(communicationSubject);

@@ -13,12 +13,67 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const taskStatusFilterOptions = [
+  ["ALL", "All"],
+  ["OPEN", "Open"],
+  ["DONE", "Done"],
+] as const;
+
+const dueFilterOptions = [
+  ["ALL", "All"],
+  ["OVERDUE", "Overdue"],
+  ["TODAY", "Due today"],
+  ["UPCOMING", "Upcoming"],
+  ["NO_DUE_DATE", "No due date"],
+] as const;
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function dayStamp(date: Date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized.getTime();
+}
+
 export default async function ClaimTasksPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const query = await searchParams;
   const { claim, users } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/tasks`;
+  const q = firstValue(query.q)?.trim() ?? "";
+  const normalizedQuery = q.toLowerCase();
+  const status = firstValue(query.status)?.trim() ?? "ALL";
+  const priority = firstValue(query.priority)?.trim() ?? "ALL";
+  const due = firstValue(query.due)?.trim() ?? "ALL";
+  const hasFilters = Boolean(q) || status !== "ALL" || priority !== "ALL" || due !== "ALL";
+  const today = new Date();
+  const todayStamp = dayStamp(today);
+
+  const filteredTasks = claim.tasks.filter((task) => {
+    const searchValues = [task.title, task.notes ?? "", task.assignedUser?.name ?? ""];
+    const matchesQuery = q.length === 0 || searchValues.some((value) => value.toLowerCase().includes(normalizedQuery));
+    const matchesStatus = status === "ALL" || task.status === status;
+    const matchesPriority = priority === "ALL" || task.priority === priority;
+
+    const dueStamp = task.dueDate ? dayStamp(task.dueDate) : null;
+    const matchesDue =
+      due === "ALL" ||
+      (due === "NO_DUE_DATE" && dueStamp === null) ||
+      (due === "OVERDUE" && dueStamp !== null && dueStamp < todayStamp) ||
+      (due === "TODAY" && dueStamp !== null && dueStamp === todayStamp) ||
+      (due === "UPCOMING" && dueStamp !== null && dueStamp > todayStamp);
+
+    return matchesQuery && matchesStatus && matchesPriority && matchesDue;
+  });
+
+  const openMatchingTasks = filteredTasks.filter((task) => task.status === "OPEN").length;
+  const doneMatchingTasks = filteredTasks.filter((task) => task.status === "DONE").length;
+  const overdueMatchingTasks = filteredTasks.filter((task) => task.dueDate && dayStamp(task.dueDate) < todayStamp).length;
+  const noTasksYet = claim.tasks.length === 0;
+  const noFilteredResults = !noTasksYet && filteredTasks.length === 0;
 
   return (
     <>
@@ -27,54 +82,118 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <Section title="Claim tasks" description="Use tasks for the next office action, not long notes. Long details can go in the Notes field.">
-          {claim.tasks.length === 0 ? (
-            <EmptyState title="No tasks yet" message="Add a task for the next call, deadline, document request, or carrier follow-up." />
-          ) : (
-            <div className="grid gap-4">
-              {claim.tasks.map((task) => (
-                <Card key={task.id} className="grid gap-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-slate-950">{task.title}</p>
-                        <Badge tone={task.status === "DONE" ? "green" : "amber"}>{labelFromEnum(task.status)}</Badge>
-                        <Badge tone={task.priority === "HIGH" ? "red" : "slate"}>{labelFromEnum(task.priority)}</Badge>
-                      </div>
-                      <p className="mt-1 text-sm text-slate-600">Due {formatDate(task.dueDate)} · {task.assignedUser?.name ?? "Unassigned"}</p>
-                      {task.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{task.notes}</p> : null}
-                    </div>
-                    <form action={toggleTask.bind(null, task.id, returnPath)}>
-                      <SubmitButton variant="secondary">{task.status === "DONE" ? "Reopen" : "Complete"}</SubmitButton>
-                    </form>
-                  </div>
+        <div className="grid gap-6">
+          <Card>
+            <form method="get" className="grid gap-3 md:grid-cols-[1.4fr_0.7fr_0.7fr_0.8fr_auto] md:items-end">
+              <Field label="Search tasks" hint="Search task title, notes, or assigned adjuster.">
+                <input name="q" defaultValue={q} className={inputClassName} placeholder="Search tasks..." />
+              </Field>
+              <Field label="Status" hint="Show open or done tasks.">
+                <select name="status" defaultValue={status} className={selectClassName}>
+                  {taskStatusFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <Field label="Priority" hint="Filter by urgency.">
+                <select name="priority" defaultValue={priority} className={selectClassName}>
+                  <option value="ALL">All</option>
+                  {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <Field label="Due" hint="Filter by due date timing.">
+                <select name="due" defaultValue={due} className={selectClassName}>
+                  {dueFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <div className="flex items-center gap-3 pb-1">
+                <SubmitButton variant="secondary">Apply filters</SubmitButton>
+                {hasFilters ? <ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink> : null}
+              </div>
+            </form>
+          </Card>
 
-                  <form action={updateTask.bind(null, task.id, returnPath)} className="grid gap-3 rounded-md bg-slate-50 p-3 lg:grid-cols-2">
-                    <Field label="Task" required><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
-                    <Field label="Due date"><input name="dueDate" type="date" defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""} className={inputClassName} /></Field>
-                    <Field label="Assigned adjuster">
-                      <select name="assignedUserId" defaultValue={task.assignedUserId ?? ""} className={selectClassName}>
-                        <option value="">Unassigned</option>
-                        {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Priority">
-                      <select name="priority" defaultValue={task.priority} className={selectClassName}>
-                        {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                      </select>
-                    </Field>
-                    <div className="lg:col-span-2">
-                      <Field label="Notes" hint="Add details like who to call, what to ask for, or where the file is."><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
-                    </div>
-                    <div className="lg:col-span-2">
-                      <SubmitButton variant="secondary">Save task</SubmitButton>
-                    </div>
-                  </form>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Section>
+          {noTasksYet ? (
+            <EmptyState title="No tasks yet" message="Add a task for the next call, deadline, document request, or carrier follow-up." />
+          ) : null}
+
+          {noFilteredResults ? (
+            <Card className="grid gap-3">
+              <p className="font-medium text-slate-950">No tasks match these filters.</p>
+              {hasFilters ? <div><ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink></div> : null}
+            </Card>
+          ) : null}
+
+          {!noTasksYet && !noFilteredResults ? (
+            <>
+              <Card className="grid gap-4 md:grid-cols-4">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Matching tasks</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{filteredTasks.length} total</p>
+                  <p className="mt-1 text-sm text-slate-600">Based on your current filters.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Open</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{openMatchingTasks} open</p>
+                  <p className="mt-1 text-sm text-slate-600">Tasks still in progress.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Overdue</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{overdueMatchingTasks} overdue</p>
+                  <p className="mt-1 text-sm text-slate-600">Tasks with due dates before today.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Done</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{doneMatchingTasks} done</p>
+                  <p className="mt-1 text-sm text-slate-600">Completed tasks in this result.</p>
+                </div>
+              </Card>
+
+              <Section title="Claim tasks" description="Use tasks for the next office action, not long notes. Long details can go in the Notes field.">
+                <div className="grid gap-4">
+                  {filteredTasks.map((task) => (
+                    <Card key={task.id} className="grid gap-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-slate-950">{task.title}</p>
+                            <Badge tone={task.status === "DONE" ? "green" : "amber"}>{labelFromEnum(task.status)}</Badge>
+                            <Badge tone={task.priority === "HIGH" ? "red" : "slate"}>{labelFromEnum(task.priority)}</Badge>
+                          </div>
+                          <p className="mt-1 text-sm text-slate-600">Due {formatDate(task.dueDate)} · {task.assignedUser?.name ?? "Unassigned"}</p>
+                          {task.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{task.notes}</p> : null}
+                        </div>
+                        <form action={toggleTask.bind(null, task.id, returnPath)}>
+                          <SubmitButton variant="secondary">{task.status === "DONE" ? "Reopen" : "Complete"}</SubmitButton>
+                        </form>
+                      </div>
+
+                      <form action={updateTask.bind(null, task.id, returnPath)} className="grid gap-3 rounded-md bg-slate-50 p-3 lg:grid-cols-2">
+                        <Field label="Task" required><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
+                        <Field label="Due date"><input name="dueDate" type="date" defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""} className={inputClassName} /></Field>
+                        <Field label="Assigned adjuster">
+                          <select name="assignedUserId" defaultValue={task.assignedUserId ?? ""} className={selectClassName}>
+                            <option value="">Unassigned</option>
+                            {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Priority">
+                          <select name="priority" defaultValue={task.priority} className={selectClassName}>
+                            {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                          </select>
+                        </Field>
+                        <div className="lg:col-span-2">
+                          <Field label="Notes" hint="Add details like who to call, what to ask for, or where the file is."><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
+                        </div>
+                        <div className="lg:col-span-2">
+                          <SubmitButton variant="secondary">Save task</SubmitButton>
+                        </div>
+                      </form>
+                    </Card>
+                  ))}
+                </div>
+              </Section>
+            </>
+          ) : null}
+        </div>
 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add task</h2>
