@@ -19,6 +19,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
   const { claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/documents`;
+  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
+  const receivedDocuments = claim.documents.filter((document) => !document.requestedFromClient);
 
   return (
     <>
@@ -27,32 +29,82 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <Section title="Claim documents and photos">
-          {claim.documents.length === 0 ? (
-            <EmptyState title="No documents yet" message="Upload a file or add a document record for this claim." />
-          ) : (
-            <div className="grid gap-3">
-              {claim.documents.map((document) => (
-                <Card key={document.id}>
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-slate-950">{document.title}</p>
-                        <Badge tone={document.requestedFromClient ? "amber" : "slate"}>{labelFromEnum(document.category)}</Badge>
-                      </div>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {document.fileName ?? (document.requestedFromClient ? "No file attached yet" : "No file attached")} · {document.uploadedByUser?.name ?? "Office"} · {formatDate(document.receivedAt ?? document.createdAt)}
-                      </p>
-                      {document.filePath ? <p className="mt-1 break-all text-xs text-slate-500">Local file saved for development</p> : null}
-                      {document.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{document.notes}</p> : null}
-                    </div>
-                    {document.requestedFromClient ? <Badge tone="amber">Requested from client</Badge> : null}
-                  </div>
-                </Card>
-              ))}
+        <div className="grid gap-6">
+          <Card className="grid gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Requested from client</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{requestedDocuments.length} requested</p>
+              <p className="mt-1 text-sm text-slate-600">Waiting on the client to send these items.</p>
             </div>
-          )}
-        </Section>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Received / uploaded</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{receivedDocuments.length} received</p>
+              <p className="mt-1 text-sm text-slate-600">Files already in the claim file.</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Total documents</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{claim.documents.length} total documents</p>
+              <p className="mt-1 text-sm text-slate-600">Includes requests, uploads, and office records.</p>
+            </div>
+          </Card>
+
+          <Section title="Requested from client" description="These are the items the office is still waiting on from the client.">
+            {requestedDocuments.length === 0 ? (
+              <EmptyState title="No client requests yet" message="Use the form on the right to request photos, policy pages, receipts, or other claim files." />
+            ) : (
+              <div className="grid gap-3">
+                {requestedDocuments.map((document) => (
+                  <Card key={document.id}>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-slate-950">{document.title}</p>
+                          <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
+                        </div>
+                        <div className="mt-3 grid gap-1 text-sm leading-6 text-slate-600">
+                          <p>{document.notes ?? "No notes added"}</p>
+                          <p>Requested {formatDate(document.createdAt)}</p>
+                        </div>
+                      </div>
+                      <Badge tone="amber">Waiting on client</Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          <Section title="Received / uploaded" description="These documents are already in the office file.">
+            {receivedDocuments.length === 0 ? (
+              <EmptyState title="No received documents yet" message="Uploaded files and office records will appear here." />
+            ) : (
+              <div className="grid gap-3">
+                {receivedDocuments.map((document) => {
+                  const isReceived = Boolean(document.receivedAt || document.filePath);
+
+                  return (
+                    <Card key={document.id}>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-slate-950">{document.title}</p>
+                            <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
+                            {isReceived ? <Badge tone="green">Received</Badge> : null}
+                          </div>
+                          <div className="mt-3 grid gap-1 text-sm leading-6 text-slate-600">
+                            {document.fileName ? <p>File name: {document.fileName}</p> : null}
+                            {document.receivedAt ? <p>Received {formatDate(document.receivedAt)}</p> : null}
+                            <p>{document.notes ?? "No notes added"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </Section>
+        </div>
 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add document</h2>

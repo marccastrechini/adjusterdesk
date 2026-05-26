@@ -118,6 +118,8 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.getByRole("button", { name: "Save document or request" }).click();
   await expect(page.getByText("Client document requested", { exact: true })).toBeVisible();
   await expect(page.getByText(documentTitle)).toBeVisible();
+  await expect(page.getByText("1 requested", { exact: true })).toBeVisible();
+  await expect(page.getByText("Waiting on client", { exact: true })).toBeVisible();
 
   await page.goto(`${claimUrl}/money`);
   await page.locator('input[name="demandAmount"]').fill("28500");
