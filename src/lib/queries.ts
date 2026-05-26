@@ -43,8 +43,37 @@ export async function getTodayData() {
   const { firm, user, users } = await getDemoContext();
   const { start, end } = todayRange();
   const upcomingEnd = addDays(14);
+  const leadFollowUpCutoff = addDays(3);
+  const activeClaimWhere = {
+    firmId: firm.id,
+    status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] },
+  };
+  const leadFollowUpWhere = {
+    firmId: firm.id,
+    status: { not: LeadStatus.CONVERTED },
+    followUpDate: { lte: leadFollowUpCutoff },
+  };
+  const requestedDocumentWhere = {
+    firmId: firm.id,
+    requestedFromClient: true,
+    claim: { is: activeClaimWhere },
+  };
 
-  const [overdueTasks, dueTodayTasks, upcomingTasks, upcomingDeadlines, waitingOnCarrierClaims, unpaidInvoices, recentClaims] =
+  const [
+    overdueTasks,
+    overdueTaskCount,
+    dueTodayTasks,
+    dueTodayTaskCount,
+    upcomingTasks,
+    leadFollowUps,
+    leadFollowUpCount,
+    upcomingDeadlines,
+    waitingOnCarrierClaims,
+    requestedDocuments,
+    requestedDocumentCount,
+    unpaidInvoices,
+    activeClaimCount,
+  ] =
     await Promise.all([
       prisma.task.findMany({
         where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { lt: start } },
@@ -52,11 +81,17 @@ export async function getTodayData() {
         orderBy: { dueDate: "asc" },
         take: 8,
       }),
+      prisma.task.count({
+        where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { lt: start } },
+      }),
       prisma.task.findMany({
         where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { gte: start, lt: end } },
         include: { claim: { include: { contact: true } }, lead: { include: { contact: true } }, assignedUser: true },
         orderBy: { dueDate: "asc" },
         take: 8,
+      }),
+      prisma.task.count({
+        where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { gte: start, lt: end } },
       }),
       prisma.task.findMany({
         where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { gte: end, lte: upcomingEnd } },
@@ -64,8 +99,17 @@ export async function getTodayData() {
         orderBy: { dueDate: "asc" },
         take: 8,
       }),
+      prisma.lead.findMany({
+        where: leadFollowUpWhere,
+        include: { contact: true, property: true, assignedUser: true },
+        orderBy: [{ followUpDate: "asc" }, { createdAt: "desc" }],
+        take: 6,
+      }),
+      prisma.lead.count({
+        where: leadFollowUpWhere,
+      }),
       prisma.claim.findMany({
-        where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] }, deadlineDate: { gte: start, lte: addDays(30) } },
+        where: { ...activeClaimWhere, deadlineDate: { gte: start, lte: addDays(30) } },
         include: { contact: true, property: true, assignedUser: true },
         orderBy: { deadlineDate: "asc" },
         take: 8,
@@ -76,17 +120,23 @@ export async function getTodayData() {
         orderBy: { updatedAt: "desc" },
         take: 8,
       }),
+      prisma.document.findMany({
+        where: requestedDocumentWhere,
+        include: { claim: { include: { contact: true, assignedUser: true } } },
+        orderBy: { createdAt: "asc" },
+        take: 6,
+      }),
+      prisma.document.count({
+        where: requestedDocumentWhere,
+      }),
       prisma.invoice.findMany({
         where: { firmId: firm.id, status: { in: [InvoiceStatus.SENT, InvoiceStatus.PARTIALLY_PAID, InvoiceStatus.OVERDUE] } },
         include: { claim: { include: { contact: true } } },
         orderBy: [{ dueAt: "asc" }, { createdAt: "desc" }],
         take: 8,
       }),
-      prisma.claim.findMany({
-        where: { firmId: firm.id },
-        include: { contact: true, property: true, assignedUser: true },
-        orderBy: { updatedAt: "desc" },
-        take: 6,
+      prisma.claim.count({
+        where: activeClaimWhere,
       }),
     ]);
 
@@ -95,12 +145,18 @@ export async function getTodayData() {
     user,
     users,
     overdueTasks,
+    overdueTaskCount,
     dueTodayTasks,
+    dueTodayTaskCount,
     upcomingTasks,
+    leadFollowUps,
+    leadFollowUpCount,
     upcomingDeadlines,
     waitingOnCarrierClaims,
+    requestedDocuments,
+    requestedDocumentCount,
     unpaidInvoices,
-    recentClaims,
+    activeClaimCount,
   };
 }
 

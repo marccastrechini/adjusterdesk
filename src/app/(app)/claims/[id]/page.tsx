@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ClaimTabs } from "@/components/claim-tabs";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, PageHeader, Section } from "@/components/ui";
-import { formatDate, formatMoney, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getClaim } from "@/lib/queries";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -10,8 +10,11 @@ export default async function ClaimOverviewPage({ params }: PageProps) {
   const { id } = await params;
   const { claim } = await getClaim(id);
   const openTasks = claim.tasks.filter((task) => task.status === "OPEN");
+  const nextTask = openTasks[0];
+  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
   const latestActivity = claim.activities[0];
   const latestInvoice = claim.invoices[0];
+  const openInvoiceCents = claim.invoices.reduce((sum, invoice) => sum + invoiceAmountDue(invoice), 0);
   const statusLink = claim.statusLinks[0];
 
   return (
@@ -43,6 +46,31 @@ export default async function ClaimOverviewPage({ params }: PageProps) {
             </dl>
             {claim.nextStep ? <p className="mt-5 rounded-md bg-teal-50 p-3 text-sm leading-6 text-teal-900">Next step: {claim.nextStep}</p> : null}
           </Card>
+
+          <Section title="What to work next" description="A quick claim map for the next office action before jumping into the tabs.">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Link href={`/claims/${claim.id}/tasks`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40">
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Tasks</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{openTasks.length} open</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{nextTask ? `Next: ${nextTask.title}` : "No open follow-ups"}</p>
+              </Link>
+              <Link href={`/claims/${claim.id}/documents`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40">
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Documents</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{requestedDocuments.length} requested</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{requestedDocuments[0]?.title ?? `${claim.documents.length} saved to the claim`}</p>
+              </Link>
+              <Link href={`/claims/${claim.id}/communications`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40">
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Notes</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{latestActivity ? "Latest note" : "No notes yet"}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{latestActivity ? `${latestActivity.subject} · ${formatDate(latestActivity.occurredAt)}` : "Log the next client or carrier touch"}</p>
+              </Link>
+              <Link href={`/claims/${claim.id}/money`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40">
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Money</p>
+                <p className="mt-2 text-base font-semibold text-slate-950">{formatMoney(openInvoiceCents)} due</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{latestInvoice ? `${latestInvoice.invoiceNumber}: ${invoiceDisplayStatus(latestInvoice)}` : "Create an invoice after settlement"}</p>
+              </Link>
+            </div>
+          </Section>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <Section title="Open tasks" actions={<ButtonLink href={`/claims/${claim.id}/tasks`} variant="secondary">Manage tasks</ButtonLink>}>
@@ -84,7 +112,8 @@ export default async function ClaimOverviewPage({ params }: PageProps) {
               <dl className="mt-4 grid gap-4">
                 <DetailItem label="Latest invoice" value={latestInvoice.invoiceNumber} />
                 <DetailItem label="Fee amount" value={formatMoney(latestInvoice.feeAmountCents)} />
-                <DetailItem label="Status" value={labelFromEnum(latestInvoice.status)} />
+                <DetailItem label="Status" value={invoiceDisplayStatus(latestInvoice)} />
+                <DetailItem label="Amount due" value={formatMoney(invoiceAmountDue(latestInvoice))} />
               </dl>
             ) : (
               <p className="mt-2 text-sm text-slate-600">No invoice has been created for this claim.</p>
