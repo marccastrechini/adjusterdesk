@@ -24,19 +24,21 @@ export default async function UsersPage({ searchParams }: PageProps) {
 
   const errorMessage =
     error === "current-user"
-      ? "You cannot deactivate the current demo user."
+      ? "You cannot deactivate the current signed-in user."
       : error === "last-owner"
-        ? "You cannot deactivate the last active owner in this demo workspace."
+        ? "You cannot deactivate the last active owner in this office."
         : error === "missing"
-          ? "That user was not found in this workspace."
+          ? "That user was not found in this office."
+          : error === "password"
+            ? "New office users need a password that is at least 8 characters long."
           : undefined;
 
   return (
     <>
-      <PageHeader title="Users" description="Demo office users for assigning claims, tasks, documents, and communication notes." />
+      <PageHeader title="Users" description="Office users for signing in and assigning claims, tasks, documents, and communication notes." />
       <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
-        <p className="font-semibold">Demo workspace users</p>
-        <p className="mt-1 leading-6">These users are for demo workspace assignment only until real sign-in and user auth are added.</p>
+        <p className="font-semibold">Office sign-in users</p>
+        <p className="mt-1 leading-6">These users can sign in with email and password. OAuth, invites, password reset, and firm switching are still outside this MVP.</p>
       </Card>
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
@@ -68,7 +70,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
                     <Badge>{labelFromEnum(user.role)}</Badge>
                     <Badge tone={user.active ? "green" : "slate"}>{user.active ? "Active" : "Inactive"}</Badge>
                     {user.id === currentUser.id ? (
-                      <Badge tone="teal">Current demo user</Badge>
+                      <Badge tone="teal">Current user</Badge>
                     ) : user.active ? (
                       <form action={setUserActive.bind(null, user.id, false)}>
                         <SubmitButton variant="secondary">Deactivate</SubmitButton>
@@ -86,10 +88,11 @@ export default async function UsersPage({ searchParams }: PageProps) {
         </Section>
 
         <Card className="grid gap-4 content-start">
-          <h2 className="text-base font-semibold text-slate-950">Add demo user</h2>
+          <h2 className="text-base font-semibold text-slate-950">Add office user</h2>
           <form action={createUser} className="grid gap-3">
             <Field label="Name"><input name="name" required className={inputClassName} /></Field>
             <Field label="Email"><input name="email" type="email" required className={inputClassName} /></Field>
+            <Field label="Password" hint="Set a temporary password the office can share with this user."><input name="password" type="password" minLength={8} required className={inputClassName} /></Field>
             <Field label="Role">
               <select name="role" defaultValue="ADJUSTER" className={selectClassName}>
                 {userRoleOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}

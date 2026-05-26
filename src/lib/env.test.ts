@@ -6,8 +6,6 @@ describe("env status helper", () => {
   afterEach(() => {
     delete process.env.DATABASE_URL;
     delete process.env.AUTH_SECRET;
-    delete process.env.NEXTAUTH_SECRET;
-    delete process.env.AUTH_TOKEN;
   });
 
   it("reports local SQLite and demo mode when no env vars are set", () => {
@@ -36,12 +34,13 @@ describe("env status helper", () => {
     process.env.AUTH_SECRET = "some-secret";
     const status = getEnvStatus();
     assert.equal(status.realAuth, "Configured");
+    assert.equal(status.demoWorkspaceMode, "Off");
   });
 
-  it("reports auth as configured when NEXTAUTH_SECRET is present", () => {
-    process.env.NEXTAUTH_SECRET = "some-secret";
-    const status = getEnvStatus();
-    assert.equal(status.realAuth, "Configured");
+  it("reports auth as active for an authenticated session view", () => {
+    const status = getEnvStatus({ authActive: true });
+    assert.equal(status.realAuth, "Active");
+    assert.equal(status.demoWorkspaceMode, "Off");
   });
 
   it("includes NODE_ENV in the output", () => {

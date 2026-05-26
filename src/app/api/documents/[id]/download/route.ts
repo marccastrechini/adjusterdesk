@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { NextResponse } from "next/server";
-import { getDemoContext } from "@/lib/app-context";
+import { getAuthenticatedAppContext } from "@/lib/app-context";
 import { prisma } from "@/lib/prisma";
 import { cleanFileName, resolveStoredUploadPath } from "@/lib/storage";
 
@@ -12,13 +12,22 @@ function notFoundResponse() {
   return NextResponse.json({ error: "Document not found." }, { status: 404 });
 }
 
+function unauthorizedResponse() {
+  return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+}
+
 function safeDownloadName(fileName?: string | null, title?: string | null) {
   const name = cleanFileName(fileName || title || "document") || "document";
   return name;
 }
 
 export async function GET(_request: Request, context: RouteContext) {
-  const { firm } = await getDemoContext();
+  const authContext = await getAuthenticatedAppContext();
+  if (!authContext) {
+    return unauthorizedResponse();
+  }
+
+  const { firm } = authContext;
   const { id } = await context.params;
 
   const document = await prisma.document.findFirst({

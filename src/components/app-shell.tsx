@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { BriefcaseBusiness } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { SubmitButton } from "@/components/ui";
+import { logout } from "@/lib/auth-actions";
 import { labelFromEnum } from "@/lib/format";
 
 export function AppShell({
@@ -38,9 +40,14 @@ export function AppShell({
               <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Workspace</p>
               <p className="text-sm font-semibold text-slate-950">{firmName}</p>
             </div>
-            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
-              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Demo user</p>
-              <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
+            <div className="flex items-center gap-3">
+              <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current user</p>
+                <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
+              </div>
+              <form action={logout}>
+                <SubmitButton variant="secondary">Log out</SubmitButton>
+              </form>
             </div>
           </header>
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">

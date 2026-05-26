@@ -17,6 +17,7 @@ import {
   UserRole,
 } from "@/generated/prisma/client";
 import { getDemoContext } from "@/lib/app-context";
+import { hashPassword } from "@/lib/auth";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
@@ -874,11 +875,18 @@ export async function deleteTemplate(templateId: string) {
 
 export async function createUser(formData: FormData) {
   const { firm } = await getDemoContext();
+  const password = formData.get("password")?.toString() ?? "";
+
+  if (password.trim().length < 8) {
+    redirect("/settings/users?error=password");
+  }
+
   await prisma.user.create({
     data: {
       firmId: firm.id,
       name: requiredText.parse(formData.get("name")?.toString()),
-      email: requiredText.parse(formData.get("email")?.toString()),
+      email: requiredText.parse(formData.get("email")?.toString()).toLowerCase(),
+      passwordHash: hashPassword(password),
       role: (formData.get("role")?.toString() as UserRole) || UserRole.ADJUSTER,
       active: formData.get("active") === "on",
     },

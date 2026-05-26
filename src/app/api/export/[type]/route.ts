@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { toCsv } from "@/lib/csv";
+import { getAuthenticatedAppContext } from "@/lib/app-context";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, isInvoiceOverdue, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getClaims, getLeads, getMoneyData } from "@/lib/queries";
 
@@ -50,6 +51,11 @@ function isDueSoonInvoice(invoice: {
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  const authContext = await getAuthenticatedAppContext();
+  if (!authContext) {
+    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+  }
+
   const { type } = await context.params;
   const requestUrl = new URL(request.url);
   const q = firstValue(requestUrl.searchParams.get("q"))?.trim();

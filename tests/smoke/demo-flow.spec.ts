@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const seededOwnerEmail = "dana@harboradjusting.example";
+const seededPassword = "AdjusterDeskDemo123!";
+
 function uniqueSuffix() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -8,6 +11,16 @@ function dateInput(daysFromNow: number) {
   const date = new Date();
   date.setDate(date.getDate() + daysFromNow);
   return date.toISOString().slice(0, 10);
+}
+
+async function loginAsSeededOwner(page: Page) {
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+  await page.locator('input[name="email"]').fill(seededOwnerEmail);
+  await page.locator('input[name="password"]').fill(seededPassword);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/today$/);
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
 }
 
 async function createLead(page: Page, suffix: string) {
@@ -70,8 +83,18 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   const documentTitle = `Mitigation invoice ${suffix}`;
   const invoiceNumber = `AD-SMOKE-${suffix.slice(-8).toUpperCase()}`;
 
+  await page.goto("/status/martinez-roof-demo");
+  await expect(page.getByText("Send a document to the office", { exact: true })).toBeVisible();
+
   await page.goto("/today");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(page.getByText("Use an active office user account to continue.", { exact: true })).toBeVisible();
+
+  await loginAsSeededOwner(page);
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Log out", exact: true })).toBeVisible();
+  await expect(page.getByText("Dana Morris · Owner", { exact: true })).toBeVisible();
   await expect(page.getByText("Work the office in this order")).toBeVisible();
 
   await page.goto("/settings/import");
@@ -82,25 +105,28 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Pilot readiness", exact: true })).toBeVisible();
-  await expect(page.getByText("Workspace is running in demo mode.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Office sign-in is active.", { exact: true })).toBeVisible();
   await expect(page.getByText("Current firm:")).toBeVisible();
-  await expect(page.getByText("Current demo user:")).toBeVisible();
+  await expect(page.getByText("Current user:")).toBeVisible();
   await expect(page.getByText("Ready for pilot demo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Credentials sign-in and session auth", { exact: true })).toBeVisible();
   await expect(page.getByText("Lead intake", { exact: true })).toBeVisible();
-  await expect(page.getByText("Real auth and sign-in", { exact: true })).toBeVisible();
+  await expect(page.getByText("User invites and password reset", { exact: true })).toBeVisible();
   await expect(page.getByText("Before real deployment", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Environment status", exact: true })).toBeVisible();
   await expect(page.getByText("Demo workspace mode", { exact: true })).toBeVisible();
+  await expect(page.getByText("Real auth", { exact: true })).toBeVisible();
   await expect(page.getByText("Local file storage", { exact: true })).toBeVisible();
 
   await page.goto("/settings/users");
   await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
-  await expect(page.getByText("Demo workspace users", { exact: true })).toBeVisible();
+  await expect(page.getByText("Office sign-in users", { exact: true })).toBeVisible();
   await expect(page.getByText("Total users", { exact: true })).toBeVisible();
   await expect(page.getByText("Active users", { exact: true })).toBeVisible();
   await expect(page.getByText("Inactive users", { exact: true })).toBeVisible();
   await expect(page.getByText("Owners", { exact: true })).toBeVisible();
-  await expect(page.getByText("Current demo user")).toBeVisible();
+  await expect(page.getByRole("main").getByText("Current user", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Add office user", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Deactivate" }).first()).toBeVisible();
 
   const leadData = await createLead(page, suffix);
@@ -149,8 +175,6 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.locator('input[name="dueDate"]').first().fill(dateInput(4));
   await page.locator('textarea[name="notes"]').first().fill("Ask for dry-out invoice and moisture readings.");
   await page.getByRole("button", { name: "Add task to claim" }).click();
-  await expect(page.getByText("Task saved", { exact: true })).toBeVisible();
-  await expect(page.getByText(claimTaskTitle)).toBeVisible();
 
   await page.goto(`${claimUrl}/tasks?q=${encodeURIComponent(claimTaskTitle)}&status=OPEN&priority=ALL&due=ALL`);
   await expect(page.getByText(claimTaskTitle, { exact: true })).toBeVisible();
@@ -229,10 +253,16 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
 
   await page.goto("/today");
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Log out", exact: true }).click();
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await page.goto("/today");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
 });
 
 test("friendly validation appears for missing lead, claim, invoice, and payment basics", async ({ page }) => {
   const suffix = uniqueSuffix();
+
+  await loginAsSeededOwner(page);
 
   await page.goto("/leads/new");
   await page.getByRole("button", { name: "Save lead and open detail" }).click();

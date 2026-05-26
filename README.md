@@ -43,6 +43,14 @@ npm run db:push
 npm run db:seed
 ```
 
+Seeded office sign-in credentials after `npm run db:seed`:
+
+- `dana@harboradjusting.example` / `AdjusterDeskDemo123!`
+- `luis@harboradjusting.example` / `AdjusterDeskDemo123!`
+- `kim@harboradjusting.example` / `AdjusterDeskDemo123!`
+
+The seeded inactive user (`avery@harboradjusting.example`) cannot sign in.
+
 4. Start the development server:
 
 ```bash
@@ -51,9 +59,12 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+`AUTH_SECRET` should be set before any shared or pilot deployment. If it is missing in local development, AdjusterDesk falls back to an insecure built-in signing secret so the seeded credentials flow still works locally.
+
 ## Demo URLs
 
-- Workspace: `http://localhost:3000/today`
+- Login: `http://localhost:3000/login`
+- Workspace: `http://localhost:3000/today` (after sign-in)
 - Leads: `http://localhost:3000/leads`
 - Claims: `http://localhost:3000/claims`
 - Money: `http://localhost:3000/money`

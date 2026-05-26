@@ -125,6 +125,7 @@ model User {
   firmId    String
   name      String
   email     String   @unique
+  passwordHash String @default("")
   role      UserRole @default(ADJUSTER)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())

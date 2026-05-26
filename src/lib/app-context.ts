@@ -1,8 +1,15 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSessionUser } from "@/lib/session";
 
-export async function getDemoContext() {
-  const firm = await prisma.firm.findFirst({
-    orderBy: { createdAt: "asc" },
+export async function getAuthenticatedAppContext() {
+  const sessionUser = await getCurrentSessionUser();
+  if (!sessionUser) {
+    return null;
+  }
+
+  const firm = await prisma.firm.findUnique({
+    where: { id: sessionUser.firmId },
     include: {
       users: {
         where: { active: true },
@@ -12,14 +19,27 @@ export async function getDemoContext() {
   });
 
   if (!firm) {
-    throw new Error("No demo firm found. Run `npm run db:push` and `npm run db:seed`.");
+    return null;
   }
 
-  const user = firm.users.find((candidate) => candidate.role === "OWNER") ?? firm.users[0];
-
+  const user = firm.users.find((candidate) => candidate.id === sessionUser.id);
   if (!user) {
-    throw new Error("No demo user found. Run `npm run db:seed`.");
+    return null;
   }
 
   return { firm, user, users: firm.users };
+}
+
+export async function requireAuthenticatedAppContext() {
+  const context = await getAuthenticatedAppContext();
+
+  if (!context) {
+    redirect("/login");
+  }
+
+  return context;
+}
+
+export async function getDemoContext() {
+  return requireAuthenticatedAppContext();
 }

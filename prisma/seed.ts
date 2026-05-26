@@ -14,6 +14,7 @@ import {
   TemplateType,
   UserRole,
 } from "../src/generated/prisma/client";
+import { hashPassword } from "../src/lib/auth";
 
 const prisma = new PrismaClient({
   adapter: new PrismaBetterSqlite3({
@@ -30,7 +31,11 @@ function cents(amount: number) {
   return Math.round(amount * 100);
 }
 
+const seededDevPassword = "AdjusterDeskDemo123!";
+
 async function main() {
+  const demoPasswordHash = hashPassword(seededDevPassword);
+
   await prisma.$transaction(async (tx) => {
     await tx.payment.deleteMany();
     await tx.invoice.deleteMany();
@@ -63,6 +68,7 @@ async function main() {
         firmId: firm.id,
         name: "Dana Morris",
         email: "dana@harboradjusting.example",
+        passwordHash: demoPasswordHash,
         role: UserRole.OWNER,
       },
     });
@@ -72,6 +78,7 @@ async function main() {
         firmId: firm.id,
         name: "Luis Patel",
         email: "luis@harboradjusting.example",
+        passwordHash: demoPasswordHash,
         role: UserRole.ADJUSTER,
       },
     });
@@ -81,6 +88,7 @@ async function main() {
         firmId: firm.id,
         name: "Kim Brooks",
         email: "kim@harboradjusting.example",
+        passwordHash: demoPasswordHash,
         role: UserRole.ASSISTANT,
       },
     });
@@ -90,6 +98,7 @@ async function main() {
         firmId: firm.id,
         name: "Avery Chen",
         email: "avery@harboradjusting.example",
+        passwordHash: demoPasswordHash,
         role: UserRole.ASSISTANT,
         active: false,
       },
