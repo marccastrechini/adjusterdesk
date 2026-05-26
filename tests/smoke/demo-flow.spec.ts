@@ -96,7 +96,12 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page).toHaveURL(/\/claims\/.+notice=lead-converted/);
   await expect(page.getByText("Lead converted", { exact: true })).toBeVisible();
   await expect(page.getByText("What to work next")).toBeVisible();
+  const convertedClaimNumber = `STM-${suffix}`;
   const claimUrl = page.url().split("?")[0];
+
+  await page.goto(`/claims?q=${encodeURIComponent(convertedClaimNumber)}&status=ALL&assignedUserId=ALL&carrierId=ALL`);
+  await expect(page.getByText("1 total", { exact: true })).toBeVisible();
+  await expect(page.getByText(`Claim #${convertedClaimNumber}`)).toBeVisible();
 
   await page.goto(`${claimUrl}/client-status`);
   await expect(page.getByText("No client status link yet", { exact: true })).toBeVisible();

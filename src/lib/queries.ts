@@ -248,6 +248,7 @@ export async function getClaims(params: SearchInput = {}) {
   const { firm, users } = await getDemoContext();
   const search = firstValue(params.q)?.trim();
   const status = firstValue(params.status);
+  const searchParts = search?.split(/\s+/).filter(Boolean) ?? [];
 
   const claims = (await prisma.claim.findMany({
     where: {
@@ -260,6 +261,9 @@ export async function getClaims(params: SearchInput = {}) {
               { lossType: { contains: search } },
               { contact: { firstName: { contains: search } } },
               { contact: { lastName: { contains: search } } },
+              ...(searchParts.length >= 2
+                ? [{ AND: searchParts.map((part) => ({ OR: [{ contact: { firstName: { contains: part } } }, { contact: { lastName: { contains: part } } }] })) }]
+                : []),
               { property: { address1: { contains: search } } },
               { carrier: { name: { contains: search } } },
             ],
