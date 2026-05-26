@@ -1,4 +1,7 @@
-import { ButtonLink, Card, PageHeader, Section } from "@/components/ui";
+import { labelFromEnum } from "@/lib/format";
+import { getDemoContext } from "@/lib/app-context";
+import { getUsers } from "@/lib/queries";
+import { Badge, ButtonLink, Card, PageHeader, Section } from "@/components/ui";
 
 const settingsCards = [
   {
@@ -21,10 +24,33 @@ const settingsCards = [
   },
 ] as const;
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { firm, user } = await getDemoContext();
+  const { users } = await getUsers();
+  const roleLabels = Array.from(new Set(users.map((entry) => labelFromEnum(entry.role))));
+
   return (
     <>
       <PageHeader title="Settings" description="Simple office defaults that reduce repeated setup work across leads and claims." />
+
+      <Section title="Pilot readiness">
+        <Card className="grid gap-3 border-amber-200 bg-amber-50">
+          <p className="text-sm font-semibold text-amber-900">Workspace is running in demo mode.</p>
+          <div className="grid gap-1 text-sm leading-6 text-amber-900">
+            <p>Current firm: {firm.name}</p>
+            <p>Current demo user: {user.name} ({labelFromEnum(user.role)})</p>
+            <p>Users in this workspace: {users.length} total ({users.filter((entry) => entry.active).length} active)</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {roleLabels.map((role) => (
+              <Badge key={role} tone="amber">{role}</Badge>
+            ))}
+          </div>
+          <p className="text-sm leading-6 text-amber-900">
+            This build does not have production sign-in, passwords, invitations, or firm switching yet.
+          </p>
+        </Card>
+      </Section>
 
       <Section title="Office setup">
         <div className="grid gap-4 md:grid-cols-3">

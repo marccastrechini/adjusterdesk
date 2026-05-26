@@ -79,6 +79,13 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByRole("link", { name: "Download leads sample CSV" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download claims sample CSV" })).toBeVisible();
 
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pilot readiness", exact: true })).toBeVisible();
+  await expect(page.getByText("Workspace is running in demo mode.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Current firm:")).toBeVisible();
+  await expect(page.getByText("Current demo user:")).toBeVisible();
+
   const leadData = await createLead(page, suffix);
 
   await page.goto(`/leads?q=${encodeURIComponent(leadData.fullName)}&status=ALL&assignedUserId=ALL&followUp=ALL`);
