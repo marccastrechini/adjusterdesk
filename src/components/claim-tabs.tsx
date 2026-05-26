@@ -12,6 +12,7 @@ export function ClaimTabs({ claimId }: { claimId: string }) {
     { href: `/claims/${claimId}/documents`, label: "Documents" },
     { href: `/claims/${claimId}/communications`, label: "Communications" },
     { href: `/claims/${claimId}/money`, label: "Money" },
+    { href: `/claims/${claimId}/client-status`, label: "Client status" },
   ];
 
   return (

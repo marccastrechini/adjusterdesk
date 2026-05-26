@@ -132,11 +132,14 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
             <h2 className="text-base font-semibold text-slate-950">Client status page</h2>
             {statusLink ? (
               <>
-                <p className="mt-2 text-sm text-slate-600">Share this simple status page with the client.</p>
-                <Link href={`/status/${statusLink.token}`} className="mt-3 inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open public status</Link>
+                <p className="mt-2 text-sm text-slate-600">Preview the simple client-facing update before sharing it.</p>
+                <Link href={`/claims/${claim.id}/client-status`} className="mt-3 inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open client status</Link>
               </>
             ) : (
-              <p className="mt-2 text-sm text-slate-600">No public status token has been created yet.</p>
+              <>
+                <p className="mt-2 text-sm text-slate-600">Preview the client-facing update for this claim.</p>
+                <Link href={`/claims/${claim.id}/client-status`} className="mt-3 inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open client status</Link>
+              </>
             )}
           </Card>
 
