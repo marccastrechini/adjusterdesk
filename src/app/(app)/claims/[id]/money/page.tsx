@@ -1,11 +1,15 @@
 import { ClaimTabs } from "@/components/claim-tabs";
-import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createInvoice, createSettlementRound, recordPayment } from "@/lib/actions";
 import { formatDate, formatMoney, formatPercentFromBasisPoints, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
+import { getNoticeMessage } from "@/lib/notices";
 import { invoiceStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 const settlementStatusOptions = [
   ["DEMAND_SENT", "Demand sent"],
@@ -14,15 +18,18 @@ const settlementStatusOptions = [
   ["REJECTED", "Rejected"],
 ] as const;
 
-export default async function ClaimMoneyPage({ params }: PageProps) {
+export default async function ClaimMoneyPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const { claim } = await getClaim(id);
+  const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/money`;
 
   return (
     <>
       <PageHeader title={`${fullName(claim.contact)} money`} description="Track demands, carrier offers, settlement checks, fee calculations, invoices, and receivables." actions={<ButtonLink href="/money" variant="secondary">All receivables</ButtonLink>} />
       <ClaimTabs claimId={claim.id} />
+      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="grid gap-6">
@@ -108,60 +115,63 @@ export default async function ClaimMoneyPage({ params }: PageProps) {
         <aside className="grid gap-6 content-start">
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Add settlement round</h2>
+            <p className="text-sm leading-6 text-slate-600">Use this for each demand, carrier offer, and accepted settlement amount. Amounts are entered in dollars.</p>
             <form action={createSettlementRound} className="grid gap-3">
               <input type="hidden" name="claimId" value={claim.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Demand amount"><input name="demandAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
-              <Field label="Offer amount"><input name="offerAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
-              <Field label="Accepted amount"><input name="acceptedAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
-              <Field label="Status">
+              <Field label="Demand amount" hint="Dollar amount requested from the carrier."><input name="demandAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
+              <Field label="Offer amount" hint="Dollar amount offered by the carrier."><input name="offerAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
+              <Field label="Accepted amount" hint="Fill this only when the client accepts the amount."><input name="acceptedAmount" type="number" min="0" step="0.01" className={inputClassName} /></Field>
+              <Field label="Status" hint="Accepted will mark the claim settled.">
                 <select name="status" defaultValue="OFFER_RECEIVED" className={selectClassName}>
                   {settlementStatusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Offer date"><input name="offeredAt" type="date" className={inputClassName} /></Field>
-              <Field label="Notes"><textarea name="notes" className={textareaClassName} /></Field>
-              <SubmitButton>Add settlement</SubmitButton>
+              <Field label="Offer date" hint="Leave blank to use today."><input name="offeredAt" type="date" className={inputClassName} /></Field>
+              <Field label="Notes" hint="Add short negotiation context or what changed from the last round."><textarea name="notes" className={textareaClassName} /></Field>
+              <SubmitButton>Save settlement round</SubmitButton>
             </form>
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Record payment/check</h2>
+            <p className="text-sm leading-6 text-slate-600">Record settlement checks or fee payments. Choose an invoice only when the payment should reduce that invoice balance.</p>
             <form action={recordPayment} className="grid gap-3">
               <input type="hidden" name="claimId" value={claim.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Apply to invoice">
+              <Field label="Apply to invoice" hint="Leave this as settlement check or no invoice for carrier settlement checks.">
                 <select name="invoiceId" className={selectClassName}>
                   <option value="">Settlement check or no invoice</option>
                   {claim.invoices.map((invoice) => <option key={invoice.id} value={invoice.id}>{invoice.invoiceNumber}</option>)}
                 </select>
               </Field>
-              <Field label="Amount"><input name="amount" type="number" min="0" step="0.01" required className={inputClassName} /></Field>
-              <Field label="Payment date"><input name="paidAt" type="date" className={inputClassName} /></Field>
-              <Field label="Check number"><input name="checkNumber" className={inputClassName} /></Field>
-              <Field label="Payee"><input name="payee" required className={inputClassName} /></Field>
-              <Field label="Notes"><textarea name="notes" className={textareaClassName} /></Field>
-              <SubmitButton>Record payment</SubmitButton>
+              <Field label="Amount" required hint="Dollar amount of the check or payment."><input name="amount" type="number" min="0" step="0.01" required className={inputClassName} /></Field>
+              <Field label="Payment date" hint="Leave blank to use today."><input name="paidAt" type="date" className={inputClassName} /></Field>
+              <Field label="Check number" hint="Optional, but useful for office records."><input name="checkNumber" className={inputClassName} /></Field>
+              <Field label="Payee" required hint="Who the check was made out to."><input name="payee" required className={inputClassName} /></Field>
+              <Field label="Notes" hint="Add any split-payee, mailing, or balance detail."><textarea name="notes" className={textareaClassName} /></Field>
+              <SubmitButton>Record check or payment</SubmitButton>
             </form>
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Create fee invoice</h2>
+            <p className="text-sm leading-6 text-slate-600">Create the public adjusting fee invoice after the settlement amount and fee percentage are known.</p>
             <form action={createInvoice} className="grid gap-3">
               <input type="hidden" name="claimId" value={claim.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Invoice number"><input name="invoiceNumber" required placeholder="AD-1002" className={inputClassName} /></Field>
-              <Field label="Settlement amount"><input name="settlementAmount" type="number" min="0" step="0.01" required className={inputClassName} /></Field>
-              <Field label="Fee percent"><input name="feePercent" type="number" min="0" step="0.01" defaultValue="10" required className={inputClassName} /></Field>
-              <Field label="Status">
+              <Field label="Invoice number" required hint="Use the office invoice number."><input name="invoiceNumber" required placeholder="AD-1002" className={inputClassName} /></Field>
+              <Field label="Settlement amount" required hint="Dollar amount used to calculate the fee."><input name="settlementAmount" type="number" min="0" step="0.01" required className={inputClassName} /></Field>
+              <Field label="Fee percent" required hint="Enter 10 for a 10% fee."><input name="feePercent" type="number" min="0" step="0.01" defaultValue="10" required className={inputClassName} /></Field>
+              <Field label="Status" hint="Use Draft until the invoice has actually been sent.">
                 <select name="status" defaultValue="DRAFT" className={selectClassName}>
                   {invoiceStatusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Issued date"><input name="issuedAt" type="date" className={inputClassName} /></Field>
-              <Field label="Due date"><input name="dueAt" type="date" className={inputClassName} /></Field>
-              <Field label="Notes"><textarea name="notes" className={textareaClassName} /></Field>
-              <SubmitButton>Create invoice</SubmitButton>
+              <Field label="Issued date" hint="Leave blank to use today."><input name="issuedAt" type="date" className={inputClassName} /></Field>
+              <Field label="Due date" hint="Use the date the office expects payment."><input name="dueAt" type="date" className={inputClassName} /></Field>
+              <Field label="Notes" hint="Add fee basis, check timing, or collection notes."><textarea name="notes" className={textareaClassName} /></Field>
+              <SubmitButton>Create fee invoice</SubmitButton>
             </form>
           </Card>
         </aside>

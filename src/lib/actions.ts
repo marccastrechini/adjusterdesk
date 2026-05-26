@@ -17,6 +17,7 @@ import {
   UserRole,
 } from "@/generated/prisma/client";
 import { getDemoContext } from "@/lib/app-context";
+import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/storage";
 
@@ -165,7 +166,7 @@ export async function createLead(formData: FormData) {
   });
 
   revalidatePath("/leads");
-  redirect(`/leads/${lead.id}`);
+  redirect(withNotice(`/leads/${lead.id}`, "lead-created"));
 }
 
 export async function convertLeadToClaim(leadId: string, formData: FormData) {
@@ -236,7 +237,7 @@ export async function convertLeadToClaim(leadId: string, formData: FormData) {
 
   revalidatePath("/leads");
   revalidatePath("/claims");
-  redirect(`/claims/${claim.id}`);
+  redirect(withNotice(`/claims/${claim.id}`, "lead-converted"));
 }
 
 export async function createClaim(formData: FormData) {
@@ -300,7 +301,7 @@ export async function createClaim(formData: FormData) {
   });
 
   revalidatePath("/claims");
-  redirect(`/claims/${claim.id}`);
+  redirect(withNotice(`/claims/${claim.id}`, "claim-created"));
 }
 
 export async function createTask(formData: FormData) {
@@ -323,7 +324,7 @@ export async function createTask(formData: FormData) {
   });
 
   revalidatePath(returnPath);
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "task-created"));
 }
 
 export async function updateTask(taskId: string, returnPath: string, formData: FormData) {
@@ -340,7 +341,7 @@ export async function updateTask(taskId: string, returnPath: string, formData: F
   });
 
   revalidatePath(returnPath);
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "task-saved"));
 }
 
 export async function toggleTask(taskId: string, returnPath: string) {
@@ -369,6 +370,8 @@ export async function createDocument(formData: FormData) {
   const upload = file instanceof File && file.size > 0 ? await saveUploadedFile(file) : {};
   const fallbackTitle = file instanceof File && file.name ? file.name : "Document";
 
+  const requestedFromClient = formData.get("requestedFromClient") === "on";
+
   await prisma.document.create({
     data: {
       firmId: firm.id,
@@ -378,14 +381,14 @@ export async function createDocument(formData: FormData) {
       category: (formData.get("category")?.toString() as DocumentCategory) || DocumentCategory.OTHER,
       title: formData.get("title")?.toString() || fallbackTitle,
       notes: formData.get("notes")?.toString() || undefined,
-      requestedFromClient: formData.get("requestedFromClient") === "on",
+      requestedFromClient,
       receivedAt: new Date(),
       ...upload,
     },
   });
 
   revalidatePath(returnPath);
-  redirect(returnPath);
+  redirect(withNotice(returnPath, requestedFromClient ? "document-requested" : "document-added"));
 }
 
 export async function createActivity(formData: FormData) {
@@ -407,7 +410,7 @@ export async function createActivity(formData: FormData) {
   });
 
   revalidatePath(returnPath);
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "note-added"));
 }
 
 export async function createSettlementRound(formData: FormData) {
@@ -439,7 +442,7 @@ export async function createSettlementRound(formData: FormData) {
   });
 
   revalidatePath(returnPath);
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "settlement-added"));
 }
 
 export async function recordPayment(formData: FormData) {
@@ -481,7 +484,7 @@ export async function recordPayment(formData: FormData) {
 
   revalidatePath(returnPath);
   revalidatePath("/money");
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "payment-recorded"));
 }
 
 export async function createInvoice(formData: FormData) {
@@ -511,7 +514,7 @@ export async function createInvoice(formData: FormData) {
 
   revalidatePath(returnPath);
   revalidatePath("/money");
-  redirect(returnPath);
+  redirect(withNotice(returnPath, "invoice-created"));
 }
 
 export async function createTemplate(formData: FormData) {

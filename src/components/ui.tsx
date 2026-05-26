@@ -77,6 +77,15 @@ export function EmptyState({ title, message }: { title: string; message: string 
   );
 }
 
+export function Notice({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+      <p className="font-semibold">{title}</p>
+      <p className="mt-1 leading-6">{children}</p>
+    </div>
+  );
+}
+
 export function Badge({ children, tone = "slate" }: { children: ReactNode; tone?: "slate" | "green" | "amber" | "red" | "blue" | "teal" }) {
   const tones = {
     slate: "border-slate-200 bg-slate-50 text-slate-700",
@@ -122,11 +131,15 @@ export function SubmitButton({ children, variant = "primary" }: { children: Reac
   );
 }
 
-export function Field({ label, children }: { label: string; children: ReactNode }) {
+export function Field({ label, children, hint, required }: { label: string; children: ReactNode; hint?: ReactNode; required?: boolean }) {
   return (
     <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-      <span>{label}</span>
+      <span className="flex flex-wrap items-center gap-2">
+        <span>{label}</span>
+        {required ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">Required</span> : null}
+      </span>
       {children}
+      {hint ? <span className="text-xs leading-5 font-normal text-slate-500">{hint}</span> : null}
     </label>
   );
 }

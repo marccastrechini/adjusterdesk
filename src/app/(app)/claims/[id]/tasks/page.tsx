@@ -1,24 +1,31 @@
 import { ClaimTabs } from "@/components/claim-tabs";
-import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createTask, toggleTask, updateTask } from "@/lib/actions";
 import { formatDate, fullName, labelFromEnum } from "@/lib/format";
+import { getNoticeMessage } from "@/lib/notices";
 import { taskPriorityOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function ClaimTasksPage({ params }: PageProps) {
+export default async function ClaimTasksPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const { claim, users } = await getClaim(id);
+  const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/tasks`;
 
   return (
     <>
       <PageHeader title={`${fullName(claim.contact)} tasks`} description="Create, edit, and complete claim follow-ups and deadlines." actions={<ButtonLink href={`/claims/${claim.id}`} variant="secondary">Claim overview</ButtonLink>} />
       <ClaimTabs claimId={claim.id} />
+      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <Section title="Claim tasks">
+        <Section title="Claim tasks" description="Use tasks for the next office action, not long notes. Long details can go in the Notes field.">
           {claim.tasks.length === 0 ? (
             <EmptyState title="No tasks yet" message="Add a task for the next call, deadline, document request, or carrier follow-up." />
           ) : (
@@ -41,7 +48,7 @@ export default async function ClaimTasksPage({ params }: PageProps) {
                   </div>
 
                   <form action={updateTask.bind(null, task.id, returnPath)} className="grid gap-3 rounded-md bg-slate-50 p-3 lg:grid-cols-2">
-                    <Field label="Task"><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
+                    <Field label="Task" required><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
                     <Field label="Due date"><input name="dueDate" type="date" defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""} className={inputClassName} /></Field>
                     <Field label="Assigned adjuster">
                       <select name="assignedUserId" defaultValue={task.assignedUserId ?? ""} className={selectClassName}>
@@ -55,7 +62,7 @@ export default async function ClaimTasksPage({ params }: PageProps) {
                       </select>
                     </Field>
                     <div className="lg:col-span-2">
-                      <Field label="Notes"><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
+                      <Field label="Notes" hint="Add details like who to call, what to ask for, or where the file is."><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
                     </div>
                     <div className="lg:col-span-2">
                       <SubmitButton variant="secondary">Save task</SubmitButton>
@@ -69,24 +76,25 @@ export default async function ClaimTasksPage({ params }: PageProps) {
 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add task</h2>
+          <p className="text-sm leading-6 text-slate-600">Add the next call, carrier follow-up, document request, inspection reminder, or deadline.</p>
           <form action={createTask} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Task"><input name="title" required className={inputClassName} /></Field>
-            <Field label="Due date"><input name="dueDate" type="date" className={inputClassName} /></Field>
-            <Field label="Assigned adjuster">
+            <Field label="Task" required hint="Example: Call carrier for estimate status."><input name="title" required className={inputClassName} /></Field>
+            <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
+            <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
               <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
                 <option value="">Unassigned</option>
                 {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
               </select>
             </Field>
-            <Field label="Priority">
+            <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
               <select name="priority" defaultValue="NORMAL" className={selectClassName}>
                 {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </Field>
-            <Field label="Notes"><textarea name="notes" className={textareaClassName} /></Field>
-            <SubmitButton>Add task</SubmitButton>
+            <Field label="Notes" hint="Optional details for the person doing the work."><textarea name="notes" className={textareaClassName} /></Field>
+            <SubmitButton>Add task to claim</SubmitButton>
           </form>
         </Card>
       </div>

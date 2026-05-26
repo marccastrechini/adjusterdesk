@@ -2,14 +2,20 @@ import Link from "next/link";
 import { createActivity, createTask, convertLeadToClaim } from "@/lib/actions";
 import { activityTypeOptions, taskPriorityOptions } from "@/lib/options";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
+import { getNoticeMessage } from "@/lib/notices";
 import { getLead } from "@/lib/queries";
-import { Badge, ButtonLink, Card, DetailItem, EmptyState, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
+import { Badge, ButtonLink, Card, DetailItem, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function LeadDetailPage({ params }: PageProps) {
+export default async function LeadDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const { lead, users } = await getLead(id);
+  const notice = getNoticeMessage(query);
   const returnPath = `/leads/${lead.id}`;
 
   return (
@@ -19,6 +25,7 @@ export default async function LeadDetailPage({ params }: PageProps) {
         description={`${lead.lossType} lead from ${lead.source}. Follow-up ${formatDate(lead.followUpDate)}.`}
         actions={<ButtonLink href="/leads" variant="secondary">Back to leads</ButtonLink>}
       />
+      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
         <div className="grid gap-6">
@@ -91,51 +98,54 @@ export default async function LeadDetailPage({ params }: PageProps) {
               </div>
             ) : (
               <form action={convertLeadToClaim.bind(null, lead.id)} className="grid gap-3">
-                <Field label="Carrier"><input name="carrierName" className={inputClassName} /></Field>
-                <Field label="Policy number"><input name="policyNumber" className={inputClassName} /></Field>
-                <Field label="Carrier claim number"><input name="claimNumber" className={inputClassName} /></Field>
-                <Field label="Next step"><textarea name="nextStep" className={textareaClassName} /></Field>
-                <SubmitButton>Convert lead</SubmitButton>
+                <p className="text-sm leading-6 text-slate-600">Use this after the client is ready to open a claim. Carrier details can be filled in later if they are not known yet.</p>
+                <Field label="Carrier" hint="Optional. Add the carrier name if the client has it."><input name="carrierName" className={inputClassName} /></Field>
+                <Field label="Policy number" hint="Optional until the policy declarations are collected."><input name="policyNumber" className={inputClassName} /></Field>
+                <Field label="Carrier claim number" hint="Optional until the carrier assigns one."><input name="claimNumber" className={inputClassName} /></Field>
+                <Field label="Next step" hint="One clear action for the new claim, like request policy, schedule inspection, or call carrier."><textarea name="nextStep" className={textareaClassName} /></Field>
+                <SubmitButton>Convert to claim and open overview</SubmitButton>
               </form>
             )}
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Add follow-up task</h2>
+            <p className="text-sm leading-6 text-slate-600">Add the next call, text, appointment reminder, or document follow-up so it appears on Today when due.</p>
             <form action={createTask} className="grid gap-3">
               <input type="hidden" name="leadId" value={lead.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Task"><input name="title" required className={inputClassName} /></Field>
-              <Field label="Due date"><input name="dueDate" type="date" className={inputClassName} /></Field>
-              <Field label="Assigned adjuster">
+              <Field label="Task" required hint="Write the action as a short instruction."><input name="title" required className={inputClassName} /></Field>
+              <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
+              <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
                 <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
                   <option value="">Unassigned</option>
                   {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
                 </select>
               </Field>
-              <Field label="Priority">
+              <Field label="Priority" hint="Use High for work that should not wait.">
                 <select name="priority" defaultValue="NORMAL" className={selectClassName}>
                   {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>
-              <SubmitButton variant="secondary">Add task</SubmitButton>
+              <SubmitButton variant="secondary">Add follow-up task</SubmitButton>
             </form>
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Log lead activity</h2>
+            <p className="text-sm leading-6 text-slate-600">Save calls, texts, emails, and quick office notes so the next person can see what happened.</p>
             <form action={createActivity} className="grid gap-3">
               <input type="hidden" name="leadId" value={lead.id} />
               <input type="hidden" name="contactId" value={lead.contactId} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Type">
+              <Field label="Type" hint="Pick the closest contact type.">
                 <select name="type" className={selectClassName} defaultValue="NOTE">
                   {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Subject"><input name="subject" required className={inputClassName} /></Field>
-              <Field label="Notes"><textarea name="body" className={textareaClassName} /></Field>
-              <SubmitButton variant="secondary">Log activity</SubmitButton>
+              <Field label="Subject" required hint="Example: Left voicemail, photos received, appointment set."><input name="subject" required className={inputClassName} /></Field>
+              <Field label="Notes" hint="Add the details the office will need later."><textarea name="body" className={textareaClassName} /></Field>
+              <SubmitButton variant="secondary">Log lead note</SubmitButton>
             </form>
           </Card>
         </aside>

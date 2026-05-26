@@ -2,13 +2,19 @@ import Link from "next/link";
 import { ClaimTabs } from "@/components/claim-tabs";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, PageHeader, Section } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, labelFromEnum, propertyAddress } from "@/lib/format";
+import { getNoticeMessage } from "@/lib/notices";
 import { getClaim } from "@/lib/queries";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function ClaimOverviewPage({ params }: PageProps) {
+export default async function ClaimOverviewPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const { claim } = await getClaim(id);
+  const notice = getNoticeMessage(query);
   const openTasks = claim.tasks.filter((task) => task.status === "OPEN");
   const nextTask = openTasks[0];
   const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
@@ -24,6 +30,7 @@ export default async function ClaimOverviewPage({ params }: PageProps) {
         description={`${claim.lossType} · ${propertyAddress(claim.property)}`}
         actions={<ButtonLink href="/claims" variant="secondary">Back to claims</ButtonLink>}
       />
+      {notice ? <Card className="border-emerald-200 bg-emerald-50 text-emerald-900"><p className="font-semibold">{notice.title}</p><p className="mt-1 text-sm leading-6">{notice.message}</p></Card> : null}
       <ClaimTabs claimId={claim.id} />
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
