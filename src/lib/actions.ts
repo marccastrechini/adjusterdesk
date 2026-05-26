@@ -21,7 +21,7 @@ import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-st
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
-import { saveUploadedFile } from "@/lib/storage";
+import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
 import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/templates";
 import { hasUsableCsvRows, normalizeImportType } from "@/lib/import-utils";
 
@@ -94,6 +94,12 @@ function textValue(formData: FormData, name: string) {
 function hasFile(formData: FormData, name: string) {
   const file = formData.get(name);
   return file instanceof File && file.size > 0;
+}
+
+function uploadFileError(formData: FormData, name: string) {
+  const file = formData.get(name);
+  if (!(file instanceof File) || file.size <= 0) return undefined;
+  return validateUploadFile(file);
 }
 
 function amountValue(formData: FormData, name: string) {
@@ -586,6 +592,8 @@ export async function createDocument(formData: FormData) {
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
   const file = formData.get("file");
   const hasUpload = file instanceof File && file.size > 0;
+  const fileError = uploadFileError(formData, "file");
+  if (fileError) throw new Error(fileError);
   const upload = hasUpload ? await saveUploadedFile(file) : {};
   const fallbackTitle = file instanceof File && file.name ? file.name : "Document";
   const documentInput = documentInputFromTemplate({
@@ -619,6 +627,7 @@ export async function createDocument(formData: FormData) {
 export async function createDocumentWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
   const hasUploadedFile = hasFile(formData, "file");
+  const fileError = uploadFileError(formData, "file");
   const documentInput = documentInputFromTemplate({
     templateKey: formData.get("documentTemplateKey")?.toString(),
     title: formData.get("title")?.toString(),
@@ -634,6 +643,10 @@ export async function createDocumentWithState(_state: ActionFormState, formData:
     errors.title = "Name the document or photo you need from the client.";
   } else if (!requestedFromClient && !hasTitle && !hasUploadedFile) {
     errors.title = "Add a document title or choose a file before saving.";
+  }
+
+  if (fileError) {
+    errors.file = fileError;
   }
 
   if (hasErrors(errors)) {
@@ -1028,6 +1041,8 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file to upload.");
+  const fileError = validateUploadFile(file);
+  if (fileError) throw new Error(fileError);
 
   const requestedDocumentId = formData.get("requestedDocumentId")?.toString() || undefined;
   const replacementTitle = formData.get("title")?.toString().trim() || undefined;
@@ -1079,6 +1094,16 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
 }
 
 export async function uploadStatusDocumentWithState(token: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return formError("Choose a file to upload before sending it to the office.", { file: "Choose a file to upload." });
+  }
+
+  const fileError = validateUploadFile(file);
+  if (fileError) {
+    return formError(fileError, { file: fileError });
+  }
+
   await uploadStatusDocument(token, formData);
   return {};
 }

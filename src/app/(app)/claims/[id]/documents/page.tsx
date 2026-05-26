@@ -164,6 +164,12 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                             {document.receivedAt ? <p>Received {formatDate(document.receivedAt)}</p> : null}
                             <p>{document.notes ?? "No notes added"}</p>
                           </div>
+                          {document.filePath ? (
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              <ButtonLink href={`/api/documents/${document.id}/download`} variant="secondary">Download file</ButtonLink>
+                              <p className="text-xs leading-5 text-slate-500">Local file saved for development.</p>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </Card>
@@ -194,7 +200,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                 {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </Field>
-            <Field label="File" hint="Optional for a request. Attach the file when it is already available."><input name="file" type="file" className={inputClassName} /></Field>
+            <Field label="File" hint="Optional for a request. Attach the file when it is already available (up to 25 MB)."><input name="file" type="file" className={inputClassName} /><FieldError name="file" /></Field>
             <Field label="Notes" hint="For requests, say exactly what the client needs to send. Common requests add this when blank."><textarea name="notes" className={textareaClassName} /></Field>
             <div className="grid gap-1.5">
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700">

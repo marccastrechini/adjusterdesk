@@ -1,5 +1,5 @@
 import type { Activity, Carrier, Claim, ClientStatusLink, Contact, Document as ClaimDocument, Firm, Property, Task, User } from "@/generated/prisma/client";
-import { ActionForm } from "@/components/action-form";
+import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import { uploadStatusDocumentWithState } from "@/lib/actions";
 import { cn } from "@/lib/utils";
@@ -126,8 +126,9 @@ export function ClientStatusView({
                     </select>
                   </Field>
                 ) : null}
-                <Field label="File" hint="Choose one file to send. PDFs and photos work best.">
+                <Field label="File" hint="Choose one file to send (up to 25 MB). PDFs and photos work best.">
                   <input name="file" type="file" className={inputClassName} />
+                  <FieldError name="file" />
                 </Field>
                 <Field label="Title" hint="Optional. Add a short name if you want the office to see something more specific than the file name.">
                   <input name="title" className={inputClassName} placeholder="Roof photos, receipts, policy pages..." />
