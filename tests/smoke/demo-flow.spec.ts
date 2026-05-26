@@ -174,6 +174,12 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Invoice saved", { exact: true })).toBeVisible();
   await expect(page.getByText(invoiceNumber).first()).toBeVisible();
 
+  await page.goto(`/money?q=${encodeURIComponent(invoiceNumber)}&status=SENT&bucket=UNPAID`);
+  await expect(page.getByText(invoiceNumber).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Receivables" })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(invoiceNumber) })).toBeVisible();
+
+  await page.goto(`${claimUrl}/money`);
   await page.locator('select[name="invoiceId"]').selectOption({ label: invoiceNumber });
   await page.locator('input[name="amount"]').fill("1200");
   await page.locator('input[name="paidAt"]').fill(dateInput(7));

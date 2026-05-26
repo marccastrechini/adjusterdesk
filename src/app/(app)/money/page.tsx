@@ -1,12 +1,106 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
-import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
-import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, propertyAddress } from "@/lib/format";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, inputClassName, selectClassName, SubmitButton } from "@/components/ui";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, isInvoiceOverdue, propertyAddress } from "@/lib/format";
+import { invoiceStatusOptions } from "@/lib/options";
 import { getMoneyData } from "@/lib/queries";
 
-export default async function MoneyPage() {
-  const { invoices, payments, outstandingCents, paidInvoiceCents } = await getMoneyData();
-  const openInvoices = invoices.filter((invoice) => !["PAID", "WRITTEN_OFF"].includes(invoice.status));
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const bucketOptions = [
+  ["ALL", "All"],
+  ["OVERDUE", "Overdue"],
+  ["DUE_SOON", "Due soon"],
+  ["PAID", "Paid"],
+  ["UNPAID", "Unpaid"],
+] as const;
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function isOpenInvoice(invoice: { status: string }) {
+  return !["PAID", "WRITTEN_OFF"].includes(invoice.status);
+}
+
+function isPaidInvoice(invoice: { status: string; feeAmountCents: number; amountPaidCents: number }) {
+  return invoice.status === "PAID" || invoice.status === "WRITTEN_OFF" || invoiceAmountDue(invoice) === 0;
+}
+
+function isDueSoonInvoice(invoice: {
+  status: string;
+  dueAt?: Date | string | null;
+  feeAmountCents: number;
+  amountPaidCents: number;
+}) {
+  if (!invoice.dueAt || !isOpenInvoice(invoice) || isInvoiceOverdue(invoice)) return false;
+  const due = new Date(invoice.dueAt);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const soon = new Date(today);
+  soon.setDate(soon.getDate() + 7);
+  return due >= today && due <= soon;
+}
+
+export default async function MoneyPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const { invoices, payments } = await getMoneyData();
+  const q = firstValue(params.q)?.trim() ?? "";
+  const normalizedQuery = q.toLowerCase();
+  const status = firstValue(params.status)?.trim() ?? "ALL";
+  const bucket = firstValue(params.bucket)?.trim() ?? "ALL";
+  const hasFilters = Boolean(q) || status !== "ALL" || bucket !== "ALL";
+
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesQuery =
+      q.length === 0 ||
+      [
+        invoice.invoiceNumber,
+        fullName(invoice.claim.contact),
+        propertyAddress(invoice.claim.property),
+        invoice.claim.claimNumber ?? "",
+        invoice.claim.carrier?.name ?? "",
+      ].some((value) => value.toLowerCase().includes(normalizedQuery));
+
+    const matchesStatus = status === "ALL" || invoice.status === status;
+
+    const matchesBucket =
+      bucket === "ALL" ||
+      (bucket === "OVERDUE" && isInvoiceOverdue(invoice)) ||
+      (bucket === "DUE_SOON" && isDueSoonInvoice(invoice)) ||
+      (bucket === "PAID" && isPaidInvoice(invoice)) ||
+      (bucket === "UNPAID" && isOpenInvoice(invoice) && invoiceAmountDue(invoice) > 0);
+
+    return matchesQuery && matchesStatus && matchesBucket;
+  });
+
+  const filteredPayments = payments.filter((payment) => {
+    const matchesQuery =
+      q.length === 0 ||
+      [
+        payment.payee,
+        payment.checkNumber ?? "",
+        fullName(payment.claim.contact),
+        propertyAddress(payment.claim.property),
+        payment.claim.claimNumber ?? "",
+        payment.claim.carrier?.name ?? "",
+        payment.invoice?.invoiceNumber ?? "",
+      ].some((value) => value.toLowerCase().includes(normalizedQuery));
+
+    const matchesStatus = status === "ALL" || payment.invoice?.status === status;
+    const matchesBucket = bucket === "ALL" || bucket === "PAID";
+    return matchesQuery && matchesStatus && matchesBucket;
+  });
+
+  const openInvoices = filteredInvoices.filter((invoice) => isOpenInvoice(invoice));
+  const outstandingReceivablesCents = openInvoices.reduce((sum, invoice) => sum + invoiceAmountDue(invoice), 0);
+  const overdueInvoiceCount = filteredInvoices.filter((invoice) => isInvoiceOverdue(invoice)).length;
+  const paidCollectedCents = filteredPayments.reduce((sum, payment) => sum + payment.amountCents, 0);
+  const totalMatchingRecords = filteredInvoices.length + filteredPayments.length;
+  const noMoneyRecords = invoices.length === 0 && payments.length === 0 && !hasFilters;
+  const noFilteredResults = !noMoneyRecords && totalMatchingRecords === 0;
 
   return (
     <>
@@ -16,14 +110,43 @@ export default async function MoneyPage() {
         actions={<ButtonLink href="/api/export/invoices" variant="secondary"><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export invoices</ButtonLink>}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Outstanding receivables" value={formatMoney(outstandingCents)} detail="Sent, partially paid, or overdue" />
-        <StatCard label="Open invoices" value={openInvoices.length} detail="Invoices still needing attention" />
-        <StatCard label="Paid fee invoices" value={formatMoney(paidInvoiceCents)} detail="Fee invoices marked paid" />
-      </div>
+      <Card>
+        <form method="get" action="/money" className="grid gap-3 md:grid-cols-[1fr_220px_220px_auto]">
+          <input name="q" defaultValue={q} className={inputClassName} placeholder="Search client, claim number, property, invoice, payee, check, or carrier" />
+          <select name="status" defaultValue={status} className={selectClassName}>
+            <option value="ALL">All invoice statuses</option>
+            {invoiceStatusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <select name="bucket" defaultValue={bucket} className={selectClassName}>
+            {bucketOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <div className="flex items-center gap-3">
+            <SubmitButton variant="secondary">Filter</SubmitButton>
+            {hasFilters ? <ButtonLink href="/money" variant="secondary">Clear filters</ButtonLink> : null}
+          </div>
+        </form>
+      </Card>
+
+      {noFilteredResults ? (
+        <Card className="grid gap-3">
+          <p className="font-medium text-slate-950">No money records match these filters.</p>
+          {hasFilters ? <div><ButtonLink href="/money" variant="secondary">Clear filters</ButtonLink></div> : null}
+        </Card>
+      ) : null}
+
+      {!noFilteredResults ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          <StatCard label="Outstanding receivables" value={formatMoney(outstandingReceivablesCents)} detail="Open balance from matching invoices" />
+          <StatCard label="Overdue invoices" value={overdueInvoiceCount} detail="Matching invoices that are past due" />
+          <StatCard label="Paid/collected" value={formatMoney(paidCollectedCents)} detail="Matching checks and fee payments" />
+          <StatCard label="Matching records" value={totalMatchingRecords} detail="Invoices plus recent payments" />
+        </div>
+      ) : null}
 
       <Section title="Receivables">
-        {openInvoices.length === 0 ? (
+        {noMoneyRecords ? (
+          <EmptyState title="No open receivables" message="There are no draft, sent, partially paid, or overdue invoices." />
+        ) : noFilteredResults ? null : openInvoices.length === 0 ? (
           <EmptyState title="No open receivables" message="There are no draft, sent, partially paid, or overdue invoices." />
         ) : (
           <div className="grid gap-3">
@@ -52,11 +175,13 @@ export default async function MoneyPage() {
       </Section>
 
       <Section title="Recent checks and fee payments">
-        {payments.length === 0 ? (
+        {noMoneyRecords ? (
+          <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
+        ) : noFilteredResults ? null : filteredPayments.length === 0 ? (
           <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
         ) : (
           <div className="grid gap-3">
-            {payments.map((payment) => (
+            {filteredPayments.map((payment) => (
               <Card key={payment.id}>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>

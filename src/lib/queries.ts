@@ -311,12 +311,12 @@ export async function getMoneyData() {
   const [invoices, payments, openInvoiceTotal, paidInvoiceTotal] = await Promise.all([
     prisma.invoice.findMany({
       where: { firmId: firm.id },
-      include: { claim: { include: { contact: true, property: true } } },
+      include: { claim: { include: { contact: true, property: true, carrier: true } } },
       orderBy: [{ status: "asc" }, { dueAt: "asc" }],
     }),
     prisma.payment.findMany({
       where: { firmId: firm.id },
-      include: { claim: { include: { contact: true } }, invoice: true },
+      include: { claim: { include: { contact: true, property: true, carrier: true } }, invoice: true },
       orderBy: { paidAt: "desc" },
       take: 10,
     }),
