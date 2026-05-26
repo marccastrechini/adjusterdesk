@@ -66,6 +66,7 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   const suffix = uniqueSuffix();
   const taskTitle = `Call client about smoke test ${suffix}`;
   const claimTaskTitle = `Request mitigation invoice ${suffix}`;
+  const communicationSubject = `Carrier call note ${suffix}`;
   const documentTitle = `Mitigation invoice ${suffix}`;
   const invoiceNumber = `AD-SMOKE-${suffix.slice(-8).toUpperCase()}`;
 
@@ -110,6 +111,18 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.getByRole("button", { name: "Add task to claim" }).click();
   await expect(page.getByText("Task saved", { exact: true })).toBeVisible();
   await expect(page.getByText(claimTaskTitle)).toBeVisible();
+
+  await page.goto(`${claimUrl}/communications`);
+  await page.locator('select[name="type"]').nth(1).selectOption("CALL");
+  await page.locator('input[name="subject"]').fill(communicationSubject);
+  await page.locator('textarea[name="body"]').fill("Spoke with carrier desk adjuster and confirmed estimate review timeline.");
+  await page.getByRole("button", { name: "Save claim note" }).click();
+  await expect(page.getByText("Note logged", { exact: true })).toBeVisible();
+  await expect(page.getByText(communicationSubject, { exact: true })).toBeVisible();
+
+  await page.goto(`${claimUrl}/communications?q=${encodeURIComponent(communicationSubject)}&type=CALL`);
+  await expect(page.getByText(communicationSubject, { exact: true })).toBeVisible();
+  await expect(page.getByText("1 total", { exact: true })).toBeVisible();
 
   await page.goto(`${claimUrl}/documents`);
   await page.locator('input[name="title"]').fill(documentTitle);

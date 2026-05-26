@@ -12,12 +12,45 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const communicationTypeFilterOptions = [
+  ["ALL", "All"],
+  ["NOTE", "Note"],
+  ["CALL", "Call"],
+  ["EMAIL", "Email"],
+  ["TEXT", "Text"],
+  ["MEETING", "Meeting"],
+  ["INSPECTION", "Inspection"],
+] as const;
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function ClaimCommunicationsPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const query = await searchParams;
   const { claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/communications`;
+  const q = firstValue(query.q)?.trim() ?? "";
+  const normalizedQuery = q.toLowerCase();
+  const type = firstValue(query.type)?.trim() ?? "ALL";
+  const hasFilters = Boolean(q) || type !== "ALL";
+
+  const filteredActivities = claim.activities.filter((activity) => {
+    const contactName = activity.contact ? fullName(activity.contact) : "";
+    const searchableValues = [activity.subject, activity.body ?? "", activity.user?.name ?? "", contactName];
+    const matchesQuery = q.length === 0 || searchableValues.some((value) => value.toLowerCase().includes(normalizedQuery));
+    const matchesType = type === "ALL" || activity.type === type;
+    return matchesQuery && matchesType;
+  });
+
+  const latestMatchingUpdate = filteredActivities[0]?.occurredAt;
+  const callCount = filteredActivities.filter((activity) => activity.type === "CALL").length;
+  const emailCount = filteredActivities.filter((activity) => activity.type === "EMAIL").length;
+  const textCount = filteredActivities.filter((activity) => activity.type === "TEXT").length;
+  const noCommunicationsYet = claim.activities.length === 0;
+  const noFilteredResults = !noCommunicationsYet && filteredActivities.length === 0;
 
   return (
     <>
@@ -26,28 +59,76 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-        <Section title="Communication log">
-          {claim.activities.length === 0 ? (
+        <div className="grid gap-6">
+          <Card>
+            <form method="get" className="grid gap-3 md:grid-cols-[1.5fr_0.8fr_auto] md:items-end">
+              <Field label="Search communications" hint="Search subject, details, team member, or contact name.">
+                <input name="q" defaultValue={q} className={inputClassName} placeholder="Search communication log..." />
+              </Field>
+              <Field label="Type" hint="Filter by communication type.">
+                <select name="type" defaultValue={type} className={selectClassName}>
+                  {communicationTypeFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <div className="flex items-center gap-3 pb-1">
+                <SubmitButton variant="secondary">Apply filters</SubmitButton>
+                {hasFilters ? <ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink> : null}
+              </div>
+            </form>
+          </Card>
+
+          {noCommunicationsYet ? (
             <EmptyState title="No communications yet" message="Log a note after the next client or carrier touch." />
-          ) : (
-            <div className="grid gap-3">
-              {claim.activities.map((activity) => (
-                <Card key={activity.id}>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-semibold text-slate-950">{activity.subject}</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {formatDateTime(activity.occurredAt)} · {activity.user?.name ?? "Office"}{activity.contact ? ` · ${fullName(activity.contact)}` : ""}
-                      </p>
-                    </div>
-                    <Badge>{labelFromEnum(activity.type)}</Badge>
-                  </div>
-                  {activity.body ? <p className="mt-3 text-sm leading-6 text-slate-700">{activity.body}</p> : null}
-                </Card>
-              ))}
-            </div>
-          )}
-        </Section>
+          ) : null}
+
+          {noFilteredResults ? (
+            <Card className="grid gap-3">
+              <p className="font-medium text-slate-950">No communications match these filters.</p>
+              {hasFilters ? <div><ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink></div> : null}
+            </Card>
+          ) : null}
+
+          {!noCommunicationsYet && !noFilteredResults ? (
+            <>
+              <Card className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Matching communications</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{filteredActivities.length} total</p>
+                  <p className="mt-1 text-sm text-slate-600">Based on your current search and type filters.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Latest matching update</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{latestMatchingUpdate ? formatDateTime(latestMatchingUpdate) : "None"}</p>
+                  <p className="mt-1 text-sm text-slate-600">Most recent matching communication date and time.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Calls / Emails / Texts</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{callCount} / {emailCount} / {textCount}</p>
+                  <p className="mt-1 text-sm text-slate-600">Matching counts for the most common contact types.</p>
+                </div>
+              </Card>
+
+              <Section title="Communication log">
+                <div className="grid gap-3">
+                  {filteredActivities.map((activity) => (
+                    <Card key={activity.id}>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-950">{activity.subject}</p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {formatDateTime(activity.occurredAt)} · {activity.user?.name ?? "Office"}{activity.contact ? ` · ${fullName(activity.contact)}` : ""}
+                          </p>
+                        </div>
+                        <Badge>{labelFromEnum(activity.type)}</Badge>
+                      </div>
+                      {activity.body ? <p className="mt-3 text-sm leading-6 text-slate-700">{activity.body}</p> : null}
+                    </Card>
+                  ))}
+                </div>
+              </Section>
+            </>
+          ) : null}
+        </div>
 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Log communication</h2>
