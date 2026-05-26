@@ -93,3 +93,7 @@ Claim columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `s
 AdjusterDesk does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. It is an office workspace and tracking system.
 
 Production authentication, billing, carrier integrations, QuickBooks sync, email/SMS sending, and advanced permissions are intentionally outside this local MVP pass.
+
+## Pilot Deployment Readiness
+
+Before inviting real pilot users, review the practical checklist in `docs/pilot-deployment-checklist.md`.

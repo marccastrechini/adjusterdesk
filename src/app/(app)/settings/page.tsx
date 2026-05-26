@@ -120,6 +120,19 @@ export default async function SettingsPage() {
             </ul>
           </Card>
         </div>
+
+        <Card className="grid gap-3 border-sky-200 bg-sky-50">
+          <h3 className="text-base font-semibold text-slate-950">Before real deployment</h3>
+          <p className="text-sm leading-6 text-slate-700">Top checklist items for pilot deployment readiness:</p>
+          <ul className="grid gap-2 text-sm leading-6 text-slate-700">
+            <li className="flex items-start gap-2"><Badge tone="blue">1</Badge><span>Real auth and session isolation</span></li>
+            <li className="flex items-start gap-2"><Badge tone="blue">2</Badge><span>Production database and backup/restore plan</span></li>
+            <li className="flex items-start gap-2"><Badge tone="blue">3</Badge><span>External file storage instead of local disk uploads</span></li>
+            <li className="flex items-start gap-2"><Badge tone="blue">4</Badge><span>Environment variables and secrets configured for deployment</span></li>
+            <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
+          </ul>
+          <p className="text-xs leading-5 text-slate-600">See docs/pilot-deployment-checklist.md for the full practical deployment checklist.</p>
+        </Card>
       </Section>
 
       <Section title="Office setup">
