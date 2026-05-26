@@ -5,6 +5,7 @@ import { activityTypeOptions, taskPriorityOptions } from "@/lib/options";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getLead } from "@/lib/queries";
+import { taskTemplates } from "@/lib/templates";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 
 type PageProps = {
@@ -115,7 +116,13 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
             <ActionForm action={createTaskWithState} className="grid gap-3">
               <input type="hidden" name="leadId" value={lead.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Task" required hint="Write the action as a short instruction."><input name="title" required className={inputClassName} /><FieldError name="title" /></Field>
+              <Field label="Common task" hint="Optional office default for routine lead work.">
+                <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                  <option value="">Custom task</option>
+                  {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+                </select>
+              </Field>
+              <Field label="Custom task" hint="Use this when the common task list does not fit."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
               <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
               <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
                 <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
@@ -124,7 +131,8 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                 </select>
               </Field>
               <Field label="Priority" hint="Use High for work that should not wait.">
-                <select name="priority" defaultValue="NORMAL" className={selectClassName}>
+                <select name="priority" defaultValue="" className={selectClassName}>
+                  <option value="">Use common task priority</option>
                   {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>

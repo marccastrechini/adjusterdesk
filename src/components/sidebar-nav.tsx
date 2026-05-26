@@ -11,10 +11,18 @@ import {
   LayoutDashboard,
   Settings,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+};
+
+const navItems: { label: string; items: NavItem[] }[] = [
   {
     label: "Office",
     items: [
@@ -28,6 +36,7 @@ const navItems = [
   {
     label: "Settings",
     items: [
+      { href: "/settings", label: "Settings", icon: Settings, exact: true },
       { href: "/settings/templates", label: "Templates", icon: CalendarCheck },
       { href: "/settings/users", label: "Users", icon: Users },
       { href: "/settings/import", label: "CSV import", icon: Settings },
@@ -45,7 +54,7 @@ export function SidebarNav() {
           <p className="px-3 text-xs font-semibold uppercase tracking-normal text-slate-400">{group.label}</p>
           {group.items.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href || (item.href !== "/today" && pathname.startsWith(item.href));
+            const active = item.exact ? pathname === item.href : pathname === item.href || (item.href !== "/today" && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}

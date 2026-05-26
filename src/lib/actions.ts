@@ -21,6 +21,7 @@ import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-st
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/storage";
+import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/templates";
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
@@ -386,6 +387,12 @@ export async function createTask(formData: FormData) {
   const claimId = formData.get("claimId")?.toString() || undefined;
   const leadId = formData.get("leadId")?.toString() || undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/today";
+  const taskInput = taskInputFromTemplate({
+    templateKey: formData.get("taskTemplateKey")?.toString(),
+    title: formData.get("title")?.toString(),
+    notes: formData.get("notes")?.toString(),
+    priority: formData.get("priority")?.toString(),
+  });
 
   await prisma.task.create({
     data: {
@@ -393,9 +400,9 @@ export async function createTask(formData: FormData) {
       claimId,
       leadId,
       assignedUserId: formData.get("assignedUserId")?.toString() || undefined,
-      title: requiredText.parse(formData.get("title")?.toString()),
-      notes: formData.get("notes")?.toString() || undefined,
-      priority: (formData.get("priority")?.toString() as TaskPriority) || TaskPriority.NORMAL,
+      title: requiredText.parse(taskInput.title),
+      notes: taskInput.notes,
+      priority: taskInput.priority,
       dueDate: asDate(formData.get("dueDate")?.toString()),
     },
   });
@@ -406,10 +413,17 @@ export async function createTask(formData: FormData) {
 
 export async function createTaskWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
-  requiredField(formData, "title", "Add a short task name.", errors);
+  const taskInput = taskInputFromTemplate({
+    templateKey: formData.get("taskTemplateKey")?.toString(),
+    title: formData.get("title")?.toString(),
+    notes: formData.get("notes")?.toString(),
+    priority: formData.get("priority")?.toString(),
+  });
+
+  if (!taskInput.title) errors.title = "Choose a common task or add a short task name.";
 
   if (hasErrors(errors)) {
-    return formError("Add a task name before saving this follow-up.", errors);
+    return formError("Choose a common task or add a task name before saving this follow-up.", errors);
   }
 
   await createTask(formData);
@@ -456,10 +470,17 @@ export async function createDocument(formData: FormData) {
   const leadId = formData.get("leadId")?.toString() || undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
   const file = formData.get("file");
-  const upload = file instanceof File && file.size > 0 ? await saveUploadedFile(file) : {};
+  const hasUpload = file instanceof File && file.size > 0;
+  const upload = hasUpload ? await saveUploadedFile(file) : {};
   const fallbackTitle = file instanceof File && file.name ? file.name : "Document";
-
-  const requestedFromClient = formData.get("requestedFromClient") === "on";
+  const documentInput = documentInputFromTemplate({
+    templateKey: formData.get("documentTemplateKey")?.toString(),
+    title: formData.get("title")?.toString(),
+    category: formData.get("category")?.toString(),
+    notes: formData.get("notes")?.toString(),
+    requestedFromClient: formData.get("requestedFromClient") === "on",
+    hasFile: hasUpload,
+  });
 
   await prisma.document.create({
     data: {
@@ -467,27 +488,36 @@ export async function createDocument(formData: FormData) {
       claimId,
       leadId,
       uploadedByUserId: user.id,
-      category: (formData.get("category")?.toString() as DocumentCategory) || DocumentCategory.OTHER,
-      title: formData.get("title")?.toString() || fallbackTitle,
-      notes: formData.get("notes")?.toString() || undefined,
-      requestedFromClient,
+      category: documentInput.category,
+      title: documentInput.title || fallbackTitle,
+      notes: documentInput.notes,
+      requestedFromClient: documentInput.requestedFromClient,
       receivedAt: new Date(),
       ...upload,
     },
   });
 
   revalidatePath(returnPath);
-  redirect(withNotice(returnPath, requestedFromClient ? "document-requested" : "document-added"));
+  redirect(withNotice(returnPath, documentInput.requestedFromClient ? "document-requested" : "document-added"));
 }
 
 export async function createDocumentWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
-  const requestedFromClient = formData.get("requestedFromClient") === "on";
-  const hasTitle = Boolean(textValue(formData, "title"));
+  const hasUploadedFile = hasFile(formData, "file");
+  const documentInput = documentInputFromTemplate({
+    templateKey: formData.get("documentTemplateKey")?.toString(),
+    title: formData.get("title")?.toString(),
+    category: formData.get("category")?.toString(),
+    notes: formData.get("notes")?.toString(),
+    requestedFromClient: formData.get("requestedFromClient") === "on",
+    hasFile: hasUploadedFile,
+  });
+  const requestedFromClient = documentInput.requestedFromClient;
+  const hasTitle = Boolean(documentInput.title);
 
   if (requestedFromClient && !hasTitle) {
     errors.title = "Name the document or photo you need from the client.";
-  } else if (!requestedFromClient && !hasTitle && !hasFile(formData, "file")) {
+  } else if (!requestedFromClient && !hasTitle && !hasUploadedFile) {
     errors.title = "Add a document title or choose a file before saving.";
   }
 
@@ -705,6 +735,13 @@ export async function createTemplate(formData: FormData) {
 
   revalidatePath("/settings/templates");
   redirect("/settings/templates");
+}
+
+export async function deleteTemplate(templateId: string) {
+  const { firm } = await getDemoContext();
+  await prisma.template.deleteMany({ where: { id: templateId, firmId: firm.id } });
+
+  revalidatePath("/settings/templates");
 }
 
 export async function createUser(formData: FormData) {

@@ -6,6 +6,7 @@ import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { documentCategoryOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
+import { documentRequestTemplates } from "@/lib/templates";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -59,6 +60,12 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
           <ActionForm action={createDocumentWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
+            <Field label="Common request" hint="Optional client document request for routine claim files.">
+              <select name="documentTemplateKey" defaultValue="" className={selectClassName}>
+                <option value="">Custom document</option>
+                {documentRequestTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+              </select>
+            </Field>
             <Field label="Title" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
             <Field label="Category" hint="Choose the closest type of record.">
               <select name="category" defaultValue="OTHER" className={selectClassName}>
@@ -66,7 +73,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               </select>
             </Field>
             <Field label="File" hint="Optional for a request. Attach the file when it is already available."><input name="file" type="file" className={inputClassName} /></Field>
-            <Field label="Notes" hint="For requests, say exactly what the client needs to send."><textarea name="notes" className={textareaClassName} /></Field>
+            <Field label="Notes" hint="For requests, say exactly what the client needs to send. Common requests add this when blank."><textarea name="notes" className={textareaClassName} /></Field>
             <div className="grid gap-1.5">
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 <input type="checkbox" name="requestedFromClient" className="h-4 w-4 rounded border-slate-300" />

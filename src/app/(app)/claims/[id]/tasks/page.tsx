@@ -6,6 +6,7 @@ import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { taskPriorityOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
+import { taskTemplates } from "@/lib/templates";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -81,7 +82,13 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
           <ActionForm action={createTaskWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Task" required hint="Example: Call carrier for estimate status."><input name="title" required className={inputClassName} /><FieldError name="title" /></Field>
+            <Field label="Common task" hint="Optional office default for routine claim work.">
+              <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                <option value="">Custom task</option>
+                {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+              </select>
+            </Field>
+            <Field label="Custom task" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
             <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
             <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
               <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
@@ -90,11 +97,12 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
               </select>
             </Field>
             <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
-              <select name="priority" defaultValue="NORMAL" className={selectClassName}>
+              <select name="priority" defaultValue="" className={selectClassName}>
+                <option value="">Use common task priority</option>
                 {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </Field>
-            <Field label="Notes" hint="Optional details for the person doing the work."><textarea name="notes" className={textareaClassName} /></Field>
+            <Field label="Notes" hint="Optional details for the person doing the work. Common tasks add a note when this is blank."><textarea name="notes" className={textareaClassName} /></Field>
             <SubmitButton>Add task to claim</SubmitButton>
           </ActionForm>
         </Card>
