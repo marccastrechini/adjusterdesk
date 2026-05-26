@@ -23,6 +23,7 @@ import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile } from "@/lib/storage";
 import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/templates";
+import { hasUsableCsvRows, normalizeImportType } from "@/lib/import-utils";
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
@@ -876,12 +877,24 @@ export async function createUser(formData: FormData) {
 
 export async function importCsv(formData: FormData) {
   const { firm, user } = await getDemoContext();
-  const importType = formData.get("importType")?.toString();
+  const importType = normalizeImportType(formData.get("importType")?.toString());
+  if (!importType) redirect("/settings/import?error=import-type");
+
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) throw new Error("Choose a CSV file to import.");
+  if (!(file instanceof File) || file.size === 0) redirect(`/settings/import?error=file&type=${importType}`);
 
   const text = await file.text();
-  const records = parse(text, { columns: true, skip_empty_lines: true, trim: true }) as Record<string, string>[];
+  let records: Record<string, string>[] = [];
+  try {
+    records = parse(text, { columns: true, skip_empty_lines: true, trim: true }) as Record<string, string>[];
+  } catch {
+    redirect(`/settings/import?error=csv&type=${importType}`);
+  }
+
+  if (!hasUsableCsvRows(records)) {
+    redirect(`/settings/import?error=rows&type=${importType}`);
+  }
+
   let created = 0;
 
   for (const record of records) {
@@ -955,8 +968,12 @@ export async function importCsv(formData: FormData) {
     created += 1;
   }
 
+  if (created === 0) {
+    redirect(`/settings/import?error=rows&type=${importType}`);
+  }
+
   revalidatePath(importType === "claims" ? "/claims" : "/leads");
-  redirect(`/settings/import?imported=${created}&type=${importType === "claims" ? "claims" : "leads"}`);
+  redirect(`/settings/import?imported=${created}&type=${importType}`);
 }
 
 export async function uploadStatusDocument(token: string, formData: FormData) {

@@ -74,6 +74,11 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
   await expect(page.getByText("Work the office in this order")).toBeVisible();
 
+  await page.goto("/settings/import");
+  await expect(page.getByRole("heading", { name: "CSV Import", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download leads sample CSV" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download claims sample CSV" })).toBeVisible();
+
   const leadData = await createLead(page, suffix);
 
   await page.goto(`/leads?q=${encodeURIComponent(leadData.fullName)}&status=ALL&assignedUserId=ALL&followUp=ALL`);
