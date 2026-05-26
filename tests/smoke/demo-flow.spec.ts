@@ -86,6 +86,16 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Current firm:")).toBeVisible();
   await expect(page.getByText("Current demo user:")).toBeVisible();
 
+  await page.goto("/settings/users");
+  await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
+  await expect(page.getByText("Demo workspace users", { exact: true })).toBeVisible();
+  await expect(page.getByText("Total users", { exact: true })).toBeVisible();
+  await expect(page.getByText("Active users", { exact: true })).toBeVisible();
+  await expect(page.getByText("Inactive users", { exact: true })).toBeVisible();
+  await expect(page.getByText("Owners", { exact: true })).toBeVisible();
+  await expect(page.getByText("Current demo user")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Deactivate" }).first()).toBeVisible();
+
   const leadData = await createLead(page, suffix);
 
   await page.goto(`/leads?q=${encodeURIComponent(leadData.fullName)}&status=ALL&assignedUserId=ALL&followUp=ALL`);

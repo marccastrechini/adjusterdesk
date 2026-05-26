@@ -59,6 +59,14 @@ export const noticeMessages = {
     title: "Client link reactivated",
     message: "The client status link now opens the current claim status page again.",
   },
+  "user-activated": {
+    title: "User updated",
+    message: "The user is now active in this demo workspace.",
+  },
+  "user-deactivated": {
+    title: "User updated",
+    message: "The user is now inactive in this demo workspace.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;

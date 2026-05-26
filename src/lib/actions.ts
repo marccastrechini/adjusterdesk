@@ -872,7 +872,44 @@ export async function createUser(formData: FormData) {
   });
 
   revalidatePath("/settings/users");
+  revalidatePath("/settings");
   redirect("/settings/users");
+}
+
+export async function setUserActive(userId: string, nextActive: boolean) {
+  const { firm, user: currentUser } = await getDemoContext();
+  const targetUser = await prisma.user.findFirst({
+    where: { id: userId, firmId: firm.id },
+    select: { id: true, role: true, active: true },
+  });
+
+  if (!targetUser) {
+    redirect("/settings/users?error=missing");
+  }
+
+  if (!nextActive && targetUser.id === currentUser.id) {
+    redirect("/settings/users?error=current-user");
+  }
+
+  if (!nextActive && targetUser.role === UserRole.OWNER) {
+    const activeOwnerCount = await prisma.user.count({
+      where: { firmId: firm.id, role: UserRole.OWNER, active: true },
+    });
+    if (activeOwnerCount <= 1) {
+      redirect("/settings/users?error=last-owner");
+    }
+  }
+
+  if (targetUser.active !== nextActive) {
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { active: nextActive },
+    });
+  }
+
+  revalidatePath("/settings/users");
+  revalidatePath("/settings");
+  redirect(withNotice("/settings/users", nextActive ? "user-activated" : "user-deactivated"));
 }
 
 export async function importCsv(formData: FormData) {

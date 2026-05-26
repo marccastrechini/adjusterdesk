@@ -448,12 +448,12 @@ export async function getTemplates() {
 }
 
 export async function getUsers() {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const users = await prisma.user.findMany({
     where: { firmId: firm.id },
     orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
   });
-  return { firm, users };
+  return { firm, user, users };
 }
 
 export async function getStatusPage(token: string): Promise<StatusPageLink> {

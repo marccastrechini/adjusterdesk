@@ -1,15 +1,58 @@
-import { createUser } from "@/lib/actions";
+import { createUser, setUserActive } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
+import { getNoticeMessage } from "@/lib/notices";
 import { userRoleOptions } from "@/lib/options";
 import { getUsers } from "@/lib/queries";
-import { Badge, Card, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton } from "@/components/ui";
+import { Badge, Card, Field, Notice, StatCard, inputClassName, PageHeader, Section, selectClassName, SubmitButton } from "@/components/ui";
 
-export default async function UsersPage() {
-  const { users } = await getUsers();
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function UsersPage({ searchParams }: PageProps) {
+  const query = await searchParams;
+  const notice = getNoticeMessage(query);
+  const error = firstValue(query.error);
+  const { users, user: currentUser } = await getUsers();
+  const activeUsers = users.filter((entry) => entry.active);
+  const inactiveUsers = users.filter((entry) => !entry.active);
+  const ownerUsers = users.filter((entry) => entry.role === "OWNER");
+
+  const errorMessage =
+    error === "current-user"
+      ? "You cannot deactivate the current demo user."
+      : error === "last-owner"
+        ? "You cannot deactivate the last active owner in this demo workspace."
+        : error === "missing"
+          ? "That user was not found in this workspace."
+          : undefined;
 
   return (
     <>
       <PageHeader title="Users" description="Demo office users for assigning claims, tasks, documents, and communication notes." />
+      <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+        <p className="font-semibold">Demo workspace users</p>
+        <p className="mt-1 leading-6">These users are for demo workspace assignment only until real sign-in and user auth are added.</p>
+      </Card>
+
+      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
+      {errorMessage ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">User update not completed</p>
+          <p className="mt-1 leading-6">{errorMessage}</p>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total users" value={users.length} />
+        <StatCard label="Active users" value={activeUsers.length} />
+        <StatCard label="Inactive users" value={inactiveUsers.length} />
+        <StatCard label="Owners" value={ownerUsers.length} />
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <Section title="Office users">
@@ -21,9 +64,20 @@ export default async function UsersPage() {
                     <p className="font-semibold text-slate-950">{user.name}</p>
                     <p className="mt-1 text-sm text-slate-600">{user.email} · Added {formatDate(user.createdAt)}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <Badge>{labelFromEnum(user.role)}</Badge>
                     <Badge tone={user.active ? "green" : "slate"}>{user.active ? "Active" : "Inactive"}</Badge>
+                    {user.id === currentUser.id ? (
+                      <Badge tone="teal">Current demo user</Badge>
+                    ) : user.active ? (
+                      <form action={setUserActive.bind(null, user.id, false)}>
+                        <SubmitButton variant="secondary">Deactivate</SubmitButton>
+                      </form>
+                    ) : (
+                      <form action={setUserActive.bind(null, user.id, true)}>
+                        <SubmitButton>Activate</SubmitButton>
+                      </form>
+                    )}
                   </div>
                 </div>
               </Card>
