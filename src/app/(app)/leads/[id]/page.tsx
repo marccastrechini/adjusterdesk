@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { createActivity, createTask, convertLeadToClaim } from "@/lib/actions";
+import { ActionForm, FieldError } from "@/components/action-form";
+import { createActivityWithState, createTaskWithState, convertLeadToClaimWithState } from "@/lib/actions";
 import { activityTypeOptions, taskPriorityOptions } from "@/lib/options";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
@@ -97,24 +98,24 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                 <Link href={`/claims/${lead.convertedClaim.id}`} className="mt-3 inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open claim</Link>
               </div>
             ) : (
-              <form action={convertLeadToClaim.bind(null, lead.id)} className="grid gap-3">
+              <ActionForm action={convertLeadToClaimWithState.bind(null, lead.id)} className="grid gap-3">
                 <p className="text-sm leading-6 text-slate-600">Use this after the client is ready to open a claim. Carrier details can be filled in later if they are not known yet.</p>
                 <Field label="Carrier" hint="Optional. Add the carrier name if the client has it."><input name="carrierName" className={inputClassName} /></Field>
                 <Field label="Policy number" hint="Optional until the policy declarations are collected."><input name="policyNumber" className={inputClassName} /></Field>
                 <Field label="Carrier claim number" hint="Optional until the carrier assigns one."><input name="claimNumber" className={inputClassName} /></Field>
                 <Field label="Next step" hint="One clear action for the new claim, like request policy, schedule inspection, or call carrier."><textarea name="nextStep" className={textareaClassName} /></Field>
                 <SubmitButton>Convert to claim and open overview</SubmitButton>
-              </form>
+              </ActionForm>
             )}
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Add follow-up task</h2>
             <p className="text-sm leading-6 text-slate-600">Add the next call, text, appointment reminder, or document follow-up so it appears on Today when due.</p>
-            <form action={createTask} className="grid gap-3">
+            <ActionForm action={createTaskWithState} className="grid gap-3">
               <input type="hidden" name="leadId" value={lead.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Task" required hint="Write the action as a short instruction."><input name="title" required className={inputClassName} /></Field>
+              <Field label="Task" required hint="Write the action as a short instruction."><input name="title" required className={inputClassName} /><FieldError name="title" /></Field>
               <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
               <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
                 <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
@@ -128,13 +129,13 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                 </select>
               </Field>
               <SubmitButton variant="secondary">Add follow-up task</SubmitButton>
-            </form>
+            </ActionForm>
           </Card>
 
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Log lead activity</h2>
             <p className="text-sm leading-6 text-slate-600">Save calls, texts, emails, and quick office notes so the next person can see what happened.</p>
-            <form action={createActivity} className="grid gap-3">
+            <ActionForm action={createActivityWithState} className="grid gap-3">
               <input type="hidden" name="leadId" value={lead.id} />
               <input type="hidden" name="contactId" value={lead.contactId} />
               <input type="hidden" name="returnPath" value={returnPath} />
@@ -143,10 +144,10 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                   {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </Field>
-              <Field label="Subject" required hint="Example: Left voicemail, photos received, appointment set."><input name="subject" required className={inputClassName} /></Field>
+              <Field label="Subject" required hint="Example: Left voicemail, photos received, appointment set."><input name="subject" required className={inputClassName} /><FieldError name="subject" /></Field>
               <Field label="Notes" hint="Add the details the office will need later."><textarea name="body" className={textareaClassName} /></Field>
               <SubmitButton variant="secondary">Log lead note</SubmitButton>
-            </form>
+            </ActionForm>
           </Card>
         </aside>
       </div>

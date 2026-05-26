@@ -1,6 +1,7 @@
 import { ClaimTabs } from "@/components/claim-tabs";
+import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createActivity } from "@/lib/actions";
+import { createActivityWithState } from "@/lib/actions";
 import { formatDateTime, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { activityTypeOptions } from "@/lib/options";
@@ -51,7 +52,7 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Log communication</h2>
           <p className="text-sm leading-6 text-slate-600">Save the important part of each client, carrier, or office touch so anyone can pick up the claim later.</p>
-          <form action={createActivity} className="grid gap-3">
+          <ActionForm action={createActivityWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="contactId" value={claim.contactId} />
             <input type="hidden" name="returnPath" value={returnPath} />
@@ -61,10 +62,10 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
               </select>
             </Field>
             <Field label="Date and time" hint="Leave blank to use the current time."><input name="occurredAt" type="datetime-local" className={inputClassName} /></Field>
-            <Field label="Subject" required hint="Example: Carrier requested photos, client called about check, inspection completed."><input name="subject" required className={inputClassName} /></Field>
+            <Field label="Subject" required hint="Example: Carrier requested photos, client called about check, inspection completed."><input name="subject" required className={inputClassName} /><FieldError name="subject" /></Field>
             <Field label="Notes" hint="Write the useful details, not a perfect transcript."><textarea name="body" className={textareaClassName} /></Field>
             <SubmitButton>Save claim note</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       </div>
     </>

@@ -1,6 +1,7 @@
 import { ClaimTabs } from "@/components/claim-tabs";
+import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createDocument } from "@/lib/actions";
+import { createDocumentWithState } from "@/lib/actions";
 import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { documentCategoryOptions } from "@/lib/options";
@@ -55,10 +56,10 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add document</h2>
           <p className="text-sm leading-6 text-slate-600">Upload a local file when you have it, or mark it requested from client to track missing photos, policy pages, or invoices.</p>
-          <form action={createDocument} className="grid gap-3">
+          <ActionForm action={createDocumentWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Title" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /></Field>
+            <Field label="Title" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
             <Field label="Category" hint="Choose the closest type of record.">
               <select name="category" defaultValue="OTHER" className={selectClassName}>
                 {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -74,7 +75,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               <p className="text-xs leading-5 text-slate-500">Use this for missing photos, policy pages, receipts, or forms the office is waiting on.</p>
             </div>
             <SubmitButton>Save document or request</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       </div>
     </>

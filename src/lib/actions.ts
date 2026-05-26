@@ -17,6 +17,7 @@ import {
   UserRole,
 } from "@/generated/prisma/client";
 import { getDemoContext } from "@/lib/app-context";
+import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { saveUploadedFile } from "@/lib/storage";
@@ -79,6 +80,40 @@ const claimSchema = z.object({
 
 function formObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
+}
+
+function textValue(formData: FormData, name: string) {
+  return formData.get(name)?.toString().trim() ?? "";
+}
+
+function hasFile(formData: FormData, name: string) {
+  const file = formData.get(name);
+  return file instanceof File && file.size > 0;
+}
+
+function amountValue(formData: FormData, name: string) {
+  const value = textValue(formData, name);
+  if (!value) return undefined;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : Number.NaN;
+}
+
+function requiredField(formData: FormData, name: string, message: string, errors: FieldErrors) {
+  if (!textValue(formData, name)) errors[name] = message;
+}
+
+function positiveAmountField(formData: FormData, name: string, message: string, errors: FieldErrors) {
+  const amount = amountValue(formData, name);
+  if (amount === undefined || !Number.isFinite(amount) || amount <= 0) errors[name] = message;
+}
+
+function nonNegativeAmountField(formData: FormData, name: string, message: string, errors: FieldErrors) {
+  const amount = amountValue(formData, name);
+  if (amount !== undefined && (!Number.isFinite(amount) || amount < 0)) errors[name] = message;
+}
+
+function hasErrors(errors: FieldErrors) {
+  return Object.keys(errors).length > 0;
 }
 
 function asDate(value?: string) {
@@ -169,6 +204,25 @@ export async function createLead(formData: FormData) {
   redirect(withNotice(`/leads/${lead.id}`, "lead-created"));
 }
 
+export async function createLeadWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  requiredField(formData, "firstName", "Add the client's first name.", errors);
+  requiredField(formData, "lastName", "Add the client's last name.", errors);
+  requiredField(formData, "address1", "Add the damaged property address.", errors);
+  requiredField(formData, "city", "Add the property city.", errors);
+  requiredField(formData, "state", "Add the property state.", errors);
+  requiredField(formData, "postalCode", "Add the property ZIP code.", errors);
+  requiredField(formData, "lossType", "Add a short loss type like water damage or roof leak.", errors);
+  requiredField(formData, "source", "Add where this lead came from.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add the client name, property basics, loss type, and lead source before saving this lead.", errors);
+  }
+
+  await createLead(formData);
+  return {};
+}
+
 export async function convertLeadToClaim(leadId: string, formData: FormData) {
   const { firm, user } = await getDemoContext();
   const lead = await prisma.lead.findFirst({ where: { id: leadId, firmId: firm.id }, include: { contact: true, property: true } });
@@ -240,6 +294,11 @@ export async function convertLeadToClaim(leadId: string, formData: FormData) {
   redirect(withNotice(`/claims/${claim.id}`, "lead-converted"));
 }
 
+export async function convertLeadToClaimWithState(leadId: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  await convertLeadToClaim(leadId, formData);
+  return {};
+}
+
 export async function createClaim(formData: FormData) {
   const { firm } = await getDemoContext();
   const input = claimSchema.parse(formObject(formData));
@@ -304,6 +363,24 @@ export async function createClaim(formData: FormData) {
   redirect(withNotice(`/claims/${claim.id}`, "claim-created"));
 }
 
+export async function createClaimWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  requiredField(formData, "firstName", "Add the client's first name.", errors);
+  requiredField(formData, "lastName", "Add the client's last name.", errors);
+  requiredField(formData, "address1", "Add the damaged property address.", errors);
+  requiredField(formData, "city", "Add the property city.", errors);
+  requiredField(formData, "state", "Add the property state.", errors);
+  requiredField(formData, "postalCode", "Add the property ZIP code.", errors);
+  requiredField(formData, "lossType", "Add a short loss type like water damage or roof leak.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add the client name, damaged property address, and loss type before saving this claim.", errors);
+  }
+
+  await createClaim(formData);
+  return {};
+}
+
 export async function createTask(formData: FormData) {
   const { firm } = await getDemoContext();
   const claimId = formData.get("claimId")?.toString() || undefined;
@@ -325,6 +402,18 @@ export async function createTask(formData: FormData) {
 
   revalidatePath(returnPath);
   redirect(withNotice(returnPath, "task-created"));
+}
+
+export async function createTaskWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  requiredField(formData, "title", "Add a short task name.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add a task name before saving this follow-up.", errors);
+  }
+
+  await createTask(formData);
+  return {};
 }
 
 export async function updateTask(taskId: string, returnPath: string, formData: FormData) {
@@ -391,6 +480,25 @@ export async function createDocument(formData: FormData) {
   redirect(withNotice(returnPath, requestedFromClient ? "document-requested" : "document-added"));
 }
 
+export async function createDocumentWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  const requestedFromClient = formData.get("requestedFromClient") === "on";
+  const hasTitle = Boolean(textValue(formData, "title"));
+
+  if (requestedFromClient && !hasTitle) {
+    errors.title = "Name the document or photo you need from the client.";
+  } else if (!requestedFromClient && !hasTitle && !hasFile(formData, "file")) {
+    errors.title = "Add a document title or choose a file before saving.";
+  }
+
+  if (hasErrors(errors)) {
+    return formError("Add enough detail so the office knows what document this is.", errors);
+  }
+
+  await createDocument(formData);
+  return {};
+}
+
 export async function createActivity(formData: FormData) {
   const { firm, user } = await getDemoContext();
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
@@ -411,6 +519,18 @@ export async function createActivity(formData: FormData) {
 
   revalidatePath(returnPath);
   redirect(withNotice(returnPath, "note-added"));
+}
+
+export async function createActivityWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  requiredField(formData, "subject", "Add a short subject for this note.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add a short subject before saving this note.", errors);
+  }
+
+  await createActivity(formData);
+  return {};
 }
 
 export async function createSettlementRound(formData: FormData) {
@@ -443,6 +563,33 @@ export async function createSettlementRound(formData: FormData) {
 
   revalidatePath(returnPath);
   redirect(withNotice(returnPath, "settlement-added"));
+}
+
+export async function createSettlementRoundWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  nonNegativeAmountField(formData, "demandAmount", "Demand amount cannot be negative.", errors);
+  nonNegativeAmountField(formData, "offerAmount", "Offer amount cannot be negative.", errors);
+  nonNegativeAmountField(formData, "acceptedAmount", "Accepted amount cannot be negative.", errors);
+
+  const demandAmount = amountValue(formData, "demandAmount") ?? 0;
+  const offerAmount = amountValue(formData, "offerAmount") ?? 0;
+  const acceptedAmount = amountValue(formData, "acceptedAmount") ?? 0;
+  const status = formData.get("status")?.toString();
+
+  if (!hasErrors(errors) && demandAmount <= 0 && offerAmount <= 0 && acceptedAmount <= 0) {
+    errors.demandAmount = "Add at least one settlement amount.";
+  }
+
+  if (status === "ACCEPTED" && acceptedAmount <= 0) {
+    errors.acceptedAmount = "Add the accepted amount before marking this accepted.";
+  }
+
+  if (hasErrors(errors)) {
+    return formError("Add a valid demand, offer, or accepted amount before saving this settlement round.", errors);
+  }
+
+  await createSettlementRound(formData);
+  return {};
 }
 
 export async function recordPayment(formData: FormData) {
@@ -487,6 +634,19 @@ export async function recordPayment(formData: FormData) {
   redirect(withNotice(returnPath, "payment-recorded"));
 }
 
+export async function recordPaymentWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  positiveAmountField(formData, "amount", "Add a payment amount greater than $0.", errors);
+  requiredField(formData, "payee", "Add who the check or payment was made out to.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add the payment amount and payee before recording this check or payment.", errors);
+  }
+
+  await recordPayment(formData);
+  return {};
+}
+
 export async function createInvoice(formData: FormData) {
   const { firm } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
@@ -515,6 +675,20 @@ export async function createInvoice(formData: FormData) {
   revalidatePath(returnPath);
   revalidatePath("/money");
   redirect(withNotice(returnPath, "invoice-created"));
+}
+
+export async function createInvoiceWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const errors: FieldErrors = {};
+  requiredField(formData, "invoiceNumber", "Add the office invoice number.", errors);
+  positiveAmountField(formData, "settlementAmount", "Add a settlement amount greater than $0.", errors);
+  positiveAmountField(formData, "feePercent", "Add a fee percent greater than 0.", errors);
+
+  if (hasErrors(errors)) {
+    return formError("Add an invoice number, settlement amount, and fee percent before creating this invoice.", errors);
+  }
+
+  await createInvoice(formData);
+  return {};
 }
 
 export async function createTemplate(formData: FormData) {

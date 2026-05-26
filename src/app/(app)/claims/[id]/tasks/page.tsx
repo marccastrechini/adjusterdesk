@@ -1,6 +1,7 @@
 import { ClaimTabs } from "@/components/claim-tabs";
+import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createTask, toggleTask, updateTask } from "@/lib/actions";
+import { createTaskWithState, toggleTask, updateTask } from "@/lib/actions";
 import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { taskPriorityOptions } from "@/lib/options";
@@ -77,10 +78,10 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add task</h2>
           <p className="text-sm leading-6 text-slate-600">Add the next call, carrier follow-up, document request, inspection reminder, or deadline.</p>
-          <form action={createTask} className="grid gap-3">
+          <ActionForm action={createTaskWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Task" required hint="Example: Call carrier for estimate status."><input name="title" required className={inputClassName} /></Field>
+            <Field label="Task" required hint="Example: Call carrier for estimate status."><input name="title" required className={inputClassName} /><FieldError name="title" /></Field>
             <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
             <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
               <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
@@ -95,7 +96,7 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
             </Field>
             <Field label="Notes" hint="Optional details for the person doing the work."><textarea name="notes" className={textareaClassName} /></Field>
             <SubmitButton>Add task to claim</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       </div>
     </>
