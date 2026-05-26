@@ -25,6 +25,8 @@ import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/template
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
+const clientSummaryMaxLength = 600;
+const clientNextStepMaxLength = 280;
 
 const leadSchema = z.object({
   firstName: requiredText,
@@ -380,6 +382,55 @@ export async function createClaimWithState(_state: ActionFormState, formData: Fo
 
   await createClaim(formData);
   return {};
+}
+
+export async function updateClaimClientStatusWithState(claimId: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const { firm } = await getDemoContext();
+  const errors: FieldErrors = {};
+  const publicSummary = textValue(formData, "publicSummary");
+  const nextStep = textValue(formData, "nextStep");
+  const status = formData.get("status")?.toString() as ClaimStatus | undefined;
+  const returnPath = `/claims/${claimId}/client-status`;
+
+  if (publicSummary.length > clientSummaryMaxLength) {
+    errors.publicSummary = `Keep the client-facing summary under ${clientSummaryMaxLength} characters.`;
+  }
+
+  if (nextStep.length > clientNextStepMaxLength) {
+    errors.nextStep = `Keep the next step under ${clientNextStepMaxLength} characters.`;
+  }
+
+  if (status && !Object.values(ClaimStatus).includes(status)) {
+    errors.status = "Choose a valid claim status.";
+  }
+
+  if (hasErrors(errors)) {
+    return formError("Shorten the client-facing status update before saving.", errors);
+  }
+
+  const claim = await prisma.claim.findFirst({
+    where: { id: claimId, firmId: firm.id },
+    include: { statusLinks: { select: { token: true } } },
+  });
+  if (!claim) throw new Error("Claim not found.");
+
+  await prisma.claim.update({
+    where: { id: claim.id },
+    data: {
+      publicSummary: publicSummary || null,
+      nextStep: nextStep || null,
+      status: status || claim.status,
+    },
+  });
+
+  revalidatePath(returnPath);
+  revalidatePath(`/claims/${claim.id}`);
+  revalidatePath("/claims");
+  for (const statusLink of claim.statusLinks) {
+    revalidatePath(`/status/${statusLink.token}`);
+  }
+
+  redirect(withNotice(returnPath, "client-status-updated"));
 }
 
 export async function createTask(formData: FormData) {

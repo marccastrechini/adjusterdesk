@@ -43,6 +43,10 @@ export const noticeMessages = {
     title: "Invoice saved",
     message: "The fee invoice is now tracked here and on the office money page.",
   },
+  "client-status-updated": {
+    title: "Client status updated",
+    message: "The client-facing summary and next step are now reflected in the preview.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;
