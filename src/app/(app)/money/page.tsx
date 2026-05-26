@@ -52,6 +52,9 @@ export default async function MoneyPage({ searchParams }: PageProps) {
   const status = firstValue(params.status)?.trim() ?? "ALL";
   const bucket = firstValue(params.bucket)?.trim() ?? "ALL";
   const hasFilters = Boolean(q) || status !== "ALL" || bucket !== "ALL";
+  const moneyExportParams = new URLSearchParams({ status, bucket });
+  if (q.length > 0) moneyExportParams.set("q", q);
+  const moneyExportHref = `/api/export/invoices?${moneyExportParams.toString()}`;
 
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesQuery =
@@ -107,7 +110,6 @@ export default async function MoneyPage({ searchParams }: PageProps) {
       <PageHeader
         title="Money"
         description="Track settlement checks, fee invoices, and receivables across the office."
-        actions={<ButtonLink href="/api/export/invoices" variant="secondary"><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export invoices</ButtonLink>}
       />
 
       <Card>
@@ -122,6 +124,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
           </select>
           <div className="flex items-center gap-3">
             <SubmitButton variant="secondary">Filter</SubmitButton>
+            <ButtonLink href={moneyExportHref} variant="secondary"><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export CSV</ButtonLink>
             {hasFilters ? <ButtonLink href="/money" variant="secondary">Clear filters</ButtonLink> : null}
           </div>
         </form>

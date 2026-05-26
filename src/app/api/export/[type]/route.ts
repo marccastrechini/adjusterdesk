@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getDemoContext } from "@/lib/app-context";
 import { toCsv } from "@/lib/csv";
-import { formatDate, formatMoney, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, isInvoiceOverdue, labelFromEnum, propertyAddress } from "@/lib/format";
+import { getClaims, getLeads, getMoneyData } from "@/lib/queries";
 
 type RouteContext = { params: Promise<{ type: string }> };
 
@@ -17,90 +16,154 @@ function csvResponse(fileName: string, csv: string) {
   });
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+function firstValue(value: string | null) {
+  return value ?? undefined;
+}
+
+function dayStamp(date: Date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized.getTime();
+}
+
+function isOpenInvoice(invoice: { status: string }) {
+  return !["PAID", "WRITTEN_OFF"].includes(invoice.status);
+}
+
+function isPaidInvoice(invoice: { status: string; feeAmountCents: number; amountPaidCents: number }) {
+  return invoice.status === "PAID" || invoice.status === "WRITTEN_OFF" || invoiceAmountDue(invoice) === 0;
+}
+
+function isDueSoonInvoice(invoice: {
+  status: string;
+  dueAt?: Date | string | null;
+  feeAmountCents: number;
+  amountPaidCents: number;
+}) {
+  if (!invoice.dueAt || !isOpenInvoice(invoice) || isInvoiceOverdue(invoice)) return false;
+  const due = new Date(invoice.dueAt);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const soon = new Date(today);
+  soon.setDate(soon.getDate() + 7);
+  return due >= today && due <= soon;
+}
+
+export async function GET(request: Request, context: RouteContext) {
   const { type } = await context.params;
-  const { firm } = await getDemoContext();
+  const requestUrl = new URL(request.url);
+  const q = firstValue(requestUrl.searchParams.get("q"))?.trim();
+  const status = firstValue(requestUrl.searchParams.get("status"))?.trim() ?? "ALL";
+  const assignedUserId = firstValue(requestUrl.searchParams.get("assignedUserId"))?.trim() ?? "ALL";
+  const carrierId = firstValue(requestUrl.searchParams.get("carrierId"))?.trim() ?? "ALL";
+  const followUp = firstValue(requestUrl.searchParams.get("followUp"))?.trim() ?? "ALL";
+  const bucket = firstValue(requestUrl.searchParams.get("bucket"))?.trim() ?? "ALL";
 
   if (type === "leads") {
-    const leads = await prisma.lead.findMany({
-      where: { firmId: firm.id },
-      include: { contact: true, property: true, assignedUser: true },
-      orderBy: { createdAt: "desc" },
+    const { leads } = await getLeads({
+      q,
+      status,
+    });
+    const todayStamp = dayStamp(new Date());
+    const filteredLeads = leads.filter((lead) => {
+      const matchesAssignedUser = assignedUserId === "ALL" || lead.assignedUserId === assignedUserId;
+      const followUpStamp = lead.followUpDate ? dayStamp(lead.followUpDate) : null;
+      const matchesFollowUp =
+        followUp === "ALL" ||
+        (followUp === "NO_DATE" && followUpStamp === null) ||
+        (followUp === "OVERDUE" && followUpStamp !== null && followUpStamp < todayStamp) ||
+        (followUp === "TODAY" && followUpStamp !== null && followUpStamp === todayStamp) ||
+        (followUp === "UPCOMING" && followUpStamp !== null && followUpStamp > todayStamp);
+
+      return matchesAssignedUser && matchesFollowUp;
     });
 
     return csvResponse(
       "adjusterdesk-leads.csv",
       toCsv(
-        ["Client", "Email", "Phone", "Property", "Source", "Referral Source", "Loss Type", "Date of Loss", "Status", "Follow-up", "Assigned Adjuster", "Notes"],
-        leads.map((lead) => [
+        ["Client", "Property", "Source", "Referral source", "Loss type", "Status", "Assigned user", "Follow-up date"],
+        filteredLeads.map((lead) => [
           fullName(lead.contact),
-          lead.contact.email,
-          lead.contact.phone,
           propertyAddress(lead.property),
           lead.source,
           lead.referralSource,
           lead.lossType,
-          formatDate(lead.dateOfLoss),
           labelFromEnum(lead.status),
-          formatDate(lead.followUpDate),
           lead.assignedUser?.name,
-          lead.notes,
+          formatDate(lead.followUpDate),
         ]),
       ),
     );
   }
 
   if (type === "claims") {
-    const claims = await prisma.claim.findMany({
-      where: { firmId: firm.id },
-      include: { contact: true, property: true, carrier: true, policy: true, assignedUser: true },
-      orderBy: { updatedAt: "desc" },
+    const { claims } = await getClaims({
+      q,
+      status,
+    });
+    const filteredClaims = claims.filter((claim) => {
+      const matchesAssignedUser = assignedUserId === "ALL" || claim.assignedUserId === assignedUserId;
+      const matchesCarrier = carrierId === "ALL" || claim.carrierId === carrierId;
+      return matchesAssignedUser && matchesCarrier;
     });
 
     return csvResponse(
       "adjusterdesk-claims.csv",
       toCsv(
-        ["Client", "Email", "Phone", "Property", "Carrier", "Policy", "Claim Number", "Loss Type", "Date of Loss", "Status", "Deadline", "Assigned Adjuster", "Next Step"],
-        claims.map((claim) => [
+        ["Client", "Property", "Claim number", "Carrier", "Loss type", "Status", "Assigned user", "Updated at"],
+        filteredClaims.map((claim) => [
           fullName(claim.contact),
-          claim.contact.email,
-          claim.contact.phone,
           propertyAddress(claim.property),
-          claim.carrier?.name,
-          claim.policy?.policyNumber,
           claim.claimNumber,
+          claim.carrier?.name,
           claim.lossType,
-          formatDate(claim.dateOfLoss),
           labelFromEnum(claim.status),
-          formatDate(claim.deadlineDate),
           claim.assignedUser?.name,
-          claim.nextStep,
+          formatDate(claim.updatedAt),
         ]),
       ),
     );
   }
 
   if (type === "invoices") {
-    const invoices = await prisma.invoice.findMany({
-      where: { firmId: firm.id },
-      include: { claim: { include: { contact: true, property: true } } },
-      orderBy: { createdAt: "desc" },
+    const { invoices } = await getMoneyData();
+    const normalizedQuery = q?.toLowerCase() ?? "";
+    const filteredInvoices = invoices.filter((invoice) => {
+      const matchesQuery =
+        !q ||
+        [
+          invoice.invoiceNumber,
+          fullName(invoice.claim.contact),
+          propertyAddress(invoice.claim.property),
+          invoice.claim.claimNumber ?? "",
+          invoice.claim.carrier?.name ?? "",
+        ].some((value) => value.toLowerCase().includes(normalizedQuery));
+
+      const matchesStatus = status === "ALL" || invoice.status === status;
+
+      const matchesBucket =
+        bucket === "ALL" ||
+        (bucket === "OVERDUE" && isInvoiceOverdue(invoice)) ||
+        (bucket === "DUE_SOON" && isDueSoonInvoice(invoice)) ||
+        (bucket === "PAID" && isPaidInvoice(invoice)) ||
+        (bucket === "UNPAID" && isOpenInvoice(invoice) && invoiceAmountDue(invoice) > 0);
+
+      return matchesQuery && matchesStatus && matchesBucket;
     });
 
     return csvResponse(
       "adjusterdesk-invoices.csv",
       toCsv(
-        ["Invoice", "Client", "Property", "Status", "Settlement Amount", "Fee Amount", "Amount Paid", "Open Amount", "Issued", "Due"],
-        invoices.map((invoice) => [
+        ["Invoice number", "Client", "Claim number", "Status", "Settlement amount", "Fee amount", "Amount paid", "Balance due", "Due date"],
+        filteredInvoices.map((invoice) => [
           invoice.invoiceNumber,
           fullName(invoice.claim.contact),
-          propertyAddress(invoice.claim.property),
+          invoice.claim.claimNumber,
           labelFromEnum(invoice.status),
           formatMoney(invoice.settlementAmountCents),
           formatMoney(invoice.feeAmountCents),
           formatMoney(invoice.amountPaidCents),
-          formatMoney(invoice.feeAmountCents - invoice.amountPaidCents),
-          formatDate(invoice.issuedAt),
+          formatMoney(invoiceAmountDue(invoice)),
           formatDate(invoice.dueAt),
         ]),
       ),

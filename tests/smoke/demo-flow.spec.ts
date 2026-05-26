@@ -107,6 +107,7 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.goto(`/claims?q=${encodeURIComponent(convertedClaimNumber)}&status=ALL&assignedUserId=ALL&carrierId=ALL`);
   await expect(page.getByText("1 total", { exact: true })).toBeVisible();
   await expect(page.getByText(`Claim #${convertedClaimNumber}`)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Export CSV" })).toBeVisible();
 
   await page.goto(`${claimUrl}/client-status`);
   await expect(page.getByText("No client status link yet", { exact: true })).toBeVisible();

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/format.test.ts src/lib/templates.test.ts src/lib/status-links.test.ts",
+    "test": "tsx --test src/lib/format.test.ts src/lib/templates.test.ts src/lib/status-links.test.ts src/lib/csv.test.ts",
     "test:smoke": "playwright install chromium && playwright test",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",

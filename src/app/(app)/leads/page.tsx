@@ -29,6 +29,13 @@ export default async function LeadsPage({ searchParams }: PageProps) {
   const assignedUserId = (Array.isArray(params.assignedUserId) ? params.assignedUserId[0] : params.assignedUserId) ?? "ALL";
   const followUp = (Array.isArray(params.followUp) ? params.followUp[0] : params.followUp) ?? "ALL";
   const hasFilters = Boolean(search) || status !== "ALL" || assignedUserId !== "ALL" || followUp !== "ALL";
+  const leadsExportParams = new URLSearchParams({
+    status,
+    assignedUserId,
+    followUp,
+  });
+  if (search?.trim()) leadsExportParams.set("q", search.trim());
+  const leadsExportHref = `/api/export/leads?${leadsExportParams.toString()}`;
   const todayStamp = dayStamp(new Date());
 
   const filteredLeads = leads.filter((lead) => {
@@ -57,9 +64,6 @@ export default async function LeadsPage({ searchParams }: PageProps) {
         description="Track new calls, referrals, follow-up dates, and intake notes before a claim is opened."
         actions={
           <>
-            <ButtonLink href="/api/export/leads" variant="secondary">
-              <Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export CSV
-            </ButtonLink>
             <ButtonLink href="/leads/new">
               <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> New lead
             </ButtonLink>
@@ -90,7 +94,12 @@ export default async function LeadsPage({ searchParams }: PageProps) {
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
-          <SubmitButton variant="secondary">Filter</SubmitButton>
+          <div className="flex items-center gap-3">
+            <SubmitButton variant="secondary">Filter</SubmitButton>
+            <ButtonLink href={leadsExportHref} variant="secondary">
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export CSV
+            </ButtonLink>
+          </div>
         </form>
         {hasFilters ? (
           <div className="mt-3">

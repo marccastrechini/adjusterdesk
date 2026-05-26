@@ -15,6 +15,13 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
   const assignedUserId = (Array.isArray(params.assignedUserId) ? params.assignedUserId[0] : params.assignedUserId) ?? "ALL";
   const carrierId = (Array.isArray(params.carrierId) ? params.carrierId[0] : params.carrierId) ?? "ALL";
   const hasFilters = Boolean(search) || status !== "ALL" || assignedUserId !== "ALL" || carrierId !== "ALL";
+  const claimsExportParams = new URLSearchParams({
+    status,
+    assignedUserId,
+    carrierId,
+  });
+  if (search?.trim()) claimsExportParams.set("q", search.trim());
+  const claimsExportHref = `/api/export/claims?${claimsExportParams.toString()}`;
 
   const carrierOptions = Array.from(
     new Map(
@@ -44,9 +51,6 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
         description="Open, search, and track claim work by client, property, carrier, status, and assigned adjuster."
         actions={
           <>
-            <ButtonLink href="/api/export/claims" variant="secondary">
-              <Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export CSV
-            </ButtonLink>
             <ButtonLink href="/claims/new">
               <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> New claim
             </ButtonLink>
@@ -71,7 +75,12 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
             <option value="">Carrier to confirm</option>
             {carrierOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
-          <SubmitButton variant="secondary">Filter</SubmitButton>
+          <div className="flex items-center gap-3">
+            <SubmitButton variant="secondary">Filter</SubmitButton>
+            <ButtonLink href={claimsExportHref} variant="secondary">
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" /> Export CSV
+            </ButtonLink>
+          </div>
         </form>
         {hasFilters ? (
           <div className="mt-3">
