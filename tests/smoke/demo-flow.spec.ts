@@ -190,6 +190,13 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Payment recorded", { exact: true })).toBeVisible();
   await expect(page.getByText(`Fee payment for ${invoiceNumber}`).first()).toBeVisible();
 
+  await page.goto("/reports");
+  await expect(page.getByRole("heading", { name: "Reports", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Outstanding receivables/ })).toBeVisible();
+  await page.getByRole("link", { name: /Outstanding receivables/ }).click();
+  await expect(page).toHaveURL(/\/money\?bucket=UNPAID/);
+  await expect(page.getByRole("heading", { name: "Money", exact: true })).toBeVisible();
+
   await page.goto("/today");
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
 });

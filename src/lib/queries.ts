@@ -12,6 +12,7 @@ import {
   type Invoice,
   type Lead,
   type Property,
+  SettlementStatus,
   TaskStatus,
   type Task,
   type User,
@@ -347,23 +348,29 @@ export async function getMoneyData() {
 export async function getReportsData() {
   const { firm } = await getDemoContext();
   const { start } = todayRange();
+  const openClaimStatuses: ClaimStatus[] = [ClaimStatus.NEW, ClaimStatus.IN_REVIEW, ClaimStatus.WAITING_ON_CLIENT, ClaimStatus.WAITING_ON_CARRIER, ClaimStatus.ESTIMATE_SENT, ClaimStatus.NEGOTIATING];
 
-  const [claimsByStatus, overdueTasks, upcomingDeadlines, leadsBySource, receivables] = await Promise.all([
+  const [
+    openClaimsByStatus,
+    leadStatusCounts,
+    leadSourceCounts,
+    overdueTasks,
+    upcomingDeadlines,
+    receivables,
+    recentSettlements,
+    acceptedSettlementTotals,
+  ] = await Promise.all([
     prisma.claim.groupBy({
+      by: ["status"],
+      where: { firmId: firm.id, status: { in: openClaimStatuses } },
+      _count: { _all: true },
+      orderBy: { status: "asc" },
+    }),
+    prisma.lead.groupBy({
       by: ["status"],
       where: { firmId: firm.id },
       _count: { _all: true },
       orderBy: { status: "asc" },
-    }),
-    prisma.task.findMany({
-      where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { lt: start } },
-      include: { claim: { include: { contact: true } }, lead: { include: { contact: true } }, assignedUser: true },
-      orderBy: { dueDate: "asc" },
-    }),
-    prisma.claim.findMany({
-      where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] }, deadlineDate: { gte: start, lte: addDays(30) } },
-      include: { contact: true, carrier: true },
-      orderBy: { deadlineDate: "asc" },
     }),
     prisma.lead.groupBy({
       by: ["source"],
@@ -371,14 +378,64 @@ export async function getReportsData() {
       _count: { _all: true },
       orderBy: { source: "asc" },
     }),
+    prisma.task.findMany({
+      where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { lt: start } },
+      include: { claim: { include: { contact: true } }, lead: { include: { contact: true } }, assignedUser: true },
+      orderBy: { dueDate: "asc" },
+      take: 8,
+    }),
+    prisma.claim.findMany({
+      where: { firmId: firm.id, status: { notIn: [ClaimStatus.CLOSED, ClaimStatus.SETTLED] }, deadlineDate: { gte: start, lte: addDays(30) } },
+      include: { contact: true, carrier: true },
+      orderBy: { deadlineDate: "asc" },
+      take: 8,
+    }),
     prisma.invoice.findMany({
       where: { firmId: firm.id, status: { in: [InvoiceStatus.SENT, InvoiceStatus.PARTIALLY_PAID, InvoiceStatus.OVERDUE] } },
       include: { claim: { include: { contact: true } } },
       orderBy: { dueAt: "asc" },
+      take: 8,
+    }),
+    prisma.settlementRound.findMany({
+      where: { firmId: firm.id, status: SettlementStatus.ACCEPTED },
+      include: { claim: { include: { contact: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    }),
+    prisma.settlementRound.aggregate({
+      where: { firmId: firm.id, status: SettlementStatus.ACCEPTED },
+      _sum: { acceptedAmountCents: true },
     }),
   ]);
 
-  return { firm, claimsByStatus, overdueTasks, upcomingDeadlines, leadsBySource, receivables };
+  const openClaimsCount = openClaimsByStatus.reduce((sum, item) => sum + (item._count?._all ?? 0), 0);
+  const overdueTaskCount = await prisma.task.count({ where: { firmId: firm.id, status: TaskStatus.OPEN, dueDate: { lt: start } } });
+  const upcomingDeadlineCount = upcomingDeadlines.length;
+  const leadFollowUpDueCount = await prisma.lead.count({
+    where: {
+      firmId: firm.id,
+      status: { not: LeadStatus.CONVERTED },
+      followUpDate: { lte: start },
+    },
+  });
+  const receivableCents = receivables.reduce((sum, invoice) => sum + invoice.feeAmountCents - invoice.amountPaidCents, 0);
+
+  return {
+    firm,
+    openClaimsByStatus,
+    openClaimsCount,
+    leadStatusCounts,
+    leadSourceCounts,
+    overdueTasks,
+    overdueTaskCount,
+    upcomingDeadlines,
+    upcomingDeadlineCount,
+    leadFollowUpDueCount,
+    receivables,
+    receivableCents,
+    recentSettlements,
+    acceptedSettlementCents: acceptedSettlementTotals._sum.acceptedAmountCents ?? 0,
+  };
 }
 
 export async function getTemplates() {
