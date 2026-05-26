@@ -104,6 +104,7 @@ export async function getTodayData() {
     leadFollowUps,
     leadFollowUpCount,
     upcomingDeadlines,
+    waitingOnClientClaims,
     waitingOnCarrierClaims,
     requestedDocuments,
     requestedDocumentCount,
@@ -151,6 +152,12 @@ export async function getTodayData() {
         take: 8,
       }),
       prisma.claim.findMany({
+        where: { firmId: firm.id, status: ClaimStatus.WAITING_ON_CLIENT },
+        include: { contact: true, carrier: true, assignedUser: true },
+        orderBy: { updatedAt: "desc" },
+        take: 8,
+      }),
+      prisma.claim.findMany({
         where: { firmId: firm.id, status: ClaimStatus.WAITING_ON_CARRIER },
         include: { contact: true, carrier: true, assignedUser: true },
         orderBy: { updatedAt: "desc" },
@@ -188,6 +195,7 @@ export async function getTodayData() {
     leadFollowUps,
     leadFollowUpCount,
     upcomingDeadlines,
+    waitingOnClientClaims,
     waitingOnCarrierClaims,
     requestedDocuments,
     requestedDocumentCount,

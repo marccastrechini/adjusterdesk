@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
+import type { ReactNode } from "react";
 import { toggleTask } from "@/lib/actions";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getTodayData } from "@/lib/queries";
@@ -11,6 +12,18 @@ function taskHref(task: { claim?: { id: string } | null; lead?: { id: string } |
   if (task.claim) return `/claims/${task.claim.id}/tasks`;
   if (task.lead) return `/leads/${task.lead.id}`;
   return "/today";
+}
+
+function taskListHref(anchor: string) {
+  return `/today#${anchor}`;
+}
+
+function SummaryLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="block h-full rounded-lg transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2">
+      {children}
+    </Link>
+  );
 }
 
 function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: string }) {
@@ -43,7 +56,7 @@ function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: s
 
 function LeadFollowUpList({ leads }: { leads: TodayData["leadFollowUps"] }) {
   if (leads.length === 0) {
-    return <EmptyState title="No lead follow-ups due" message="Every open lead has a later follow-up date right now." />;
+    return <EmptyState title="Nothing due right now" message="Every open lead has a later follow-up date right now." />;
   }
 
   return (
@@ -75,7 +88,7 @@ function LeadFollowUpList({ leads }: { leads: TodayData["leadFollowUps"] }) {
 
 function RequestedDocumentList({ documents }: { documents: TodayData["requestedDocuments"] }) {
   if (documents.length === 0) {
-    return <EmptyState title="No missing client documents" message="There are no open claim document requests waiting on clients." />;
+    return <EmptyState title="Nothing missing right now" message="There are no open claim document requests waiting on clients." />;
   }
 
   return (
@@ -109,7 +122,9 @@ function RequestedDocumentList({ documents }: { documents: TodayData["requestedD
 export default async function TodayPage() {
   const data = await getTodayData();
   const openReceivableCents = data.unpaidInvoices.reduce((sum, invoice) => sum + invoiceAmountDue(invoice), 0);
-  const tasksDueNowCount = data.overdueTaskCount + data.dueTodayTaskCount;
+  const waitingOnClientCount = data.waitingOnClientClaims.length;
+  const waitingOnCarrierCount = data.waitingOnCarrierClaims.length;
+  const overdueInvoiceCount = data.unpaidInvoices.filter((invoice) => invoice.status === "OVERDUE").length;
 
   return (
     <>
@@ -131,32 +146,49 @@ export default async function TodayPage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Lead follow-ups" value={data.leadFollowUpCount} detail="Open leads due for a touch" />
-        <StatCard label="Tasks due now" value={tasksDueNowCount} detail="Overdue or due today" />
-        <StatCard label="Active claims" value={data.activeClaimCount} detail="Claims still being worked" />
-        <StatCard label="Requested docs" value={data.requestedDocumentCount} detail="Items still needed from clients" />
-        <StatCard label="Open receivables" value={formatMoney(openReceivableCents)} detail="Sent, partially paid, or overdue invoices" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <SummaryLink href={taskListHref("overdue-tasks")}>
+          <StatCard label="Overdue tasks" value={data.overdueTaskCount} detail="Work that needs attention first" />
+        </SummaryLink>
+        <SummaryLink href={taskListHref("due-today")}>
+          <StatCard label="Due today" value={data.dueTodayTaskCount} detail="Tasks to finish before the day ends" />
+        </SummaryLink>
+        <SummaryLink href="/leads?status=ALL&assignedUserId=ALL&followUp=TODAY">
+          <StatCard label="Lead follow-ups due" value={data.leadFollowUpCount} detail="Open leads due for a touch" />
+        </SummaryLink>
+        <SummaryLink href="/claims?status=WAITING_ON_CLIENT&assignedUserId=ALL&carrierId=ALL">
+          <StatCard label="Waiting on client" value={waitingOnClientCount} detail="Claims blocked on client response" />
+        </SummaryLink>
+        <SummaryLink href="/claims?status=WAITING_ON_CARRIER&assignedUserId=ALL&carrierId=ALL">
+          <StatCard label="Waiting on carrier" value={waitingOnCarrierCount} detail="Claims pending carrier action" />
+        </SummaryLink>
+        <SummaryLink href={openReceivableCents > 0 ? "/money?bucket=UNPAID" : "/money"}>
+          <StatCard label="Unpaid receivables" value={formatMoney(openReceivableCents)} detail={overdueInvoiceCount > 0 ? `${overdueInvoiceCount} overdue invoice${overdueInvoiceCount === 1 ? "" : "s"}` : "Sent, partially paid, or overdue invoices"} />
+        </SummaryLink>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Lead follow-ups" description="Open leads due for a call, text, or intake follow-up in the next few days.">
+        <Section title="Lead follow-ups due" description="Open leads due for a call, text, or intake follow-up in the next few days.">
           <LeadFollowUpList leads={data.leadFollowUps} />
         </Section>
 
         <Section title="Overdue tasks" description="Handle these first so follow-ups do not slip.">
-          <TaskList tasks={data.overdueTasks} empty="Nothing is overdue. The day is starting clean." />
+          <div id="overdue-tasks">
+            <TaskList tasks={data.overdueTasks} empty="Nothing overdue right now." />
+          </div>
         </Section>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Due today" description="Calls, texts, document requests, and office reminders due today.">
-          <TaskList tasks={data.dueTodayTasks} empty="No tasks are due today." />
+          <div id="due-today">
+            <TaskList tasks={data.dueTodayTasks} empty="Nothing is due today." />
+          </div>
         </Section>
 
         <Section title="Upcoming deadlines" description="Claim deadlines coming up in the next 30 days.">
           {data.upcomingDeadlines.length === 0 ? (
-            <EmptyState title="No upcoming deadlines" message="No open claim deadlines are due in the next 30 days." />
+            <EmptyState title="No upcoming deadlines" message="Nothing is due in the next 30 days." />
           ) : (
             <div className="grid gap-3">
               {data.upcomingDeadlines.map((claim) => (
@@ -184,7 +216,7 @@ export default async function TodayPage() {
 
         <Section title="Waiting on carrier" description="Open claims currently waiting on a carrier response.">
           {data.waitingOnCarrierClaims.length === 0 ? (
-            <EmptyState title="No carrier follow-ups" message="No claims are marked as waiting on carrier." />
+            <EmptyState title="Nothing waiting on carrier" message="No claims are marked as waiting on carrier right now." />
           ) : (
             <div className="grid gap-3">
               {data.waitingOnCarrierClaims.map((claim) => (
@@ -208,7 +240,7 @@ export default async function TodayPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Unpaid invoices" description="Receivables that still need collection.">
           {data.unpaidInvoices.length === 0 ? (
-            <EmptyState title="No unpaid receivables" message="Every sent invoice is paid or written off." />
+            <EmptyState title="Nothing unpaid" message="Every sent invoice is paid or written off." />
           ) : (
             <div className="grid gap-3">
               {data.unpaidInvoices.map((invoice) => (
