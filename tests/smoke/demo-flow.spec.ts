@@ -97,6 +97,11 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("What to work next")).toBeVisible();
   const claimUrl = page.url().split("?")[0];
 
+  await page.goto(`${claimUrl}/client-status`);
+  await expect(page.getByText("No client status link yet", { exact: true })).toBeVisible();
+  await expect(page.getByText("Create a link when the office is ready to share this simple claim update with the client.")).toBeVisible();
+  await expect(page.getByText("Send a document to the office")).toHaveCount(0);
+
   await page.getByRole("link", { name: "Tasks", exact: true }).click();
   await expect(page).toHaveURL(/\/tasks$/);
   await page.locator('input[name="title"]').first().fill(claimTaskTitle);

@@ -49,7 +49,7 @@ export default async function StatusPage({ params, searchParams }: PageProps) {
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-5xl gap-4">
         {uploaded === "1" ? <Notice title="Document sent">Your file was sent to the office.</Notice> : null}
-        <ClientStatusView firm={statusLink.firm} claim={statusLink.claim} statusLink={statusLink} statusToken={statusLink.token} className="w-full" />
+        <ClientStatusView firm={statusLink.firm} claim={statusLink.claim} statusLink={statusLink} statusToken={statusLink.token} allowClientUpload className="w-full" />
       </div>
     </main>
   );
