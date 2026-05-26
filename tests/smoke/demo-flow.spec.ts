@@ -121,6 +121,10 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("1 requested", { exact: true })).toBeVisible();
   await expect(page.getByText("Waiting on client", { exact: true })).toBeVisible();
 
+  await page.goto(`${claimUrl}/documents?q=${encodeURIComponent(documentTitle)}&status=REQUESTED`);
+  await expect(page.getByText(documentTitle, { exact: true })).toBeVisible();
+  await expect(page.getByText("1 requested", { exact: true })).toBeVisible();
+
   await page.goto(`${claimUrl}/money`);
   await page.locator('input[name="demandAmount"]').fill("28500");
   await page.locator('input[name="offerAmount"]').fill("21000");

@@ -13,14 +13,46 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const statusFilterOptions = [
+  ["ALL", "All"],
+  ["REQUESTED", "Requested from client"],
+  ["RECEIVED", "Received / uploaded"],
+] as const;
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function ClaimDocumentsPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const query = await searchParams;
   const { claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/documents`;
-  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
-  const receivedDocuments = claim.documents.filter((document) => !document.requestedFromClient);
+  const q = firstValue(query.q)?.trim() ?? "";
+  const normalizedQuery = q.toLowerCase();
+  const category = firstValue(query.category)?.trim() ?? "ALL";
+  const status = firstValue(query.status)?.trim() ?? "ALL";
+  const hasFilters = Boolean(q) || category !== "ALL" || status !== "ALL";
+
+  const filteredDocuments = claim.documents.filter((document) => {
+    const categoryLabel = labelFromEnum(document.category);
+    const searchableValues = [document.title, document.fileName ?? "", document.notes ?? "", categoryLabel];
+    const matchesQuery =
+      q.length === 0 ||
+      searchableValues.some((value) => value.toLowerCase().includes(normalizedQuery));
+
+    const matchesCategory = category === "ALL" || document.category === category;
+    const matchesStatus =
+      status === "ALL" || (status === "REQUESTED" ? document.requestedFromClient : !document.requestedFromClient);
+
+    return matchesQuery && matchesCategory && matchesStatus;
+  });
+
+  const requestedDocuments = filteredDocuments.filter((document) => document.requestedFromClient);
+  const receivedDocuments = filteredDocuments.filter((document) => !document.requestedFromClient);
+  const noDocumentsYet = claim.documents.length === 0;
+  const noFilteredResults = !noDocumentsYet && filteredDocuments.length === 0;
 
   return (
     <>
@@ -30,6 +62,42 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="grid gap-6">
+          <Card>
+            <form method="get" className="grid gap-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_auto] md:items-end">
+              <Field label="Search documents" hint="Search title, file name, notes, or category.">
+                <input name="q" defaultValue={q} className={inputClassName} placeholder="Search documents..." />
+              </Field>
+              <Field label="Category" hint="Filter by document category.">
+                <select name="category" defaultValue={category} className={selectClassName}>
+                  <option value="ALL">All categories</option>
+                  {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <Field label="Status" hint="Show requested or received documents.">
+                <select name="status" defaultValue={status} className={selectClassName}>
+                  {statusFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <div className="flex items-center gap-3 pb-1">
+                <SubmitButton variant="secondary">Apply filters</SubmitButton>
+                {hasFilters ? <ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink> : null}
+              </div>
+            </form>
+          </Card>
+
+          {noDocumentsYet ? (
+            <EmptyState title="No documents yet" message="Upload a file or add a document record for this claim." />
+          ) : null}
+
+          {noFilteredResults ? (
+            <Card className="grid gap-3">
+              <p className="font-medium text-slate-950">No documents match these filters.</p>
+              {hasFilters ? <div><ButtonLink href={returnPath} variant="secondary">Clear filters</ButtonLink></div> : null}
+            </Card>
+          ) : null}
+
+          {!noDocumentsYet && !noFilteredResults ? (
+            <>
           <Card className="grid gap-4 md:grid-cols-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Requested from client</p>
@@ -43,7 +111,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Total documents</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">{claim.documents.length} total documents</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{filteredDocuments.length} total documents</p>
               <p className="mt-1 text-sm text-slate-600">Includes requests, uploads, and office records.</p>
             </div>
           </Card>
@@ -104,6 +172,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               </div>
             )}
           </Section>
+            </>
+          ) : null}
         </div>
 
         <Card className="grid gap-4 content-start">
