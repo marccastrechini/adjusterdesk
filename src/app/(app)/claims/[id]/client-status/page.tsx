@@ -1,12 +1,14 @@
 import { ClaimTabs } from "@/components/claim-tabs";
 import { ClientStatusView } from "@/components/client-status-view";
+import { CopyLinkField } from "@/components/copy-link-field";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { updateClaimClientStatusWithState } from "@/lib/actions";
+import { createClientStatusLink, pauseClientStatusLink, reactivateClientStatusLink, updateClaimClientStatusWithState } from "@/lib/actions";
 import { formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { claimStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
+import { clientStatusPath } from "@/lib/status-links";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -41,17 +43,32 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
             </div>
             {statusLink ? (
               <div className="mt-3 grid gap-3">
-                <p className="text-sm leading-6 text-slate-600">This is the current local client status link for the claim.</p>
-                <p className="break-all rounded-md bg-slate-50 p-3 text-sm text-slate-700">/status/{statusLink.token}</p>
+                <p className="text-sm leading-6 text-slate-600">Send this link to the client when you want them to see a simple claim status page.</p>
+                <CopyLinkField path={clientStatusPath(statusLink.token)} />
                 {statusLink.isActive ? (
                   <div className="flex flex-wrap gap-2">
-                    <ButtonLink href={`/status/${statusLink.token}`} variant="secondary">Open client view</ButtonLink>
+                    <ButtonLink href={clientStatusPath(statusLink.token)} variant="secondary">Open client view</ButtonLink>
+                    <form action={pauseClientStatusLink.bind(null, claim.id, statusLink.id)}>
+                      <SubmitButton variant="secondary">Pause client link</SubmitButton>
+                    </form>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <ButtonLink href={clientStatusPath(statusLink.token)} variant="secondary">Open paused page</ButtonLink>
+                    <form action={reactivateClientStatusLink.bind(null, claim.id, statusLink.id)}>
+                      <SubmitButton>Reactivate client link</SubmitButton>
+                    </form>
+                  </div>
+                )}
                 <p className="text-xs leading-5 text-slate-500">Use the client view to confirm status, next step, requested documents, and office contact details.</p>
               </div>
             ) : (
-              <EmptyState title="Share link coming soon" message="This claim can still use the preview below. Creating and managing client links can be added later." />
+              <div className="mt-3 grid gap-3">
+                <EmptyState title="No client status link yet" message="Create a link when the office is ready to share this simple claim update with the client." />
+                <form action={createClientStatusLink.bind(null, claim.id)}>
+                  <SubmitButton>Create client status link</SubmitButton>
+                </form>
+              </div>
             )}
           </Card>
 
@@ -78,6 +95,50 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
               <SubmitButton>Save client status</SubmitButton>
             </ActionForm>
           </Card>
+
+          <Section title="Client status links" description="Manage every client status link for this claim. New links stay in history so you can pause and reactivate them later.">
+            <div className="grid gap-3">
+              <form action={createClientStatusLink.bind(null, claim.id)} className="flex flex-wrap items-center gap-2">
+                <SubmitButton>Create new client status link</SubmitButton>
+              </form>
+
+              {claim.statusLinks.length === 0 ? (
+                <EmptyState title="No status links yet" message="Create the first client status link when you are ready to share the claim update." />
+              ) : (
+                <div className="grid gap-3">
+                  {claim.statusLinks.map((link) => (
+                    <Card key={link.id} className="grid gap-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-medium text-slate-950">{clientStatusPath(link.token)}</p>
+                            <Badge tone={link.isActive ? "green" : "slate"}>{link.isActive ? "Active" : "Paused"}</Badge>
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">Created {formatDateTime(link.createdAt)}</p>
+                          {link.lastViewedAt ? <p className="mt-1 text-xs leading-5 text-slate-500">Last viewed {formatDateTime(link.lastViewedAt)}</p> : null}
+                        </div>
+                      </div>
+
+                      <CopyLinkField path={clientStatusPath(link.token)} />
+
+                      <div className="flex flex-wrap gap-2">
+                        {link.isActive ? <ButtonLink href={clientStatusPath(link.token)} variant="secondary">Open client view</ButtonLink> : null}
+                        {link.isActive ? (
+                          <form action={pauseClientStatusLink.bind(null, claim.id, link.id)}>
+                            <SubmitButton variant="secondary">Pause link</SubmitButton>
+                          </form>
+                        ) : (
+                          <form action={reactivateClientStatusLink.bind(null, claim.id, link.id)}>
+                            <SubmitButton>Reactivate link</SubmitButton>
+                          </form>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Section>
 
           <Card>
             <h2 className="text-base font-semibold text-slate-950">Client-facing summary</h2>

@@ -25,7 +25,7 @@ export function ClientStatusView({
   statusLink,
   className,
 }: {
-  firm: Firm;
+  firm: Pick<Firm, "name" | "phone" | "email">;
   claim: StatusClaim;
   statusLink?: Pick<ClientStatusLink, "lastViewedAt"> | null;
   className?: string;

@@ -1,15 +1,18 @@
 import { notFound } from "next/navigation";
 import {
-  ClaimStatus,
-  InvoiceStatus,
-  LeadStatus,
-  TaskStatus,
+  type Activity,
   type Carrier,
+  ClaimStatus,
   type Claim,
   type Contact,
+  type Document as ClaimDocument,
+  type Firm,
+  InvoiceStatus,
+  LeadStatus,
   type Invoice,
   type Lead,
   type Property,
+  TaskStatus,
   type Task,
   type User,
 } from "@/generated/prisma/client";
@@ -34,6 +37,39 @@ type ClaimListItem = Claim & {
   invoices: Invoice[];
   tasks: Task[];
 };
+
+type StatusLinkFirm = Pick<Firm, "name" | "phone" | "email">;
+
+type StatusLinkClaim = Claim & {
+  contact: Contact;
+  property: Property;
+  carrier: Carrier | null;
+  assignedUser: User | null;
+  tasks: Task[];
+  documents: ClaimDocument[];
+  activities: (Activity & { user: User | null })[];
+};
+
+type StatusPageBase = {
+  id: string;
+  token: string;
+  isActive: boolean;
+  lastViewedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  firm: StatusLinkFirm;
+};
+
+type InactiveStatusPage = StatusPageBase & {
+  isActive: false;
+};
+
+type ActiveStatusPage = StatusPageBase & {
+  isActive: true;
+  claim: StatusLinkClaim;
+};
+
+export type StatusPageLink = InactiveStatusPage | ActiveStatusPage;
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -347,8 +383,25 @@ export async function getUsers() {
   return { firm, users };
 }
 
-export async function getStatusPage(token: string) {
+export async function getStatusPage(token: string): Promise<StatusPageLink> {
   const statusLink = await prisma.clientStatusLink.findUnique({
+    where: { token },
+    select: {
+      id: true,
+      token: true,
+      isActive: true,
+      lastViewedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      firm: { select: { name: true, phone: true, email: true } },
+    },
+  });
+
+  if (!statusLink) notFound();
+
+  if (!statusLink.isActive) return statusLink as InactiveStatusPage;
+
+  const activeStatusLink = await prisma.clientStatusLink.findUnique({
     where: { token },
     include: {
       firm: true,
@@ -366,9 +419,18 @@ export async function getStatusPage(token: string) {
     },
   });
 
-  if (!statusLink || !statusLink.isActive) notFound();
+  if (!activeStatusLink) notFound();
 
-  await prisma.clientStatusLink.update({ where: { id: statusLink.id }, data: { lastViewedAt: new Date() } });
+  const now = new Date();
+  await prisma.clientStatusLink.update({ where: { id: activeStatusLink.id }, data: { lastViewedAt: now } });
 
-  return statusLink;
+  return {
+    ...activeStatusLink,
+    firm: {
+      name: activeStatusLink.firm.name,
+      phone: activeStatusLink.firm.phone,
+      email: activeStatusLink.firm.email,
+    },
+    lastViewedAt: now,
+  };
 }

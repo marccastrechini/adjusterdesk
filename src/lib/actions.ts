@@ -20,6 +20,7 @@ import { getDemoContext } from "@/lib/app-context";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
+import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile } from "@/lib/storage";
 import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/templates";
 
@@ -431,6 +432,68 @@ export async function updateClaimClientStatusWithState(claimId: string, _state: 
   }
 
   redirect(withNotice(returnPath, "client-status-updated"));
+}
+
+async function generateUniqueClientStatusToken() {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const token = generateClientStatusToken();
+    const existing = await prisma.clientStatusLink.findUnique({ where: { token }, select: { id: true } });
+    if (!existing) return token;
+  }
+
+  throw new Error("Could not create a unique client status link. Try again.");
+}
+
+export async function createClientStatusLink(claimId: string) {
+  const { firm } = await getDemoContext();
+  const returnPath = `/claims/${claimId}/client-status`;
+  const claim = await prisma.claim.findFirst({
+    where: { id: claimId, firmId: firm.id },
+    select: { id: true },
+  });
+  if (!claim) throw new Error("Claim not found.");
+
+  const token = await generateUniqueClientStatusToken();
+  const statusLink = await prisma.clientStatusLink.create({
+    data: {
+      firmId: firm.id,
+      claimId: claim.id,
+      token,
+      isActive: true,
+    },
+  });
+
+  revalidatePath(returnPath);
+  revalidatePath(`/status/${statusLink.token}`);
+  redirect(withNotice(returnPath, "client-link-created"));
+}
+
+async function updateClientStatusLinkActive(claimId: string, linkId: string, isActive: boolean) {
+  const { firm } = await getDemoContext();
+  const returnPath = `/claims/${claimId}/client-status`;
+  const statusLink = await prisma.clientStatusLink.findFirst({
+    where: { id: linkId, claimId, firmId: firm.id },
+  });
+  if (!statusLink) throw new Error("Client status link not found.");
+
+  await prisma.clientStatusLink.update({ where: { id: statusLink.id }, data: { isActive } });
+
+  revalidatePath(returnPath);
+  revalidatePath(`/claims/${claimId}`);
+  revalidatePath(`/status/${statusLink.token}`);
+  redirect(withNotice(returnPath, isActive ? "client-link-reactivated" : "client-link-paused"));
+}
+
+export async function pauseClientStatusLink(claimId: string, linkId: string) {
+  await updateClientStatusLinkActive(claimId, linkId, false);
+}
+
+export async function reactivateClientStatusLink(claimId: string, linkId: string) {
+  await updateClientStatusLinkActive(claimId, linkId, true);
+}
+
+export async function setClientStatusLinkActive(claimId: string, linkId: string, isActive: boolean) {
+  await updateClientStatusLinkActive(claimId, linkId, isActive);
 }
 
 export async function createTask(formData: FormData) {

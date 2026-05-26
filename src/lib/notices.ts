@@ -47,6 +47,18 @@ export const noticeMessages = {
     title: "Client status updated",
     message: "The client-facing summary and next step are now reflected in the preview.",
   },
+  "client-link-created": {
+    title: "Client link created",
+    message: "The client status link is ready to copy or open for review.",
+  },
+  "client-link-paused": {
+    title: "Client link paused",
+    message: "Clients who open this link will see that the status page is unavailable right now.",
+  },
+  "client-link-reactivated": {
+    title: "Client link reactivated",
+    message: "The client status link now opens the current claim status page again.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;
