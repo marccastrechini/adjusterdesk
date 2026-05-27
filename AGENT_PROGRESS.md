@@ -54,6 +54,11 @@
 - Added system workspace detail with workspace info, owner user, user list, lead/claim totals, and global user admin actions.
 - Added system admin web actions for creating a workspace with owner user, updating owner/user email, generated temporary password reset (shown once), and deactivate/reactivate user.
 - Added `docs/SYSTEM_ADMIN.md` and linked it from `README.md` and `docs/WORKSPACE_ADMIN.md`.
+- Audited workspace isolation across auth/session context, workspace routes, server queries/actions, document download API, and system-admin gating before pilot hardening.
+- Hardened server actions to reject cross-workspace foreign IDs submitted via tampered forms (claim, lead, contact, assigned user, and invoice ownership checks).
+- Hardened claim/lead document, task, activity, settlement, payment, and invoice write paths so records must belong to the current authenticated workspace.
+- Hardened task update assignment path so assigned user IDs are validated inside the current workspace before update.
+- Hardened document download API to require that a downloaded document belongs to a claim in the authenticated workspace before reading local storage.
 
 ## In Progress
 
@@ -99,6 +104,9 @@
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after coding the system admin console slice.
 - Ran `npm run db:push` after schema changes and applied a local SQL update so Dana is marked as system admin in the existing local database.
 - Manual smoke-tested on `npm run dev` port 3002: signed in as Dana, confirmed `/system` access, opened `/system/workspaces`, opened Stark Loss workspace detail, reset Steve Reardon password, signed in as Steve with the one-time temporary password, confirmed Steve is redirected away from `/system` and only sees Stark Loss data, then signed back in as Dana and confirmed Harbor Public Adjusting data remains separate.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the workspace isolation audit slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the workspace isolation hardening slice.
+- Manual smoke-tested on `npm run dev` port 3001: signed in as Dana and confirmed `/system` works; signed in as Steve (`sreardon@starkloss.example`) and confirmed `/system` redirects to `/today`; as Steve, opened Harbor claim URL `/claims/cmpo6mguk000mawdqyiqlccoc` and received app 404; as Steve, opened Harbor document URL `/api/documents/cmpo6mgvc0011awdqy1ppxaqc/download` and received 404 response; confirmed Steve still sees Stark Loss Adjusting data; signed back in as Dana and confirmed Harbor Public Adjusting data still loads.
 
 ## Known Notes
 
@@ -106,4 +114,4 @@
 
 ## Next Recommended Slice
 
-- Add a small signed-in password rotation screen (current password + new password) so users can rotate temporary passwords immediately without CLI access.
+- Add a small integration-style security test harness for critical server actions (task/document/activity/money writes) to automatically assert cross-workspace ID rejection during CI.

@@ -168,9 +168,62 @@ async function findOrCreateCarrier(firmId: string, name?: string) {
   return prisma.carrier.create({ data: { firmId, name } });
 }
 
+async function requireOwnedClaimId(firmId: string, claimId: string) {
+  const claim = await prisma.claim.findFirst({
+    where: { id: claimId, firmId },
+    select: { id: true },
+  });
+
+  if (!claim) {
+    throw new Error("Claim not found.");
+  }
+
+  return claim.id;
+}
+
+async function requireOwnedLeadId(firmId: string, leadId: string) {
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, firmId },
+    select: { id: true },
+  });
+
+  if (!lead) {
+    throw new Error("Lead not found.");
+  }
+
+  return lead.id;
+}
+
+async function requireOwnedContactId(firmId: string, contactId: string) {
+  const contact = await prisma.contact.findFirst({
+    where: { id: contactId, firmId },
+    select: { id: true },
+  });
+
+  if (!contact) {
+    throw new Error("Contact not found.");
+  }
+
+  return contact.id;
+}
+
+async function requireOwnedUserId(firmId: string, userId: string) {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, firmId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  return user.id;
+}
+
 export async function createLead(formData: FormData) {
   const { firm } = await getDemoContext();
   const input = leadSchema.parse(formObject(formData));
+  const assignedUserId = input.assignedUserId ? await requireOwnedUserId(firm.id, input.assignedUserId) : undefined;
 
   const lead = await prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({
@@ -199,7 +252,7 @@ export async function createLead(formData: FormData) {
         firmId: firm.id,
         contactId: contact.id,
         propertyId: property.id,
-        assignedUserId: input.assignedUserId,
+        assignedUserId,
         source: input.source,
         referralSource: input.referralSource,
         lossType: input.lossType,
@@ -215,7 +268,7 @@ export async function createLead(formData: FormData) {
         data: {
           firmId: firm.id,
           leadId: createdLead.id,
-          assignedUserId: input.assignedUserId,
+          assignedUserId,
           title: `Follow up with ${input.firstName} ${input.lastName}`,
           dueDate: asDate(input.followUpDate),
         },
@@ -347,6 +400,7 @@ export async function convertLeadToClaimWithState(leadId: string, _state: Action
 export async function createClaim(formData: FormData) {
   const { firm } = await getDemoContext();
   const input = claimSchema.parse(formObject(formData));
+  const assignedUserId = input.assignedUserId ? await requireOwnedUserId(firm.id, input.assignedUserId) : undefined;
 
   const claim = await prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({
@@ -390,7 +444,7 @@ export async function createClaim(formData: FormData) {
         propertyId: property.id,
         policyId: policy?.id,
         carrierId: carrier?.id,
-        assignedUserId: input.assignedUserId,
+        assignedUserId,
         claimNumber: input.claimNumber,
         lossType: input.lossType,
         dateOfLoss: asDate(input.dateOfLoss),
@@ -539,8 +593,12 @@ export async function setClientStatusLinkActive(claimId: string, linkId: string,
 
 export async function createTask(formData: FormData) {
   const { firm } = await getDemoContext();
-  const claimId = formData.get("claimId")?.toString() || undefined;
-  const leadId = formData.get("leadId")?.toString() || undefined;
+  const rawClaimId = formData.get("claimId")?.toString() || undefined;
+  const rawLeadId = formData.get("leadId")?.toString() || undefined;
+  const rawAssignedUserId = formData.get("assignedUserId")?.toString() || undefined;
+  const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
+  const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
+  const assignedUserId = rawAssignedUserId ? await requireOwnedUserId(firm.id, rawAssignedUserId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/today";
   const taskInput = taskInputFromTemplate({
     templateKey: formData.get("taskTemplateKey")?.toString(),
@@ -554,7 +612,7 @@ export async function createTask(formData: FormData) {
       firmId: firm.id,
       claimId,
       leadId,
-      assignedUserId: formData.get("assignedUserId")?.toString() || undefined,
+      assignedUserId,
       title: requiredText.parse(taskInput.title),
       notes: taskInput.notes,
       priority: taskInput.priority,
@@ -587,12 +645,20 @@ export async function createTaskWithState(_state: ActionFormState, formData: For
 
 export async function updateTask(taskId: string, returnPath: string, formData: FormData) {
   const { firm } = await getDemoContext();
+  const task = await prisma.task.findFirst({ where: { id: taskId, firmId: firm.id }, select: { id: true } });
+  if (!task) {
+    throw new Error("Task not found.");
+  }
+
+  const rawAssignedUserId = formData.get("assignedUserId")?.toString() || undefined;
+  const assignedUserId = rawAssignedUserId ? await requireOwnedUserId(firm.id, rawAssignedUserId) : undefined;
+
   await prisma.task.updateMany({
-    where: { id: taskId, firmId: firm.id },
+    where: { id: task.id, firmId: firm.id },
     data: {
       title: requiredText.parse(formData.get("title")?.toString()),
       notes: formData.get("notes")?.toString() || undefined,
-      assignedUserId: formData.get("assignedUserId")?.toString() || undefined,
+      assignedUserId,
       priority: (formData.get("priority")?.toString() as TaskPriority) || TaskPriority.NORMAL,
       dueDate: asDate(formData.get("dueDate")?.toString()),
     },
@@ -643,8 +709,10 @@ export async function toggleTask(taskId: string, returnPath: string) {
 
 export async function createDocument(formData: FormData) {
   const { firm, user } = await getDemoContext();
-  const claimId = formData.get("claimId")?.toString() || undefined;
-  const leadId = formData.get("leadId")?.toString() || undefined;
+  const rawClaimId = formData.get("claimId")?.toString() || undefined;
+  const rawLeadId = formData.get("leadId")?.toString() || undefined;
+  const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
+  const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
   const file = formData.get("file");
   const hasUpload = file instanceof File && file.size > 0;
@@ -715,14 +783,20 @@ export async function createDocumentWithState(_state: ActionFormState, formData:
 
 export async function createActivity(formData: FormData) {
   const { firm, user } = await getDemoContext();
+  const rawClaimId = formData.get("claimId")?.toString() || undefined;
+  const rawLeadId = formData.get("leadId")?.toString() || undefined;
+  const rawContactId = formData.get("contactId")?.toString() || undefined;
+  const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
+  const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
+  const contactId = rawContactId ? await requireOwnedContactId(firm.id, rawContactId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
 
   await prisma.activity.create({
     data: {
       firmId: firm.id,
-      claimId: formData.get("claimId")?.toString() || undefined,
-      leadId: formData.get("leadId")?.toString() || undefined,
-      contactId: formData.get("contactId")?.toString() || undefined,
+      claimId,
+      leadId,
+      contactId,
       userId: user.id,
       type: (formData.get("type")?.toString() as ActivityType) || ActivityType.NOTE,
       subject: requiredText.parse(formData.get("subject")?.toString()),
@@ -750,8 +824,9 @@ export async function createActivityWithState(_state: ActionFormState, formData:
 export async function createSettlementRound(formData: FormData) {
   const { firm } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
+  const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const returnPath = formData.get("returnPath")?.toString() || `/claims/${claimId}/money`;
-  const existingCount = await prisma.settlementRound.count({ where: { firmId: firm.id, claimId } });
+  const existingCount = await prisma.settlementRound.count({ where: { firmId: firm.id, claimId: ownedClaimId } });
   const status = (formData.get("status")?.toString() as SettlementStatus) || SettlementStatus.OFFER_RECEIVED;
   const acceptedAmountCents = centsFromInput(formData.get("acceptedAmount"));
 
@@ -759,7 +834,7 @@ export async function createSettlementRound(formData: FormData) {
     await tx.settlementRound.create({
       data: {
         firmId: firm.id,
-        claimId,
+        claimId: ownedClaimId,
         roundNumber: existingCount + 1,
         demandAmountCents: centsFromInput(formData.get("demandAmount")) || undefined,
         offerAmountCents: centsFromInput(formData.get("offerAmount")) || undefined,
@@ -771,7 +846,7 @@ export async function createSettlementRound(formData: FormData) {
     });
 
     if (status === SettlementStatus.ACCEPTED) {
-      await tx.claim.update({ where: { id: claimId }, data: { status: ClaimStatus.SETTLED } });
+      await tx.claim.update({ where: { id: ownedClaimId }, data: { status: ClaimStatus.SETTLED } });
     }
   });
 
@@ -809,16 +884,31 @@ export async function createSettlementRoundWithState(_state: ActionFormState, fo
 export async function recordPayment(formData: FormData) {
   const { firm } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
+  const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const invoiceId = formData.get("invoiceId")?.toString() || undefined;
   const returnPath = formData.get("returnPath")?.toString() || `/claims/${claimId}/money`;
   const amountCents = centsFromInput(formData.get("amount"));
+
+  let scopedInvoiceId: string | undefined;
+  if (invoiceId) {
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: invoiceId, firmId: firm.id, claimId: ownedClaimId },
+      select: { id: true },
+    });
+
+    if (!invoice) {
+      throw new Error("Invoice not found.");
+    }
+
+    scopedInvoiceId = invoice.id;
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.payment.create({
       data: {
         firmId: firm.id,
-        claimId,
-        invoiceId,
+        claimId: ownedClaimId,
+        invoiceId: scopedInvoiceId,
         amountCents,
         paidAt: asDate(formData.get("paidAt")?.toString()) ?? new Date(),
         checkNumber: formData.get("checkNumber")?.toString() || undefined,
@@ -827,8 +917,8 @@ export async function recordPayment(formData: FormData) {
       },
     });
 
-    if (invoiceId) {
-      const invoice = await tx.invoice.findFirst({ where: { id: invoiceId, firmId: firm.id } });
+    if (scopedInvoiceId) {
+      const invoice = await tx.invoice.findFirst({ where: { id: scopedInvoiceId, firmId: firm.id, claimId: ownedClaimId } });
       if (invoice) {
         const amountPaidCents = invoice.amountPaidCents + amountCents;
         await tx.invoice.update({
@@ -864,6 +954,7 @@ export async function recordPaymentWithState(_state: ActionFormState, formData: 
 export async function createInvoice(formData: FormData) {
   const { firm } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
+  const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const returnPath = formData.get("returnPath")?.toString() || `/claims/${claimId}/money`;
   const settlementAmountCents = centsFromInput(formData.get("settlementAmount"));
   const feePercentageBasisPoints = basisPointsFromPercent(formData.get("feePercent"));
@@ -873,7 +964,7 @@ export async function createInvoice(formData: FormData) {
   await prisma.invoice.create({
     data: {
       firmId: firm.id,
-      claimId,
+      claimId: ownedClaimId,
       feeRuleId: feeRule?.id,
       invoiceNumber: requiredText.parse(formData.get("invoiceNumber")?.toString()),
       status: (formData.get("status")?.toString() as InvoiceStatus) || InvoiceStatus.DRAFT,

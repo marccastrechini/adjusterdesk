@@ -34,7 +34,15 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
 
   const document = await prisma.document.findFirst({
-    where: { id, firmId: firm.id },
+    where: {
+      id,
+      firmId: firm.id,
+      claim: {
+        is: {
+          firmId: firm.id,
+        },
+      },
+    },
     select: {
       filePath: true,
       fileName: true,
