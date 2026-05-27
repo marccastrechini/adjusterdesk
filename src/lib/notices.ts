@@ -91,6 +91,14 @@ export const noticeMessages = {
     title: "Password changed",
     message: "Your sign-in password was updated.",
   },
+  "password-reset-requested": {
+    title: "If that account is active, a reset email was sent",
+    message: "Check the inbox for a reset link. For security, this page does not confirm whether an email address exists.",
+  },
+  "password-reset-complete": {
+    title: "Password reset complete",
+    message: "Your password was updated. Sign in with the new password.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;

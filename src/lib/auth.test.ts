@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createSignedSessionValue, hashPassword, verifyPassword, verifySignedSessionValue } from "./auth";
+import {
+  createPasswordResetTokenValue,
+  createSignedSessionValue,
+  hashPassword,
+  hashPasswordResetToken,
+  verifyPassword,
+  verifySignedSessionValue,
+} from "./auth";
 
 describe("password auth helpers", () => {
   it("hashes and verifies a password", () => {
@@ -40,5 +47,24 @@ describe("signed session helpers", () => {
     const expiredNow = now + 1000 * 60 * 60 * 24 * 15;
 
     assert.equal(verifySignedSessionValue(sessionValue, secret, expiredNow), null);
+  });
+});
+
+describe("password reset token helpers", () => {
+  it("creates a random token value", () => {
+    const tokenA = createPasswordResetTokenValue();
+    const tokenB = createPasswordResetTokenValue();
+
+    assert.notEqual(tokenA, tokenB);
+    assert.ok(tokenA.length >= 32);
+  });
+
+  it("hashes token values consistently", () => {
+    const token = "sample-reset-token";
+    const firstHash = hashPasswordResetToken(token);
+    const secondHash = hashPasswordResetToken(token);
+
+    assert.equal(firstHash, secondHash);
+    assert.equal(firstHash.length, 64);
   });
 });

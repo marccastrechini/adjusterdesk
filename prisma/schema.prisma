@@ -138,8 +138,24 @@ model User {
   assignedTasks     Task[]
   uploadedDocuments Document[]
   activities        Activity[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([firmId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([usedAt])
 }
 
 model Contact {

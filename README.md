@@ -12,6 +12,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 - Settlement rounds, payments/checks, fee percentage calculation, invoices, and office-wide receivables.
 - Reports for claim status, overdue tasks, upcoming deadlines, leads by source, and outstanding receivables.
 - Templates and demo user management.
+- Forgot-password and reset-password flow with transactional Resend email.
 - Public client status page by token with requested documents and upload form.
 - CSV export for leads, claims, and invoices.
 - Basic CSV import for leads and claims.

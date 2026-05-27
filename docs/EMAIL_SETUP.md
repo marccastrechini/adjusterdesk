@@ -49,3 +49,24 @@ APP_BASE_URL=https://adjusterdesk.xyz
 - Password reset links should use `APP_BASE_URL`.
 - App-sent system email should use `hello@adjusterdesk.xyz` as From and Reply-To.
 - Operator/admin login should use `admin@adjusterdesk.xyz`.
+
+## Implemented Password Reset Flow
+
+- Request page: `/forgot-password`
+- Reset page: `/reset-password?token=<token>`
+- Reset emails are plain-text and sent through Resend using:
+	- `SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"`
+	- `SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz`
+
+## Test Steps
+
+1. Open `/forgot-password`.
+2. Submit an active user email.
+3. Confirm the page always shows the same generic success notice.
+4. If `RESEND_API_KEY` is missing, confirm the app does not crash and logs a clear setup error.
+5. If `RESEND_API_KEY` is configured, confirm the reset email arrives.
+6. Open the reset link and set a new password.
+7. Confirm old password sign-in fails.
+8. Confirm new password sign-in works.
+9. Confirm `/settings/account` password change still works after reset.
+10. Confirm system admin sign-in still works for `admin@adjusterdesk.xyz`.

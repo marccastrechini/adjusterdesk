@@ -1,9 +1,10 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
 const passwordAlgorithm = "scrypt";
 const developmentAuthSecret = "adjusterdesk-dev-auth-secret";
 
 export const sessionDurationMs = 1000 * 60 * 60 * 24 * 14;
+const defaultPasswordResetTokenMinutes = 30;
 
 export type SessionPayload = {
   userId: string;
@@ -50,6 +51,30 @@ export function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const derivedKey = scryptSync(password, salt, 64).toString("hex");
   return `${passwordAlgorithm}$${salt}$${derivedKey}`;
+}
+
+export function createPasswordResetTokenValue() {
+  return randomBytes(32).toString("base64url");
+}
+
+export function hashPasswordResetToken(token: string) {
+  return createHash("sha256").update(token, "utf8").digest("hex");
+}
+
+export function resolvePasswordResetTokenMinutes() {
+  const configuredValue = process.env.PASSWORD_RESET_TOKEN_MINUTES?.trim();
+  const parsedValue = configuredValue ? Number.parseInt(configuredValue, 10) : defaultPasswordResetTokenMinutes;
+
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return parsedValue;
+  }
+
+  return defaultPasswordResetTokenMinutes;
+}
+
+export function resolveAppBaseUrl() {
+  const configuredUrl = process.env.APP_BASE_URL?.trim();
+  return configuredUrl || "http://localhost:3000";
 }
 
 export function verifyPassword(password: string, passwordHash: string) {
