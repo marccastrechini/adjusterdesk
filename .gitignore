@@ -34,8 +34,14 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.env
+.env.local
+.env.development.local
+.env.production.local
 .env*
 !.env.example
+!.env.development.example
+!.env.production.example
 
 # local data
 /prisma/dev.db

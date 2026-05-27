@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+export { resolveAppBaseUrl } from "./env";
 
 const passwordAlgorithm = "scrypt";
 const developmentAuthSecret = "adjusterdesk-dev-auth-secret";
@@ -82,11 +83,6 @@ export function resolveUserInvitationTokenMinutes() {
   }
 
   return defaultUserInvitationTokenMinutes;
-}
-
-export function resolveAppBaseUrl() {
-  const configuredUrl = process.env.APP_BASE_URL?.trim();
-  return configuredUrl || "http://localhost:3000";
 }
 
 export function verifyPassword(password: string, passwordHash: string) {

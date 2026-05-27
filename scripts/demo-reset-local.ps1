@@ -3,6 +3,9 @@ param(
   [switch]$ConfirmReset,
 
   [Parameter(Mandatory = $false)]
+  [switch]$ConfirmProductionReset,
+
+  [Parameter(Mandatory = $false)]
   [switch]$SkipBackup
 )
 
@@ -14,15 +17,37 @@ if (-not $ConfirmReset) {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Resolve-Path (Join-Path $scriptDir "..")
+$helperPath = Join-Path $scriptDir "local-runtime.ps1"
+. $helperPath
+
+$profile = if ($ConfirmProductionReset) { "production" } else { "development" }
+$config = Get-LocalRuntimeConfig -Profile $profile -RepoRoot $repoRoot.Path
+Set-LocalRuntimeEnvironment -Config $config | Out-Null
+
+if ($config.Profile -eq "production" -and -not $ConfirmProductionReset) {
+  Write-Error "Demo reset aborted. Production data requires -ConfirmProductionReset and a production profile file."
+}
+
+Assert-LocalRuntimeSafety -Config $config
 
 Write-Warning "This reset is destructive and is only safe for demo/training data."
-Write-Warning "Do not run this script against real pilot office data."
+if ($config.Profile -eq "production") {
+  Write-Warning "Production demo reset confirmed. Use only when you explicitly intend to reseed the production demo profile."
+}
+else {
+  Write-Warning "Do not run this script against real pilot office data."
+}
 
 Push-Location $repoRoot.Path
 try {
   if (-not $SkipBackup) {
     Write-Output "Creating a safety backup before reset..."
-    npm run backup:local
+    if ($config.Profile -eq "production") {
+      npm run prod:backup:local
+    }
+    else {
+      npm run backup:local
+    }
     if ($LASTEXITCODE -ne 0) {
       throw "Backup failed. Reset cancelled."
     }

@@ -17,7 +17,7 @@ This area is separate from normal office owner/admin tools in `/settings`.
 1. Back up local data before global admin changes.
 
 ```powershell
-npm run backup:local
+npm run prod:backup:local
 ```
 
 2. Use system admin access only on trusted local office computers.
@@ -70,6 +70,8 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 5. Resend invite if a user did not receive the first onboarding email.
 6. Use reset password only when invite onboarding is blocked or for break-glass support.
 7. Have users rotate passwords from Settings > Account security (`/settings/account`) after first sign-in.
+
+If you are working in the debugger/dev profile instead of the production demo profile, use `npm run backup:local` instead.
 
 ## Manual Smoke Checklist
 

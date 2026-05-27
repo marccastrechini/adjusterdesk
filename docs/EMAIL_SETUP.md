@@ -24,25 +24,32 @@ Important: SPF must not be duplicated. Merge providers into one SPF record as ne
 
 ## Environment Variables
 
-Set these in local `.env` only. Do not commit API keys or generated secrets.
+Set these in local profile files only. Do not commit API keys or generated secrets.
+
+Use `.env.development.local` for debugger/dev work and `.env.production.local` for the public local demo/runtime.
 
 ```dotenv
+APP_ENV=development
 APP_BASE_URL=http://localhost:3000
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
 SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
 SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
 PASSWORD_RESET_TOKEN_MINUTES=30
+USER_INVITATION_TOKEN_MINUTES=4320
 SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
 ```
 
-For future public hosting, change only:
+For the local production profile, change only:
 
 ```dotenv
+APP_ENV=production
 APP_BASE_URL=https://adjusterdesk.xyz
+DATABASE_URL=file:./prisma/production.db
+UPLOADS_DIR=storage/uploads-production
 ```
 
-`RESEND_API_KEY` belongs only in `.env` (or deployment secrets), never in source control.
+`RESEND_API_KEY` belongs only in `.env.development.local`, `.env.production.local`, or deployment secrets, never in source control.
 
 ## App Behavior Targets
 

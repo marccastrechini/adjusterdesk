@@ -1,8 +1,7 @@
 import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { resolveUploadsDir } from "./env";
 
-const uploadRoot = path.join(process.cwd(), "storage", "uploads");
-const uploadPrefix = "storage/uploads/";
 const blockedUploadExtensions = new Set([
   ".app",
   ".appimage",
@@ -30,6 +29,18 @@ const blockedUploadExtensions = new Set([
 
 export const maxUploadSizeBytes = 25 * 1024 * 1024;
 
+function getUploadsDir() {
+  return resolveUploadsDir();
+}
+
+function getUploadRoot() {
+  return path.join(process.cwd(), getUploadsDir());
+}
+
+function getUploadPrefix() {
+  return `${getUploadsDir().replaceAll("\\", "/")}/`;
+}
+
 function extensionFromName(fileName: string) {
   const normalized = fileName.trim().toLowerCase();
   const index = normalized.lastIndexOf(".");
@@ -55,10 +66,11 @@ export function validateUploadFile(file: File) {
 
 export function resolveStoredUploadPath(filePath: string) {
   const normalized = filePath.replaceAll("\\", "/");
+  const uploadPrefix = getUploadPrefix();
   if (!normalized.startsWith(uploadPrefix)) return undefined;
 
   const absolutePath = path.resolve(process.cwd(), normalized);
-  const rootPath = path.resolve(uploadRoot);
+  const rootPath = path.resolve(getUploadRoot());
   const withinRoot = absolutePath === rootPath || absolutePath.startsWith(`${rootPath}${path.sep}`);
   if (!withinRoot) return undefined;
 
@@ -82,6 +94,7 @@ export async function saveUploadedFile(file: File) {
   const fileError = validateUploadFile(file);
   if (fileError) throw new Error(fileError);
 
+  const uploadRoot = getUploadRoot();
   await mkdir(uploadRoot, { recursive: true });
 
   const safeName = cleanFileName(file.name || "upload.bin") || "upload.bin";

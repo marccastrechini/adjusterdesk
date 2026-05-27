@@ -71,6 +71,10 @@
 - Implemented transactional password-reset infrastructure: added Resend email helper, forgot/reset password pages, generic non-enumerating reset request behavior, one-time expiring password reset tokens in Prisma, login notice support for reset completion, and docs updates for email/reset validation.
 - Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent AdjusterDesk branding and plain-language tone.
 - Added secure user invitations with one-time hashed invitation tokens, invite email delivery through the shared system template, an `/accept-invite` password setup page, and resend-invite actions in system and workspace user management.
+- Added local production runtime operations tooling for the main demo machine: `run-local-production.ps1`, `deploy-local-production.ps1`, Task Scheduler management scripts, npm aliases, and a new `docs/LOCAL_PRODUCTION.md` runbook linked from README and local-hosting docs.
+- Split local runtime configuration into guarded development and production profiles with `.env.development.example`, `.env.production.example`, ignored `.env.development.local`/`.env.production.local` files, and profile-aware helpers for `DATABASE_URL`, `APP_BASE_URL`, and uploads storage paths.
+- Added shared PowerShell runtime helpers plus guarded `dev:local`, `dev:debug:local`, `prod:run:local`, and `prod:backup:local` flows so development and production backups/runs cannot silently cross-use the wrong SQLite database or uploads folder.
+- Updated local hosting, local production, email setup, system admin, pilot readiness, and README docs to point at the correct profile files and backup/reset commands.
 
 ## In Progress
 
@@ -139,6 +143,17 @@
 - Manual smoke-tested invite onboarding on `http://localhost:3003`: sent a workspace user invite from `/settings/users`, opened `/accept-invite` with a valid token, set a password, confirmed login success for the invited user, and confirmed reusing the same invite token returns an invalid/expired error.
 - Manual smoke-tested system-admin compatibility on `http://localhost:3003`: signed in as Dana, confirmed `/system/workspaces` renders the new onboarding method and bootstrap password fields, opened a workspace detail page, resent a user invite, and confirmed invite pending badge + invite-resent notice.
 - Re-verified break-glass and reset paths: confirmed system-admin access still works for Dana and confirmed `/forgot-password` still shows generic reset-email success behavior.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before coding the local production runtime slice.
+- Ran `npm run prisma:generate`, `npm run db:push`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local production runtime slice.
+- Manual smoke-tested runtime/deploy flow: stopped ad hoc listeners on ports 3000-3003, ran `npm run prod:deploy:local -- -AllowDirty`, confirmed local runtime works on `127.0.0.1:3000` and `localhost:3000`, and confirmed `/system` loads after sign-in.
+- Verified APP_BASE_URL behavior for reset/invite links by setting `APP_BASE_URL=https://adjusterdesk.xyz` in process env and confirming generated reset/invite URLs use that base.
+- Confirmed external `https://adjusterdesk.xyz` currently resolves to a GoDaddy landing page in this environment (Cloudflare tunnel routing not active in this session).
+- Smoke-tested stop/status scripts: stop script requires explicit `-ConfirmStopPort3000Process` before killing the port-3000 process; status script reports listener state.
+- Task Scheduler install/start smoke test is blocked in this environment by OS permissions (`Access is denied` on task creation), so scheduled-task start validation could not complete in-session.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the dev/prod env split slice.
+- Re-ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the split; all passed, with the existing Turbopack NFT tracing warning still present.
+- Manual smoke-tested the new profile scripts: `npm run backup:local` created a development backup, `npm run prod:backup:local` created a production backup, `git status --short --ignored` showed `.env.development.local` and `.env.production.local` as ignored, and `npm run demo:reset:local -- -ConfirmReset` stayed on the development profile and reseeded safely.
+- Manual smoke-tested the live runtime: `npm run prod:run:local` printed the production env summary for `.env.production.local`; `http://127.0.0.1:3000` and `https://adjusterdesk.xyz/system` both returned the sign-in page in this session; the only blocker was an existing node listener already occupying port 3000, so a second production instance could not bind from this sandbox.
 
 ## Known Notes
 
@@ -146,4 +161,4 @@
 
 ## Next Recommended Slice
 
-- Add one small operator troubleshooting note for invitation delivery/retry and expired invite handling in local pilot operations.
+- If the 3000 listener needs to be reclaimed on the demo machine, stop the existing node process from an elevated PowerShell session and re-run `npm run prod:run:local` there so the guarded production runtime can bind cleanly.

@@ -21,23 +21,21 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 ## Setup
 
 For a Windows local demo/staging host with backup and restore steps, see `docs/LOCAL_HOSTING.md`.
+For a persistent local production runtime on the main demo machine, see `docs/LOCAL_PRODUCTION.md`.
 For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
 For a concise pilot safety/readiness checklist, see `docs/PILOT_READINESS.md`.
 For local pilot workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
 For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
 
-1. Copy the environment file if needed:
-
-```bash
-cp .env.example .env
-```
-
-On Windows PowerShell:
+1. Copy the matching environment template:
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.development.example .env.development.local
+Copy-Item .env.production.example .env.production.local
 ```
+
+Use `.env.development.local` for debugger/dev work and `.env.production.local` for the public local demo runtime. Both are ignored by Git.
 
 2. Install dependencies:
 
@@ -63,7 +61,7 @@ The seeded inactive user (`avery@harboradjusting.example`) cannot sign in.
 4. Start the development server:
 
 ```bash
-npm run dev
+npm run dev:local
 ```
 
 Open `http://localhost:3000`.
@@ -95,8 +93,10 @@ npm run db:studio
 
 ## Local Data
 
-- SQLite database: `prisma/dev.db`
-- Development uploads: `storage/uploads`
+- Development SQLite database: `prisma/dev.db`
+- Development uploads: `storage/uploads-development`
+- Production SQLite database: `prisma/production.db`
+- Production uploads: `storage/uploads-production`
 
 Both are ignored by Git. Keep uploaded documents and local database files out of commits.
 
@@ -118,3 +118,4 @@ Production authentication, billing, carrier integrations, QuickBooks sync, email
 
 Before inviting real pilot users, review the practical checklist in `docs/pilot-deployment-checklist.md`.
 For operator-facing demo and pilot guardrails, also review `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md`.
+For the production run/update/task workflow on the local machine, review `docs/LOCAL_PRODUCTION.md`.

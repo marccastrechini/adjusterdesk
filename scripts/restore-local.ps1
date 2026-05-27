@@ -3,6 +3,10 @@ param(
   [string]$BackupPath,
 
   [Parameter(Mandatory = $false)]
+  [ValidateSet("development", "production")]
+  [string]$Profile = "development",
+
+  [Parameter(Mandatory = $false)]
   [string]$TargetRoot,
 
   [Parameter(Mandatory = $false)]
@@ -20,6 +24,10 @@ if (-not $ConfirmRestore) {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Resolve-Path (Join-Path $scriptDir "..")
+$helperPath = Join-Path $scriptDir "local-runtime.ps1"
+. $helperPath
+$config = Get-LocalRuntimeConfig -Profile $Profile -RepoRoot $repoRoot.Path
+$env:APP_ENV = $config.AppEnv
 $resolvedBackupPath = Resolve-Path $BackupPath -ErrorAction Stop
 
 if (-not $TargetRoot) {
@@ -29,8 +37,9 @@ if (-not $TargetRoot) {
 $resolvedTargetRoot = Resolve-Path $TargetRoot -ErrorAction Stop
 
 $backupPrismaDir = Join-Path $resolvedBackupPath.Path "prisma"
-$backupStorageDir = Join-Path $resolvedBackupPath.Path "storage\uploads"
-$backupEnvPath = Join-Path $resolvedBackupPath.Path ".env"
+$backupStorageDir = Join-Path $resolvedBackupPath.Path $config.UploadsDir
+$backupEnvPath = Join-Path $resolvedBackupPath.Path (Split-Path $config.ProfileEnvPath -Leaf)
+$backupSharedEnvPath = Join-Path $resolvedBackupPath.Path ".env"
 
 if (-not (Test-Path $backupPrismaDir -PathType Container)) {
   Write-Error "Backup is missing prisma folder: $backupPrismaDir"
@@ -38,8 +47,9 @@ if (-not (Test-Path $backupPrismaDir -PathType Container)) {
 
 $targetPrismaDir = Join-Path $resolvedTargetRoot.Path "prisma"
 $targetStorageRoot = Join-Path $resolvedTargetRoot.Path "storage"
-$targetUploadsDir = Join-Path $targetStorageRoot "uploads"
+$targetUploadsDir = Join-Path $targetStorageRoot $config.UploadsDir
 $targetEnvPath = Join-Path $resolvedTargetRoot.Path ".env"
+$targetProfileEnvPath = Join-Path $resolvedTargetRoot.Path (Split-Path $config.ProfileEnvPath -Leaf)
 
 if (-not (Test-Path $targetPrismaDir -PathType Container)) {
   New-Item -ItemType Directory -Path $targetPrismaDir -Force | Out-Null
@@ -51,11 +61,11 @@ if (-not (Test-Path $targetUploadsDir -PathType Container)) {
 
 Write-Output "Restoring database files from $($resolvedBackupPath.Path) to $($resolvedTargetRoot.Path)..."
 
-Get-ChildItem -Path $targetPrismaDir -Filter "dev.db*" -File -ErrorAction SilentlyContinue | ForEach-Object {
+Get-ChildItem -Path $targetPrismaDir -Filter "*$($config.ExpectedDatabaseFragment)*" -File -ErrorAction SilentlyContinue | ForEach-Object {
   Remove-Item $_.FullName -Force
 }
 
-Get-ChildItem -Path $backupPrismaDir -Filter "dev.db*" -File | ForEach-Object {
+Get-ChildItem -Path $backupPrismaDir -Filter "*$($config.ExpectedDatabaseFragment)*" -File | ForEach-Object {
   Copy-Item -Path $_.FullName -Destination (Join-Path $targetPrismaDir $_.Name) -Force
 }
 
@@ -73,11 +83,19 @@ else {
 
 if ($RestoreEnv) {
   if (Test-Path $backupEnvPath -PathType Leaf) {
-    Copy-Item -Path $backupEnvPath -Destination $targetEnvPath -Force
-    Write-Output "Restored .env file."
+    Copy-Item -Path $backupEnvPath -Destination $targetProfileEnvPath -Force
+    Write-Output "Restored profile env file."
   }
   else {
-    Write-Warning "-RestoreEnv was used but backup has no .env file."
+    Write-Warning "-RestoreEnv was used but backup has no profile env file."
+  }
+
+  if (Test-Path $backupSharedEnvPath -PathType Leaf) {
+    Copy-Item -Path $backupSharedEnvPath -Destination $targetEnvPath -Force
+    Write-Output "Restored shared .env file."
+  }
+  else {
+    Write-Warning "-RestoreEnv was used but backup has no shared .env file."
   }
 }
 

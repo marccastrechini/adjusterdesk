@@ -1,5 +1,7 @@
 # Local Hosting
 
+For a persistent local production runtime that survives VS Code/debugger/terminal sessions, see `docs/LOCAL_PRODUCTION.md`.
+
 This guide sets up AdjusterDesk as a local demo or staging server on the main Windows computer in the office. The goal is a stable local host with:
 
 - a persistent SQLite database
@@ -8,6 +10,8 @@ This guide sets up AdjusterDesk as a local demo or staging server on the main Wi
 - a repeatable build and start process
 - simple backup and restore steps
 
+This guide is for the debugger/development profile. For the public local demo/runtime profile, see `docs/LOCAL_PRODUCTION.md`.
+
 For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
 
 ## Local Runtime Layout
@@ -15,13 +19,13 @@ For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP
 - App code: the AdjusterDesk repo folder, for example `C:\Projects\adjusterdesk`
 - SQLite database: `prisma/dev.db`
 - SQLite sidecar files when SQLite is active: `prisma/dev.db-wal`, `prisma/dev.db-shm`, `prisma/dev.db-journal`
-- Uploaded files: `storage/uploads`
-- Environment file: `.env`
+- Uploaded files: `storage/uploads-development`
+- Environment file: `.env.development.local`
 
 The code currently uses:
 
-- `DATABASE_URL` from `.env`, falling back to `file:./prisma/dev.db`
-- uploads saved under `storage/uploads`
+- `DATABASE_URL` from `.env.development.local`, falling back to `file:./prisma/dev.db`
+- uploads saved under `storage/uploads-development`
 - `AUTH_SECRET` for signed sessions
 
 ## Recommended Node Version
@@ -37,27 +41,30 @@ node -v
 ## First-Time Setup
 
 1. Open PowerShell in `C:\Projects\adjusterdesk`.
-2. Copy the example env file.
+2. Copy the development example env file.
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.development.example .env.development.local
 ```
 
-3. Edit `.env` and set a real `AUTH_SECRET`.
+3. Edit `.env.development.local` and set a real `AUTH_SECRET`.
 4. Keep `APP_BASE_URL` as `http://localhost:3000` for local hosting.
-5. If configuring transactional email later, set email env vars in `.env` only (do not commit keys).
+5. If configuring transactional email later, set email env vars in `.env.development.local` only (do not commit keys).
 
 Example `.env` values:
 
 ```dotenv
+APP_ENV=development
 DATABASE_URL="file:./prisma/dev.db"
 AUTH_SECRET="replace-with-a-long-random-secret"
 APP_BASE_URL=http://localhost:3000
+UPLOADS_DIR=storage/uploads-development
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
 SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
 SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
 PASSWORD_RESET_TOKEN_MINUTES=30
+USER_INVITATION_TOKEN_MINUTES=4320
 SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
 NEXT_PUBLIC_APP_NAME="AdjusterDesk"
 ```
@@ -122,18 +129,19 @@ npm run build
 
 ## Start The Local Server
 
-Use the LAN-friendly alias:
+Use the guarded development alias:
 
 ```powershell
-npm run start:local
+npm run dev:local
 ```
 
-This starts the built app on `0.0.0.0:3000`.
+This starts the app on `127.0.0.1:3000` with the development profile loaded from `.env.development.local`.
 
 Typical URLs:
 
 - Local machine: `http://localhost:3000`
-- Same network: `http://<demo-computer-ip>:3000`
+
+If you need LAN access for a debugger session, temporarily override the `-BindHost` parameter.
 
 To find the LAN IP on Windows:
 
@@ -166,19 +174,19 @@ Check the stored value exists:
 [Environment]::GetEnvironmentVariable("AUTH_SECRET", "User")
 ```
 
-Even if you store it at the user level, keep the same value in `.env` on the demo computer so the runtime stays predictable.
+Even if you store it at the user level, keep the same value in `.env.development.local` on the demo computer so the runtime stays predictable.
 
 ## Where Data Lives
 
 Persistent local data lives here:
 
 - Database: `prisma/dev.db`
-- Uploads: `storage/uploads`
-- Local env settings: `.env`
+- Uploads: `storage/uploads-development`
+- Local env settings: `.env.development.local`
 
 If those files and folders stay in place, the local demo host keeps its data between restarts.
 
-If a document record exists in the database but the matching local file is missing from `storage/uploads`, the claim documents page now flags it as missing and asks the office to re-upload it.
+If a document record exists in the database but the matching local file is missing from `storage/uploads-development`, the claim documents page now flags it as missing and asks the office to re-upload it.
 
 ## Backup
 
@@ -187,6 +195,8 @@ Run the included PowerShell backup script from the repo root:
 ```powershell
 npm run backup:local
 ```
+
+For the production local demo profile, use `npm run prod:backup:local`.
 
 Or directly:
 
@@ -198,7 +208,8 @@ The script creates a timestamped folder under `backups/` and copies:
 
 - `prisma/dev.db`
 - any SQLite sidecar files that exist
-- `storage/uploads`
+- `storage/uploads-development`
+- `.env.development.local` if present
 - `.env` if present
 
 The `.env` backup may contain your real local `AUTH_SECRET`, so treat backups like sensitive local office files.
@@ -213,7 +224,7 @@ The `.env` backup may contain your real local `AUTH_SECRET`, so treat backups li
 npm run restore:local -- -BackupPath backups\adjusterdesk-YYYYMMDD-HHMMSS -ConfirmRestore
 ```
 
-Optional: include `.env` from the backup if you intentionally want to restore local environment values on this machine.
+Optional: include profile env files from the backup if you intentionally want to restore local environment values on this machine.
 
 ```powershell
 npm run restore:local -- -BackupPath backups\adjusterdesk-YYYYMMDD-HHMMSS -ConfirmRestore -RestoreEnv
@@ -232,8 +243,8 @@ npm run build
 npm run start:local
 ```
 
-If you are restoring onto a new machine, verify that the restored `.env` still points to `file:./prisma/dev.db`.
-Always review `.env` contents before restoring it, because it can contain local secrets.
+If you are restoring onto a new machine, verify that the restored `.env.development.local` still points to `file:./prisma/dev.db`.
+Always review restored env files before using them, because they can contain local secrets.
 
 ## Local Production Smoke Checklist
 

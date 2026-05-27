@@ -28,4 +28,14 @@ describe("storage helpers", () => {
     assert.equal(resolveStoredUploadPath("storage/../.env"), undefined);
     assert.equal(resolveStoredUploadPath("other/place/file.pdf"), undefined);
   });
+
+  it("resolves paths inside a configured uploads directory", () => {
+    process.env.UPLOADS_DIR = "storage/uploads-production";
+
+    const goodPath = resolveStoredUploadPath("storage/uploads-production/123-proof.pdf");
+    assert.ok(goodPath);
+
+    assert.equal(resolveStoredUploadPath("storage/uploads/123-proof.pdf"), undefined);
+    delete process.env.UPLOADS_DIR;
+  });
 });
