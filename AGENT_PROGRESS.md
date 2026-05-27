@@ -47,6 +47,13 @@
 - Added a local admin password reset script at `scripts/reset-user-password.ts` to reset any user's password by email without manual SQLite edits.
 - Added `npm run admin:reset-password` alias.
 - Updated `docs/WORKSPACE_ADMIN.md` with reset instructions, required/optional inputs, safety notes, and guidance to rotate after first sign-in.
+- Added a local-only global system admin permission via `User.isSystemAdmin` so system access is separate from workspace `OWNER` role.
+- Added hidden system admin routes: `/system`, `/system/workspaces`, and `/system/workspaces/[id]`.
+- Added system dashboard metrics for workspace count, active user count, and basic local install status.
+- Added system workspace listing with owner user/email, user count, lead count, claim count, and created date.
+- Added system workspace detail with workspace info, owner user, user list, lead/claim totals, and global user admin actions.
+- Added system admin web actions for creating a workspace with owner user, updating owner/user email, generated temporary password reset (shown once), and deactivate/reactivate user.
+- Added `docs/SYSTEM_ADMIN.md` and linked it from `README.md` and `docs/WORKSPACE_ADMIN.md`.
 
 ## In Progress
 
@@ -88,6 +95,10 @@
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local password reset slice.
 - Confirmed `admin:reset-password` returns a clear error when the email does not exist.
 - Manual smoke-tested password reset: ran `npm run admin:reset-password -- --email "sreardon@starkloss.example"`, used the generated temporary password to sign in as Steve Reardon, confirmed Stark Loss Adjusting workspace loaded clean, signed out, signed in as demo owner Dana Morris, and confirmed Harbor Public Adjusting data remained separate.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before coding the system admin console slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after coding the system admin console slice.
+- Ran `npm run db:push` after schema changes and applied a local SQL update so Dana is marked as system admin in the existing local database.
+- Manual smoke-tested on `npm run dev` port 3002: signed in as Dana, confirmed `/system` access, opened `/system/workspaces`, opened Stark Loss workspace detail, reset Steve Reardon password, signed in as Steve with the one-time temporary password, confirmed Steve is redirected away from `/system` and only sees Stark Loss data, then signed back in as Dana and confirmed Harbor Public Adjusting data remains separate.
 
 ## Known Notes
 
@@ -95,4 +106,4 @@
 
 ## Next Recommended Slice
 
-- Add a small owner self-service password rotation screen (current password + new password) so pilot offices can rotate temporary provisioned passwords without CLI access.
+- Add a small signed-in password rotation screen (current password + new password) so users can rotate temporary passwords immediately without CLI access.

@@ -71,6 +71,22 @@ export const noticeMessages = {
     title: "User updated",
     message: "The user is now inactive in this demo workspace.",
   },
+  "system-workspace-created": {
+    title: "Workspace created",
+    message: "The new workspace and owner user were created.",
+  },
+  "system-user-email-updated": {
+    title: "User updated",
+    message: "The user email address was updated.",
+  },
+  "system-user-activated": {
+    title: "User updated",
+    message: "The user is now active.",
+  },
+  "system-user-deactivated": {
+    title: "User updated",
+    message: "The user is now inactive.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;

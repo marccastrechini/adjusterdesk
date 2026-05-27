@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { parse } from "csv-parse/sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -16,7 +17,7 @@ import {
   TemplateType,
   UserRole,
 } from "@/generated/prisma/client";
-import { getDemoContext } from "@/lib/app-context";
+import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
 import { hashPassword } from "@/lib/auth";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
@@ -146,6 +147,18 @@ function centsFromInput(value: FormDataEntryValue | null) {
 function basisPointsFromPercent(value: FormDataEntryValue | null) {
   const percent = Number(value ?? 0);
   return Number.isFinite(percent) ? Math.round(percent * 100) : 0;
+}
+
+function generateTemporaryPassword(length = 18) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^*-_";
+  const bytes = randomBytes(length);
+  let generated = "";
+
+  for (let i = 0; i < length; i += 1) {
+    generated += alphabet[bytes[i] % alphabet.length];
+  }
+
+  return generated;
 }
 
 async function findOrCreateCarrier(firmId: string, name?: string) {
@@ -1156,4 +1169,162 @@ export async function uploadStatusDocumentWithState(token: string, _state: Actio
 
   await uploadStatusDocument(token, formData);
   return {};
+}
+
+export async function createSystemWorkspaceWithOwner(formData: FormData) {
+  await requireSystemAdminContext();
+
+  const workspaceName = requiredText.parse(formData.get("workspaceName")?.toString());
+  const ownerName = requiredText.parse(formData.get("ownerName")?.toString());
+  const ownerEmail = z.email().parse(formData.get("ownerEmail")?.toString()).toLowerCase();
+  const ownerPassword = requiredText.parse(formData.get("ownerPassword")?.toString());
+
+  if (ownerPassword.length < 8) {
+    redirect("/system/workspaces?error=workspace-password");
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { email: ownerEmail }, select: { id: true } });
+  if (existingUser) {
+    redirect("/system/workspaces?error=workspace-owner-email");
+  }
+
+  const existingWorkspace = await prisma.firm.findFirst({ where: { name: workspaceName }, select: { id: true } });
+  if (existingWorkspace) {
+    redirect("/system/workspaces?error=workspace-name");
+  }
+
+  const workspace = await prisma.$transaction(async (tx) => {
+    const createdWorkspace = await tx.firm.create({
+      data: {
+        name: workspaceName,
+      },
+    });
+
+    await tx.user.create({
+      data: {
+        firmId: createdWorkspace.id,
+        name: ownerName,
+        email: ownerEmail,
+        passwordHash: hashPassword(ownerPassword),
+        role: UserRole.OWNER,
+        active: true,
+      },
+    });
+
+    return createdWorkspace;
+  });
+
+  revalidatePath("/system");
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspace.id}`);
+  redirect(withNotice(`/system/workspaces/${workspace.id}`, "system-workspace-created"));
+}
+
+export async function updateSystemUserEmail(formData: FormData) {
+  await requireSystemAdminContext();
+
+  const userId = requiredText.parse(formData.get("userId")?.toString());
+  const nextEmail = z.email().parse(formData.get("email")?.toString()).toLowerCase();
+  const workspaceId = requiredText.parse(formData.get("workspaceId")?.toString());
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, firmId: true },
+  });
+
+  if (!user || user.firmId !== workspaceId) {
+    redirect(`/system/workspaces/${workspaceId}?error=user-missing`);
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { email: nextEmail },
+    });
+  } catch {
+    redirect(`/system/workspaces/${workspaceId}?error=user-email-duplicate`);
+  }
+
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+  redirect(withNotice(`/system/workspaces/${workspaceId}`, "system-user-email-updated"));
+}
+
+export async function setSystemUserActive(userId: string, workspaceId: string, nextActive: boolean) {
+  await requireSystemAdminContext();
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, active: true, firmId: true },
+  });
+
+  if (!targetUser || targetUser.firmId !== workspaceId) {
+    redirect(`/system/workspaces/${workspaceId}?error=user-missing`);
+  }
+
+  if (!nextActive && targetUser.role === UserRole.OWNER) {
+    const activeOwnerCount = await prisma.user.count({
+      where: { firmId: workspaceId, role: UserRole.OWNER, active: true },
+    });
+
+    if (activeOwnerCount <= 1) {
+      redirect(`/system/workspaces/${workspaceId}?error=last-owner`);
+    }
+  }
+
+  if (targetUser.active !== nextActive) {
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { active: nextActive },
+    });
+  }
+
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+  redirect(withNotice(`/system/workspaces/${workspaceId}`, nextActive ? "system-user-activated" : "system-user-deactivated"));
+}
+
+export type ResetSystemUserPasswordState = {
+  error?: string;
+  message?: string;
+  temporaryPassword?: string;
+};
+
+export async function resetSystemUserPasswordWithState(
+  _state: ResetSystemUserPasswordState,
+  formData: FormData,
+): Promise<ResetSystemUserPasswordState> {
+  await requireSystemAdminContext();
+
+  const userId = formData.get("userId")?.toString().trim() ?? "";
+  const workspaceId = formData.get("workspaceId")?.toString().trim() ?? "";
+
+  if (!userId || !workspaceId) {
+    return { error: "Select a valid workspace user before resetting a password." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, firmId: true, name: true, email: true },
+  });
+
+  if (!user || user.firmId !== workspaceId) {
+    return { error: "That user is no longer available in this workspace." };
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: hashPassword(temporaryPassword),
+    },
+  });
+
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+
+  return {
+    message: `Password reset for ${user.name} (${user.email}). Share it securely and rotate after first sign-in.`,
+    temporaryPassword,
+  };
 }

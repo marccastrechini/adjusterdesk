@@ -43,3 +43,13 @@ export async function requireAuthenticatedAppContext() {
 export async function getDemoContext() {
   return requireAuthenticatedAppContext();
 }
+
+export async function requireSystemAdminContext() {
+  const sessionUser = await getCurrentSessionUser();
+
+  if (!sessionUser || !sessionUser.isSystemAdmin) {
+    redirect("/today");
+  }
+
+  return sessionUser;
+}

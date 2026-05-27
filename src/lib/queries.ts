@@ -16,8 +16,10 @@ import {
   TaskStatus,
   type Task,
   type User,
+  UserRole,
 } from "@/generated/prisma/client";
-import { getDemoContext } from "@/lib/app-context";
+import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
+import { getEnvStatus } from "@/lib/env";
 import { addDays, todayRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -529,5 +531,77 @@ export async function getStatusPage(token: string): Promise<StatusPageLink> {
       email: activeStatusLink.firm.email,
     },
     lastViewedAt: now,
+  };
+}
+
+export async function getSystemDashboardData() {
+  await requireSystemAdminContext();
+
+  const [workspaceCount, activeUserCount] = await Promise.all([
+    prisma.firm.count(),
+    prisma.user.count({ where: { active: true } }),
+  ]);
+
+  return {
+    workspaceCount,
+    activeUserCount,
+    installStatus: getEnvStatus({ authActive: true }),
+  };
+}
+
+export async function getSystemWorkspaces() {
+  await requireSystemAdminContext();
+
+  return prisma.firm.findMany({
+    include: {
+      users: {
+        where: { role: UserRole.OWNER },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          users: true,
+          leads: true,
+          claims: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getSystemWorkspaceDetail(workspaceId: string) {
+  await requireSystemAdminContext();
+
+  const workspace = await prisma.firm.findUnique({
+    where: { id: workspaceId },
+    include: {
+      users: {
+        orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+
+  if (!workspace) {
+    notFound();
+  }
+
+  const owner = workspace.users.find((user) => user.role === UserRole.OWNER) ?? null;
+  const [leadCount, claimCount] = await Promise.all([
+    prisma.lead.count({ where: { firmId: workspace.id } }),
+    prisma.claim.count({ where: { firmId: workspace.id } }),
+  ]);
+
+  return {
+    workspace,
+    owner,
+    leadCount,
+    claimCount,
   };
 }

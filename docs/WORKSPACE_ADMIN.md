@@ -2,6 +2,8 @@
 
 This guide explains how to create a real pilot workspace and owner user locally, without editing SQLite files by hand.
 
+For local global admin console usage across all workspaces, see `docs/SYSTEM_ADMIN.md`.
+
 Use this for new pilot companies, for example:
 
 - Workspace: Stark Loss

@@ -70,6 +70,7 @@ async function main() {
         email: "dana@harboradjusting.example",
         passwordHash: demoPasswordHash,
         role: UserRole.OWNER,
+        isSystemAdmin: true,
       },
     });
 

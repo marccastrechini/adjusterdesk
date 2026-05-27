@@ -60,6 +60,7 @@ export async function getCurrentSessionUser() {
       name: true,
       email: true,
       role: true,
+      isSystemAdmin: true,
       active: true,
     },
   });
