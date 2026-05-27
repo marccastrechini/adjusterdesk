@@ -75,9 +75,21 @@ Important: `npm run db:seed` resets the local demo data before re-creating it.
 
 Use this only when you want to reset the app back to the seeded Harbor Public Adjusting story.
 
+Safe reset command (requires explicit confirmation and creates a backup by default):
+
 ```powershell
-npm run db:seed
+npm run demo:reset:local -- -ConfirmReset
 ```
+
+This wrapper:
+
+- warns that reset is destructive and only for demo/training data
+- runs `npm run backup:local` before reset unless you pass `-SkipBackup`
+- runs `npm run db:seed` only after confirmation
+
+Direct `npm run db:seed` is still available, but it should be treated as a destructive command.
+
+Important: Do not run demo reset on real pilot office data.
 
 That recreates:
 
@@ -181,24 +193,34 @@ The `.env` backup may contain your real local `AUTH_SECRET`, so treat backups li
 ## Restore From Backup
 
 1. Stop the local AdjusterDesk server.
-2. Pick the backup folder you want to restore from.
-3. Copy the backed-up database files into `prisma/`.
-4. Copy the backed-up `uploads/` contents into `storage/uploads`.
-5. If the backup includes `.env`, restore it only if you want to restore that machine's local settings and `AUTH_SECRET`.
-6. Run:
+2. Pick the backup folder you want to restore from under `backups/`.
+3. Run the guarded restore command with explicit confirmation:
+
+```powershell
+npm run restore:local -- -BackupPath backups\adjusterdesk-YYYYMMDD-HHMMSS -ConfirmRestore
+```
+
+Optional: include `.env` from the backup if you intentionally want to restore local environment values on this machine.
+
+```powershell
+npm run restore:local -- -BackupPath backups\adjusterdesk-YYYYMMDD-HHMMSS -ConfirmRestore -RestoreEnv
+```
+
+4. Rebuild and restart:
 
 ```powershell
 npm run prisma:generate
 npm run build
 ```
 
-7. Start the server again:
+5. Start the server again:
 
 ```powershell
 npm run start:local
 ```
 
 If you are restoring onto a new machine, verify that the restored `.env` still points to `file:./prisma/dev.db`.
+Always review `.env` contents before restoring it, because it can contain local secrets.
 
 ## Local Production Smoke Checklist
 
@@ -222,4 +244,4 @@ For the main demo computer:
 2. Keep the real `AUTH_SECRET` only in `.env` and the Windows user environment.
 3. Run `npm run build` after pulling new code.
 4. Run `npm run backup:local` before resetting demo data or before larger updates.
-5. Use `npm run db:seed` only when you intentionally want to return to the demo story.
+5. Use `npm run demo:reset:local -- -ConfirmReset` only when you intentionally want to return to the demo story.

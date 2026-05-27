@@ -32,6 +32,8 @@
 - Added small safe local-hosting script aliases for starting the built app on the LAN and creating a local backup bundle.
 - Added `docs/LOCAL_HOSTING.md` with Windows local hosting steps for Node, install/build/start, persistent `AUTH_SECRET`, LAN access notes, data locations, backup/restore, and a local production smoke checklist.
 - Added `scripts/backup-local.ps1` and validated it creates timestamped backup folders for local database files, uploads, and optional `.env`.
+- Added guarded local data safety scripts: `scripts/restore-local.ps1` for explicit restore and `scripts/demo-reset-local.ps1` for explicit demo reset with backup-by-default behavior.
+- Added local workflow aliases `restore:local` and `demo:reset:local` and updated local hosting docs to use explicit confirmation for restore/reset operations.
 
 ## In Progress
 
@@ -55,6 +57,11 @@
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the local hosting setup slice.
 - Browser smoke-tested the built app started with `npm run start` using a non-temporary `AUTH_SECRET` from local `.env`, then signed in and checked `/today`, `/leads`, one claim overview, claim `/tasks`, claim `/money`, and `/money`.
 - Ran `npm run backup:local` and confirmed backup output was created under `backups/`.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the local restore workflow slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local restore workflow slice.
+- Ran `npm run demo:reset:local -- -ConfirmReset` and confirmed it warns, creates a safety backup, and reseeds successfully.
+- Validated `npm run restore:local` against a temporary target folder and confirmed database and uploads restore behavior without touching live data.
+- Browser smoke-tested the built app on port 3001 (`npm run start -- --port 3001`), signed in, and verified `/today`, `/leads`, one claim overview, claim `/tasks`, claim `/money`, and `/money`.
 
 ## Known Notes
 

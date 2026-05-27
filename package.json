@@ -17,6 +17,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "backup:local": "powershell -ExecutionPolicy Bypass -File scripts/backup-local.ps1",
+    "restore:local": "powershell -ExecutionPolicy Bypass -File scripts/restore-local.ps1",
+    "demo:reset:local": "powershell -ExecutionPolicy Bypass -File scripts/demo-reset-local.ps1",
     "postinstall": "prisma generate"
   },
   "dependencies": {
