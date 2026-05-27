@@ -44,6 +44,7 @@ yarn-error.log*
 /prisma/dev.db-shm
 /storage/uploads/*
 !/storage/uploads/.gitkeep
+/backups/
 
 # vercel
 .vercel
