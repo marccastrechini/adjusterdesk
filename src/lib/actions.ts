@@ -245,6 +245,8 @@ export async function convertLeadToClaim(leadId: string, formData: FormData) {
   const policyNumber = z.string().trim().optional().parse(formData.get("policyNumber")?.toString() || undefined);
   const claimNumber = z.string().trim().optional().parse(formData.get("claimNumber")?.toString() || undefined);
   const nextStep = z.string().trim().optional().parse(formData.get("nextStep")?.toString() || undefined);
+  const followUpTaskTitle = z.string().trim().optional().parse(formData.get("followUpTaskTitle")?.toString() || undefined);
+  const followUpDueDate = asDate(formData.get("followUpDueDate")?.toString());
 
   const claim = await prisma.$transaction(async (tx) => {
     const existingCarrier = carrierName ? await tx.carrier.findFirst({ where: { firmId: firm.id, name: carrierName } }) : undefined;
@@ -285,6 +287,23 @@ export async function convertLeadToClaim(leadId: string, formData: FormData) {
       data: { status: LeadStatus.CONVERTED, convertedClaimId: createdClaim.id },
     });
 
+    await tx.task.updateMany({
+      where: { leadId: lead.id, status: TaskStatus.OPEN },
+      data: { status: TaskStatus.DONE, completedAt: new Date() },
+    });
+
+    await tx.task.create({
+      data: {
+        firmId: firm.id,
+        claimId: createdClaim.id,
+        assignedUserId: lead.assignedUserId ?? user.id,
+        title: followUpTaskTitle || `First claim follow-up for ${lead.contact.firstName} ${lead.contact.lastName}`,
+        notes: nextStep || "Confirm carrier details, collect the policy, and set the next claim step.",
+        priority: TaskPriority.NORMAL,
+        dueDate: followUpDueDate ?? new Date(),
+      },
+    });
+
     await tx.activity.create({
       data: {
         firmId: firm.id,
@@ -303,6 +322,7 @@ export async function convertLeadToClaim(leadId: string, formData: FormData) {
 
   revalidatePath("/leads");
   revalidatePath("/claims");
+  revalidatePath("/today");
   redirect(withNotice(`/claims/${claim.id}`, "lead-converted"));
 }
 

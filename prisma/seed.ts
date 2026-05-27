@@ -379,7 +379,7 @@ async function main() {
         dateOfLoss: daysFromNow(-4),
         status: LeadStatus.NEW,
         followUpDate: daysFromNow(0, 14),
-        notes: "Asked for a call after work about possible roof leak from storm.",
+        notes: "Ready to convert once the signed agreement is confirmed. Client asked for the first claim follow-up right away.",
       },
     });
 

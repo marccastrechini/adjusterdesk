@@ -22,6 +22,9 @@
 - Added a simple claim deadline editor to the claim tasks page so deadline dates and next steps can be maintained with the task workflow.
 - Strengthened Today with an upcoming-deadlines summary card and clearer overdue/due-today task badges.
 - Updated seeded claim task and deadline demo data so the office starts with visible overdue work, due-today work, and an upcoming claim deadline.
+- Updated the lead-to-claim conversion flow so opening a claim creates the first claim follow-up task, closes any open lead tasks, and refreshes Today immediately.
+- Expanded the lead conversion form with plain-language first-follow-up fields so the office can set the first claim touch during conversion.
+- Refreshed the Robert Hale demo lead so the seeded story clearly shows a ready-to-convert lead that becomes an active claim with a same-day follow-up.
 
 ## In Progress
 
@@ -36,6 +39,8 @@
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the task/deadline slice.
 - Ran `npm run prisma:generate`, `npm run db:seed`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the task/deadline slice.
 - Browser smoke-tested `/today`, the Elena Martinez claim overview, and that claim's `/tasks` page with the new deadline editor visible.
+- Ran `npm run typecheck`, `npm run prisma:generate`, `npm run db:seed`, `npm run test`, `npm run lint`, and `npm run build` for the lead conversion slice.
+- Browser smoke-tested `/leads`, converted the Robert Hale lead into a claim, confirmed the new claim task on the claim overview, and confirmed Today shows the new claim follow-up without the old lead task.
 
 ## Known Notes
 
@@ -43,4 +48,4 @@
 
 ## Next Recommended Slice
 
-- Add a simple office reports slice for overdue tasks and upcoming claim deadlines so the Today worklist and Reports stay aligned.
+- Add a simple conversion-ready lead filter or report so office staff can quickly see which open leads are ready to become claims.

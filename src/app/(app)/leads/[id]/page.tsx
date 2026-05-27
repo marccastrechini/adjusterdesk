@@ -105,6 +105,12 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                 <Field label="Policy number" hint="Optional until the policy declarations are collected."><input name="policyNumber" className={inputClassName} /></Field>
                 <Field label="Carrier claim number" hint="Optional until the carrier assigns one."><input name="claimNumber" className={inputClassName} /></Field>
                 <Field label="Next step" hint="One clear action for the new claim, like request policy, schedule inspection, or call carrier."><textarea name="nextStep" className={textareaClassName} /></Field>
+                <Field label="First follow-up task" hint="This becomes the first open task on the new claim.">
+                  <input name="followUpTaskTitle" defaultValue={`Call ${lead.contact.firstName} and open the new claim file`} className={inputClassName} />
+                </Field>
+                <Field label="First follow-up date" hint="Use today or the next office day so the claim shows up on Today.">
+                  <input name="followUpDueDate" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className={inputClassName} />
+                </Field>
                 <SubmitButton>Convert to claim and open overview</SubmitButton>
               </ActionForm>
             )}
