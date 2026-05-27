@@ -1,7 +1,7 @@
 import { ClaimTabs } from "@/components/claim-tabs";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createTaskWithState, toggleTask, updateTask } from "@/lib/actions";
+import { createTaskWithState, toggleTask, updateClaimDeadlineWithState, updateTask } from "@/lib/actions";
 import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { taskPriorityOptions } from "@/lib/options";
@@ -74,6 +74,7 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
   const overdueMatchingTasks = filteredTasks.filter((task) => task.dueDate && dayStamp(task.dueDate) < todayStamp).length;
   const noTasksYet = claim.tasks.length === 0;
   const noFilteredResults = !noTasksYet && filteredTasks.length === 0;
+  const nextOpenTask = claim.tasks.find((task) => task.status === "OPEN");
 
   return (
     <>
@@ -195,36 +196,58 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
           ) : null}
         </div>
 
-        <Card className="grid gap-4 content-start">
-          <h2 className="text-base font-semibold text-slate-950">Add task</h2>
-          <p className="text-sm leading-6 text-slate-600">Add the next call, carrier follow-up, document request, inspection reminder, or deadline.</p>
-          <ActionForm action={createTaskWithState} className="grid gap-3">
-            <input type="hidden" name="claimId" value={claim.id} />
-            <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Common task" hint="Optional office default for routine claim work.">
-              <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
-                <option value="">Custom task</option>
-                {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
-              </select>
-            </Field>
-            <Field label="Custom task" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
-            <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
-            <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
-              <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
-                <option value="">Unassigned</option>
-                {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
-              <select name="priority" defaultValue="" className={selectClassName}>
-                <option value="">Use common task priority</option>
-                {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </Field>
-            <Field label="Notes" hint="Optional details for the person doing the work. Common tasks add a note when this is blank."><textarea name="notes" className={textareaClassName} /></Field>
-            <SubmitButton>Add task to claim</SubmitButton>
-          </ActionForm>
-        </Card>
+        <aside className="grid gap-6 content-start">
+          <Card className="grid gap-4">
+            <h2 className="text-base font-semibold text-slate-950">Claim deadline</h2>
+            <p className="text-sm leading-6 text-slate-600">Keep the claim deadline and next step current so Today shows the right office work.</p>
+            <ActionForm action={updateClaimDeadlineWithState.bind(null, claim.id)} className="grid gap-3">
+              <Field label="Deadline date" hint="This appears in Today and on the claim overview.">
+                <input name="deadlineDate" type="date" defaultValue={claim.deadlineDate ? claim.deadlineDate.toISOString().slice(0, 10) : ""} className={inputClassName} />
+              </Field>
+              <Field label="Next step" hint="Short plain-language note for the next office action.">
+                <textarea name="nextStep" defaultValue={claim.nextStep ?? ""} className={textareaClassName} />
+              </Field>
+              <SubmitButton>Save deadline</SubmitButton>
+            </ActionForm>
+            <div className="rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+              <p className="font-medium text-slate-950">Current deadline</p>
+              <p className="mt-1">{formatDate(claim.deadlineDate)}</p>
+              <p className="mt-3 font-medium text-slate-950">Next open task</p>
+              <p className="mt-1">{nextOpenTask ? `${nextOpenTask.title} · ${formatDate(nextOpenTask.dueDate)}` : "No open task scheduled."}</p>
+            </div>
+          </Card>
+
+          <Card className="grid gap-4 content-start">
+            <h2 className="text-base font-semibold text-slate-950">Add task</h2>
+            <p className="text-sm leading-6 text-slate-600">Add the next call, carrier follow-up, document request, inspection reminder, or deadline.</p>
+            <ActionForm action={createTaskWithState} className="grid gap-3">
+              <input type="hidden" name="claimId" value={claim.id} />
+              <input type="hidden" name="returnPath" value={returnPath} />
+              <Field label="Common task" hint="Optional office default for routine claim work.">
+                <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                  <option value="">Custom task</option>
+                  {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+                </select>
+              </Field>
+              <Field label="Custom task" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
+              <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
+              <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
+                <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
+                  <option value="">Unassigned</option>
+                  {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
+                <select name="priority" defaultValue="" className={selectClassName}>
+                  <option value="">Use common task priority</option>
+                  {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </Field>
+              <Field label="Notes" hint="Optional details for the person doing the work. Common tasks add a note when this is blank."><textarea name="notes" className={textareaClassName} /></Field>
+              <SubmitButton>Add task to claim</SubmitButton>
+            </ActionForm>
+          </Card>
+        </aside>
       </div>
     </>
   );

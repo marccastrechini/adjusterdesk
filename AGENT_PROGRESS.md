@@ -19,6 +19,9 @@
 - Added a `prisma:generate` script alias so the repo supports the requested Prisma verification command.
 - Clarified claim money tracking with explicit calculated-fee and payment-received fields on claim money views.
 - Renamed the Today receivables section to surface outstanding money items more clearly from the claim money workflow.
+- Added a simple claim deadline editor to the claim tasks page so deadline dates and next steps can be maintained with the task workflow.
+- Strengthened Today with an upcoming-deadlines summary card and clearer overdue/due-today task badges.
+- Updated seeded claim task and deadline demo data so the office starts with visible overdue work, due-today work, and an upcoming claim deadline.
 
 ## In Progress
 
@@ -30,6 +33,9 @@
 - Ran `npm run db:seed`, `npm run lint`, `npm run typecheck`, and `npm run build` after the polish pass.
 - Re-verified `npm run prisma:generate` and `npm run typecheck` after the money-tracking updates.
 - Browser smoke-tested `Today` and a claim money page with the seeded unpaid receivables visible.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the task/deadline slice.
+- Ran `npm run prisma:generate`, `npm run db:seed`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the task/deadline slice.
+- Browser smoke-tested `/today`, the Elena Martinez claim overview, and that claim's `/tasks` page with the new deadline editor visible.
 
 ## Known Notes
 
@@ -37,4 +43,4 @@
 
 ## Next Recommended Slice
 
-- Tighten receivables follow-up by adding a simple overdue-invoice filter or reminder view in Reports or Money.
+- Add a simple office reports slice for overdue tasks and upcoming claim deadlines so the Today worklist and Reports stay aligned.

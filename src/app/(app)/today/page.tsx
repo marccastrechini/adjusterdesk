@@ -26,6 +26,28 @@ function SummaryLink({ href, children }: { href: string; children: ReactNode }) 
   );
 }
 
+function timingTone(task: { dueDate?: Date | null }) {
+  if (!task.dueDate) return "slate" as const;
+  const due = new Date(task.dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (due < today) return "red" as const;
+  if (due.getTime() === today.getTime()) return "amber" as const;
+  return "teal" as const;
+}
+
+function timingLabel(task: { dueDate?: Date | null }) {
+  if (!task.dueDate) return "No due date";
+  const due = new Date(task.dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (due < today) return "Overdue";
+  if (due.getTime() === today.getTime()) return "Due today";
+  return "Upcoming";
+}
+
 function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: string }) {
   if (tasks.length === 0) return <EmptyState title="No tasks here" message={empty} />;
 
@@ -39,6 +61,7 @@ function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: s
                 {task.title}
               </Link>
               <Badge tone={task.priority === "HIGH" ? "red" : "slate"}>{labelFromEnum(task.priority)}</Badge>
+              <Badge tone={timingTone(task)}>{timingLabel(task)}</Badge>
             </div>
             <p className="mt-1 text-sm text-slate-600">
               {task.claim ? fullName(task.claim.contact) : task.lead ? fullName(task.lead.contact) : "General"} · Due {formatDate(task.dueDate)}
@@ -125,6 +148,7 @@ export default async function TodayPage() {
   const waitingOnClientCount = data.waitingOnClientClaims.length;
   const waitingOnCarrierCount = data.waitingOnCarrierClaims.length;
   const overdueInvoiceCount = data.unpaidInvoices.filter((invoice) => invoice.status === "OVERDUE").length;
+  const upcomingDeadlineCount = data.upcomingDeadlines.length;
 
   return (
     <>
@@ -152,6 +176,9 @@ export default async function TodayPage() {
         </SummaryLink>
         <SummaryLink href={taskListHref("due-today")}>
           <StatCard label="Due today" value={data.dueTodayTaskCount} detail="Tasks to finish before the day ends" />
+        </SummaryLink>
+        <SummaryLink href={taskListHref("upcoming-deadlines")}>
+          <StatCard label="Upcoming deadlines" value={upcomingDeadlineCount} detail="Claims with dates coming up in the next 30 days" />
         </SummaryLink>
         <SummaryLink href="/leads?status=ALL&assignedUserId=ALL&followUp=TODAY">
           <StatCard label="Lead follow-ups due" value={data.leadFollowUpCount} detail="Open leads due for a touch" />
@@ -187,6 +214,7 @@ export default async function TodayPage() {
         </Section>
 
         <Section title="Upcoming deadlines" description="Claim deadlines coming up in the next 30 days.">
+          <div id="upcoming-deadlines">
           {data.upcomingDeadlines.length === 0 ? (
             <EmptyState title="No upcoming deadlines" message="Nothing is due in the next 30 days." />
           ) : (
@@ -199,13 +227,18 @@ export default async function TodayPage() {
                       <Link href={`/claims/${claim.id}`} className="font-medium text-slate-950 hover:text-teal-800">
                         {fullName(claim.contact)} · {claim.lossType}
                       </Link>
-                      <p className="mt-1 text-sm text-slate-600">Deadline {formatDate(claim.deadlineDate)} · {propertyAddress(claim.property)}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                        <span>Deadline {formatDate(claim.deadlineDate)}</span>
+                        <Badge tone="amber">Keep moving</Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-600">{propertyAddress(claim.property)}</p>
                     </div>
                   </div>
                 </Card>
               ))}
             </div>
           )}
+          </div>
         </Section>
       </div>
 

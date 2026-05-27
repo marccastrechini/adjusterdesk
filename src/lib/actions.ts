@@ -569,6 +569,28 @@ export async function updateTask(taskId: string, returnPath: string, formData: F
   redirect(withNotice(returnPath, "task-saved"));
 }
 
+export async function updateClaimDeadline(claimId: string, returnPath: string, formData: FormData) {
+  const { firm } = await getDemoContext();
+  await prisma.claim.updateMany({
+    where: { id: claimId, firmId: firm.id },
+    data: {
+      deadlineDate: asDate(formData.get("deadlineDate")?.toString()),
+      nextStep: formData.get("nextStep")?.toString() || undefined,
+    },
+  });
+
+  revalidatePath(returnPath);
+  revalidatePath(`/claims/${claimId}`);
+  revalidatePath("/claims");
+  revalidatePath("/today");
+  redirect(withNotice(returnPath, "deadline-saved"));
+}
+
+export async function updateClaimDeadlineWithState(claimId: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  await updateClaimDeadline(claimId, `/claims/${claimId}/tasks`, formData);
+  return {};
+}
+
 export async function toggleTask(taskId: string, returnPath: string) {
   const { firm } = await getDemoContext();
   const task = await prisma.task.findFirst({ where: { id: taskId, firmId: firm.id } });

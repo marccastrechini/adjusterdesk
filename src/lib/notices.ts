@@ -19,6 +19,10 @@ export const noticeMessages = {
     title: "Task updated",
     message: "The task changes were saved.",
   },
+  "deadline-saved": {
+    title: "Claim deadline updated",
+    message: "The claim deadline and next step now appear on this claim and in Today.",
+  },
   "document-added": {
     title: "Document saved",
     message: "The document record is now attached to this claim.",
