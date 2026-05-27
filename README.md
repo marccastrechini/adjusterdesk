@@ -23,6 +23,7 @@ For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
 For a concise pilot safety/readiness checklist, see `docs/PILOT_READINESS.md`.
 For local pilot workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
+For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
 
 1. Copy the environment file if needed:
 

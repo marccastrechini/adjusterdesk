@@ -67,6 +67,7 @@
 - Refreshed `docs/DEMO_SCRIPT.md` into a concise operator walkthrough covering pre-demo backup, local app start, system admin overview, workspace flow, core claim workflow tabs, account password change, and post-demo backup/reset guidance.
 - Added `docs/PILOT_READINESS.md` with safe-to-demo scope, non-production-ready gaps, local-hosting limits, backup expectations, pilot question prompts, known warnings, and pilot guardrails.
 - Linked `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md` from `README.md` setup and readiness sections.
+- Updated env/documentation configuration for email and password-reset readiness only: expanded `.env.example`, added safe non-secret placeholders to local `.env`, created `docs/EMAIL_SETUP.md`, linked the new doc from `README.md`, `docs/LOCAL_HOSTING.md`, and `docs/SYSTEM_ADMIN.md`, and kept this slice free of feature code changes.
 
 ## In Progress
 
@@ -121,6 +122,7 @@
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the pilot/demo readiness documentation slice.
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the pilot/demo readiness documentation slice.
 - Manual smoke-tested demo route path on active local app (`http://localhost:3001`): opened `/system`, `/today`, `/leads`, one claim overview (`/claims/cmpo6mguk000mawdqyiqlccoc`), that claim's `/documents`, `/tasks`, and `/money` tabs, and `/settings/account`; confirmed the updated demo script route sequence matches the live app flow.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the email env/docs cleanup slice.
 
 ## Known Notes
 
@@ -128,4 +130,4 @@
 
 ## Next Recommended Slice
 
-- Add one operator runbook for "pilot day operations" (startup checks, daily backup cadence, restore drill cadence, and end-of-day validation) so non-technical office staff can run local hosting reliably.
+- Implement the password-reset email flow using the documented env configuration (APP_BASE_URL + Resend sender settings) without committing secrets.

@@ -8,6 +8,8 @@ This guide sets up AdjusterDesk as a local demo or staging server on the main Wi
 - a repeatable build and start process
 - simple backup and restore steps
 
+For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
+
 ## Local Runtime Layout
 
 - App code: the AdjusterDesk repo folder, for example `C:\Projects\adjusterdesk`
@@ -42,28 +44,37 @@ Copy-Item .env.example .env
 ```
 
 3. Edit `.env` and set a real `AUTH_SECRET`.
+4. Keep `APP_BASE_URL` as `http://localhost:3000` for local hosting.
+5. If configuring transactional email later, set email env vars in `.env` only (do not commit keys).
 
 Example `.env` values:
 
 ```dotenv
 DATABASE_URL="file:./prisma/dev.db"
 AUTH_SECRET="replace-with-a-long-random-secret"
+APP_BASE_URL=http://localhost:3000
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
+SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
+PASSWORD_RESET_TOKEN_MINUTES=30
+SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
 NEXT_PUBLIC_APP_NAME="AdjusterDesk"
 ```
 
-4. Install dependencies.
+6. Install dependencies.
 
 ```powershell
 npm install
 ```
 
-5. Generate the Prisma client.
+7. Generate the Prisma client.
 
 ```powershell
 npm run prisma:generate
 ```
 
-6. For a fresh demo database, seed the demo office.
+8. For a fresh demo database, seed the demo office.
 
 ```powershell
 npm run db:seed

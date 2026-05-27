@@ -1,0 +1,51 @@
+# Email Setup (IONOS + GoDaddy + Resend)
+
+This document defines how email is split for AdjusterDesk on `adjusterdesk.xyz`.
+
+## Roles And Addresses
+
+- Operator login address: `admin@adjusterdesk.xyz`
+- Outbound system email address: `hello@adjusterdesk.xyz`
+- App public domain: `adjusterdesk.xyz`
+
+## Service Ownership
+
+- IONOS hosts mailbox/inbound email for `admin@adjusterdesk.xyz` and `hello@adjusterdesk.xyz`.
+- GoDaddy is the DNS host where domain records are managed.
+- Resend is the transactional sender for app-generated email.
+
+## DNS Rules
+
+1. Do not remove existing IONOS MX records.
+2. Add the Resend domain verification records in GoDaddy DNS.
+3. Keep SPF to a single record for the root domain.
+
+Important: SPF must not be duplicated. Merge providers into one SPF record as needed.
+
+## Environment Variables
+
+Set these in local `.env` only. Do not commit API keys or generated secrets.
+
+```dotenv
+APP_BASE_URL=http://localhost:3000
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=
+SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
+SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
+PASSWORD_RESET_TOKEN_MINUTES=30
+SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
+```
+
+For future public hosting, change only:
+
+```dotenv
+APP_BASE_URL=https://adjusterdesk.xyz
+```
+
+`RESEND_API_KEY` belongs only in `.env` (or deployment secrets), never in source control.
+
+## App Behavior Targets
+
+- Password reset links should use `APP_BASE_URL`.
+- App-sent system email should use `hello@adjusterdesk.xyz` as From and Reply-To.
+- Operator/admin login should use `admin@adjusterdesk.xyz`.

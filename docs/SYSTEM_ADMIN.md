@@ -4,6 +4,8 @@ This guide is for Marc's local-only global admin console.
 
 Use the system admin area to manage workspaces and users across the local AdjusterDesk install.
 
+For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
+
 - System dashboard: `/system`
 - Workspaces list: `/system/workspaces`
 - Workspace detail: `/system/workspaces/<workspace-id>`
