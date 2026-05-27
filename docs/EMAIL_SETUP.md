@@ -49,12 +49,16 @@ APP_BASE_URL=https://adjusterdesk.xyz
 - Password reset links should use `APP_BASE_URL`.
 - App-sent system email should use `hello@adjusterdesk.xyz` as From and Reply-To.
 - Operator/admin login should use `admin@adjusterdesk.xyz`.
+- All system emails should use the shared renderer in `src/lib/email-template.ts` so styling, tone, and plain-text fallback stay consistent.
+- System email templates must use inline CSS only (no external stylesheets, images, tracking pixels, or remote fonts).
 
 ## Implemented Password Reset Flow
 
 - Request page: `/forgot-password`
 - Reset page: `/reset-password?token=<token>`
 - Reset emails are plain-text and sent through Resend using:
+
+- Reset emails now use the shared system renderer for both HTML and plain-text output and are sent through Resend using:
 	- `SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"`
 	- `SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz`
 

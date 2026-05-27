@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { renderSystemEmailTemplate } from "@/lib/email-template";
 
 type PasswordResetEmailInput = {
   toEmail: string;
@@ -49,21 +50,28 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
   }
 
   try {
+    const emailContent = renderSystemEmailTemplate({
+      preheader: "Reset your AdjusterDesk password.",
+      title: "Reset your password",
+      intro: `Hello ${input.userName},`,
+      bodyLines: [
+        "A password reset was requested for your AdjusterDesk account.",
+        `Use the button below to set a new password. This link expires in ${input.expiresInMinutes} minutes and can be used once.`,
+      ],
+      ctaLabel: "Reset password",
+      ctaUrl: input.resetUrl,
+      secondaryText: "If you did not request this, you can ignore this email.",
+      footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+    });
+
     const resend = new Resend(resendApiKey);
     await resend.emails.send({
       from: resolveSystemEmailFrom(),
       to: [input.toEmail],
       replyTo: resolveSystemEmailReplyTo(),
       subject: "AdjusterDesk password reset",
-      text: [
-        `Hello ${input.userName},`,
-        "",
-        "A password reset was requested for your AdjusterDesk account.",
-        `Reset your password: ${input.resetUrl}`,
-        "",
-        `This link expires in ${input.expiresInMinutes} minutes and can be used once.`,
-        "If you did not request this, you can ignore this email.",
-      ].join("\n"),
+      html: emailContent.html,
+      text: emailContent.text,
     });
 
     return { ok: true };

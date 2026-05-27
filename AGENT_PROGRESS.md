@@ -69,6 +69,7 @@
 - Linked `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md` from `README.md` setup and readiness sections.
 - Updated env/documentation configuration for email and password-reset readiness only: expanded `.env.example`, added safe non-secret placeholders to local `.env`, created `docs/EMAIL_SETUP.md`, linked the new doc from `README.md`, `docs/LOCAL_HOSTING.md`, and `docs/SYSTEM_ADMIN.md`, and kept this slice free of feature code changes.
 - Implemented transactional password-reset infrastructure: added Resend email helper, forgot/reset password pages, generic non-enumerating reset request behavior, one-time expiring password reset tokens in Prisma, login notice support for reset completion, and docs updates for email/reset validation.
+- Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent AdjusterDesk branding and plain-language tone.
 
 ## In Progress
 
@@ -129,6 +130,9 @@
 - Manual smoke-tested password reset on `http://localhost:3003`: opened `/forgot-password`, submitted `sreardon@starkloss.example`, confirmed generic non-enumerating success notice, confirmed missing-key graceful behavior by running with blank `RESEND_API_KEY` and observing clear server log, then restarted with configured env and confirmed no send-error logs.
 - Manual smoke-tested reset completion and sign-in behavior: used a valid one-time token to open `/reset-password`, set a new password, confirmed old password failed at `/login`, and confirmed new password succeeded.
 - Re-verified existing auth paths: signed in as Dana (`dana@harboradjusting.example`) and confirmed `/system` still loads; signed in as Steve and confirmed `/settings/account` password change still works.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the shared system email template slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the shared system email template slice.
+- Manual validation for shared template slice: confirmed password-reset email now uses `renderSystemEmailTemplate`, confirmed plain-text fallback is readable from rendered output, confirmed email HTML uses inline styling with no external assets, and confirmed no secrets appear in git diff.
 
 ## Known Notes
 
@@ -136,4 +140,4 @@
 
 ## Next Recommended Slice
 
-- Add one small operator note for troubleshooting reset-email delivery (Resend provider errors, SPF/DKIM verification status, and safe retry steps) in the local admin docs.
+- Add one small operator troubleshooting note to document system-email template changes and a quick verification checklist for future system email additions.
