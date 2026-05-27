@@ -9,7 +9,10 @@ type RouteContext = { params: Promise<{ id: string }> };
 export const dynamic = "force-dynamic";
 
 function notFoundResponse() {
-  return NextResponse.json({ error: "Document not found." }, { status: 404 });
+  return new NextResponse("Document file not found in local storage.", {
+    status: 404,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
 }
 
 function unauthorizedResponse() {

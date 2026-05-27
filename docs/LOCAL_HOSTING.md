@@ -167,6 +167,8 @@ Persistent local data lives here:
 
 If those files and folders stay in place, the local demo host keeps its data between restarts.
 
+If a document record exists in the database but the matching local file is missing from `storage/uploads`, the claim documents page now flags it as missing and asks the office to re-upload it.
+
 ## Backup
 
 Run the included PowerShell backup script from the repo root:
@@ -235,6 +237,7 @@ Use this after a build, restore, or demo reset:
 7. Open that claim's `/money` page.
 8. Open `/money`.
 9. Confirm uploaded documents still open and download if you restored from backup.
+10. If any claim document shows "Local file missing", re-upload it from that claim's documents page.
 
 ## Recommended Local Hosting Routine
 

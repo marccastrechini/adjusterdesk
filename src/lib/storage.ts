@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const uploadRoot = path.join(process.cwd(), "storage", "uploads");
@@ -63,6 +63,19 @@ export function resolveStoredUploadPath(filePath: string) {
   if (!withinRoot) return undefined;
 
   return absolutePath;
+}
+
+export async function storedUploadExists(filePath?: string | null) {
+  if (!filePath) return false;
+  const absolutePath = resolveStoredUploadPath(filePath);
+  if (!absolutePath) return false;
+
+  try {
+    await access(absolutePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function saveUploadedFile(file: File) {

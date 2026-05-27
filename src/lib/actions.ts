@@ -658,7 +658,7 @@ export async function createDocument(formData: FormData) {
       title: documentInput.title || fallbackTitle,
       notes: documentInput.notes,
       requestedFromClient: documentInput.requestedFromClient,
-      receivedAt: new Date(),
+      receivedAt: documentInput.requestedFromClient ? null : new Date(),
       ...upload,
     },
   });

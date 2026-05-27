@@ -2,10 +2,11 @@ import { ClaimTabs } from "@/components/claim-tabs";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createDocumentWithState } from "@/lib/actions";
-import { formatDate, fullName, labelFromEnum } from "@/lib/format";
+import { formatDate, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { documentCategoryOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
+import { storedUploadExists } from "@/lib/storage";
 import { documentRequestTemplates } from "@/lib/templates";
 
 type PageProps = {
@@ -35,7 +36,14 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
   const status = firstValue(query.status)?.trim() ?? "ALL";
   const hasFilters = Boolean(q) || category !== "ALL" || status !== "ALL";
 
-  const filteredDocuments = claim.documents.filter((document) => {
+  const documentsWithStorage = await Promise.all(
+    claim.documents.map(async (document) => ({
+      document,
+      hasStoredFile: await storedUploadExists(document.filePath),
+    })),
+  );
+
+  const filteredDocuments = documentsWithStorage.filter(({ document }) => {
     const categoryLabel = labelFromEnum(document.category);
     const searchableValues = [document.title, document.fileName ?? "", document.notes ?? "", categoryLabel];
     const matchesQuery =
@@ -49,8 +57,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
     return matchesQuery && matchesCategory && matchesStatus;
   });
 
-  const requestedDocuments = filteredDocuments.filter((document) => document.requestedFromClient);
-  const receivedDocuments = filteredDocuments.filter((document) => !document.requestedFromClient);
+  const requestedDocuments = filteredDocuments.filter(({ document }) => document.requestedFromClient);
+  const receivedDocuments = filteredDocuments.filter(({ document }) => !document.requestedFromClient);
   const noDocumentsYet = claim.documents.length === 0;
   const noFilteredResults = !noDocumentsYet && filteredDocuments.length === 0;
 
@@ -63,6 +71,9 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="grid gap-6">
           <Card>
+            <p className="mb-3 text-sm leading-6 text-slate-600">
+              Claim file for {fullName(claim.contact)}{claim.claimNumber ? ` (Claim #${claim.claimNumber})` : ""}. {claim.lossType} at {propertyAddress(claim.property)}.
+            </p>
             <form method="get" className="grid gap-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_auto] md:items-end">
               <Field label="Search documents" hint="Search title, file name, notes, or category.">
                 <input name="q" defaultValue={q} className={inputClassName} placeholder="Search documents..." />
@@ -86,7 +97,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
           </Card>
 
           {noDocumentsYet ? (
-            <EmptyState title="No documents yet" message="Upload a file or add a document record for this claim." />
+            <EmptyState title="No documents in this claim file yet" message="Upload a file or add a document request so the office can track what is missing." />
           ) : null}
 
           {noFilteredResults ? (
@@ -121,7 +132,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               <EmptyState title="No client requests yet" message="Use the form on the right to request photos, policy pages, receipts, or other claim files." />
             ) : (
               <div className="grid gap-3">
-                {requestedDocuments.map((document) => (
+                {requestedDocuments.map(({ document }) => (
                   <Card key={document.id}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
@@ -130,8 +141,11 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                           <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
                         </div>
                         <div className="mt-3 grid gap-1 text-sm leading-6 text-slate-600">
-                          <p>{document.notes ?? "No notes added"}</p>
+                          <p>Claim file: {fullName(claim.contact)}{claim.claimNumber ? ` (Claim #${claim.claimNumber})` : ""}</p>
+                          <p>Property: {propertyAddress(claim.property)}</p>
+                          <p>Requested by: {document.uploadedByUser?.name ?? "Office"}</p>
                           <p>Requested {formatDate(document.createdAt)}</p>
+                          <p>{document.notes ?? "No notes added"}</p>
                         </div>
                       </div>
                       <Badge tone="amber">Waiting on client</Badge>
@@ -147,8 +161,11 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               <EmptyState title="No received documents yet" message="Uploaded files and office records will appear here." />
             ) : (
               <div className="grid gap-3">
-                {receivedDocuments.map((document) => {
+                {receivedDocuments.map(({ document, hasStoredFile }) => {
                   const isReceived = Boolean(document.receivedAt || document.filePath);
+                  const hasFileRecord = Boolean(document.filePath);
+                  const fileIsMissing = hasFileRecord && !hasStoredFile;
+                  const showDownload = hasFileRecord && hasStoredFile;
 
                   return (
                     <Card key={document.id}>
@@ -158,17 +175,26 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                             <p className="font-semibold text-slate-950">{document.title}</p>
                             <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
                             {isReceived ? <Badge tone="green">Received</Badge> : null}
+                            {fileIsMissing ? <Badge tone="red">Local file missing</Badge> : null}
                           </div>
                           <div className="mt-3 grid gap-1 text-sm leading-6 text-slate-600">
+                            <p>Claim file: {fullName(claim.contact)}{claim.claimNumber ? ` (Claim #${claim.claimNumber})` : ""}</p>
+                            <p>Property: {propertyAddress(claim.property)}</p>
+                            <p>Added by: {document.uploadedByUser?.name ?? "Office"}</p>
                             {document.fileName ? <p>File name: {document.fileName}</p> : null}
-                            {document.receivedAt ? <p>Received {formatDate(document.receivedAt)}</p> : null}
+                            <p>Uploaded {formatDate(document.receivedAt ?? document.createdAt)}</p>
                             <p>{document.notes ?? "No notes added"}</p>
                           </div>
-                          {document.filePath ? (
+                          {showDownload ? (
                             <div className="mt-3 flex flex-wrap items-center gap-3">
-                              <ButtonLink href={`/api/documents/${document.id}/download`} variant="secondary">Download file</ButtonLink>
-                              <p className="text-xs leading-5 text-slate-500">Local file saved for development.</p>
+                              <ButtonLink href={`/api/documents/${document.id}/download`} variant="secondary">Open or download file</ButtonLink>
+                              <p className="text-xs leading-5 text-slate-500">File is available in local storage.</p>
                             </div>
+                          ) : null}
+                          {fileIsMissing ? (
+                            <p className="mt-3 text-xs leading-5 text-rose-700">
+                              This record points to a local file that is not on disk right now. Re-upload the file if you need it in this claim.
+                            </p>
                           ) : null}
                         </div>
                       </div>

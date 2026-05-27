@@ -34,6 +34,10 @@
 - Added `scripts/backup-local.ps1` and validated it creates timestamped backup folders for local database files, uploads, and optional `.env`.
 - Added guarded local data safety scripts: `scripts/restore-local.ps1` for explicit restore and `scripts/demo-reset-local.ps1` for explicit demo reset with backup-by-default behavior.
 - Added local workflow aliases `restore:local` and `demo:reset:local` and updated local hosting docs to use explicit confirmation for restore/reset operations.
+- Polished claim document storage UX with clearer claim-file context, category/file/date/uploader details, and plain-language empty states on the claim documents page.
+- Added local file guardrails for claim documents so records pointing to missing files are clearly flagged and do not expose a broken download action.
+- Updated document creation behavior so "requested from client" records are no longer marked as received immediately.
+- Updated local hosting docs with a note about handling "Local file missing" document records after restore or cleanup.
 
 ## In Progress
 
@@ -62,6 +66,10 @@
 - Ran `npm run demo:reset:local -- -ConfirmReset` and confirmed it warns, creates a safety backup, and reseeds successfully.
 - Validated `npm run restore:local` against a temporary target folder and confirmed database and uploads restore behavior without touching live data.
 - Browser smoke-tested the built app on port 3001 (`npm run start -- --port 3001`), signed in, and verified `/today`, `/leads`, one claim overview, claim `/tasks`, claim `/money`, and `/money`.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the document-storage polish slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the document-storage polish slice.
+- Browser smoke-tested on the updated build (`npm run start -- --port 3001` because port 3000 was already in use), signed in, opened one claim documents page, uploaded a small test file, and confirmed the new record rendered with Open/Download action and claim-file metadata.
+- Ran `npm run backup:local` again after the upload and confirmed the backup includes the uploaded file in the copied storage folder.
 
 ## Known Notes
 
@@ -69,4 +77,4 @@
 
 ## Next Recommended Slice
 
-- Add a one-click Windows launcher and optional Scheduled Task setup doc so the local demo host can auto-start after reboot with minimal operator steps.
+- Add a small "replace missing local file" action on claim documents so office staff can repair a missing-file record in one step without creating a duplicate document row.
