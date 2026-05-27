@@ -49,7 +49,7 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                         </div>
                         <p className="mt-1 text-sm text-slate-600">Offered {formatDate(round.offeredAt)}</p>
                       </div>
-                      <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[420px] lg:text-right">
+                      <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-2 lg:min-w-[520px] lg:grid-cols-3 lg:text-right">
                         <p>Demand {formatMoney(round.demandAmountCents)}</p>
                         <p>Offer {formatMoney(round.offerAmountCents)}</p>
                         <p>Accepted {formatMoney(round.acceptedAmountCents)}</p>
@@ -100,10 +100,12 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                         </div>
                         <p className="mt-1 text-sm text-slate-600">Issued {formatDate(invoice.issuedAt)} · Due {formatDate(invoice.dueAt)}</p>
                       </div>
-                      <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[430px] lg:text-right">
+                      <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-2 lg:min-w-[520px] lg:grid-cols-3 lg:text-right">
                         <p>Settlement {formatMoney(invoice.settlementAmountCents)}</p>
                         <p>Fee {formatPercentFromBasisPoints(invoice.feePercentageBasisPoints)}</p>
-                        <p>Due {formatMoney(invoiceAmountDue(invoice))}</p>
+                        <p>Calculated fee {formatMoney(invoice.feeAmountCents)}</p>
+                        <p>Payment received {invoice.amountPaidCents > 0 ? formatMoney(invoice.amountPaidCents) : "No payment yet"}</p>
+                        <p>Open balance {formatMoney(invoiceAmountDue(invoice))}</p>
                       </div>
                     </div>
                   </Card>

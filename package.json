@@ -10,6 +10,7 @@
     "test": "tsx --test src/lib/format.test.ts src/lib/templates.test.ts src/lib/status-links.test.ts src/lib/csv.test.ts src/lib/import-utils.test.ts src/lib/storage.test.ts src/lib/env.test.ts src/lib/auth.test.ts",
     "test:smoke": "playwright install chromium && playwright test",
     "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",

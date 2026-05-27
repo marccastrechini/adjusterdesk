@@ -118,7 +118,8 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
             {latestInvoice ? (
               <dl className="mt-4 grid gap-4">
                 <DetailItem label="Latest invoice" value={latestInvoice.invoiceNumber} />
-                <DetailItem label="Fee amount" value={formatMoney(latestInvoice.feeAmountCents)} />
+                <DetailItem label="Calculated fee" value={formatMoney(latestInvoice.feeAmountCents)} />
+                <DetailItem label="Payment received" value={latestInvoice.amountPaidCents > 0 ? formatMoney(latestInvoice.amountPaidCents) : "No payment yet"} />
                 <DetailItem label="Status" value={invoiceDisplayStatus(latestInvoice)} />
                 <DetailItem label="Amount due" value={formatMoney(invoiceAmountDue(latestInvoice))} />
               </dl>

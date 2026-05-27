@@ -16,6 +16,9 @@
 - Replaced the generated README with AdjusterDesk setup and MVP notes.
 - Completed a QA walkthrough of all required routes, claim tabs, public status pages, sidebar navigation, and CSV exports.
 - Polished navigation grouping, demo-user display, receivable labels, document storage wording, inactive-user creation, and demo data depth.
+- Added a `prisma:generate` script alias so the repo supports the requested Prisma verification command.
+- Clarified claim money tracking with explicit calculated-fee and payment-received fields on claim money views.
+- Renamed the Today receivables section to surface outstanding money items more clearly from the claim money workflow.
 
 ## In Progress
 
@@ -25,7 +28,13 @@
 
 - Browser smoke-tested all required MVP routes, claim tabs, sidebar navigation, public status pages, and CSV export links.
 - Ran `npm run db:seed`, `npm run lint`, `npm run typecheck`, and `npm run build` after the polish pass.
+- Re-verified `npm run prisma:generate` and `npm run typecheck` after the money-tracking updates.
+- Browser smoke-tested `Today` and a claim money page with the seeded unpaid receivables visible.
 
 ## Known Notes
 
 - npm reported moderate dependency audit findings during package installation. These are dependency-tree audit items and were not force-upgraded during scaffold work.
+
+## Next Recommended Slice
+
+- Tighten receivables follow-up by adding a simple overdue-invoice filter or reminder view in Reports or Money.

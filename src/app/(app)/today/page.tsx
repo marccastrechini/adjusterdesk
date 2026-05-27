@@ -238,7 +238,7 @@ export default async function TodayPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Unpaid invoices" description="Receivables that still need collection.">
+        <Section title="Outstanding receivables" description="Fee invoices and other money items that still need collection.">
           {data.unpaidInvoices.length === 0 ? (
             <EmptyState title="Nothing unpaid" message="Every sent invoice is paid or written off." />
           ) : (
