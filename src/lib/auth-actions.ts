@@ -249,3 +249,83 @@ export async function resetPasswordWithTokenWithState(_state: ActionFormState, f
 
   redirect(withNotice("/login", "password-reset-complete"));
 }
+
+export async function acceptInviteWithTokenWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const token = formData.get("token")?.toString().trim() ?? "";
+  const newPassword = formData.get("newPassword")?.toString() ?? "";
+  const confirmPassword = formData.get("confirmPassword")?.toString() ?? "";
+  const errors: FieldErrors = {};
+
+  if (!token) {
+    return formError("The invitation link is missing or invalid. Ask the office to resend your invite.");
+  }
+
+  if (!newPassword) {
+    errors.newPassword = "Enter a password.";
+  } else if (newPassword.length < 8) {
+    errors.newPassword = "Use at least 8 characters for your password.";
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Confirm your password.";
+  } else if (newPassword && confirmPassword !== newPassword) {
+    errors.confirmPassword = "Password and confirmation must match.";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return formError("Fix the password fields and try again.", errors);
+  }
+
+  const tokenHash = hashPasswordResetToken(token);
+  const inviteToken = await prisma.userInvitationToken.findUnique({
+    where: { tokenHash },
+    select: {
+      id: true,
+      userId: true,
+      expiresAt: true,
+      acceptedAt: true,
+      user: {
+        select: {
+          active: true,
+        },
+      },
+    },
+  });
+
+  const now = new Date();
+  if (!inviteToken || inviteToken.acceptedAt || inviteToken.expiresAt <= now || !inviteToken.user.active) {
+    return formError("This invite link is invalid or expired. Ask the office to resend your invite.");
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const markAccepted = await tx.userInvitationToken.updateMany({
+        where: {
+          id: inviteToken.id,
+          acceptedAt: null,
+          expiresAt: {
+            gt: now,
+          },
+        },
+        data: {
+          acceptedAt: now,
+        },
+      });
+
+      if (markAccepted.count !== 1) {
+        throw new Error("invite-token-already-used");
+      }
+
+      await tx.user.update({
+        where: { id: inviteToken.userId },
+        data: {
+          passwordHash: hashPassword(newPassword),
+        },
+      });
+    });
+  } catch {
+    return formError("This invite link is invalid or expired. Ask the office to resend your invite.");
+  }
+
+  redirect(withNotice("/login", "invite-accepted"));
+}

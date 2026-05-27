@@ -18,7 +18,14 @@ import {
   UserRole,
 } from "@/generated/prisma/client";
 import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
-import { hashPassword } from "@/lib/auth";
+import {
+  createPasswordResetTokenValue,
+  hashPassword,
+  hashPasswordResetToken,
+  resolveAppBaseUrl,
+  resolveUserInvitationTokenMinutes,
+} from "@/lib/auth";
+import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
@@ -159,6 +166,76 @@ function generateTemporaryPassword(length = 18) {
   }
 
   return generated;
+}
+
+async function issueUserInvitation({
+  userId,
+  userName,
+  userEmail,
+  workspaceName,
+}: {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  workspaceName: string;
+}) {
+  if (!canSendSystemEmail()) {
+    return {
+      ok: false as const,
+      error: "System email is not configured. Add EMAIL_PROVIDER and RESEND_API_KEY in .env.",
+    };
+  }
+
+  const token = createPasswordResetTokenValue();
+  const tokenHash = hashPasswordResetToken(token);
+  const inviteMinutes = resolveUserInvitationTokenMinutes();
+  const expiresAt = new Date(Date.now() + inviteMinutes * 60 * 1000);
+  const acceptInviteUrl = `${resolveAppBaseUrl()}/accept-invite?token=${encodeURIComponent(token)}`;
+
+  await prisma.userInvitationToken.create({
+    data: {
+      userId,
+      tokenHash,
+      expiresAt,
+    },
+  });
+
+  const sendResult = await sendUserInvitationEmail({
+    toEmail: userEmail,
+    userName,
+    workspaceName,
+    acceptInviteUrl,
+    expiresInMinutes: inviteMinutes,
+  });
+
+  if (!sendResult.ok) {
+    await prisma.userInvitationToken.deleteMany({
+      where: {
+        userId,
+        tokenHash,
+      },
+    });
+
+    return {
+      ok: false as const,
+      error: sendResult.error ?? "Invitation email could not be sent.",
+    };
+  }
+
+  await prisma.userInvitationToken.updateMany({
+    where: {
+      userId,
+      acceptedAt: null,
+      tokenHash: {
+        not: tokenHash,
+      },
+    },
+    data: {
+      acceptedAt: new Date(),
+    },
+  });
+
+  return { ok: true as const };
 }
 
 async function findOrCreateCarrier(firmId: string, name?: string) {
@@ -1021,26 +1098,68 @@ export async function deleteTemplate(templateId: string) {
 
 export async function createUser(formData: FormData) {
   const { firm } = await getDemoContext();
-  const password = formData.get("password")?.toString() ?? "";
+  const name = requiredText.parse(formData.get("name")?.toString());
+  const email = requiredText.parse(formData.get("email")?.toString()).toLowerCase();
+  const role = (formData.get("role")?.toString() as UserRole) || UserRole.ADJUSTER;
+  const active = formData.get("active") === "on";
 
-  if (password.trim().length < 8) {
-    redirect("/settings/users?error=password");
+  const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (existingUser) {
+    redirect("/settings/users?error=email-duplicate");
   }
 
-  await prisma.user.create({
+  const createdUser = await prisma.user.create({
     data: {
       firmId: firm.id,
-      name: requiredText.parse(formData.get("name")?.toString()),
-      email: requiredText.parse(formData.get("email")?.toString()).toLowerCase(),
-      passwordHash: hashPassword(password),
-      role: (formData.get("role")?.toString() as UserRole) || UserRole.ADJUSTER,
-      active: formData.get("active") === "on",
+      name,
+      email,
+      passwordHash: "",
+      role,
+      active,
     },
   });
 
+  const inviteResult = await issueUserInvitation({
+    userId: createdUser.id,
+    userName: createdUser.name,
+    userEmail: createdUser.email,
+    workspaceName: firm.name,
+  });
+
+  if (!inviteResult.ok) {
+    await prisma.user.delete({ where: { id: createdUser.id } });
+    redirect("/settings/users?error=invite-send");
+  }
+
   revalidatePath("/settings/users");
   revalidatePath("/settings");
-  redirect("/settings/users");
+  redirect(withNotice("/settings/users", "user-invite-sent"));
+}
+
+export async function resendUserInvite(userId: string) {
+  const { firm } = await getDemoContext();
+  const targetUser = await prisma.user.findFirst({
+    where: { id: userId, firmId: firm.id },
+    select: { id: true, name: true, email: true, active: true },
+  });
+
+  if (!targetUser || !targetUser.active) {
+    redirect("/settings/users?error=missing");
+  }
+
+  const inviteResult = await issueUserInvitation({
+    userId: targetUser.id,
+    userName: targetUser.name,
+    userEmail: targetUser.email,
+    workspaceName: firm.name,
+  });
+
+  if (!inviteResult.ok) {
+    redirect("/settings/users?error=invite-send");
+  }
+
+  revalidatePath("/settings/users");
+  redirect(withNotice("/settings/users", "user-invite-resent"));
 }
 
 export async function setUserActive(userId: string, nextActive: boolean) {
@@ -1268,11 +1387,11 @@ export async function createSystemWorkspaceWithOwner(formData: FormData) {
   const workspaceName = requiredText.parse(formData.get("workspaceName")?.toString());
   const ownerName = requiredText.parse(formData.get("ownerName")?.toString());
   const ownerEmail = z.email().parse(formData.get("ownerEmail")?.toString()).toLowerCase();
-  const ownerPassword = requiredText.parse(formData.get("ownerPassword")?.toString());
-
-  if (ownerPassword.length < 8) {
-    redirect("/system/workspaces?error=workspace-password");
-  }
+  const bootstrapMode = formData.get("bootstrapMode") === "temporary";
+  const ownerPasswordInput = formData.get("ownerPassword")?.toString().trim() ?? "";
+  const ownerPassword = bootstrapMode
+    ? (ownerPasswordInput.length >= 8 ? ownerPasswordInput : generateTemporaryPassword())
+    : "";
 
   const existingUser = await prisma.user.findUnique({ where: { email: ownerEmail }, select: { id: true } });
   if (existingUser) {
@@ -1291,24 +1410,74 @@ export async function createSystemWorkspaceWithOwner(formData: FormData) {
       },
     });
 
-    await tx.user.create({
+    const createdOwner = await tx.user.create({
       data: {
         firmId: createdWorkspace.id,
         name: ownerName,
         email: ownerEmail,
-        passwordHash: hashPassword(ownerPassword),
+        passwordHash: ownerPassword ? hashPassword(ownerPassword) : "",
         role: UserRole.OWNER,
         active: true,
       },
     });
 
-    return createdWorkspace;
+    return {
+      workspace: createdWorkspace,
+      owner: createdOwner,
+    };
   });
+
+  if (!bootstrapMode) {
+    const inviteResult = await issueUserInvitation({
+      userId: workspace.owner.id,
+      userName: workspace.owner.name,
+      userEmail: workspace.owner.email,
+      workspaceName: workspace.workspace.name,
+    });
+
+    if (!inviteResult.ok) {
+      await prisma.user.delete({ where: { id: workspace.owner.id } });
+      await prisma.firm.delete({ where: { id: workspace.workspace.id } });
+      redirect("/system/workspaces?error=invite-send");
+    }
+  }
 
   revalidatePath("/system");
   revalidatePath("/system/workspaces");
-  revalidatePath(`/system/workspaces/${workspace.id}`);
-  redirect(withNotice(`/system/workspaces/${workspace.id}`, "system-workspace-created"));
+  revalidatePath(`/system/workspaces/${workspace.workspace.id}`);
+
+  if (bootstrapMode) {
+    redirect(`/system/workspaces/${workspace.workspace.id}?tempPassword=${encodeURIComponent(ownerPassword)}`);
+  }
+
+  redirect(withNotice(`/system/workspaces/${workspace.workspace.id}`, "system-workspace-created"));
+}
+
+export async function resendSystemUserInvite(userId: string, workspaceId: string) {
+  await requireSystemAdminContext();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, firmId: true, name: true, email: true, active: true, firm: { select: { name: true } } },
+  });
+
+  if (!user || user.firmId !== workspaceId || !user.active) {
+    redirect(`/system/workspaces/${workspaceId}?error=user-missing`);
+  }
+
+  const inviteResult = await issueUserInvitation({
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    workspaceName: user.firm.name,
+  });
+
+  if (!inviteResult.ok) {
+    redirect(`/system/workspaces/${workspaceId}?error=invite-send`);
+  }
+
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+  redirect(withNotice(`/system/workspaces/${workspaceId}`, "user-invite-resent"));
 }
 
 export async function updateSystemUserEmail(formData: FormData) {

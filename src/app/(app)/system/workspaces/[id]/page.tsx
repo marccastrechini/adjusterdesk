@@ -1,4 +1,4 @@
-import { setSystemUserActive, updateSystemUserEmail } from "@/lib/actions";
+import { resendSystemUserInvite, setSystemUserActive, updateSystemUserEmail } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemWorkspaceDetail } from "@/lib/queries";
@@ -19,6 +19,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
   const query = await searchParams;
   const notice = getNoticeMessage(query);
   const error = firstValue(query.error);
+  const tempPassword = firstValue(query.tempPassword);
 
   const { workspace, owner, leadCount, claimCount } = await getSystemWorkspaceDetail(id);
 
@@ -29,6 +30,8 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
         ? "That email is already used by another user."
         : error === "last-owner"
           ? "You cannot deactivate the last active owner in a workspace."
+          : error === "invite-send"
+            ? "Invite email could not be sent. Check system email setup and try again."
           : undefined;
 
   return (
@@ -44,6 +47,14 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
         <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
           <p className="font-semibold">User update not completed</p>
           <p className="mt-1 leading-6">{errorMessage}</p>
+        </Card>
+      ) : null}
+
+      {tempPassword ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Temporary password (shown once)</p>
+          <p className="mt-1 leading-6">Use this only for local bootstrap sign-in, then rotate from Account security.</p>
+          <p className="mt-2 break-all rounded-md border border-amber-300 bg-amber-100 px-3 py-2 font-mono text-xs">{tempPassword}</p>
         </Card>
       ) : null}
 
@@ -77,6 +88,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge>{labelFromEnum(user.role)}</Badge>
                     <Badge tone={user.active ? "green" : "slate"}>{user.active ? "Active" : "Inactive"}</Badge>
+                    {user.userInvitationTokens.length > 0 ? <Badge tone="amber">Invite pending</Badge> : null}
                     {user.isSystemAdmin ? <Badge tone="blue">System admin</Badge> : null}
                   </div>
                 </div>
@@ -92,6 +104,11 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
 
                 <div className="grid gap-2 content-start">
                   <SystemResetPasswordForm userId={user.id} workspaceId={workspace.id} />
+                  {user.active ? (
+                    <form action={resendSystemUserInvite.bind(null, user.id, workspace.id)}>
+                      <SubmitButton variant="secondary">Resend invite</SubmitButton>
+                    </form>
+                  ) : null}
                   {user.active ? (
                     <form action={setSystemUserActive.bind(null, user.id, workspace.id, false)}>
                       <SubmitButton variant="secondary">Deactivate user</SubmitButton>

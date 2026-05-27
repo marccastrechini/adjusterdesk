@@ -8,6 +8,14 @@ type PasswordResetEmailInput = {
   expiresInMinutes: number;
 };
 
+type UserInvitationEmailInput = {
+  toEmail: string;
+  userName: string;
+  workspaceName: string;
+  acceptInviteUrl: string;
+  expiresInMinutes: number;
+};
+
 type EmailSendResult = {
   ok: boolean;
   error?: string;
@@ -25,19 +33,44 @@ function resolveSystemEmailReplyTo() {
   return process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz";
 }
 
-export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Promise<EmailSendResult> {
+function getEmailProviderError() {
   const provider = resolveEmailProvider();
   if (!provider) {
-    return {
-      ok: false,
-      error: "EMAIL_PROVIDER is not configured.",
-    };
+    return "EMAIL_PROVIDER is not configured.";
   }
 
   if (provider !== "resend") {
+    return `EMAIL_PROVIDER '${provider}' is not supported for system emails.`;
+  }
+
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+  if (!resendApiKey) {
+    return "RESEND_API_KEY is not configured.";
+  }
+
+  return undefined;
+}
+
+export function canSendSystemEmail() {
+  return !getEmailProviderError();
+}
+
+async function sendSystemEmail({
+  toEmail,
+  subject,
+  html,
+  text,
+}: {
+  toEmail: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<EmailSendResult> {
+  const providerError = getEmailProviderError();
+  if (providerError) {
     return {
       ok: false,
-      error: `EMAIL_PROVIDER '${provider}' is not supported for password reset emails.`,
+      error: providerError,
     };
   }
 
@@ -50,28 +83,14 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
   }
 
   try {
-    const emailContent = renderSystemEmailTemplate({
-      preheader: "Reset your AdjusterDesk password.",
-      title: "Reset your password",
-      intro: `Hello ${input.userName},`,
-      bodyLines: [
-        "A password reset was requested for your AdjusterDesk account.",
-        `Use the button below to set a new password. This link expires in ${input.expiresInMinutes} minutes and can be used once.`,
-      ],
-      ctaLabel: "Reset password",
-      ctaUrl: input.resetUrl,
-      secondaryText: "If you did not request this, you can ignore this email.",
-      footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
-    });
-
     const resend = new Resend(resendApiKey);
     await resend.emails.send({
       from: resolveSystemEmailFrom(),
-      to: [input.toEmail],
+      to: [toEmail],
       replyTo: resolveSystemEmailReplyTo(),
-      subject: "AdjusterDesk password reset",
-      html: emailContent.html,
-      text: emailContent.text,
+      subject,
+      html,
+      text,
     });
 
     return { ok: true };
@@ -82,4 +101,50 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
       error: `Resend send failed: ${message}`,
     };
   }
+}
+
+export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Promise<EmailSendResult> {
+  const emailContent = renderSystemEmailTemplate({
+    preheader: "Reset your AdjusterDesk password.",
+    title: "Reset your password",
+    intro: `Hello ${input.userName},`,
+    bodyLines: [
+      "A password reset was requested for your AdjusterDesk account.",
+      `Use the button below to set a new password. This link expires in ${input.expiresInMinutes} minutes and can be used once.`,
+    ],
+    ctaLabel: "Reset password",
+    ctaUrl: input.resetUrl,
+    secondaryText: "If you did not request this, you can ignore this email.",
+    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+  });
+
+  return sendSystemEmail({
+    toEmail: input.toEmail,
+    subject: "AdjusterDesk password reset",
+    html: emailContent.html,
+    text: emailContent.text,
+  });
+}
+
+export async function sendUserInvitationEmail(input: UserInvitationEmailInput): Promise<EmailSendResult> {
+  const emailContent = renderSystemEmailTemplate({
+    preheader: "You have been invited to AdjusterDesk.",
+    title: "Set up your account",
+    intro: `Hello ${input.userName},`,
+    bodyLines: [
+      `You were invited to join ${input.workspaceName} in AdjusterDesk.`,
+      `Use the secure link below to set your password. This invite expires in ${input.expiresInMinutes} minutes and can be used once.`,
+    ],
+    ctaLabel: "Accept invite",
+    ctaUrl: input.acceptInviteUrl,
+    secondaryText: "If you were not expecting this invite, you can ignore this email.",
+    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+  });
+
+  return sendSystemEmail({
+    toEmail: input.toEmail,
+    subject: "AdjusterDesk account invitation",
+    html: emailContent.html,
+    text: emailContent.text,
+  });
 }

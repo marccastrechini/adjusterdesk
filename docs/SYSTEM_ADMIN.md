@@ -21,8 +21,9 @@ npm run backup:local
 ```
 
 2. Use system admin access only on trusted local office computers.
-3. Share temporary passwords securely and rotate after first sign-in.
-4. Do not commit local database files, uploaded files, `.env`, generated passwords, or backups.
+3. Prefer invite emails so users set their own password through one-time links.
+4. Use temporary passwords only as break-glass support.
+5. Do not commit local database files, uploaded files, `.env`, generated passwords, or backups.
 
 ## Who Can Access `/system`
 
@@ -55,6 +56,7 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 
 4. Run global user admin actions:
 - create workspace with owner user
+- send owner/user invitation links
 - update owner/user email
 - reset user password (generated temporary password shown once)
 - deactivate/reactivate workspace users
@@ -65,15 +67,17 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 2. Open `/system/workspaces`.
 3. Create new workspace and owner for a pilot office.
 4. Open that workspace detail and verify users.
-5. If needed, reset a user password and securely hand off the one-time temporary password.
-6. Have that user sign in and immediately rotate their password from Settings > Account security (`/settings/account`).
+5. Resend invite if a user did not receive the first onboarding email.
+6. Use reset password only when invite onboarding is blocked or for break-glass support.
+7. Have users rotate passwords from Settings > Account security (`/settings/account`) after first sign-in.
 
 ## Manual Smoke Checklist
 
 1. Sign in as Dana and open `/system`.
 2. Confirm workspace and active-user stats render.
 3. Open Stark Loss in `/system/workspaces`.
-4. Reset Steve Reardon password in the Stark workspace detail.
-5. Sign in as Steve using the temporary password.
-6. Confirm Steve only sees Stark Loss data.
-7. Sign back in as demo owner and confirm Harbor data is still separate.
+4. Resend Steve Reardon invite in the Stark workspace detail.
+5. Open the invite link and set a password.
+6. Confirm token reuse fails and Steve can sign in.
+7. Confirm Steve only sees Stark Loss data.
+8. Sign back in as demo owner and confirm Harbor data is still separate.

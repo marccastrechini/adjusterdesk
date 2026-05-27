@@ -45,11 +45,20 @@ Example with explicit password:
 npm run admin:create-workspace -- --workspace-name "Stark Loss" --owner-name "Steve Reardon" --owner-email "steve@starkloss.example" --password "ChooseAStrongPassword123!"
 ```
 
-## Password Behavior
+For the web system-admin flow (`/system/workspaces`), choose:
 
-- If `--password` is provided, that password is hashed and stored.
-- If `--password` is omitted, a temporary password is generated and printed once.
-- Save the temporary password immediately and rotate it after first sign-in.
+- Invite email (recommended): sends a one-time accept-invite link so the owner sets their own password.
+- Temporary bootstrap password: local break-glass option that shows a one-time password.
+
+## Password And Invite Behavior
+
+- CLI script:
+	- If `--password` is provided, that password is hashed and stored.
+	- If `--password` is omitted, a temporary password is generated and printed once.
+- Web system-admin flow:
+	- Invite mode sends a one-time accept-invite email.
+	- Temporary mode shows a generated one-time bootstrap password.
+- Save temporary passwords immediately and rotate after first sign-in.
 
 The script never stores cleartext passwords in files.
 
@@ -83,6 +92,8 @@ npm run start
 ## Reset A User Password
 
 Use this to recover access for a locked-out user or to rotate a temporary provisioned password.
+
+Preferred onboarding flow is invite email from `/settings/users` or `/system/workspaces/<workspace-id>`, then user self-setup through `/accept-invite`.
 
 Back up first:
 

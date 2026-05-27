@@ -19,12 +19,12 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
   const workspaces = await getSystemWorkspaces();
 
   const errorMessage =
-    error === "workspace-password"
-      ? "Owner password must be at least 8 characters."
-      : error === "workspace-owner-email"
+    error === "workspace-owner-email"
         ? "A user with that owner email already exists."
         : error === "workspace-name"
           ? "A workspace with that name already exists."
+        : error === "invite-send"
+          ? "Workspace was not created because the invite email could not be sent. Check system email setup and try again."
           : undefined;
 
   return (
@@ -49,7 +49,15 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
             <Field label="Workspace name" required><input name="workspaceName" required className={inputClassName} /></Field>
             <Field label="Owner name" required><input name="ownerName" required className={inputClassName} /></Field>
             <Field label="Owner email" required><input name="ownerEmail" type="email" required className={inputClassName} /></Field>
-            <Field label="Owner password" required hint="Set a temporary password and rotate after first sign-in."><input name="ownerPassword" type="password" minLength={8} required className={inputClassName} /></Field>
+            <Field label="Onboarding method" required>
+              <select name="bootstrapMode" defaultValue="invite" className={inputClassName}>
+                <option value="invite">Send invite email (recommended)</option>
+                <option value="temporary">Use temporary bootstrap password</option>
+              </select>
+            </Field>
+            <Field label="Bootstrap password" hint="Used only when onboarding method is temporary. Leave blank to auto-generate a one-time password.">
+              <input name="ownerPassword" type="password" minLength={8} className={inputClassName} />
+            </Field>
             <div className="md:col-span-2">
               <SubmitButton>Create workspace</SubmitButton>
             </div>

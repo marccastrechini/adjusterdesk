@@ -453,6 +453,20 @@ export async function getUsers() {
   const { firm, user } = await getDemoContext();
   const users = await prisma.user.findMany({
     where: { firmId: firm.id },
+    include: {
+      userInvitationTokens: {
+        where: {
+          acceptedAt: null,
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+      },
+    },
     orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
   });
   return { firm, user, users };
@@ -583,6 +597,20 @@ export async function getSystemWorkspaceDetail(workspaceId: string) {
     where: { id: workspaceId },
     include: {
       users: {
+        include: {
+          userInvitationTokens: {
+            where: {
+              acceptedAt: null,
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
+        },
         orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       },
     },

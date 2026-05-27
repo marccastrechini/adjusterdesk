@@ -5,6 +5,7 @@ import {
   createSignedSessionValue,
   hashPassword,
   hashPasswordResetToken,
+  resolveUserInvitationTokenMinutes,
   verifyPassword,
   verifySignedSessionValue,
 } from "./auth";
@@ -66,5 +67,20 @@ describe("password reset token helpers", () => {
 
     assert.equal(firstHash, secondHash);
     assert.equal(firstHash.length, 64);
+  });
+});
+
+describe("user invitation token config", () => {
+  it("uses the default invitation token duration when env is missing", () => {
+    const previous = process.env.USER_INVITATION_TOKEN_MINUTES;
+    delete process.env.USER_INVITATION_TOKEN_MINUTES;
+
+    const value = resolveUserInvitationTokenMinutes();
+
+    assert.equal(value, 60 * 24 * 3);
+
+    if (previous !== undefined) {
+      process.env.USER_INVITATION_TOKEN_MINUTES = previous;
+    }
   });
 });

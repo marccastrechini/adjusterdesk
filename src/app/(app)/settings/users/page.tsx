@@ -1,4 +1,4 @@
-import { createUser, setUserActive } from "@/lib/actions";
+import { createUser, resendUserInvite, setUserActive } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { userRoleOptions } from "@/lib/options";
@@ -29,8 +29,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
         ? "You cannot deactivate the last active owner in this office."
         : error === "missing"
           ? "That user was not found in this office."
-          : error === "password"
-            ? "New office users need a password that is at least 8 characters long."
+          : error === "email-duplicate"
+            ? "That email address is already used by another account."
+            : error === "invite-send"
+              ? "Invite email could not be sent. Check system email setup and try again."
           : undefined;
 
   return (
@@ -38,7 +40,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
       <PageHeader title="Users" description="Office users for signing in and assigning claims, tasks, documents, and communication notes." />
       <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
         <p className="font-semibold">Office sign-in users</p>
-        <p className="mt-1 leading-6">These users can sign in with email and password. OAuth, invites, password reset, and firm switching are still outside this MVP.</p>
+        <p className="mt-1 leading-6">Add users by email invite so they set their own password securely. System-admin password reset remains available for support.</p>
       </Card>
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
@@ -69,9 +71,15 @@ export default async function UsersPage({ searchParams }: PageProps) {
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <Badge>{labelFromEnum(user.role)}</Badge>
                     <Badge tone={user.active ? "green" : "slate"}>{user.active ? "Active" : "Inactive"}</Badge>
+                    {user.userInvitationTokens.length > 0 ? <Badge tone="amber">Invite pending</Badge> : null}
                     {user.id === currentUser.id ? (
                       <Badge tone="teal">Current user</Badge>
                     ) : user.active ? (
+                      <form action={resendUserInvite.bind(null, user.id)}>
+                        <SubmitButton variant="secondary">Resend invite</SubmitButton>
+                      </form>
+                    ) : null}
+                    {user.id === currentUser.id ? null : user.active ? (
                       <form action={setUserActive.bind(null, user.id, false)}>
                         <SubmitButton variant="secondary">Deactivate</SubmitButton>
                       </form>
@@ -92,7 +100,6 @@ export default async function UsersPage({ searchParams }: PageProps) {
           <form action={createUser} className="grid gap-3">
             <Field label="Name"><input name="name" required className={inputClassName} /></Field>
             <Field label="Email"><input name="email" type="email" required className={inputClassName} /></Field>
-            <Field label="Password" hint="Set a temporary password the office can share with this user."><input name="password" type="password" minLength={8} required className={inputClassName} /></Field>
             <Field label="Role">
               <select name="role" defaultValue="ADJUSTER" className={selectClassName}>
                 {userRoleOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -102,7 +109,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
               <input type="checkbox" name="active" defaultChecked className="h-4 w-4 rounded border-slate-300" />
               Active
             </label>
-            <SubmitButton>Add user</SubmitButton>
+            <SubmitButton>Send invite</SubmitButton>
           </form>
         </Card>
       </div>

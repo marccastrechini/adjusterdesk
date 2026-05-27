@@ -87,6 +87,14 @@ export const noticeMessages = {
     title: "User updated",
     message: "The user is now inactive.",
   },
+  "user-invite-sent": {
+    title: "Invitation sent",
+    message: "The user will receive an email link to set their password.",
+  },
+  "user-invite-resent": {
+    title: "Invitation resent",
+    message: "A new invitation link was emailed to this user.",
+  },
   "password-changed": {
     title: "Password changed",
     message: "Your sign-in password was updated.",
@@ -98,6 +106,10 @@ export const noticeMessages = {
   "password-reset-complete": {
     title: "Password reset complete",
     message: "Your password was updated. Sign in with the new password.",
+  },
+  "invite-accepted": {
+    title: "Account setup complete",
+    message: "Your password is set. Sign in with your email and new password.",
   },
 } as const;
 

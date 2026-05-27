@@ -47,6 +47,7 @@ APP_BASE_URL=https://adjusterdesk.xyz
 ## App Behavior Targets
 
 - Password reset links should use `APP_BASE_URL`.
+- Invitation links should use `APP_BASE_URL`.
 - App-sent system email should use `hello@adjusterdesk.xyz` as From and Reply-To.
 - Operator/admin login should use `admin@adjusterdesk.xyz`.
 - All system emails should use the shared renderer in `src/lib/email-template.ts` so styling, tone, and plain-text fallback stay consistent.
@@ -61,6 +62,12 @@ APP_BASE_URL=https://adjusterdesk.xyz
 - Reset emails now use the shared system renderer for both HTML and plain-text output and are sent through Resend using:
 	- `SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"`
 	- `SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz`
+
+## Implemented Invite Flow
+
+- Invite acceptance page: `/accept-invite?token=<token>`
+- Invite emails use the shared system email renderer with one-time token links.
+- Token hashes are stored in the database; raw invite tokens are only in email links.
 
 ## Test Steps
 

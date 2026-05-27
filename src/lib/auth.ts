@@ -5,6 +5,7 @@ const developmentAuthSecret = "adjusterdesk-dev-auth-secret";
 
 export const sessionDurationMs = 1000 * 60 * 60 * 24 * 14;
 const defaultPasswordResetTokenMinutes = 30;
+const defaultUserInvitationTokenMinutes = 60 * 24 * 3;
 
 export type SessionPayload = {
   userId: string;
@@ -70,6 +71,17 @@ export function resolvePasswordResetTokenMinutes() {
   }
 
   return defaultPasswordResetTokenMinutes;
+}
+
+export function resolveUserInvitationTokenMinutes() {
+  const configuredValue = process.env.USER_INVITATION_TOKEN_MINUTES?.trim();
+  const parsedValue = configuredValue ? Number.parseInt(configuredValue, 10) : defaultUserInvitationTokenMinutes;
+
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return parsedValue;
+  }
+
+  return defaultUserInvitationTokenMinutes;
 }
 
 export function resolveAppBaseUrl() {

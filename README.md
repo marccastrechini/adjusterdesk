@@ -13,6 +13,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 - Reports for claim status, overdue tasks, upcoming deadlines, leads by source, and outstanding receivables.
 - Templates and demo user management.
 - Forgot-password and reset-password flow with transactional Resend email.
+- Secure user invitation flow for workspace onboarding with one-time accept-invite links.
 - Public client status page by token with requested documents and upload form.
 - CSV export for leads, claims, and invoices.
 - Basic CSV import for leads and claims.

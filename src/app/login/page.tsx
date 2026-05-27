@@ -49,7 +49,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
               Forgot your password?
             </Link>
           </div>
-          <p className="text-xs leading-5 text-slate-500">Public client status links stay available without sign-in. OAuth, invites, and firm switching are not part of this MVP.</p>
+          <p className="text-xs leading-5 text-slate-500">Public client status links stay available without sign-in. OAuth and firm switching are not part of this MVP.</p>
         </Card>
       </div>
     </main>
