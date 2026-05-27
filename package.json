@@ -19,6 +19,7 @@
     "backup:local": "powershell -ExecutionPolicy Bypass -File scripts/backup-local.ps1",
     "restore:local": "powershell -ExecutionPolicy Bypass -File scripts/restore-local.ps1",
     "demo:reset:local": "powershell -ExecutionPolicy Bypass -File scripts/demo-reset-local.ps1",
+    "admin:create-workspace": "tsx scripts/create-workspace-owner.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

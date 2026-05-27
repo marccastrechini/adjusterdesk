@@ -40,6 +40,10 @@
 - Updated local hosting docs with a note about handling "Local file missing" document records after restore or cleanup.
 - Added `docs/DEMO_SCRIPT.md` with a plain-English 10-15 minute pilot walkthrough from sign-in through lead intake, lead conversion, claim tasks/deadlines, documents, client status, money, and Today coherence.
 - Updated `README.md` setup guidance to link the new pilot walkthrough script.
+- Added a local admin provisioning script at `scripts/create-workspace-owner.ts` to create a new workspace and owner user without manual SQLite edits.
+- Added `npm run admin:create-workspace` for transactional workspace and owner provisioning from the command line.
+- Added `docs/WORKSPACE_ADMIN.md` with backup-first workspace provisioning steps, owner login verification flow, and demo-reset safety guidance for real pilot data.
+- Updated `README.md` setup guidance to link the new workspace admin guide.
 
 ## In Progress
 
@@ -74,6 +78,9 @@
 - Ran `npm run backup:local` again after the upload and confirmed the backup includes the uploaded file in the copied storage folder.
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the MVP demo-script slice.
 - Browser smoke-tested the full demo path end-to-end on `npm run start`: `/today` -> `/leads/new` intake -> lead conversion to claim -> claim `/tasks` deadline update -> claim `/documents` upload and Open/Download link -> claim `/client-status` link creation and public status-page preview -> `/money` -> `/today` coherence check.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the local workspace provisioning slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local workspace provisioning slice.
+- Manual smoke-tested local provisioning and firm isolation on port 3001: ran `npm run admin:create-workspace -- --workspace-name "Stark Loss" --owner-name "Steve Reardon" --owner-email "steve.reardon.test@starkloss.example"`, signed in as the new owner, confirmed Stark Loss loaded as a clean workspace, created one new lead, then signed back in as demo owner Dana Morris and confirmed Harbor demo data remained separate.
 
 ## Known Notes
 
@@ -81,4 +88,4 @@
 
 ## Next Recommended Slice
 
-- Add a small "replace missing local file" action on claim documents so office staff can repair a missing-file record in one step without creating a duplicate document row.
+- Add a small owner self-service password rotation screen (current password + new password) so pilot offices can rotate temporary provisioned passwords without CLI access.
