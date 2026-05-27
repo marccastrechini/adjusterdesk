@@ -25,6 +25,9 @@
 - Updated the lead-to-claim conversion flow so opening a claim creates the first claim follow-up task, closes any open lead tasks, and refreshes Today immediately.
 - Expanded the lead conversion form with plain-language first-follow-up fields so the office can set the first claim touch during conversion.
 - Refreshed the Robert Hale demo lead so the seeded story clearly shows a ready-to-convert lead that becomes an active claim with a same-day follow-up.
+- Hardened the MVP demo loop with clearer plain-language copy across Today, Leads, Claims, and Money so each page explains why an item is showing and what the next office action should be.
+- Updated lead and claim list cards to surface notes and next-step context so the seeded demo story reads cleanly without clicking through every record first.
+- Renamed the claim workspace tab from Communications to Notes so the claim routes use the same plain-language label as the rest of the app.
 
 ## In Progress
 
@@ -41,6 +44,9 @@
 - Browser smoke-tested `/today`, the Elena Martinez claim overview, and that claim's `/tasks` page with the new deadline editor visible.
 - Ran `npm run typecheck`, `npm run prisma:generate`, `npm run db:seed`, `npm run test`, `npm run lint`, and `npm run build` for the lead conversion slice.
 - Browser smoke-tested `/leads`, converted the Robert Hale lead into a claim, confirmed the new claim task on the claim overview, and confirmed Today shows the new claim follow-up without the old lead task.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` before the MVP demo hardening pass.
+- Ran `npm run prisma:generate`, `npm run db:seed`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the MVP demo hardening pass.
+- Browser smoke-tested `/today`, `/leads`, converted the Robert Hale lead to a claim, checked the new claim overview, checked that claim's `/tasks` and `/money` pages, checked `/money`, and confirmed Today then showed the new Robert Hale claim follow-up with the lead removed from due follow-ups.
 
 ## Known Notes
 
@@ -48,4 +54,4 @@
 
 ## Next Recommended Slice
 
-- Add a simple conversion-ready lead filter or report so office staff can quickly see which open leads are ready to become claims.
+- Add a small reports polish pass so Reports mirrors the same plain-language “why this matters / what to do next” cues now used in Today, Leads, Claims, and Money.

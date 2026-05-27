@@ -90,7 +90,7 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
       </Card>
 
       {noClaimsYet ? (
-        <EmptyState title="No claims found" message="Create a claim or clear the current filters." />
+        <EmptyState title="No claims yet" message="Open the first claim from a lead or create one directly to start tracking tasks, deadlines, and money." />
       ) : noFilteredResults ? (
         <Card className="grid gap-3">
           <p className="font-medium text-slate-950">No claims match these filters.</p>
@@ -139,6 +139,7 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
                       <p className="mt-1 text-sm text-slate-600">
                         {claim.carrier?.name ?? "Carrier to confirm"} · Claim #{claim.claimNumber ?? "not set"} · Deadline {formatDate(claim.deadlineDate)}
                       </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-700">Next step: {claim.nextStep ?? "Open the claim and set the next office action."}</p>
                     </div>
                     <div className="grid gap-1 text-sm text-slate-600 sm:grid-cols-3 xl:min-w-[420px] xl:text-right">
                       <p>Assigned: {claim.assignedUser?.name ?? "Unassigned"}</p>

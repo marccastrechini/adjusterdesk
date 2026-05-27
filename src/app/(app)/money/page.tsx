@@ -146,11 +146,11 @@ export default async function MoneyPage({ searchParams }: PageProps) {
         </div>
       ) : null}
 
-      <Section title="Receivables">
+      <Section title="Outstanding receivables" description="Open fee invoices that still need collection or follow-up.">
         {noMoneyRecords ? (
-          <EmptyState title="No open receivables" message="There are no draft, sent, partially paid, or overdue invoices." />
+          <EmptyState title="No money records yet" message="Record a settlement, create a fee invoice, or add a payment from a claim money page." />
         ) : noFilteredResults ? null : openInvoices.length === 0 ? (
-          <EmptyState title="No open receivables" message="There are no draft, sent, partially paid, or overdue invoices." />
+          <EmptyState title="No open receivables" message="Every matching invoice is paid or written off." />
         ) : (
           <div className="grid gap-3">
             {openInvoices.map((invoice) => (
@@ -164,6 +164,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
                       <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">{propertyAddress(invoice.claim.property)} · Due {formatDate(invoice.dueAt)}</p>
+                    <p className="mt-1 text-sm text-slate-600">Next step: Open the claim money page to collect or record the remaining balance.</p>
                   </div>
                   <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[430px] lg:text-right">
                     <p>Invoice {formatMoney(invoice.feeAmountCents)}</p>
@@ -177,7 +178,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
         )}
       </Section>
 
-      <Section title="Recent checks and fee payments">
+      <Section title="Recent checks and fee payments" description="Recent settlement checks and fee payments already recorded on claim money pages.">
         {noMoneyRecords ? (
           <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
         ) : noFilteredResults ? null : filteredPayments.length === 0 ? (

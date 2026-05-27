@@ -109,7 +109,7 @@ export default async function LeadsPage({ searchParams }: PageProps) {
       </Card>
 
       {noLeadsYet ? (
-        <EmptyState title="No leads found" message="Create a new lead or clear the current filters." />
+        <EmptyState title="No leads yet" message="Add the next intake so the office can start follow-up and convert it into a claim when ready." />
       ) : noFilteredResults ? (
         <Card className="grid gap-3">
           <p className="font-medium text-slate-950">No leads match these filters.</p>
@@ -155,6 +155,7 @@ export default async function LeadsPage({ searchParams }: PageProps) {
                     <p className="mt-1 text-sm text-slate-600">
                       Source: {lead.source}{lead.referralSource ? ` · ${lead.referralSource}` : ""} · Follow-up {formatDate(lead.followUpDate)}
                     </p>
+                    {lead.notes ? <p className="mt-2 text-sm leading-6 text-slate-700">{lead.notes}</p> : null}
                   </div>
                   <div className="text-sm text-slate-600 lg:text-right">
                     <p>Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
@@ -163,7 +164,9 @@ export default async function LeadsPage({ searchParams }: PageProps) {
                         Open converted claim
                       </Link>
                     ) : (
-                      <p className="mt-1">Created {formatDate(lead.createdAt)}</p>
+                      <Link href={`/leads/${lead.id}`} className="mt-1 inline-flex font-medium text-teal-800 hover:text-teal-900">
+                        Open lead and convert when ready
+                      </Link>
                     )}
                   </div>
                 </div>

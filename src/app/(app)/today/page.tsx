@@ -48,6 +48,17 @@ function timingLabel(task: { dueDate?: Date | null }) {
   return "Upcoming";
 }
 
+function timingReason(task: { dueDate?: Date | null }) {
+  if (!task.dueDate) return "Showing here because it is still open.";
+  const due = new Date(task.dueDate);
+  due.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (due < today) return `Showing here because it was due ${formatDate(task.dueDate)}.`;
+  if (due.getTime() === today.getTime()) return "Showing here because it is due today.";
+  return `Coming up on ${formatDate(task.dueDate)}.`;
+}
+
 function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: string }) {
   if (tasks.length === 0) return <EmptyState title="No tasks here" message={empty} />;
 
@@ -67,6 +78,8 @@ function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: s
               {task.claim ? fullName(task.claim.contact) : task.lead ? fullName(task.lead.contact) : "General"} · Due {formatDate(task.dueDate)}
               {task.assignedUser ? ` · ${task.assignedUser.name}` : ""}
             </p>
+            <p className="mt-1 text-sm text-slate-600">{timingReason(task)}</p>
+            {task.notes ? <p className="mt-2 text-sm leading-6 text-slate-700">Next step: {task.notes}</p> : null}
           </div>
           <form action={toggleTask.bind(null, task.id, "/today")}>
             <SubmitButton variant="secondary">Complete</SubmitButton>
@@ -99,6 +112,7 @@ function LeadFollowUpList({ leads }: { leads: TodayData["leadFollowUps"] }) {
                 Follow-up {formatDate(lead.followUpDate)} · {lead.source}
                 {lead.referralSource ? ` · ${lead.referralSource}` : ""}
               </p>
+              <p className="mt-1 text-sm text-slate-600">Showing here because the lead follow-up date is already due or coming up soon.</p>
               {lead.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{lead.notes}</p> : null}
             </div>
             <p className="text-sm text-slate-600">Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
@@ -195,11 +209,11 @@ export default async function TodayPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Lead follow-ups due" description="Open leads due for a call, text, or intake follow-up in the next few days.">
+        <Section title="Lead follow-ups due" description="Shows open leads with a follow-up date that is due now or coming up in the next few days.">
           <LeadFollowUpList leads={data.leadFollowUps} />
         </Section>
 
-        <Section title="Overdue tasks" description="Handle these first so follow-ups do not slip.">
+        <Section title="Overdue tasks" description="Shows open work that is already past the due date and should be handled first.">
           <div id="overdue-tasks">
             <TaskList tasks={data.overdueTasks} empty="Nothing overdue right now." />
           </div>
@@ -207,13 +221,13 @@ export default async function TodayPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Due today" description="Calls, texts, document requests, and office reminders due today.">
+        <Section title="Due today" description="Shows open work due before the day ends so the next touch does not slip.">
           <div id="due-today">
             <TaskList tasks={data.dueTodayTasks} empty="Nothing is due today." />
           </div>
         </Section>
 
-        <Section title="Upcoming deadlines" description="Claim deadlines coming up in the next 30 days.">
+        <Section title="Upcoming deadlines" description="Shows active claims with deadline dates coming up in the next 30 days.">
           <div id="upcoming-deadlines">
           {data.upcomingDeadlines.length === 0 ? (
             <EmptyState title="No upcoming deadlines" message="Nothing is due in the next 30 days." />
@@ -232,6 +246,7 @@ export default async function TodayPage() {
                         <Badge tone="amber">Keep moving</Badge>
                       </div>
                       <p className="mt-1 text-sm text-slate-600">{propertyAddress(claim.property)}</p>
+                      <p className="mt-1 text-sm text-slate-600">Next step: {claim.nextStep ?? "Review the file and set the next task."}</p>
                     </div>
                   </div>
                 </Card>
@@ -243,11 +258,11 @@ export default async function TodayPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Requested documents from clients" description="Files or photos the office is still waiting on before the claim can move forward.">
+        <Section title="Requested documents from clients" description="Shows claim documents the office already requested from the client and is still waiting to receive.">
           <RequestedDocumentList documents={data.requestedDocuments} />
         </Section>
 
-        <Section title="Waiting on carrier" description="Open claims currently waiting on a carrier response.">
+        <Section title="Waiting on carrier" description="Shows open claims marked as waiting on carrier so the office can decide on the next follow-up.">
           {data.waitingOnCarrierClaims.length === 0 ? (
             <EmptyState title="Nothing waiting on carrier" message="No claims are marked as waiting on carrier right now." />
           ) : (
@@ -261,6 +276,7 @@ export default async function TodayPage() {
                         {fullName(claim.contact)} · {claim.carrier?.name ?? "Carrier to confirm"}
                       </Link>
                       <p className="mt-1 text-sm text-slate-600">Assigned to {claim.assignedUser?.name ?? "Unassigned"} · Updated {formatDate(claim.updatedAt)}</p>
+                      <p className="mt-1 text-sm text-slate-600">Next step: {claim.nextStep ?? "Open the claim and set the next carrier follow-up."}</p>
                     </div>
                   </div>
                 </Card>
@@ -271,7 +287,7 @@ export default async function TodayPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Outstanding receivables" description="Fee invoices and other money items that still need collection.">
+        <Section title="Outstanding receivables" description="Shows sent, partially paid, and overdue fee invoices that still have money left to collect.">
           {data.unpaidInvoices.length === 0 ? (
             <EmptyState title="Nothing unpaid" message="Every sent invoice is paid or written off." />
           ) : (
@@ -287,6 +303,7 @@ export default async function TodayPage() {
                         <span>Due {formatDate(invoice.dueAt)}</span>
                         <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
                       </div>
+                      <p className="mt-1 text-sm text-slate-600">Showing here because this invoice still has an open balance.</p>
                     </div>
                     <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
                   </div>

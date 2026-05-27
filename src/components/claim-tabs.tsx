@@ -10,7 +10,7 @@ export function ClaimTabs({ claimId }: { claimId: string }) {
     { href: `/claims/${claimId}`, label: "Overview", exact: true },
     { href: `/claims/${claimId}/tasks`, label: "Tasks" },
     { href: `/claims/${claimId}/documents`, label: "Documents" },
-    { href: `/claims/${claimId}/communications`, label: "Communications" },
+    { href: `/claims/${claimId}/communications`, label: "Notes" },
     { href: `/claims/${claimId}/money`, label: "Money" },
     { href: `/claims/${claimId}/client-status`, label: "Client status" },
   ];
