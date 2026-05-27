@@ -78,6 +78,45 @@ npm run start
 5. Create a lead or claim to confirm records save under the new workspace.
 6. Sign out and sign in as a demo owner (for example `dana@harboradjusting.example`) to confirm demo data remains separate.
 
+## Reset A User Password
+
+Use this to recover access for a locked-out user or to rotate a temporary provisioned password.
+
+Back up first:
+
+```powershell
+npm run backup:local
+```
+
+Run:
+
+```powershell
+npm run admin:reset-password -- --email "steve@starkloss.example"
+```
+
+Optional explicit password:
+
+```powershell
+npm run admin:reset-password -- --email "steve@starkloss.example" --password "NewPassword123!"
+```
+
+Required input:
+
+- `--email` — must match an existing user account
+
+Optional input:
+
+- `--password` — if omitted a temporary password is generated and printed once
+
+The script:
+
+- normalizes the email to lowercase before lookup
+- fails clearly if the email does not exist
+- prints the user name, email, and workspace name after success
+- never stores cleartext passwords
+
+After reset, share the new password with the user and ask them to rotate it from a signed-in session.
+
 ## Demo Reset Warning
 
 Do not run demo reset after real pilot data exists in this database.

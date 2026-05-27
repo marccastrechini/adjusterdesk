@@ -44,6 +44,9 @@
 - Added `npm run admin:create-workspace` for transactional workspace and owner provisioning from the command line.
 - Added `docs/WORKSPACE_ADMIN.md` with backup-first workspace provisioning steps, owner login verification flow, and demo-reset safety guidance for real pilot data.
 - Updated `README.md` setup guidance to link the new workspace admin guide.
+- Added a local admin password reset script at `scripts/reset-user-password.ts` to reset any user's password by email without manual SQLite edits.
+- Added `npm run admin:reset-password` alias.
+- Updated `docs/WORKSPACE_ADMIN.md` with reset instructions, required/optional inputs, safety notes, and guidance to rotate after first sign-in.
 
 ## In Progress
 
@@ -81,6 +84,10 @@
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the local workspace provisioning slice.
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local workspace provisioning slice.
 - Manual smoke-tested local provisioning and firm isolation on port 3001: ran `npm run admin:create-workspace -- --workspace-name "Stark Loss" --owner-name "Steve Reardon" --owner-email "steve.reardon.test@starkloss.example"`, signed in as the new owner, confirmed Stark Loss loaded as a clean workspace, created one new lead, then signed back in as demo owner Dana Morris and confirmed Harbor demo data remained separate.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the local password reset slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the local password reset slice.
+- Confirmed `admin:reset-password` returns a clear error when the email does not exist.
+- Manual smoke-tested password reset: ran `npm run admin:reset-password -- --email "sreardon@starkloss.example"`, used the generated temporary password to sign in as Steve Reardon, confirmed Stark Loss Adjusting workspace loaded clean, signed out, signed in as demo owner Dana Morris, and confirmed Harbor Public Adjusting data remained separate.
 
 ## Known Notes
 
