@@ -19,6 +19,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 ## Setup
 
 For a Windows local demo/staging host with backup and restore steps, see `docs/LOCAL_HOSTING.md`.
+For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
 
 1. Copy the environment file if needed:
 

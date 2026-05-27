@@ -38,6 +38,8 @@
 - Added local file guardrails for claim documents so records pointing to missing files are clearly flagged and do not expose a broken download action.
 - Updated document creation behavior so "requested from client" records are no longer marked as received immediately.
 - Updated local hosting docs with a note about handling "Local file missing" document records after restore or cleanup.
+- Added `docs/DEMO_SCRIPT.md` with a plain-English 10-15 minute pilot walkthrough from sign-in through lead intake, lead conversion, claim tasks/deadlines, documents, client status, money, and Today coherence.
+- Updated `README.md` setup guidance to link the new pilot walkthrough script.
 
 ## In Progress
 
@@ -70,6 +72,8 @@
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the document-storage polish slice.
 - Browser smoke-tested on the updated build (`npm run start -- --port 3001` because port 3000 was already in use), signed in, opened one claim documents page, uploaded a small test file, and confirmed the new record rendered with Open/Download action and claim-file metadata.
 - Ran `npm run backup:local` again after the upload and confirmed the backup includes the uploaded file in the copied storage folder.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the MVP demo-script slice.
+- Browser smoke-tested the full demo path end-to-end on `npm run start`: `/today` -> `/leads/new` intake -> lead conversion to claim -> claim `/tasks` deadline update -> claim `/documents` upload and Open/Download link -> claim `/client-status` link creation and public status-page preview -> `/money` -> `/today` coherence check.
 
 ## Known Notes
 
