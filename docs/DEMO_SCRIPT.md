@@ -1,222 +1,121 @@
-# AdjusterDesk MVP Demo Script
+# AdjusterDesk Operator Demo Script
 
-This script is for a friendly 10-15 minute pilot walkthrough with a solo public adjuster.
+Use this for a friendly 15-20 minute walkthrough with a public adjuster office.
 
-It follows the exact MVP path:
+## Before Demo (3-5 minutes)
 
-1. Start local app
-2. Sign in
-3. Today view
-4. Lead intake
-5. Convert lead to claim
-6. Claim overview
-7. Tasks and deadlines
-8. Documents upload/download
-9. Client status page
-10. Money and receivables
-11. Backup before and after demo
-
-## Before You Start (2-3 minutes)
-
-### 1) Reset to a clean demo state (optional but recommended)
-
-Use this when you want to start from the same story every time:
+1. Optional clean reset when you want a repeatable baseline:
 
 ```powershell
 npm run demo:reset:local -- -ConfirmReset
 ```
 
-### 2) Create a backup before the demo
+2. Create a backup checkpoint:
 
 ```powershell
 npm run backup:local
 ```
 
-### 3) Build and start the app
+3. Start the app:
 
 ```powershell
 npm run prisma:generate
 npm run build
-npm run start
+npm run start:local
 ```
 
-Open:
+4. Open `http://localhost:3000/login`.
 
-- `http://localhost:3000/login`
-
-If port 3000 is in use, start on 3001:
+If port 3000 is in use:
 
 ```powershell
 npm run start -- --port 3001
 ```
 
-Then use `http://localhost:3001/login`.
+Use `http://localhost:3001/login` for the demo.
 
-### 4) Sign in with seeded demo user
+## Demo Walkthrough
 
-Use:
+1. Sign in as system admin
 
-- `dana@harboradjusting.example`
-- `AdjusterDeskDemo123!`
+- Email: `dana@harboradjusting.example`
+- Password: `AdjusterDeskDemo123!`
 
-## Walkthrough Steps
+2. Show system admin at a high level
 
-### Step A: Today view (home base)
+- Open `/system`.
+- Explain this is local global admin only (workspaces and users).
+- Keep it brief: counts, install status, and workspace management entry point.
 
-Open `/today`.
+3. Continue as workspace user (same signed-in session is fine for demo)
 
-Point out:
+- Open `/today`.
+- Show work order priorities: overdue tasks, due today, upcoming deadlines, waiting on carrier/client, and unpaid receivables.
 
-- overdue and due-today tasks
-- upcoming deadlines
-- leads due for follow-up
-- waiting-on-carrier items
-- unpaid receivables
+4. Lead intake
 
-Talk track:
+- Open `/leads/new`.
+- Add a quick sample lead with follow-up date.
+- Save and open the lead detail.
 
-"This is my daily office board. I can see what must be handled first, what is coming up next, and what money is still open. It keeps me from missing follow-ups."
+5. Convert lead to claim
 
-### Step B: Lead intake (new call)
+- Use Convert to claim on the lead detail.
+- Add basic carrier/policy/claim info only if useful for the audience.
+- Confirm first claim follow-up task is created.
 
-Open `/leads/new`.
+6. Claim overview
 
-Create a simple lead:
+- Open `/claims/<claim-id>`.
+- Show status, next step, and the "What to work next" shortcuts.
 
-- First name: `Mason`
-- Last name: `Reed`
-- Phone: `(813) 555-0190`
-- Address: `255 Bayshore Drive`
-- City: `Tampa`
-- State: `FL`
-- ZIP: `33606`
-- Loss type: `Water damage`
-- Source: `Referral`
-- Follow-up date: today
-- Optional note: `Kitchen leak after storm. Wants a same-day callback.`
+7. Tasks and deadline
 
-Save the lead.
+- Open `/claims/<claim-id>/tasks`.
+- Add one task, then show deadline and next-step update.
 
-Talk track:
+8. Documents upload/download
 
-"When a new call comes in, I capture just what I need to keep moving: who it is, where the loss is, and the next follow-up date."
+- Open `/claims/<claim-id>/documents`.
+- Upload one small file.
+- Confirm it appears in the claim file list.
+- Click "Open or download file".
 
-### Step C: Convert lead to claim
+9. Client status page
 
-From that lead detail page, use **Convert to claim**.
+- Open `/claims/<claim-id>/client-status`.
+- Update summary/next step and create or copy a client status link.
+- Optionally open the public view under `/status/<token>`.
 
-You can leave carrier details blank or add sample values:
+10. Money and receivables
 
-- Carrier: `Sun State Insurance`
-- Policy number: `SSI-HO-990011`
-- Carrier claim number: `SSI-25-02001`
-- Next step: `Call carrier desk and confirm first inspection window.`
+- Open `/money`.
+- Show outstanding receivables and recent checks/payments.
+- Drill into one claim money page if asked.
 
-Set first follow-up date to today (or next business day), then convert.
+11. Account security (self-service password change)
 
-Talk track:
+- Open `/settings/account`.
+- Explain users can rotate their own password here using current password + new password confirmation.
 
-"Once intake is ready, I convert the lead into a claim in one step. The first claim task is created automatically so nothing drops."
+## After Demo (2 minutes)
 
-### Step D: Claim overview
-
-On `/claims/[id]` for the new claim, show:
-
-- status and next step
-- client, property, carrier, claim basics
-- what-to-work-next cards (Tasks, Documents, Notes, Money)
-
-Talk track:
-
-"This page gives me one clear snapshot of where the claim stands and what the next office action is."
-
-### Step E: Tasks and deadline
-
-Open `/claims/[id]/tasks`.
-
-Show:
-
-- existing open task
-- adding a new task
-- updating claim deadline and next step
-
-Talk track:
-
-"I track every follow-up here, assign it, and set dates. Today updates from this so the day stays organized."
-
-### Step F: Documents upload/download
-
-Open `/claims/[id]/documents`.
-
-1. Upload one small local test file (for example a `.txt` note).
-2. Confirm it appears with title, category, upload date, and who added it.
-3. Click **Open or download file**.
-
-Talk track:
-
-"I can keep a clean claim file with uploads and document requests in one place. If a local file is missing, the page flags it clearly so I can re-upload it."
-
-### Step G: Client status page
-
-Open `/claims/[id]/client-status`.
-
-Show:
-
-- summary and next-step editor
-- status link creation/copy
-- preview panel
-
-Optionally open the public page from the generated link.
-
-Talk track:
-
-"This gives clients a simple update page without exposing internal notes, tasks, or money screens."
-
-### Step H: Money and receivables
-
-Open `/money`.
-
-Show:
-
-- outstanding receivables
-- overdue invoices
-- recent checks/payments
-- drill-in from invoice to claim money tab
-
-Talk track:
-
-"This is where I quickly see what fee money is still open and what was already collected."
-
-### Step I: Confirm Today still coherent
-
-Go back to `/today`.
-
-Confirm:
-
-- the new converted claim and task flow make sense
-- no broken worklist sections
-
-Talk track:
-
-"After intake, conversion, and document updates, Today still gives me a coherent work order for the office."
-
-## After Demo (1 minute)
-
-### 1) Backup again
+1. Backup again:
 
 ```powershell
 npm run backup:local
 ```
 
-### 2) Optional reset to demo baseline
+2. If this was a training-only run, reset to baseline:
 
 ```powershell
 npm run demo:reset:local -- -ConfirmReset
 ```
 
-## Presenter Tips
+3. If this was a pilot data session, do not reset. Keep backups and continue with normal local hosting routine in `docs/LOCAL_HOSTING.md`.
 
-- Keep language operational and plain: claim, follow-up, deadline, documents, check, fee, invoice.
-- Avoid technical architecture details unless asked.
-- Show one complete story from intake to receivable instead of clicking every menu.
-- If asked about reliability, emphasize local backups and restore workflow.
+## Presenter Notes
+
+- Use plain office language: Claim, Follow-up, Deadline, Documents, Check, Fee, Invoice.
+- Avoid deep technical details unless asked.
+- Favor one full story from intake to receivable over jumping around every screen.

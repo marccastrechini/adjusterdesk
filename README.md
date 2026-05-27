@@ -20,6 +20,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 
 For a Windows local demo/staging host with backup and restore steps, see `docs/LOCAL_HOSTING.md`.
 For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
+For a concise pilot safety/readiness checklist, see `docs/PILOT_READINESS.md`.
 For local pilot workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
 
@@ -113,3 +114,4 @@ Production authentication, billing, carrier integrations, QuickBooks sync, email
 ## Pilot Deployment Readiness
 
 Before inviting real pilot users, review the practical checklist in `docs/pilot-deployment-checklist.md`.
+For operator-facing demo and pilot guardrails, also review `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md`.
