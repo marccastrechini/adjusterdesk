@@ -117,7 +117,7 @@ The script:
 - prints the user name, email, and workspace name after success
 - never stores cleartext passwords
 
-After reset, share the new password with the user and ask them to rotate it from a signed-in session.
+After reset, share the new password with the user and ask them to rotate it from Settings > Account security (`/settings/account`) after signing in.
 
 ## Demo Reset Warning
 

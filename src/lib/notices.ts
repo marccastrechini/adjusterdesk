@@ -87,6 +87,10 @@ export const noticeMessages = {
     title: "User updated",
     message: "The user is now inactive.",
   },
+  "password-changed": {
+    title: "Password changed",
+    message: "Your sign-in password was updated.",
+  },
 } as const;
 
 export type NoticeKey = keyof typeof noticeMessages;

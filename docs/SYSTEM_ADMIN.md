@@ -64,7 +64,7 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 3. Create new workspace and owner for a pilot office.
 4. Open that workspace detail and verify users.
 5. If needed, reset a user password and securely hand off the one-time temporary password.
-6. Have that user sign in and immediately rotate their password.
+6. Have that user sign in and immediately rotate their password from Settings > Account security (`/settings/account`).
 
 ## Manual Smoke Checklist
 

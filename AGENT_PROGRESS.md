@@ -59,6 +59,11 @@
 - Hardened claim/lead document, task, activity, settlement, payment, and invoice write paths so records must belong to the current authenticated workspace.
 - Hardened task update assignment path so assigned user IDs are validated inside the current workspace before update.
 - Hardened document download API to require that a downloaded document belongs to a claim in the authenticated workspace before reading local storage.
+- Added a self-service account security page at `/settings/account` so signed-in users can change their own password without system-admin assistance.
+- Added authenticated password change action validation for current password, new password minimum length, new password confirmation, and incorrect current-password handling.
+- Wired password changes to existing password hashing and verification helpers and restricted updates to the current signed-in user record only.
+- Added success notice handling for password change completion and linked Account security from Settings.
+- Updated workspace/system admin docs to direct users to Settings > Account security for password rotation after admin resets.
 
 ## In Progress
 
@@ -107,6 +112,9 @@
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the workspace isolation audit slice.
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the workspace isolation hardening slice.
 - Manual smoke-tested on `npm run dev` port 3001: signed in as Dana and confirmed `/system` works; signed in as Steve (`sreardon@starkloss.example`) and confirmed `/system` redirects to `/today`; as Steve, opened Harbor claim URL `/claims/cmpo6mguk000mawdqyiqlccoc` and received app 404; as Steve, opened Harbor document URL `/api/documents/cmpo6mgvc0011awdqy1ppxaqc/download` and received 404 response; confirmed Steve still sees Stark Loss Adjusting data; signed back in as Dana and confirmed Harbor Public Adjusting data still loads.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the self-service password change slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the self-service password change slice.
+- Manual smoke-tested on `npm run dev` port 3001: signed in as Steve, changed password from `/settings/account`, signed out, confirmed old password failed at sign-in, confirmed new password succeeded, then signed in as Dana and confirmed normal Harbor workspace behavior and `/system` system-admin access still worked.
 
 ## Known Notes
 
@@ -114,4 +122,4 @@
 
 ## Next Recommended Slice
 
-- Add a small integration-style security test harness for critical server actions (task/document/activity/money writes) to automatically assert cross-workspace ID rejection during CI.
+- Add focused auth-action tests for self-service password change (current-password mismatch, confirmation mismatch, and successful hash update) to keep account-security behavior covered in CI.

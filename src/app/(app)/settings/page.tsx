@@ -5,6 +5,12 @@ import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/compon
 
 const settingsCards = [
   {
+    title: "Account security",
+    description: "Change your own sign-in password for this office account.",
+    href: "/settings/account",
+    action: "Open account security",
+  },
+  {
     title: "Templates",
     description: "Follow-ups, document request defaults, document categories, and reusable office messages.",
     href: "/settings/templates",
@@ -46,7 +52,7 @@ export default async function SettingsPage() {
 
   const demoOnlyGaps = [
     "OAuth or SSO sign-in",
-    "User invites and password reset",
+    "User invites and account recovery",
     "Firm switching across offices",
     "External object storage",
     "Backups and deployment configuration",
@@ -84,7 +90,7 @@ export default async function SettingsPage() {
             This app now uses first-party email and password sign-in with firm-scoped sessions.
           </p>
           <p className="text-sm leading-6 text-teal-900">
-            OAuth, invites, password reset, firm switching, storage hardening, and production backup practices are still outside this MVP.
+            OAuth, user invites, account recovery, firm switching, storage hardening, and production backup practices are still outside this MVP.
           </p>
         </Card>
 
@@ -133,7 +139,7 @@ export default async function SettingsPage() {
             <li className="flex items-start gap-2"><Badge tone="blue">1</Badge><span>Set AUTH_SECRET and verify office sign-in in deployment</span></li>
             <li className="flex items-start gap-2"><Badge tone="blue">2</Badge><span>Production database and backup/restore plan</span></li>
             <li className="flex items-start gap-2"><Badge tone="blue">3</Badge><span>External file storage instead of local disk uploads</span></li>
-            <li className="flex items-start gap-2"><Badge tone="blue">4</Badge><span>Decide how new users, password resets, and inactive accounts will be handled</span></li>
+            <li className="flex items-start gap-2"><Badge tone="blue">4</Badge><span>Decide how user invites, account recovery, and inactive accounts will be handled</span></li>
             <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
           </ul>
           <p className="text-xs leading-5 text-slate-600">See docs/pilot-deployment-checklist.md for the full practical deployment checklist.</p>
