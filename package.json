@@ -12,6 +12,7 @@
     "prod:deploy:local": "powershell -ExecutionPolicy Bypass -File scripts/deploy-local-production.ps1",
     "prod:run:local": "powershell -ExecutionPolicy Bypass -File scripts/run-local-production.ps1",
     "prod:backup:local": "powershell -ExecutionPolicy Bypass -File scripts/backup-local.ps1 -Profile production",
+    "prod:demo:bootstrap": "tsx scripts/bootstrap-production-demo.ts",
     "prod:task:install": "powershell -ExecutionPolicy Bypass -File scripts/install-local-production-task.ps1",
     "prod:task:start": "powershell -ExecutionPolicy Bypass -File scripts/start-local-production-task.ps1",
     "prod:task:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-local-production-task.ps1",

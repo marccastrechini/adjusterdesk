@@ -165,6 +165,12 @@ Back up production database and uploads:
 npm run prod:backup:local
 ```
 
+For the fixed production demo workspace and shared owner login, see [docs/PRODUCTION_DEMO_BOOTSTRAP.md](PRODUCTION_DEMO_BOOTSTRAP.md).
+
+Run `npm run prod:demo:bootstrap -- -ConfirmProductionDemo` only after setting `DEMO_OWNER_PASSWORD` at runtime or passing `--password` on the command line.
+
+The bootstrap creates or refreshes fake demo data only, requires a fresh production backup first, and verifies that `admin@adjusterdesk.xyz` still remains system admin without changing that account.
+
 Confirm the public tunnel URL is serving the app:
 
 ```powershell

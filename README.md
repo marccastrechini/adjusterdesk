@@ -22,6 +22,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 
 For a Windows local demo/staging host with backup and restore steps, see `docs/LOCAL_HOSTING.md`.
 For a persistent local production runtime on the main demo machine, see `docs/LOCAL_PRODUCTION.md`.
+For the fixed production demo workspace bootstrap, see `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.
 For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
 For a concise pilot safety/readiness checklist, see `docs/PILOT_READINESS.md`.
 For local pilot workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
