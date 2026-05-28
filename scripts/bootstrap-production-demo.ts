@@ -13,6 +13,7 @@ import {
   SettlementStatus,
   TaskPriority,
   TaskStatus,
+  TemplateType,
   UserRole,
 } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/auth";
@@ -716,6 +717,46 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           subject: "Carrier review follow-up",
           body: "Waiting on the desk to confirm the review window.",
           occurredAt: daysFromNow(-1, 10),
+        },
+      ],
+    });
+
+    await tx.template.createMany({
+      data: [
+        {
+          firmId: firm.id,
+          name: "Client follow-up",
+          type: TemplateType.EMAIL,
+          subject: "Quick claim follow-up",
+          body: "Hi {{client_name}},\n\nQuick follow-up on your claim file. We are still working through the current items and wanted to confirm if you had any updates or questions today.\n\nThank you,\n{{adjuster_name}}",
+        },
+        {
+          firmId: firm.id,
+          name: "Carrier follow-up",
+          type: TemplateType.EMAIL,
+          subject: "Claim status follow-up",
+          body: "Hello,\n\nFollowing up on claim {{claim_number}} for {{client_name}}. Please share the current status and any items needed from our office to keep review moving.\n\nThank you,\n{{adjuster_name}}",
+        },
+        {
+          firmId: firm.id,
+          name: "Inspection scheduled",
+          type: TemplateType.TEXT,
+          subject: "Inspection scheduled",
+          body: "Inspection is scheduled for {{inspection_date}} at {{inspection_time}}. Please reply if anything changes and keep the damaged areas accessible.",
+        },
+        {
+          firmId: firm.id,
+          name: "Missing documents reminder",
+          type: TemplateType.TEXT,
+          subject: "Missing documents reminder",
+          body: "Quick reminder: we still need the requested claim documents to keep your file moving. Please send them when ready, and we will confirm receipt.",
+        },
+        {
+          firmId: firm.id,
+          name: "Settlement update",
+          type: TemplateType.LETTER,
+          subject: "Settlement update",
+          body: "This is an update on your claim settlement. We have logged the latest carrier response and will contact you with the next recommended step after final review.",
         },
       ],
     });
