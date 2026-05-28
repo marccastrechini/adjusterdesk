@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ActionForm, FieldError } from "@/components/action-form";
-import { createActivityWithState, createTaskWithState, convertLeadToClaimWithState } from "@/lib/actions";
+import { createActivityWithState, createTaskWithState, convertLeadToClaimWithState, toggleTask } from "@/lib/actions";
 import { activityTypeOptions, taskPriorityOptions } from "@/lib/options";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
@@ -66,7 +66,12 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                         <p className="font-medium text-slate-950">{task.title}</p>
                         <p className="mt-1 text-sm text-slate-600">Due {formatDate(task.dueDate)} · {task.assignedUser?.name ?? "Unassigned"}</p>
                       </div>
-                      <Badge tone={task.status === "DONE" ? "green" : "amber"}>{labelFromEnum(task.status)}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge tone={task.status === "DONE" ? "green" : "amber"}>{labelFromEnum(task.status)}</Badge>
+                        <form action={toggleTask.bind(null, task.id, returnPath)}>
+                          <SubmitButton variant="secondary">{task.status === "DONE" ? "Reopen" : "Complete"}</SubmitButton>
+                        </form>
+                      </div>
                     </div>
                   </Card>
                 ))}
@@ -101,14 +106,26 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
             <h2 className="text-base font-semibold text-slate-950">Lead actions</h2>
 
             {!selectedAction ? (
-              <div className="grid gap-3">
+              <div className="grid gap-4">
                 {lead.convertedClaim ? (
-                  <Link href={`/claims/${lead.convertedClaim.id}`} className="inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open converted claim</Link>
+                  <div>
+                    <ButtonLink href={`/claims/${lead.convertedClaim.id}`} variant="primary">Open converted claim</ButtonLink>
+                    <p className="mt-1.5 text-xs text-slate-500">This lead is already open as a claim.</p>
+                  </div>
                 ) : (
-                  <ButtonLink href={`${returnPath}?action=convert`} variant="secondary">Convert to claim</ButtonLink>
+                  <div>
+                    <ButtonLink href={`${returnPath}?action=convert`} variant="primary">Convert to claim</ButtonLink>
+                    <p className="mt-1.5 text-xs text-slate-500">Open a new claim file once the client is ready to proceed.</p>
+                  </div>
                 )}
-                <ButtonLink href={`${returnPath}?action=task`} variant="secondary">Add follow-up task</ButtonLink>
-                <ButtonLink href={`${returnPath}?action=activity`} variant="secondary">Log note or call</ButtonLink>
+                <div>
+                  <ButtonLink href={`${returnPath}?action=task`} variant="secondary">Add follow-up task</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Schedule a call, reminder, or document follow-up so nothing slips.</p>
+                </div>
+                <div>
+                  <ButtonLink href={`${returnPath}?action=activity`} variant="secondary">Log note or call</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Record what was said so the next person knows where things stand.</p>
+                </div>
               </div>
             ) : null}
 
