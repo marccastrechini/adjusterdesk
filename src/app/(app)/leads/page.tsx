@@ -141,37 +141,66 @@ export default async function LeadsPage({ searchParams }: PageProps) {
           </Card>
 
           <div className="grid gap-3">
-            {filteredLeads.map((lead) => (
-              <Card key={lead.id}>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/leads/${lead.id}`} className="text-base font-semibold text-slate-950 hover:text-teal-800">
-                        {fullName(lead.contact)}
-                      </Link>
-                      <Badge tone={lead.status === "CONVERTED" ? "green" : lead.status === "NEW" ? "teal" : "slate"}>{labelFromEnum(lead.status)}</Badge>
+            {filteredLeads.map((lead) => {
+              const followUpStamp = lead.followUpDate ? dayStamp(lead.followUpDate) : null;
+              const followUpDueOrOverdue = followUpStamp !== null && followUpStamp <= todayStamp;
+              const openLeadActionClassName =
+                followUpDueOrOverdue
+                  ? "inline-flex h-8 items-center justify-center rounded-md border border-teal-300 bg-teal-50 px-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100"
+                  : "inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50";
+              const followUpTaskActionClassName =
+                followUpDueOrOverdue
+                  ? "inline-flex h-8 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+                  : "inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50";
+              const convertActionClassName =
+                lead.status === "NEW"
+                  ? "inline-flex h-8 items-center justify-center rounded-md border border-teal-300 bg-teal-50 px-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100"
+                  : "inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50";
+
+              return (
+                <Card key={lead.id}>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link href={`/leads/${lead.id}`} className="text-base font-semibold text-slate-950 hover:text-teal-800">
+                          {fullName(lead.contact)}
+                        </Link>
+                        <Badge tone={lead.status === "CONVERTED" ? "green" : lead.status === "NEW" ? "teal" : "slate"}>{labelFromEnum(lead.status)}</Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-600">{lead.lossType} · {propertyAddress(lead.property)}</p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Source: {lead.source}{lead.referralSource ? ` · ${lead.referralSource}` : ""} · Follow-up {formatDate(lead.followUpDate)}
+                      </p>
+                      {lead.notes ? <p className="mt-2 text-sm leading-6 text-slate-700">{lead.notes}</p> : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link href={`/leads/${lead.id}`} className={openLeadActionClassName}>
+                          Open lead
+                        </Link>
+                        <Link href={`/leads/${lead.id}?action=activity`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                          Log note or call
+                        </Link>
+                        <Link href={`/leads/${lead.id}?action=task`} className={followUpTaskActionClassName}>
+                          Add follow-up task
+                        </Link>
+                        {lead.convertedClaim ? (
+                          <Link href={`/claims/${lead.convertedClaim.id}`} className="inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100">
+                            Open converted claim
+                          </Link>
+                        ) : (
+                          <Link href={`/leads/${lead.id}?action=convert`} className={convertActionClassName}>
+                            Convert to claim
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                    <p className="mt-1 text-sm text-slate-600">{lead.lossType} · {propertyAddress(lead.property)}</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Source: {lead.source}{lead.referralSource ? ` · ${lead.referralSource}` : ""} · Follow-up {formatDate(lead.followUpDate)}
-                    </p>
-                    {lead.notes ? <p className="mt-2 text-sm leading-6 text-slate-700">{lead.notes}</p> : null}
+                    <div className="text-sm text-slate-600 lg:text-right">
+                      <p>Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
+                      <p className="mt-1">Follow-up {formatDate(lead.followUpDate)}</p>
+                    </div>
                   </div>
-                  <div className="text-sm text-slate-600 lg:text-right">
-                    <p>Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
-                    {lead.convertedClaim ? (
-                      <Link href={`/claims/${lead.convertedClaim.id}`} className="mt-1 inline-flex font-medium text-teal-800 hover:text-teal-900">
-                        Open converted claim
-                      </Link>
-                    ) : (
-                      <Link href={`/leads/${lead.id}`} className="mt-1 inline-flex font-medium text-teal-800 hover:text-teal-900">
-                        Open lead and convert when ready
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </>
       )}
