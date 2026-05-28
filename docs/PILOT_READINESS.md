@@ -65,3 +65,25 @@ See `docs/LOCAL_HOSTING.md` for exact setup and recovery steps.
 - Schedule backup checkpoints and ownership for restore operations.
 - Use system admin access only on trusted local office machines.
 - Require users to rotate temporary passwords at first sign-in via `/settings/account`.
+
+## Admin Workspace View For Demo And Support
+
+Operator workflow:
+
+1. Sign in as system admin.
+2. Open `/system/workspaces`.
+3. Click `Enter workspace` for `AdjusterDesk Demo Office`.
+4. Confirm banner: `Viewing AdjusterDesk Demo Office as system admin.`
+5. Use Today, Leads, Claims, and Money as normal.
+6. Click `Exit workspace view` to return to `/system/workspaces`.
+
+Safety notes:
+
+- This is not silent impersonation.
+- The system admin identity remains visible while workspace view is active.
+- Non-admin users cannot access system workspace switching.
+
+Demo-use notes:
+
+- Use admin workspace view for quick demo-office checks without logging out/in as demo owner.
+- Use demo owner login when showing the true customer experience.

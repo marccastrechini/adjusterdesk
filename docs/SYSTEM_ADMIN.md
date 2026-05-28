@@ -71,15 +71,36 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 6. Use reset password only when invite onboarding is blocked or for break-glass support.
 7. Have users rotate passwords from Settings > Account security (`/settings/account`) after first sign-in.
 
+## Admin Workspace View
+
+Use this when support or demo prep requires checking an office workspace quickly from system admin.
+
+1. Sign in as system admin.
+2. Open `/system/workspaces`.
+3. Click `Enter workspace` for `AdjusterDesk Demo Office`.
+4. Confirm banner: `Viewing AdjusterDesk Demo Office as system admin.`
+5. Use Today, Leads, Claims, and Money as normal.
+6. Click `Exit workspace view` to return to `/system/workspaces`.
+
+Safety notes:
+
+- This is not silent impersonation.
+- The system admin identity remains visible while workspace view is active.
+- Non-admin users cannot access system workspace switching.
+
+Demo-use notes:
+
+- Use admin workspace view for quick support checks of the demo office without logging out/in as demo owner.
+- Use demo owner login when demonstrating the true customer experience.
+
 If you are working in the debugger/dev profile instead of the production demo profile, use `npm run backup:local` instead.
 
 ## Manual Smoke Checklist
 
-1. Sign in as Dana and open `/system`.
+1. Sign in as system admin and open `/system`.
 2. Confirm workspace and active-user stats render.
-3. Open Stark Loss in `/system/workspaces`.
-4. Resend Steve Reardon invite in the Stark workspace detail.
-5. Open the invite link and set a password.
-6. Confirm token reuse fails and Steve can sign in.
-7. Confirm Steve only sees Stark Loss data.
-8. Sign back in as demo owner and confirm Harbor data is still separate.
+3. Open `/system/workspaces` and enter `AdjusterDesk Demo Office`.
+4. Confirm the admin workspace-view banner is visible.
+5. Open Today, Leads, Claims, and Money to confirm expected demo data.
+6. Click `Exit workspace view` and confirm return to `/system/workspaces`.
+7. Sign in as demo owner and confirm `/system` is blocked.

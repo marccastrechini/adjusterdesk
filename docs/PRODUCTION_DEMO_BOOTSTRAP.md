@@ -68,6 +68,28 @@ After the bootstrap finishes, sign in at [https://adjusterdesk.xyz/login](https:
 
 The owner should land in `AdjusterDesk Demo Office`.
 
+## Admin Workspace View
+
+Use this mode when you need to check or support the demo workspace quickly without switching to the demo owner account.
+
+1. Sign in as system admin.
+2. Open `/system/workspaces`.
+3. Click `Enter workspace` for `AdjusterDesk Demo Office`.
+4. Confirm banner: `Viewing AdjusterDesk Demo Office as system admin.`
+5. Use Today, Leads, Claims, and Money as normal.
+6. Click `Exit workspace view` to return to `/system/workspaces`.
+
+Safety notes:
+
+- This is not silent impersonation.
+- The system admin identity remains visible while workspace view is active.
+- Non-admin users cannot access system workspace switching.
+
+Demo-use notes:
+
+- Use admin workspace view for quick demo-office checks without logging out/in as demo owner.
+- Use demo owner login when presenting the true customer experience.
+
 ## How To Back Up Before And After
 
 Before:
