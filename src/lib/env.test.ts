@@ -45,7 +45,7 @@ describe("env status helper", () => {
     process.env.APP_ENV = "development";
     assert.equal(resolveAppEnvironment(), "development");
     assert.equal(resolveDatabaseUrl(), "file:./prisma/dev.db");
-    assert.equal(resolveUploadsDir(), "storage/uploads");
+    assert.equal(resolveUploadsDir(), "storage/uploads-development");
     assert.equal(resolveAppBaseUrl(), "http://localhost:3000");
   });
 

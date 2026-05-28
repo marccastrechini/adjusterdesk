@@ -52,6 +52,6 @@ finally {
 Write-Output ""
 Write-Output "Local production deploy/update completed."
 Write-Output "Next steps:"
-Write-Output "1. Restart the scheduled task: npm run prod:task:stop ; npm run prod:task:start"
+Write-Output "1. Restart the scheduled task: npm run prod:task:stop -- -ConfirmStop ; npm run prod:task:start"
 Write-Output "2. Or run directly: npm run prod:run:local"
 Write-Output "3. Verify: http://127.0.0.1:3000 and http://localhost:3000"

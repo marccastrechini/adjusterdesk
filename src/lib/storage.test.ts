@@ -22,7 +22,7 @@ describe("storage helpers", () => {
   });
 
   it("only resolves paths inside storage uploads", () => {
-    const goodPath = resolveStoredUploadPath("storage/uploads/123-proof.pdf");
+    const goodPath = resolveStoredUploadPath("storage/uploads-development/123-proof.pdf");
     assert.ok(goodPath);
 
     assert.equal(resolveStoredUploadPath("storage/../.env"), undefined);
@@ -35,7 +35,7 @@ describe("storage helpers", () => {
     const goodPath = resolveStoredUploadPath("storage/uploads-production/123-proof.pdf");
     assert.ok(goodPath);
 
-    assert.equal(resolveStoredUploadPath("storage/uploads/123-proof.pdf"), undefined);
+    assert.equal(resolveStoredUploadPath("storage/uploads-development/123-proof.pdf"), undefined);
     delete process.env.UPLOADS_DIR;
   });
 });

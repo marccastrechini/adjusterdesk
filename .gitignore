@@ -48,8 +48,14 @@ yarn-error.log*
 /prisma/dev.db-journal
 /prisma/dev.db-wal
 /prisma/dev.db-shm
+/prisma/production.db
+/prisma/production.db-journal
+/prisma/production.db-wal
+/prisma/production.db-shm
 /storage/uploads/*
 !/storage/uploads/.gitkeep
+/storage/uploads-development/
+/storage/uploads-production/
 /backups/
 
 # vercel

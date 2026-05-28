@@ -66,7 +66,7 @@ This script runs:
 After deploy/update, restart the runtime task:
 
 ```powershell
-npm run prod:task:stop -- -ConfirmStopPort3000Process
+npm run prod:task:stop -- -ConfirmStop
 npm run prod:task:start
 ```
 
@@ -102,7 +102,7 @@ npm run prod:task:stop
 Stop task and explicitly stop any process listening on port 3000:
 
 ```powershell
-npm run prod:task:stop -- -ConfirmStopPort3000Process
+npm run prod:task:stop -- -ConfirmStop
 ```
 
 Status:
@@ -123,6 +123,52 @@ or
 
 ```powershell
 Get-NetTCPConnection -LocalPort 3000 -State Listen
+```
+
+## Daily Commands
+
+Use these exact commands from C:\Projects\adjusterdesk.
+
+Deploy or update production build:
+
+```powershell
+npm run prod:deploy:local
+```
+
+Install or update the scheduled task:
+
+```powershell
+npm run prod:task:install -- -ConfirmInstall
+```
+
+Start scheduled production runtime:
+
+```powershell
+npm run prod:task:start
+```
+
+Stop scheduled runtime and explicitly stop node listener on port 3000:
+
+```powershell
+npm run prod:task:stop -- -ConfirmStop
+```
+
+Check scheduled task, listener, and local/public URL health:
+
+```powershell
+npm run prod:task:status
+```
+
+Back up production database and uploads:
+
+```powershell
+npm run prod:backup:local
+```
+
+Confirm the public tunnel URL is serving the app:
+
+```powershell
+Invoke-WebRequest https://adjusterdesk.xyz/system -UseBasicParsing
 ```
 
 ## Cloudflare Tunnel Target
@@ -158,7 +204,7 @@ Do not expose `0.0.0.0:3000` directly for this production local runtime.
 
 ```powershell
 npm run prod:deploy:local
-npm run prod:task:stop -- -ConfirmStopPort3000Process
+npm run prod:task:stop -- -ConfirmStop
 npm run prod:task:start
 ```
 
@@ -173,7 +219,7 @@ npm run prod:task:start
 - Run:
 
 ```powershell
-npm run prod:task:stop -- -ConfirmStopPort3000Process
+npm run prod:task:stop -- -ConfirmStop
 npm run prod:task:start
 ```
 

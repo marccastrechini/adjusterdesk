@@ -106,7 +106,7 @@ export async function saveUploadedFile(file: File) {
 
   return {
     fileName: file.name,
-    filePath: path.join("storage", "uploads", storedName).replaceAll("\\", "/"),
+    filePath: path.join(getUploadsDir(), storedName).replaceAll("\\", "/"),
     mimeType: file.type || "application/octet-stream",
     sizeBytes: buffer.length,
   };

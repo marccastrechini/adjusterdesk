@@ -42,7 +42,7 @@ export function resolveUploadsDir() {
     return configuredDir.replaceAll("\\", "/").replace(/\/+$/, "");
   }
 
-  return resolveAppEnvironment() === "production" ? "storage/uploads-production" : "storage/uploads";
+  return resolveAppEnvironment() === "production" ? "storage/uploads-production" : "storage/uploads-development";
 }
 
 export function getEnvStatus({ authActive = false }: { authActive?: boolean } = {}): EnvStatus {

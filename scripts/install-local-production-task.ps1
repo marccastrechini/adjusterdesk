@@ -4,6 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 if (-not $ConfirmInstall) {
   Write-Error "Install aborted. Re-run with -ConfirmInstall to create/update the scheduled task."
@@ -18,8 +19,13 @@ if (-not (Test-Path $runScriptPath -PathType Leaf)) {
 
 $command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$runScriptPath`""
 
-& schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL LIMITED /TR $command /F | Out-Null
-if ($LASTEXITCODE -ne 0) {
+$priorErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+& schtasks.exe /Create /TN $TaskName /SC ONLOGON /RL LIMITED /TR $command /F 2>$null | Out-Null
+$taskExitCode = $LASTEXITCODE
+$ErrorActionPreference = $priorErrorPreference
+
+if ($taskExitCode -ne 0) {
   throw "Failed to install/update scheduled task $TaskName"
 }
 

@@ -75,6 +75,10 @@
 - Split local runtime configuration into guarded development and production profiles with `.env.development.example`, `.env.production.example`, ignored `.env.development.local`/`.env.production.local` files, and profile-aware helpers for `DATABASE_URL`, `APP_BASE_URL`, and uploads storage paths.
 - Added shared PowerShell runtime helpers plus guarded `dev:local`, `dev:debug:local`, `prod:run:local`, and `prod:backup:local` flows so development and production backups/runs cannot silently cross-use the wrong SQLite database or uploads folder.
 - Updated local hosting, local production, email setup, system admin, pilot readiness, and README docs to point at the correct profile files and backup/reset commands.
+- Hardened local production task operations scripts so task stop now requires explicit `-ConfirmStop` before stopping node listeners on port 3000, and status now reports scheduler state, listener PID/path details, and local/public URL probe results.
+- Corrected environment/profile defaults and storage path handling so development defaults to `storage/uploads-development`, production defaults to `storage/uploads-production`, and saved upload records follow the active uploads directory.
+- Expanded local ignore rules for local-production safety by ignoring `prisma/production.db` sidecars and profile-specific uploads directories.
+- Updated `docs/LOCAL_PRODUCTION.md` with exact daily production commands for deploy, task install/start/stop/status, backup, and public tunnel confirmation.
 
 ## In Progress
 
@@ -154,6 +158,16 @@
 - Re-ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, and `npm run build` after the split; all passed, with the existing Turbopack NFT tracing warning still present.
 - Manual smoke-tested the new profile scripts: `npm run backup:local` created a development backup, `npm run prod:backup:local` created a production backup, `git status --short --ignored` showed `.env.development.local` and `.env.production.local` as ignored, and `npm run demo:reset:local -- -ConfirmReset` stayed on the development profile and reseeded safely.
 - Manual smoke-tested the live runtime: `npm run prod:run:local` printed the production env summary for `.env.production.local`; `http://127.0.0.1:3000` and `https://adjusterdesk.xyz/system` both returned the sign-in page in this session; the only blocker was an existing node listener already occupying port 3000, so a second production instance could not bind from this sandbox.
+- Ran required pre-edit checks: `node --version`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local`.
+- Re-ran required post-edit checks after task/script hardening updates: `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run prod:backup:local`.
+- Verified production profile mapping without exposing secrets: `APP_ENV=production`, `APP_BASE_URL=https://adjusterdesk.xyz`, `DATABASE_URL=file:./prisma/production.db`, `UPLOADS_DIR=storage/uploads-production`, `SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz`, and configured `SYSTEM_EMAIL_FROM`/`SYSTEM_EMAIL_REPLY_TO` values.
+- Verified development profile mapping without exposing secrets: `APP_ENV=development`, `APP_BASE_URL=http://localhost:3000`, `DATABASE_URL=file:./prisma/dev.db`, and `UPLOADS_DIR=storage/uploads-development`.
+- Verified `.env.development.local`, `.env.production.local`, local SQLite files, uploads folders, and backup folders are ignored and not staged.
+- Verified `npm run demo:reset:local` refuses destructive reset by default without `-ConfirmReset`.
+- Verified `npm run prod:task:status` now reports task state, port-listener state, process detail availability, and local/public URL probe status.
+- Verified production backup includes production database/uploads once production data paths exist (`HAS_PROD_DB=True`, `HAS_PROD_UPLOADS=True`).
+- Attempted `npm run prod:run:local`; production profile loaded correctly but start failed with `EADDRINUSE` because another node process already owns port 3000.
+- Attempted `npm run prod:task:install -- -ConfirmInstall` and `npm run prod:task:start`; task install/start is still blocked in this session by local task-creation permissions.
 
 ## Known Notes
 
@@ -161,4 +175,4 @@
 
 ## Next Recommended Slice
 
-- If the 3000 listener needs to be reclaimed on the demo machine, stop the existing node process from an elevated PowerShell session and re-run `npm run prod:run:local` there so the guarded production runtime can bind cleanly.
+- From an elevated PowerShell session on the demo machine, stop the existing node process on port 3000 with `npm run prod:task:stop -- -ConfirmStop`, then install/start the scheduled task (`npm run prod:task:install -- -ConfirmInstall`, `npm run prod:task:start`) and confirm `npm run prod:task:status` reports the task running plus local/public URL success.

@@ -3,9 +3,15 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
-& schtasks.exe /Run /TN $TaskName | Out-Null
-if ($LASTEXITCODE -ne 0) {
+$priorErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+& schtasks.exe /Run /TN $TaskName 2>$null | Out-Null
+$taskExitCode = $LASTEXITCODE
+$ErrorActionPreference = $priorErrorPreference
+
+if ($taskExitCode -ne 0) {
   Write-Error "Scheduled task not found or failed to start: $TaskName"
 }
 
