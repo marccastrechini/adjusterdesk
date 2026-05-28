@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BriefcaseBusiness } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { SubmitButton } from "@/components/ui";
+import { exitSystemWorkspaceView } from "@/lib/actions";
 import { logout } from "@/lib/auth-actions";
 import { labelFromEnum } from "@/lib/format";
 
@@ -10,11 +11,15 @@ export function AppShell({
   firmName,
   userName,
   userRole,
+  isSystemAdmin,
+  workspaceOverride,
 }: {
   children: ReactNode;
   firmName: string;
   userName: string;
   userRole: string;
+  isSystemAdmin: boolean;
+  workspaceOverride: { firmId: string; firmName: string } | null;
 }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -43,7 +48,10 @@ export function AppShell({
             <div className="flex items-center gap-3">
               <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
                 <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current user</p>
-                <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
+                <p className="text-sm font-semibold text-slate-950">
+                  {userName} · {labelFromEnum(userRole)}
+                  {isSystemAdmin ? " · System admin" : ""}
+                </p>
               </div>
               <form action={logout}>
                 <SubmitButton variant="secondary">Log out</SubmitButton>
@@ -51,7 +59,17 @@ export function AppShell({
             </div>
           </header>
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-            <div className="mx-auto grid max-w-7xl gap-6">{children}</div>
+            <div className="mx-auto grid max-w-7xl gap-6">
+              {workspaceOverride ? (
+                <div className="flex flex-col gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-medium">Viewing {workspaceOverride.firmName} as system admin.</p>
+                  <form action={exitSystemWorkspaceView}>
+                    <SubmitButton variant="secondary">Exit workspace view</SubmitButton>
+                  </form>
+                </div>
+              ) : null}
+              {children}
+            </div>
           </main>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getCurrentSessionUser } from "@/lib/session";
+import { clearAdminWorkspaceOverride, getAdminWorkspaceOverrideId, getCurrentSessionUser } from "@/lib/session";
 
 export async function getAuthenticatedAppContext() {
   const sessionUser = await getCurrentSessionUser();
@@ -8,8 +8,11 @@ export async function getAuthenticatedAppContext() {
     return null;
   }
 
+  const requestedOverrideFirmId = sessionUser.isSystemAdmin ? await getAdminWorkspaceOverrideId() : undefined;
+  const targetFirmId = requestedOverrideFirmId || sessionUser.firmId;
+
   const firm = await prisma.firm.findUnique({
-    where: { id: sessionUser.firmId },
+    where: { id: targetFirmId },
     include: {
       users: {
         where: { active: true },
@@ -19,15 +22,43 @@ export async function getAuthenticatedAppContext() {
   });
 
   if (!firm) {
+    if (requestedOverrideFirmId) {
+      await clearAdminWorkspaceOverride();
+    }
     return null;
   }
 
-  const user = firm.users.find((candidate) => candidate.id === sessionUser.id);
+  const userInWorkspace = firm.users.find((candidate) => candidate.id === sessionUser.id);
+  const actingUser =
+    userInWorkspace ??
+    (sessionUser.isSystemAdmin && requestedOverrideFirmId
+      ? (firm.users.find((candidate) => candidate.role === "OWNER") ?? firm.users[0])
+      : undefined);
+
+  const workspaceOverrideActive = Boolean(
+    sessionUser.isSystemAdmin && requestedOverrideFirmId && requestedOverrideFirmId !== sessionUser.firmId,
+  );
+
+  const user = actingUser;
   if (!user) {
+    if (requestedOverrideFirmId) {
+      await clearAdminWorkspaceOverride();
+    }
     return null;
   }
 
-  return { firm, user, users: firm.users };
+  return {
+    firm,
+    user,
+    users: firm.users,
+    sessionUser,
+    workspaceOverride: workspaceOverrideActive
+      ? {
+          firmId: firm.id,
+          firmName: firm.name,
+        }
+      : null,
+  };
 }
 
 export async function requireAuthenticatedAppContext() {

@@ -31,6 +31,7 @@ import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
+import { clearAdminWorkspaceOverride, setAdminWorkspaceOverride } from "@/lib/session";
 import { activityInputFromTemplate, documentInputFromTemplate, messageTemplateTypes, taskInputFromTemplate } from "@/lib/templates";
 import { hasUsableCsvRows, normalizeImportType } from "@/lib/import-utils";
 
@@ -1423,6 +1424,28 @@ export async function uploadStatusDocumentWithState(token: string, _state: Actio
 
   await uploadStatusDocument(token, formData);
   return {};
+}
+
+export async function enterSystemWorkspaceView(workspaceId: string) {
+  await requireSystemAdminContext();
+
+  const workspace = await prisma.firm.findUnique({
+    where: { id: workspaceId },
+    select: { id: true },
+  });
+
+  if (!workspace) {
+    redirect("/system/workspaces");
+  }
+
+  await setAdminWorkspaceOverride(workspace.id);
+  redirect("/today");
+}
+
+export async function exitSystemWorkspaceView() {
+  await requireSystemAdminContext();
+  await clearAdminWorkspaceOverride();
+  redirect("/system/workspaces");
 }
 
 export async function createSystemWorkspaceWithOwner(formData: FormData) {

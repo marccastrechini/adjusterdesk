@@ -1,4 +1,4 @@
-import { resendSystemUserInvite, setSystemUserActive, updateSystemUserEmail } from "@/lib/actions";
+import { enterSystemWorkspaceView, resendSystemUserInvite, setSystemUserActive, updateSystemUserEmail } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemWorkspaceDetail } from "@/lib/queries";
@@ -39,7 +39,14 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
       <PageHeader
         title={workspace.name}
         description="System admin workspace detail for local pilot operations."
-        actions={<ButtonLink href="/system/workspaces" variant="secondary">Back to workspaces</ButtonLink>}
+        actions={
+          <>
+            <form action={enterSystemWorkspaceView.bind(null, workspace.id)}>
+              <SubmitButton>Enter workspace</SubmitButton>
+            </form>
+            <ButtonLink href="/system/workspaces" variant="secondary">Back to workspaces</ButtonLink>
+          </>
+        }
       />
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}

@@ -1,4 +1,4 @@
-import { createSystemWorkspaceWithOwner } from "@/lib/actions";
+import { createSystemWorkspaceWithOwner, enterSystemWorkspaceView } from "@/lib/actions";
 import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemWorkspaces } from "@/lib/queries";
@@ -86,7 +86,12 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                     <p>Claims: <span className="font-semibold text-slate-950">{workspace._count.claims}</span></p>
                   </div>
                   <div>
-                    <ButtonLink href={`/system/workspaces/${workspace.id}`} variant="secondary">Open workspace</ButtonLink>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <form action={enterSystemWorkspaceView.bind(null, workspace.id)}>
+                        <SubmitButton>Enter workspace</SubmitButton>
+                      </form>
+                      <ButtonLink href={`/system/workspaces/${workspace.id}`} variant="secondary">Open workspace</ButtonLink>
+                    </div>
                   </div>
                 </div>
               </Card>
