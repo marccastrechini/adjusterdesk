@@ -30,6 +30,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
   const { claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/documents`;
+  const action = firstValue(query.action);
+  const selectedAction = action === "request-document" || action === "add-document" ? action : undefined;
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const category = firstValue(query.category)?.trim() ?? "ALL";
@@ -208,36 +210,70 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
           ) : null}
         </div>
 
-        <Card className="grid gap-4 content-start">
-          <h2 className="text-base font-semibold text-slate-950">Add document</h2>
-          <p className="text-sm leading-6 text-slate-600">Start from a request template or write your own so the office knows whether this file is missing or already uploaded.</p>
-          <ActionForm action={createDocumentWithState} className="grid gap-3">
-            <input type="hidden" name="claimId" value={claim.id} />
-            <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Start from a template" hint="Used when requesting claim documents. Or write your own request below.">
-              <select name="documentTemplateKey" defaultValue="" className={selectClassName}>
-                <option value="">Or write your own</option>
-                {documentRequestTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
-              </select>
-            </Field>
-            <Field label="Or write your own" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
-            <Field label="Category" hint="Choose the closest type of record.">
-              <select name="category" defaultValue="OTHER" className={selectClassName}>
-                {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </Field>
-            <Field label="File" hint="Optional for a request. Attach the file when it is already available (up to 25 MB)."><input name="file" type="file" className={inputClassName} /><FieldError name="file" /></Field>
-            <Field label="Notes" hint="For requests, say exactly what the client needs to send. Common requests add this when blank."><textarea name="notes" className={textareaClassName} /></Field>
-            <div className="grid gap-1.5">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input type="checkbox" name="requestedFromClient" className="h-4 w-4 rounded border-slate-300" />
-                Requested from client
-              </label>
-              <p className="text-xs leading-5 text-slate-500">Use this for missing photos, policy pages, receipts, or forms the office is waiting on.</p>
-            </div>
-            <SubmitButton>Save document or request</SubmitButton>
-          </ActionForm>
-        </Card>
+        <aside className="grid gap-6 content-start">
+          <Card className="grid gap-4">
+            <h2 className="text-base font-semibold text-slate-950">Document actions</h2>
+
+            {!selectedAction ? (
+              <div className="grid gap-4">
+                <div>
+                  <ButtonLink href={`${returnPath}?action=request-document`} variant="primary">Request document from client</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Track missing photos, policy pages, receipts, and forms you still need.</p>
+                </div>
+                <div>
+                  <ButtonLink href={`${returnPath}?action=add-document`} variant="secondary">Upload or record document</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Attach a file now or record a document the office already has.</p>
+                </div>
+              </div>
+            ) : null}
+
+            {selectedAction === "request-document" ? (
+              <ActionForm action={createDocumentWithState} className="grid gap-3">
+                <input type="hidden" name="claimId" value={claim.id} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <input type="hidden" name="requestedFromClient" value="on" />
+                <p className="text-sm leading-6 text-slate-600">Use this when the office is waiting on the client to send a document.</p>
+                <Field label="Start from a template" hint="Used for common claim document requests. Or write your own request below.">
+                  <select name="documentTemplateKey" defaultValue="" className={selectClassName}>
+                    <option value="">Or write your own</option>
+                    {documentRequestTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+                  </select>
+                </Field>
+                <Field label="Or write your own" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
+                <Field label="Category" hint="Choose the closest type of record.">
+                  <select name="category" defaultValue="OTHER" className={selectClassName}>
+                    {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Request notes" hint="Say exactly what the client needs to send and any due date."><textarea name="notes" className={textareaClassName} /></Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton>Save document request</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
+
+            {selectedAction === "add-document" ? (
+              <ActionForm action={createDocumentWithState} className="grid gap-3">
+                <input type="hidden" name="claimId" value={claim.id} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <p className="text-sm leading-6 text-slate-600">Use this for files the office already has or records without an uploaded file yet.</p>
+                <Field label="Document title" hint="Use a name the office will recognize later."><input name="title" className={inputClassName} placeholder="Estimate packet, signed agreement..." /><FieldError name="title" /></Field>
+                <Field label="Category" hint="Choose the closest type of record.">
+                  <select name="category" defaultValue="OTHER" className={selectClassName}>
+                    {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="File" hint="Attach the file when available (up to 25 MB)."><input name="file" type="file" className={inputClassName} /><FieldError name="file" /></Field>
+                <Field label="Notes" hint="Optional office notes about this record."><textarea name="notes" className={textareaClassName} /></Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton>Save uploaded or office document</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
+          </Card>
+        </aside>
       </div>
     </>
   );

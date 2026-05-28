@@ -34,6 +34,8 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
   const { templates } = await getTemplates();
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/communications`;
+  const action = firstValue(query.action);
+  const selectedAction = action === "log-communication" ? action : undefined;
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const type = firstValue(query.type)?.trim() ?? "ALL";
@@ -133,36 +135,51 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
           ) : null}
         </div>
 
-        <Card className="grid gap-4 content-start">
-          <h2 className="text-base font-semibold text-slate-950">Log communication</h2>
-          <p className="text-sm leading-6 text-slate-600">Save the important part of each client, carrier, or office touch so anyone can pick up the claim later.</p>
-          <ActionForm action={createActivityWithState} className="grid gap-3">
-            <input type="hidden" name="claimId" value={claim.id} />
-            <input type="hidden" name="contactId" value={claim.contactId} />
-            <input type="hidden" name="returnPath" value={returnPath} />
-            {messageTemplates.length > 0 ? (
-              <Field label="Start from a template" hint="Used in claim communications. Or write your own note below.">
-                <select name="activityTemplateKey" defaultValue="" className={selectClassName}>
-                  <option value="">Or write your own</option>
-                  {messageTemplates.map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}{template.subject ? ` · ${template.subject}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+        <aside className="grid gap-6 content-start">
+          <Card className="grid gap-4">
+            <h2 className="text-base font-semibold text-slate-950">Communication actions</h2>
+
+            {!selectedAction ? (
+              <div>
+                <ButtonLink href={`${returnPath}?action=log-communication`} variant="primary">Log note or call</ButtonLink>
+                <p className="mt-1.5 text-xs text-slate-500">Capture client, carrier, and office touches so anyone can pick up the claim.</p>
+              </div>
             ) : null}
-            <Field label="Type" hint="Pick the closest kind of contact.">
-              <select name="type" className={selectClassName} defaultValue="NOTE">
-                {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </Field>
-            <Field label="Date and time" hint="Leave blank to use the current time."><input name="occurredAt" type="datetime-local" className={inputClassName} /></Field>
-            <Field label="Subject" hint="Example: Carrier requested photos, client called about check, inspection completed. You can leave this blank if a message template supplies it."><input name="subject" className={inputClassName} /><FieldError name="subject" /></Field>
-            <Field label="Or write your own notes" hint="Use the template wording or type a custom note."><textarea name="body" className={textareaClassName} /></Field>
-            <SubmitButton>Save claim note</SubmitButton>
-          </ActionForm>
-        </Card>
+
+            {selectedAction === "log-communication" ? (
+              <ActionForm action={createActivityWithState} className="grid gap-3">
+                <input type="hidden" name="claimId" value={claim.id} />
+                <input type="hidden" name="contactId" value={claim.contactId} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <p className="text-sm leading-6 text-slate-600">Save the important part of each client, carrier, or office touch so anyone can pick up the claim later.</p>
+                {messageTemplates.length > 0 ? (
+                  <Field label="Start from a template" hint="Used in claim communications. Or write your own note below.">
+                    <select name="activityTemplateKey" defaultValue="" className={selectClassName}>
+                      <option value="">Or write your own</option>
+                      {messageTemplates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}{template.subject ? ` · ${template.subject}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                ) : null}
+                <Field label="Type" hint="Pick the closest kind of contact.">
+                  <select name="type" className={selectClassName} defaultValue="NOTE">
+                    {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Date and time" hint="Leave blank to use the current time."><input name="occurredAt" type="datetime-local" className={inputClassName} /></Field>
+                <Field label="Subject" hint="Example: Carrier requested photos, client called about check, inspection completed. You can leave this blank if a message template supplies it."><input name="subject" className={inputClassName} /><FieldError name="subject" /></Field>
+                <Field label="Or write your own notes" hint="Use the template wording or type a custom note."><textarea name="body" className={textareaClassName} /></Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton>Save claim note</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
+          </Card>
+        </aside>
       </div>
     </>
   );

@@ -43,6 +43,10 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
   const { claim, users } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/tasks`;
+  const action = firstValue(query.action);
+  const selectedAction = action === "add-task" || action === "deadline" ? action : undefined;
+  const rawEditTask = firstValue(query.editTask);
+  const editingTaskId = rawEditTask && claim.tasks.some((task) => task.id === rawEditTask) ? rawEditTask : undefined;
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const status = firstValue(query.status)?.trim() ?? "ALL";
@@ -162,32 +166,38 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
                           <p className="mt-1 text-sm text-slate-600">Due {formatDate(task.dueDate)} · {task.assignedUser?.name ?? "Unassigned"}</p>
                           {task.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{task.notes}</p> : null}
                         </div>
-                        <form action={toggleTask.bind(null, task.id, returnPath)}>
-                          <SubmitButton variant="secondary">{task.status === "DONE" ? "Reopen" : "Complete"}</SubmitButton>
-                        </form>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <form action={toggleTask.bind(null, task.id, returnPath)}>
+                            <SubmitButton variant="secondary">{task.status === "DONE" ? "Reopen" : "Complete"}</SubmitButton>
+                          </form>
+                          <ButtonLink href={`${returnPath}?editTask=${task.id}`} variant="secondary">Edit task</ButtonLink>
+                        </div>
                       </div>
 
-                      <form action={updateTask.bind(null, task.id, returnPath)} className="grid gap-3 rounded-md bg-slate-50 p-3 lg:grid-cols-2">
-                        <Field label="Task" required><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
-                        <Field label="Due date"><input name="dueDate" type="date" defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""} className={inputClassName} /></Field>
-                        <Field label="Assigned adjuster">
-                          <select name="assignedUserId" defaultValue={task.assignedUserId ?? ""} className={selectClassName}>
-                            <option value="">Unassigned</option>
-                            {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                          </select>
-                        </Field>
-                        <Field label="Priority">
-                          <select name="priority" defaultValue={task.priority} className={selectClassName}>
-                            {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                          </select>
-                        </Field>
-                        <div className="lg:col-span-2">
-                          <Field label="Notes" hint="Add details like who to call, what to ask for, or where the file is."><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <SubmitButton variant="secondary">Save task</SubmitButton>
-                        </div>
-                      </form>
+                      {editingTaskId === task.id ? (
+                        <form action={updateTask.bind(null, task.id, returnPath)} className="grid gap-3 rounded-md bg-slate-50 p-3 lg:grid-cols-2">
+                          <Field label="Task" required><input name="title" required defaultValue={task.title} className={inputClassName} /></Field>
+                          <Field label="Due date"><input name="dueDate" type="date" defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""} className={inputClassName} /></Field>
+                          <Field label="Assigned adjuster">
+                            <select name="assignedUserId" defaultValue={task.assignedUserId ?? ""} className={selectClassName}>
+                              <option value="">Unassigned</option>
+                              {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                            </select>
+                          </Field>
+                          <Field label="Priority">
+                            <select name="priority" defaultValue={task.priority} className={selectClassName}>
+                              {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                          </Field>
+                          <div className="lg:col-span-2">
+                            <Field label="Notes" hint="Add details like who to call, what to ask for, or where the file is."><textarea name="notes" defaultValue={task.notes ?? ""} className={textareaClassName} /></Field>
+                          </div>
+                          <div className="lg:col-span-2 flex flex-wrap items-center gap-2">
+                            <SubmitButton variant="secondary">Save task</SubmitButton>
+                            <ButtonLink href={returnPath} variant="secondary">Back to task list</ButtonLink>
+                          </div>
+                        </form>
+                      ) : null}
                     </Card>
                   ))}
                 </div>
@@ -198,54 +208,76 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
 
         <aside className="grid gap-6 content-start">
           <Card className="grid gap-4">
-            <h2 className="text-base font-semibold text-slate-950">Claim deadline</h2>
-            <p className="text-sm leading-6 text-slate-600">Keep the claim deadline and next step current so Today shows the right office work.</p>
-            <ActionForm action={updateClaimDeadlineWithState.bind(null, claim.id)} className="grid gap-3">
-              <Field label="Deadline date" hint="This appears in Today and on the claim overview.">
-                <input name="deadlineDate" type="date" defaultValue={claim.deadlineDate ? claim.deadlineDate.toISOString().slice(0, 10) : ""} className={inputClassName} />
-              </Field>
-              <Field label="Next step" hint="Short plain-language note for the next office action.">
-                <textarea name="nextStep" defaultValue={claim.nextStep ?? ""} className={textareaClassName} />
-              </Field>
-              <SubmitButton>Save deadline</SubmitButton>
-            </ActionForm>
+            <h2 className="text-base font-semibold text-slate-950">Task actions</h2>
+
+            {!selectedAction ? (
+              <div className="grid gap-4">
+                <div>
+                  <ButtonLink href={`${returnPath}?action=add-task`} variant="primary">Add task</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Schedule the next office follow-up so it appears on Today.</p>
+                </div>
+                <div>
+                  <ButtonLink href={`${returnPath}?action=deadline`} variant="secondary">Update claim deadline / next step</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Keep the claim deadline and short next-step note current.</p>
+                </div>
+              </div>
+            ) : null}
+
+            {selectedAction === "add-task" ? (
+              <ActionForm action={createTaskWithState} className="grid gap-3">
+                <input type="hidden" name="claimId" value={claim.id} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <p className="text-sm leading-6 text-slate-600">Start from a common task or write your own so the next office action stays clear.</p>
+                <Field label="Start from a template" hint="Used when adding claim tasks. Or write your own task below.">
+                  <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                    <option value="">Or write your own</option>
+                    {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+                  </select>
+                </Field>
+                <Field label="Or write your own" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
+                <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
+                <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
+                  <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
+                    <option value="">Unassigned</option>
+                    {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                  </select>
+                </Field>
+                <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
+                  <select name="priority" defaultValue="" className={selectClassName}>
+                    <option value="">Use common task priority</option>
+                    {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Notes" hint="Optional details for the person doing the work. Common tasks add a note when this is blank."><textarea name="notes" className={textareaClassName} /></Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton>Add task to claim</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
+
+            {selectedAction === "deadline" ? (
+              <ActionForm action={updateClaimDeadlineWithState.bind(null, claim.id)} className="grid gap-3">
+                <p className="text-sm leading-6 text-slate-600">Keep the claim deadline and next step current so Today shows the right office work.</p>
+                <Field label="Deadline date" hint="This appears in Today and on the claim overview.">
+                  <input name="deadlineDate" type="date" defaultValue={claim.deadlineDate ? claim.deadlineDate.toISOString().slice(0, 10) : ""} className={inputClassName} />
+                </Field>
+                <Field label="Next step" hint="Short plain-language note for the next office action.">
+                  <textarea name="nextStep" defaultValue={claim.nextStep ?? ""} className={textareaClassName} />
+                </Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton>Save deadline</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
+
             <div className="rounded-md bg-slate-50 p-3 text-sm text-slate-700">
               <p className="font-medium text-slate-950">Current deadline</p>
               <p className="mt-1">{formatDate(claim.deadlineDate)}</p>
               <p className="mt-3 font-medium text-slate-950">Next open task</p>
               <p className="mt-1">{nextOpenTask ? `${nextOpenTask.title} · ${formatDate(nextOpenTask.dueDate)}` : "No open task scheduled."}</p>
             </div>
-          </Card>
-
-          <Card className="grid gap-4 content-start">
-            <h2 className="text-base font-semibold text-slate-950">Add task</h2>
-            <p className="text-sm leading-6 text-slate-600">Start from a common task or write your own so the next office action stays clear.</p>
-            <ActionForm action={createTaskWithState} className="grid gap-3">
-              <input type="hidden" name="claimId" value={claim.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Start from a template" hint="Used when adding claim tasks. Or write your own task below.">
-                <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
-                  <option value="">Or write your own</option>
-                  {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
-                </select>
-              </Field>
-              <Field label="Or write your own" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
-              <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
-              <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
-                <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
-                  <option value="">Unassigned</option>
-                  {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                </select>
-              </Field>
-              <Field label="Priority" hint="Use High for urgent client, carrier, or deadline work.">
-                <select name="priority" defaultValue="" className={selectClassName}>
-                  <option value="">Use common task priority</option>
-                  {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <Field label="Notes" hint="Optional details for the person doing the work. Common tasks add a note when this is blank."><textarea name="notes" className={textareaClassName} /></Field>
-              <SubmitButton>Add task to claim</SubmitButton>
-            </ActionForm>
           </Card>
         </aside>
       </div>
