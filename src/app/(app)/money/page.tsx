@@ -156,7 +156,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
             {openInvoices.map((invoice) => (
               <Card key={invoice.id}>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link href={`/claims/${invoice.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">
                         {invoice.invoiceNumber} · {fullName(invoice.claim.contact)}
@@ -165,6 +165,17 @@ export default async function MoneyPage({ searchParams }: PageProps) {
                     </div>
                     <p className="mt-1 text-sm text-slate-600">{propertyAddress(invoice.claim.property)} · Due {formatDate(invoice.dueAt)}</p>
                     <p className="mt-1 text-sm text-slate-600">Next step: Open the claim money page to collect or record the remaining balance.</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link href={`/claims/${invoice.claim.id}/money`} className="inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100">
+                        Open money
+                      </Link>
+                      <Link href={`/claims/${invoice.claim.id}/money?action=payment`} className="inline-flex h-8 items-center justify-center rounded-md border border-teal-300 bg-teal-50 px-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100">
+                        Record payment
+                      </Link>
+                      <Link href={`/claims/${invoice.claim.id}/communications?action=log-communication`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                        Log note
+                      </Link>
+                    </div>
                   </div>
                   <div className="grid gap-1 text-sm text-slate-700 sm:grid-cols-3 lg:min-w-[430px] lg:text-right">
                     <p>Invoice {formatMoney(invoice.feeAmountCents)}</p>
@@ -195,6 +206,11 @@ export default async function MoneyPage({ searchParams }: PageProps) {
                     <p className="mt-1 text-sm text-slate-600">
                       {fullName(payment.claim.contact)} · {payment.invoice ? `Fee payment for ${payment.invoice.invoiceNumber}` : "Settlement check"} · Paid {formatDate(payment.paidAt)} · Check {payment.checkNumber ?? "not set"}
                     </p>
+                    <div className="mt-2">
+                      <Link href={`/claims/${payment.claim.id}/money`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                        Open money
+                      </Link>
+                    </div>
                   </div>
                   <p className="text-lg font-semibold text-slate-950">{formatMoney(payment.amountCents)}</p>
                 </div>

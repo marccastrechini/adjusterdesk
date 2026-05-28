@@ -125,6 +125,14 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
             {filteredClaims.map((claim) => {
               const openTasks = claim.tasks.filter((task) => task.status === "OPEN").length;
               const openInvoiceCents = claim.invoices.reduce((sum, invoice) => sum + invoice.feeAmountCents - invoice.amountPaidCents, 0);
+              const tasksActionClassName =
+                openTasks > 0
+                  ? "inline-flex h-8 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+                  : "inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50";
+              const moneyActionClassName =
+                openInvoiceCents > 0
+                  ? "inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100"
+                  : "inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50";
               return (
                 <Card key={claim.id}>
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -140,6 +148,23 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
                         {claim.carrier?.name ?? "Carrier to confirm"} · Claim #{claim.claimNumber ?? "not set"} · Deadline {formatDate(claim.deadlineDate)}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-700">Next step: {claim.nextStep ?? "Open the claim and set the next office action."}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link href={`/claims/${claim.id}`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                          Open claim
+                        </Link>
+                        <Link href={`/claims/${claim.id}/tasks`} className={tasksActionClassName}>
+                          Tasks{openTasks > 0 ? ` (${openTasks})` : ""}
+                        </Link>
+                        <Link href={`/claims/${claim.id}/documents`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                          Documents
+                        </Link>
+                        <Link href={`/claims/${claim.id}/communications?action=log-communication`} className="inline-flex h-8 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                          Log note
+                        </Link>
+                        <Link href={`/claims/${claim.id}/money`} className={moneyActionClassName}>
+                          Money{openInvoiceCents > 0 ? ` (${formatMoney(openInvoiceCents)})` : ""}
+                        </Link>
+                      </div>
                     </div>
                     <div className="grid gap-1 text-sm text-slate-600 sm:grid-cols-3 xl:min-w-[420px] xl:text-right">
                       <p>Assigned: {claim.assignedUser?.name ?? "Unassigned"}</p>
