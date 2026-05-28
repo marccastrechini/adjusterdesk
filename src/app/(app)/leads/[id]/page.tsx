@@ -13,12 +13,18 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function LeadDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const query = await searchParams;
   const { lead, users } = await getLead(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/leads/${lead.id}`;
+  const action = firstValue(query.action);
+  const selectedAction = action === "convert" || action === "task" || action === "activity" ? action : undefined;
 
   return (
     <>
@@ -92,76 +98,99 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
 
         <aside className="grid gap-6 content-start">
           <Card className="grid gap-4">
-            <h2 className="text-base font-semibold text-slate-950">Convert to claim</h2>
-            {lead.convertedClaim ? (
-              <div>
-                <p className="text-sm text-slate-600">This lead has already been converted.</p>
-                <Link href={`/claims/${lead.convertedClaim.id}`} className="mt-3 inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open claim</Link>
+            <h2 className="text-base font-semibold text-slate-950">Lead actions</h2>
+
+            {!selectedAction ? (
+              <div className="grid gap-3">
+                {lead.convertedClaim ? (
+                  <Link href={`/claims/${lead.convertedClaim.id}`} className="inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open converted claim</Link>
+                ) : (
+                  <ButtonLink href={`${returnPath}?action=convert`} variant="secondary">Convert to claim</ButtonLink>
+                )}
+                <ButtonLink href={`${returnPath}?action=task`} variant="secondary">Add follow-up task</ButtonLink>
+                <ButtonLink href={`${returnPath}?action=activity`} variant="secondary">Log note or call</ButtonLink>
               </div>
-            ) : (
-              <ActionForm action={convertLeadToClaimWithState.bind(null, lead.id)} className="grid gap-3">
-                <p className="text-sm leading-6 text-slate-600">Use this after the client is ready to open a claim. Carrier details can be filled in later if they are not known yet.</p>
-                <Field label="Carrier" hint="Optional. Add the carrier name if the client has it."><input name="carrierName" className={inputClassName} /></Field>
-                <Field label="Policy number" hint="Optional until the policy declarations are collected."><input name="policyNumber" className={inputClassName} /></Field>
-                <Field label="Carrier claim number" hint="Optional until the carrier assigns one."><input name="claimNumber" className={inputClassName} /></Field>
-                <Field label="Next step" hint="One clear action for the new claim, like request policy, schedule inspection, or call carrier."><textarea name="nextStep" className={textareaClassName} /></Field>
-                <Field label="First follow-up task" hint="This becomes the first open task on the new claim.">
-                  <input name="followUpTaskTitle" defaultValue={`Call ${lead.contact.firstName} and open the new claim file`} className={inputClassName} />
+            ) : null}
+
+            {selectedAction === "convert" ? (
+              lead.convertedClaim ? (
+                <div className="grid gap-3">
+                  <p className="text-sm text-slate-600">This lead has already been converted.</p>
+                  <Link href={`/claims/${lead.convertedClaim.id}`} className="inline-flex text-sm font-medium text-teal-800 hover:text-teal-900">Open converted claim</Link>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              ) : (
+                <ActionForm action={convertLeadToClaimWithState.bind(null, lead.id)} className="grid gap-3">
+                  <p className="text-sm leading-6 text-slate-600">Use this after the client is ready to open a claim. Carrier details can be filled in later if they are not known yet.</p>
+                  <Field label="Carrier" hint="Optional. Add the carrier name if the client has it."><input name="carrierName" className={inputClassName} /></Field>
+                  <Field label="Policy number" hint="Optional until the policy declarations are collected."><input name="policyNumber" className={inputClassName} /></Field>
+                  <Field label="Carrier claim number" hint="Optional until the carrier assigns one."><input name="claimNumber" className={inputClassName} /></Field>
+                  <Field label="Next step" hint="One clear action for the new claim, like request policy, schedule inspection, or call carrier."><textarea name="nextStep" className={textareaClassName} /></Field>
+                  <Field label="First follow-up task" hint="This becomes the first open task on the new claim.">
+                    <input name="followUpTaskTitle" defaultValue={`Call ${lead.contact.firstName} and open the new claim file`} className={inputClassName} />
+                  </Field>
+                  <Field label="First follow-up date" hint="Use today or the next office day so the claim shows up on Today.">
+                    <input name="followUpDueDate" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className={inputClassName} />
+                  </Field>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <SubmitButton>Convert to claim and open overview</SubmitButton>
+                    <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                  </div>
+                </ActionForm>
+              )
+            ) : null}
+
+            {selectedAction === "task" ? (
+              <ActionForm action={createTaskWithState} className="grid gap-3">
+                <p className="text-sm leading-6 text-slate-600">Add the next call, text, appointment reminder, or document follow-up so it appears on Today when due.</p>
+                <input type="hidden" name="leadId" value={lead.id} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <Field label="Common task" hint="Optional office default for routine lead work.">
+                  <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                    <option value="">Custom task</option>
+                    {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
+                  </select>
                 </Field>
-                <Field label="First follow-up date" hint="Use today or the next office day so the claim shows up on Today.">
-                  <input name="followUpDueDate" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className={inputClassName} />
+                <Field label="Custom task" hint="Use this when the common task list does not fit."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
+                <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
+                <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
+                  <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
+                    <option value="">Unassigned</option>
+                    {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                  </select>
                 </Field>
-                <SubmitButton>Convert to claim and open overview</SubmitButton>
+                <Field label="Priority" hint="Use High for work that should not wait.">
+                  <select name="priority" defaultValue="" className={selectClassName}>
+                    <option value="">Use common task priority</option>
+                    {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton variant="secondary">Add follow-up task</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
               </ActionForm>
-            )}
-          </Card>
+            ) : null}
 
-          <Card className="grid gap-4">
-            <h2 className="text-base font-semibold text-slate-950">Add follow-up task</h2>
-            <p className="text-sm leading-6 text-slate-600">Add the next call, text, appointment reminder, or document follow-up so it appears on Today when due.</p>
-            <ActionForm action={createTaskWithState} className="grid gap-3">
-              <input type="hidden" name="leadId" value={lead.id} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Common task" hint="Optional office default for routine lead work.">
-                <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
-                  <option value="">Custom task</option>
-                  {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
-                </select>
-              </Field>
-              <Field label="Custom task" hint="Use this when the common task list does not fit."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
-              <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
-              <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
-                <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
-                  <option value="">Unassigned</option>
-                  {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                </select>
-              </Field>
-              <Field label="Priority" hint="Use High for work that should not wait.">
-                <select name="priority" defaultValue="" className={selectClassName}>
-                  <option value="">Use common task priority</option>
-                  {taskPriorityOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <SubmitButton variant="secondary">Add follow-up task</SubmitButton>
-            </ActionForm>
-          </Card>
-
-          <Card className="grid gap-4">
-            <h2 className="text-base font-semibold text-slate-950">Log lead activity</h2>
-            <p className="text-sm leading-6 text-slate-600">Save calls, texts, emails, and quick office notes so the next person can see what happened.</p>
-            <ActionForm action={createActivityWithState} className="grid gap-3">
-              <input type="hidden" name="leadId" value={lead.id} />
-              <input type="hidden" name="contactId" value={lead.contactId} />
-              <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Type" hint="Pick the closest contact type.">
-                <select name="type" className={selectClassName} defaultValue="NOTE">
-                  {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </Field>
-              <Field label="Subject" required hint="Example: Left voicemail, photos received, appointment set."><input name="subject" required className={inputClassName} /><FieldError name="subject" /></Field>
-              <Field label="Notes" hint="Add the details the office will need later."><textarea name="body" className={textareaClassName} /></Field>
-              <SubmitButton variant="secondary">Log lead note</SubmitButton>
-            </ActionForm>
+            {selectedAction === "activity" ? (
+              <ActionForm action={createActivityWithState} className="grid gap-3">
+                <p className="text-sm leading-6 text-slate-600">Save calls, texts, emails, and quick office notes so the next person can see what happened.</p>
+                <input type="hidden" name="leadId" value={lead.id} />
+                <input type="hidden" name="contactId" value={lead.contactId} />
+                <input type="hidden" name="returnPath" value={returnPath} />
+                <Field label="Type" hint="Pick the closest contact type.">
+                  <select name="type" className={selectClassName} defaultValue="NOTE">
+                    {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Subject" required hint="Example: Left voicemail, photos received, appointment set."><input name="subject" required className={inputClassName} /><FieldError name="subject" /></Field>
+                <Field label="Notes" hint="Add the details the office will need later."><textarea name="body" className={textareaClassName} /></Field>
+                <div className="flex flex-wrap items-center gap-2">
+                  <SubmitButton variant="secondary">Log lead note</SubmitButton>
+                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                </div>
+              </ActionForm>
+            ) : null}
           </Card>
         </aside>
       </div>
