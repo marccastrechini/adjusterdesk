@@ -1,18 +1,42 @@
 import { createTemplate, deleteTemplate } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
+import { TemplateType } from "@/generated/prisma/client";
 import { templateTypeOptions } from "@/lib/options";
 import { getTemplates } from "@/lib/queries";
-import { documentCategoryGuides, documentRequestTemplates, taskTemplates } from "@/lib/templates";
+import { documentCategoryGuides, documentRequestTemplates, messageTemplateTypes, taskTemplates, templateUsageSummaries } from "@/lib/templates";
 import { Badge, Card, EmptyState, Field, inputClassName, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
+
+const messageTemplateTypeLabels = new Map<TemplateType, string>([
+  [TemplateType.EMAIL, "Email"],
+  [TemplateType.TEXT, "Text"],
+  [TemplateType.LETTER, "Letter"],
+]);
 
 export default async function TemplatesPage() {
   const { templates } = await getTemplates();
+  const messageTemplates = templates.filter((template) => messageTemplateTypes.includes(template.type));
+  const checklistTemplates = templates.filter((template) => template.type === TemplateType.CHECKLIST);
 
   return (
     <>
       <PageHeader title="Templates" description="Common office defaults for follow-ups, document requests, categories, and reusable client-facing language." />
 
       <div className="grid gap-6">
+        <Section title="Where templates are used" description="This map shows which template types are active today and which ones are still setup-only.">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {templateUsageSummaries.map((item) => (
+              <Card key={item.title} className="grid content-start gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h3 className="font-semibold text-slate-950">{item.title}</h3>
+                  <Badge tone={item.status === "Active" ? "green" : item.status === "Partially used" ? "amber" : "slate"}>{item.status}</Badge>
+                </div>
+                <p className="text-sm leading-6 text-slate-600">{item.usedIn}</p>
+                <p className="text-xs leading-5 text-slate-500">{item.example}</p>
+              </Card>
+            ))}
+          </div>
+        </Section>
+
         <Section title="Task templates" description="Common follow-ups used from lead and claim task forms.">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {taskTemplates.map((template) => (
@@ -21,6 +45,7 @@ export default async function TemplatesPage() {
                   <h3 className="font-semibold text-slate-950">{template.title}</h3>
                   <Badge tone={template.priority === "HIGH" ? "red" : "slate"}>{labelFromEnum(template.priority)}</Badge>
                 </div>
+                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Used when adding lead and claim tasks.</p>
                 <p className="text-sm leading-6 text-slate-600">{template.notes}</p>
               </Card>
             ))}
@@ -36,6 +61,7 @@ export default async function TemplatesPage() {
                     <h3 className="font-semibold text-slate-950">{template.title}</h3>
                     <Badge>{labelFromEnum(template.category)}</Badge>
                   </div>
+                  <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Used when requesting claim documents.</p>
                   <p className="text-sm leading-6 text-slate-600">{template.notes}</p>
                 </Card>
               ))}
@@ -58,35 +84,65 @@ export default async function TemplatesPage() {
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <Section title="Saved message templates" description="Reusable email, text, letter, and checklist language for the office.">
-            {templates.length === 0 ? (
-              <EmptyState title="No saved messages" message="Add a follow-up or document request message for the office." />
-            ) : (
-              <div className="grid gap-3">
-                {templates.map((template) => (
-                  <Card key={template.id}>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-950">{template.name}</p>
-                        {template.subject ? <p className="mt-1 text-sm text-slate-600">{template.subject}</p> : null}
+          <div className="grid gap-6">
+            <Section title="Claim communication templates" description="Email, text, and letter templates can start a claim communication note. Use the same plain-language wording here and on the claim communications page.">
+              {messageTemplates.length === 0 ? (
+                <EmptyState title="No saved message templates" message="Add a short office message starter for claim communications." />
+              ) : (
+                <div className="grid gap-3">
+                  {messageTemplates.map((template) => (
+                    <Card key={template.id}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-950">{template.name}</p>
+                          {template.subject ? <p className="mt-1 text-sm text-slate-600">{template.subject}</p> : null}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge>{messageTemplateTypeLabels.get(template.type) ?? labelFromEnum(template.type)}</Badge>
+                          <Badge tone="green">Used in claim communications</Badge>
+                          <form action={deleteTemplate.bind(null, template.id)}>
+                            <SubmitButton variant="secondary">Delete</SubmitButton>
+                          </form>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge>{labelFromEnum(template.type)}</Badge>
-                        <form action={deleteTemplate.bind(null, template.id)}>
-                          <SubmitButton variant="secondary">Delete</SubmitButton>
-                        </form>
+                      <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{template.body}</p>
+                      <p className="mt-3 text-xs text-slate-500">Updated {formatDate(template.updatedAt)}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Section>
+
+            <Section title="Checklist templates" description="Checklists stay in Settings for now. They are useful for office prep, but they are not connected to a claim screen yet.">
+              {checklistTemplates.length === 0 ? (
+                <EmptyState title="No checklist templates" message="Add one if your office wants a simple prep checklist." />
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {checklistTemplates.map((template) => (
+                    <Card key={template.id} className="grid content-start gap-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-950">{template.name}</p>
+                          <p className="mt-1 text-sm text-slate-600">Checklist template</p>
+                        </div>
+                        <Badge tone="slate">Planned</Badge>
                       </div>
-                    </div>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{template.body}</p>
-                    <p className="mt-3 text-xs text-slate-500">Updated {formatDate(template.updatedAt)}</p>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </Section>
+                      <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Settings only for now.</p>
+                      <p className="text-sm leading-6 whitespace-pre-line text-slate-700">{template.body}</p>
+                      <p className="text-xs text-slate-500">Updated {formatDate(template.updatedAt)}</p>
+                      <form action={deleteTemplate.bind(null, template.id)}>
+                        <SubmitButton variant="secondary">Delete</SubmitButton>
+                      </form>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Section>
+          </div>
 
           <Card className="grid gap-4 content-start">
-            <h2 className="text-base font-semibold text-slate-950">Add message template</h2>
+            <h2 className="text-base font-semibold text-slate-950">Add template</h2>
+            <p className="text-sm leading-6 text-slate-600">Email, text, and letter templates can start claim communications. Checklist templates stay in Settings until a workflow needs them.</p>
             <form action={createTemplate} className="grid gap-3">
               <Field label="Name"><input name="name" required className={inputClassName} /></Field>
               <Field label="Type">

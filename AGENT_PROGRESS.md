@@ -72,6 +72,7 @@
 - Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent AdjusterDesk branding and plain-language tone.
 - Added secure user invitations with one-time hashed invitation tokens, invite email delivery through the shared system template, an `/accept-invite` password setup page, and resend-invite actions in system and workspace user management.
 - Added local production runtime operations tooling for the main demo machine: `run-local-production.ps1`, `deploy-local-production.ps1`, Task Scheduler management scripts, npm aliases, and a new `docs/LOCAL_PRODUCTION.md` runbook linked from README and local-hosting docs.
+- Added a production-only demo bootstrap slice for the public demo instance, including a guarded `prod:demo:bootstrap` npm alias, a repeatable production demo workspace seeding script, and `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.
 - Split local runtime configuration into guarded development and production profiles with `.env.development.example`, `.env.production.example`, ignored `.env.development.local`/`.env.production.local` files, and profile-aware helpers for `DATABASE_URL`, `APP_BASE_URL`, and uploads storage paths.
 - Added shared PowerShell runtime helpers plus guarded `dev:local`, `dev:debug:local`, `prod:run:local`, and `prod:backup:local` flows so development and production backups/runs cannot silently cross-use the wrong SQLite database or uploads folder.
 - Updated local hosting, local production, email setup, system admin, pilot readiness, and README docs to point at the correct profile files and backup/reset commands.
@@ -79,10 +80,18 @@
 - Corrected environment/profile defaults and storage path handling so development defaults to `storage/uploads-development`, production defaults to `storage/uploads-production`, and saved upload records follow the active uploads directory.
 - Expanded local ignore rules for local-production safety by ignoring `prisma/production.db` sidecars and profile-specific uploads directories.
 - Updated `docs/LOCAL_PRODUCTION.md` with exact daily production commands for deploy, task install/start/stop/status, backup, and public tunnel confirmation.
+- Updated `README.md` and `docs/LOCAL_PRODUCTION.md` to link the production demo bootstrap guide and explain the runtime password flow.
 
 ## In Progress
 
 - No active implementation work.
+
+## Template Map
+
+- Task templates: managed in Settings > Templates, used on lead and claim task forms, active.
+- Document request templates: managed in Settings > Templates, used on claim documents, active.
+- Message templates (EMAIL, TEXT, LETTER): managed in Settings > Templates, used on claim communications as note starters, partially used.
+- Checklist templates: managed in Settings > Templates, setup-only for now, not currently used in a claim workflow.
 
 ## Verified
 
@@ -160,6 +169,11 @@
 - Manual smoke-tested the live runtime: `npm run prod:run:local` printed the production env summary for `.env.production.local`; `http://127.0.0.1:3000` and `https://adjusterdesk.xyz/system` both returned the sign-in page in this session; the only blocker was an existing node listener already occupying port 3000, so a second production instance could not bind from this sandbox.
 - Ran required pre-edit checks: `node --version`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local`.
 - Re-ran required post-edit checks after task/script hardening updates: `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run prod:backup:local`.
+- Ran required pre-edit checks for the production demo bootstrap slice: `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run prod:backup:local`.
+- Ran required post-edit checks after the production demo bootstrap slice: `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run prod:backup:local`.
+- Manual smoke on the local production listener at `http://localhost:3000`: signed in as `demo.owner@adjusterdesk.xyz`, confirmed `AdjusterDesk Demo Office`, confirmed `Today` shows overdue tasks, due-today tasks, upcoming deadlines, lead follow-ups, and unpaid receivables, confirmed `/leads` shows the fake demo leads, confirmed `/claims` shows the fake demo claims, confirmed one converted claim shows documents/tasks/money/client-status data, and confirmed `/system` redirects back to `/today` for the demo owner.
+- Confirmed the production bootstrap backup at `backups/adjusterdesk-production-20260528-084504` includes `prisma/production.db` and `storage/uploads-production`.
+- Confirmed the public hostname `https://adjusterdesk.xyz` still resolves to a parked GoDaddy landing page in this environment, so the browser smoke used the local production listener instead of the external tunnel.
 - Verified production profile mapping without exposing secrets: `APP_ENV=production`, `APP_BASE_URL=https://adjusterdesk.xyz`, `DATABASE_URL=file:./prisma/production.db`, `UPLOADS_DIR=storage/uploads-production`, `SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz`, and configured `SYSTEM_EMAIL_FROM`/`SYSTEM_EMAIL_REPLY_TO` values.
 - Verified development profile mapping without exposing secrets: `APP_ENV=development`, `APP_BASE_URL=http://localhost:3000`, `DATABASE_URL=file:./prisma/dev.db`, and `UPLOADS_DIR=storage/uploads-development`.
 - Verified `.env.development.local`, `.env.production.local`, local SQLite files, uploads folders, and backup folders are ignored and not staged.
@@ -168,6 +182,9 @@
 - Verified production backup includes production database/uploads once production data paths exist (`HAS_PROD_DB=True`, `HAS_PROD_UPLOADS=True`).
 - Attempted `npm run prod:run:local`; production profile loaded correctly but start failed with `EADDRINUSE` because another node process already owns port 3000.
 - Attempted `npm run prod:task:install -- -ConfirmInstall` and `npm run prod:task:start`; task install/start is still blocked in this session by local task-creation permissions.
+- Production demo bootstrap note: the script now creates a repeatable fake demo workspace in the production profile, but public tunnel verification still needs the external hostname to point at this local listener before the browser can confirm `https://adjusterdesk.xyz/login` directly.
+- Template audit slice: task templates and document request templates are active on their claim pages, saved EMAIL/TEXT/LETTER templates now start claim communications, and CHECKLIST templates are clearly marked as setup-only.
+- Template audit slice checks run: post-edit verification, browser smoke review, and backup validation still pending.
 
 ## Known Notes
 

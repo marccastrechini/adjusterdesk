@@ -1,5 +1,5 @@
-import { DocumentCategory, TaskPriority } from "@/generated/prisma/client";
-import type { DocumentCategory as DocumentCategoryValue, TaskPriority as TaskPriorityValue } from "@/generated/prisma/client";
+import { DocumentCategory, TaskPriority, TemplateType } from "@/generated/prisma/client";
+import type { DocumentCategory as DocumentCategoryValue, TaskPriority as TaskPriorityValue, TemplateType as TemplateTypeValue } from "@/generated/prisma/client";
 
 type MaybeText = string | null | undefined;
 
@@ -23,8 +23,51 @@ export type DocumentRequestTemplate = {
   notes: string;
 };
 
+export type SavedMessageTemplate = {
+  name: string;
+  subject: string | null;
+  body: string;
+  type: TemplateTypeValue;
+};
+
+export type TemplateUsageSummary = {
+  title: string;
+  status: "Active" | "Partially used" | "Planned";
+  usedIn: string;
+  example: string;
+};
+
 const taskPriorityValues = new Set<string>(Object.values(TaskPriority));
 const documentCategoryValues = new Set<string>(Object.values(DocumentCategory));
+
+export const messageTemplateTypes: TemplateTypeValue[] = [TemplateType.EMAIL, TemplateType.TEXT, TemplateType.LETTER];
+
+export const templateUsageSummaries = [
+  {
+    title: "Task templates",
+    status: "Active",
+    usedIn: "Claim tasks and lead follow-ups",
+    example: "Used when adding claim tasks.",
+  },
+  {
+    title: "Document request templates",
+    status: "Active",
+    usedIn: "Claim documents",
+    example: "Used when requesting claim documents.",
+  },
+  {
+    title: "Message templates",
+    status: "Partially used",
+    usedIn: "Claim communications",
+    example: "Used when logging a call, text, email, or letter note.",
+  },
+  {
+    title: "Checklist templates",
+    status: "Planned",
+    usedIn: "Settings only for now",
+    example: "Not connected to a claim workflow yet.",
+  },
+] as const satisfies readonly TemplateUsageSummary[];
 
 export const taskTemplates = [
   {
@@ -193,5 +236,18 @@ export function documentInputFromTemplate(input: {
     category: template?.category ?? (documentCategoryValues.has(category ?? "") ? (category as DocumentCategoryValue) : DocumentCategory.OTHER),
     notes: cleanText(input.notes) ?? template?.notes,
     requestedFromClient: Boolean(input.requestedFromClient || (template && !input.hasFile)),
+  };
+}
+
+export function activityInputFromTemplate(input: {
+  template?: SavedMessageTemplate;
+  subject?: MaybeText;
+  body?: MaybeText;
+}) {
+  const templateSubject = cleanText(input.template?.subject) ?? cleanText(input.template?.name);
+
+  return {
+    subject: cleanText(input.subject) ?? templateSubject ?? "",
+    body: cleanText(input.body) ?? cleanText(input.template?.body),
   };
 }

@@ -833,6 +833,13 @@ async function main() {
         },
         {
           firmId: firm.id,
+          name: "Claim follow-up letter",
+          type: TemplateType.LETTER,
+          subject: "Claim follow-up for {{clientLastName}} file",
+          body: "Dear {{clientFirstName}},\n\nThis letter follows up on the current claim work and any items we still need from your office.\n\nThank you,\nAdjusterDesk Demo Office",
+        },
+        {
+          firmId: firm.id,
           name: "Inspection checklist",
           type: TemplateType.CHECKLIST,
           body: "Policy declarations\nSigned contract\nDamage photos\nMitigation documents\nCarrier claim number",

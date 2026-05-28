@@ -210,17 +210,17 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
 
         <Card className="grid gap-4 content-start">
           <h2 className="text-base font-semibold text-slate-950">Add document</h2>
-          <p className="text-sm leading-6 text-slate-600">Upload a local file when you have it, or mark it requested from client to track missing photos, policy pages, or invoices.</p>
+          <p className="text-sm leading-6 text-slate-600">Start from a request template or write your own so the office knows whether this file is missing or already uploaded.</p>
           <ActionForm action={createDocumentWithState} className="grid gap-3">
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="returnPath" value={returnPath} />
-            <Field label="Common request" hint="Optional client document request for routine claim files.">
+            <Field label="Start from a template" hint="Used when requesting claim documents. Or write your own request below.">
               <select name="documentTemplateKey" defaultValue="" className={selectClassName}>
-                <option value="">Custom document</option>
+                <option value="">Or write your own</option>
                 {documentRequestTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
               </select>
             </Field>
-            <Field label="Title" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
+            <Field label="Or write your own" hint="Use a name the office and client will recognize."><input name="title" className={inputClassName} placeholder="Policy declarations, kitchen photos..." /><FieldError name="title" /></Field>
             <Field label="Category" hint="Choose the closest type of record.">
               <select name="category" defaultValue="OTHER" className={selectClassName}>
                 {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}

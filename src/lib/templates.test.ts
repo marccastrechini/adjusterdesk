@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DocumentCategory, TaskPriority } from "@/generated/prisma/client";
-import { documentInputFromTemplate, taskInputFromTemplate } from "./templates";
+import { activityInputFromTemplate, documentInputFromTemplate, taskInputFromTemplate } from "./templates";
 
 describe("office templates", () => {
   it("uses a selected task template when the task name is blank", () => {
@@ -47,5 +47,37 @@ describe("office templates", () => {
     assert.equal(input.category, DocumentCategory.PHOTOS);
     assert.equal(input.notes, "Received by text.");
     assert.equal(input.requestedFromClient, false);
+  });
+
+  it("uses a message template as a communication starter but keeps custom text first", () => {
+    const input = activityInputFromTemplate({
+      template: {
+        name: "Carrier follow-up email",
+        subject: "Follow-up on claim status",
+        body: "Hello, checking on the claim review.",
+        type: "EMAIL",
+      },
+      subject: "",
+      body: "Custom note.",
+    });
+
+    assert.equal(input.subject, "Follow-up on claim status");
+    assert.equal(input.body, "Custom note.");
+  });
+
+  it("falls back to the template name when a message template has no subject", () => {
+    const input = activityInputFromTemplate({
+      template: {
+        name: "Client text follow-up",
+        subject: null,
+        body: "Hi {{clientFirstName}}, please send the photos.",
+        type: "TEXT",
+      },
+      subject: "",
+      body: "",
+    });
+
+    assert.equal(input.subject, "Client text follow-up");
+    assert.equal(input.body, "Hi {{clientFirstName}}, please send the photos.");
   });
 });

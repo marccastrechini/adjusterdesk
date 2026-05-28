@@ -219,17 +219,17 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
 
           <Card className="grid gap-4 content-start">
             <h2 className="text-base font-semibold text-slate-950">Add task</h2>
-            <p className="text-sm leading-6 text-slate-600">Add the next call, carrier follow-up, document request, inspection reminder, or deadline.</p>
+            <p className="text-sm leading-6 text-slate-600">Start from a common task or write your own so the next office action stays clear.</p>
             <ActionForm action={createTaskWithState} className="grid gap-3">
               <input type="hidden" name="claimId" value={claim.id} />
               <input type="hidden" name="returnPath" value={returnPath} />
-              <Field label="Common task" hint="Optional office default for routine claim work.">
+              <Field label="Start from a template" hint="Used when adding claim tasks. Or write your own task below.">
                 <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
-                  <option value="">Custom task</option>
+                  <option value="">Or write your own</option>
                   {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
                 </select>
               </Field>
-              <Field label="Custom task" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
+              <Field label="Or write your own" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
               <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
               <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
                 <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>

@@ -31,7 +31,7 @@ import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
-import { documentInputFromTemplate, taskInputFromTemplate } from "@/lib/templates";
+import { activityInputFromTemplate, documentInputFromTemplate, messageTemplateTypes, taskInputFromTemplate } from "@/lib/templates";
 import { hasUsableCsvRows, normalizeImportType } from "@/lib/import-utils";
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
@@ -863,10 +863,31 @@ export async function createActivity(formData: FormData) {
   const rawClaimId = formData.get("claimId")?.toString() || undefined;
   const rawLeadId = formData.get("leadId")?.toString() || undefined;
   const rawContactId = formData.get("contactId")?.toString() || undefined;
+  const rawTemplateKey = formData.get("activityTemplateKey")?.toString() || undefined;
   const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
   const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
   const contactId = rawContactId ? await requireOwnedContactId(firm.id, rawContactId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
+  const template = rawTemplateKey
+    ? await prisma.template.findFirst({
+        where: {
+          id: rawTemplateKey,
+          firmId: firm.id,
+          type: { in: messageTemplateTypes },
+        },
+        select: {
+          name: true,
+          subject: true,
+          body: true,
+          type: true,
+        },
+      })
+    : undefined;
+  const activityInput = activityInputFromTemplate({
+    template: template ?? undefined,
+    subject: formData.get("subject")?.toString(),
+    body: formData.get("body")?.toString(),
+  });
 
   await prisma.activity.create({
     data: {
@@ -876,8 +897,8 @@ export async function createActivity(formData: FormData) {
       contactId,
       userId: user.id,
       type: (formData.get("type")?.toString() as ActivityType) || ActivityType.NOTE,
-      subject: requiredText.parse(formData.get("subject")?.toString()),
-      body: formData.get("body")?.toString() || undefined,
+      subject: requiredText.parse(activityInput.subject),
+      body: activityInput.body,
       occurredAt: asDateTime(formData.get("occurredAt")?.toString()) ?? new Date(),
     },
   });
@@ -888,10 +909,33 @@ export async function createActivity(formData: FormData) {
 
 export async function createActivityWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
-  requiredField(formData, "subject", "Add a short subject for this note.", errors);
+  const { firm } = await getDemoContext();
+  const rawTemplateKey = formData.get("activityTemplateKey")?.toString() || undefined;
+  const template = rawTemplateKey
+    ? await prisma.template.findFirst({
+        where: {
+          id: rawTemplateKey,
+          firmId: firm.id,
+          type: { in: messageTemplateTypes },
+        },
+        select: {
+          name: true,
+          subject: true,
+          body: true,
+          type: true,
+        },
+      })
+    : undefined;
+  const activityInput = activityInputFromTemplate({
+    template: template ?? undefined,
+    subject: formData.get("subject")?.toString(),
+    body: formData.get("body")?.toString(),
+  });
+
+  if (!activityInput.subject) errors.subject = "Add a short subject or choose a saved message template.";
 
   if (hasErrors(errors)) {
-    return formError("Add a short subject before saving this note.", errors);
+    return formError("Add a subject or choose a saved message template before saving this note.", errors);
   }
 
   await createActivity(formData);

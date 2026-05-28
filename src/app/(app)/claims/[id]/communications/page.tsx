@@ -5,7 +5,8 @@ import { createActivityWithState } from "@/lib/actions";
 import { formatDateTime, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { activityTypeOptions } from "@/lib/options";
-import { getClaim } from "@/lib/queries";
+import { getClaim, getTemplates } from "@/lib/queries";
+import { messageTemplateTypes } from "@/lib/templates";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -30,12 +31,14 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
   const { id } = await params;
   const query = await searchParams;
   const { claim } = await getClaim(id);
+  const { templates } = await getTemplates();
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/communications`;
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const type = firstValue(query.type)?.trim() ?? "ALL";
   const hasFilters = Boolean(q) || type !== "ALL";
+  const messageTemplates = templates.filter((template) => messageTemplateTypes.includes(template.type));
 
   const filteredActivities = claim.activities.filter((activity) => {
     const contactName = activity.contact ? fullName(activity.contact) : "";
@@ -54,7 +57,7 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
 
   return (
     <>
-      <PageHeader title={`${fullName(claim.contact)} communications`} description="Keep a manual record of calls, emails, texts, meetings, inspections, and important notes." actions={<ButtonLink href={`/claims/${claim.id}`} variant="secondary">Claim overview</ButtonLink>} />
+      <PageHeader title={`${fullName(claim.contact)} communications`} description="Keep a manual record of calls, emails, texts, meetings, inspections, and important notes. Saved message templates can start a note here." actions={<ButtonLink href={`/claims/${claim.id}`} variant="secondary">Claim overview</ButtonLink>} />
       <ClaimTabs claimId={claim.id} />
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
@@ -137,14 +140,26 @@ export default async function ClaimCommunicationsPage({ params, searchParams }: 
             <input type="hidden" name="claimId" value={claim.id} />
             <input type="hidden" name="contactId" value={claim.contactId} />
             <input type="hidden" name="returnPath" value={returnPath} />
+            {messageTemplates.length > 0 ? (
+              <Field label="Start from a template" hint="Used in claim communications. Or write your own note below.">
+                <select name="activityTemplateKey" defaultValue="" className={selectClassName}>
+                  <option value="">Or write your own</option>
+                  {messageTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}{template.subject ? ` · ${template.subject}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : null}
             <Field label="Type" hint="Pick the closest kind of contact.">
               <select name="type" className={selectClassName} defaultValue="NOTE">
                 {activityTypeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </Field>
             <Field label="Date and time" hint="Leave blank to use the current time."><input name="occurredAt" type="datetime-local" className={inputClassName} /></Field>
-            <Field label="Subject" required hint="Example: Carrier requested photos, client called about check, inspection completed."><input name="subject" required className={inputClassName} /><FieldError name="subject" /></Field>
-            <Field label="Notes" hint="Write the useful details, not a perfect transcript."><textarea name="body" className={textareaClassName} /></Field>
+            <Field label="Subject" hint="Example: Carrier requested photos, client called about check, inspection completed. You can leave this blank if a message template supplies it."><input name="subject" className={inputClassName} /><FieldError name="subject" /></Field>
+            <Field label="Or write your own notes" hint="Use the template wording or type a custom note."><textarea name="body" className={textareaClassName} /></Field>
             <SubmitButton>Save claim note</SubmitButton>
           </ActionForm>
         </Card>
