@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { toggleTask } from "@/lib/actions";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getTodayData } from "@/lib/queries";
-import { Badge, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
 
 type TodayData = Awaited<ReturnType<typeof getTodayData>>;
 
@@ -81,9 +81,12 @@ function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: s
             <p className="mt-1 text-sm text-slate-600">{timingReason(task)}</p>
             {task.notes ? <p className="mt-2 text-sm leading-6 text-slate-700">Next step: {task.notes}</p> : null}
           </div>
-          <form action={toggleTask.bind(null, task.id, "/today")}>
-            <SubmitButton variant="secondary">Complete</SubmitButton>
-          </form>
+          <div className="flex flex-wrap items-center gap-2">
+            <ButtonLink href={taskHref(task)} variant="secondary">Open</ButtonLink>
+            <form action={toggleTask.bind(null, task.id, "/today")}>
+              <SubmitButton variant="secondary">Complete</SubmitButton>
+            </form>
+          </div>
         </Card>
       ))}
     </div>
@@ -115,7 +118,13 @@ function LeadFollowUpList({ leads }: { leads: TodayData["leadFollowUps"] }) {
               <p className="mt-1 text-sm text-slate-600">Showing here because the lead follow-up date is already due or coming up soon.</p>
               {lead.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{lead.notes}</p> : null}
             </div>
-            <p className="text-sm text-slate-600">Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
+            <div className="grid gap-2 justify-items-start">
+              <p className="text-sm text-slate-600">Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <ButtonLink href={`/leads/${lead.id}`} variant="secondary">Open lead</ButtonLink>
+                <ButtonLink href={`/leads/${lead.id}?action=activity`} variant="secondary">Log note or call</ButtonLink>
+              </div>
+            </div>
           </div>
         </Card>
       ))}
@@ -147,7 +156,10 @@ function RequestedDocumentList({ documents }: { documents: TodayData["requestedD
                 <p className="mt-1 text-sm text-slate-600">Assigned to {document.claim.assignedUser?.name ?? "Unassigned"}</p>
                 {document.notes ? <p className="mt-3 text-sm leading-6 text-slate-700">{document.notes}</p> : null}
               </div>
-              <Badge>{labelFromEnum(document.category)}</Badge>
+              <div className="grid gap-2 justify-items-start sm:justify-items-end">
+                <Badge>{labelFromEnum(document.category)}</Badge>
+                <ButtonLink href={`/claims/${document.claim.id}/documents`} variant="secondary">Open documents</ButtonLink>
+              </div>
             </div>
           </Card>
         );
@@ -163,6 +175,43 @@ export default async function TodayPage() {
   const waitingOnCarrierCount = data.waitingOnCarrierClaims.length;
   const overdueInvoiceCount = data.unpaidInvoices.filter((invoice) => invoice.status === "OVERDUE").length;
   const upcomingDeadlineCount = data.upcomingDeadlines.length;
+  const startActions: Array<{ href: string; label: string; detail: string; variant: "primary" | "secondary" }> = [];
+
+  if (data.leadFollowUpCount > 0) {
+    startActions.push({
+      href: "/leads?status=ALL&assignedUserId=ALL&followUp=TODAY",
+      label: "Work lead follow-ups",
+      detail: `${data.leadFollowUpCount} lead${data.leadFollowUpCount === 1 ? "" : "s"} due for a touch.`,
+      variant: "primary",
+    });
+  }
+
+  if (data.overdueTaskCount > 0) {
+    startActions.push({
+      href: taskListHref("overdue-tasks"),
+      label: "Clear overdue tasks",
+      detail: `${data.overdueTaskCount} overdue task${data.overdueTaskCount === 1 ? "" : "s"}.`,
+      variant: startActions.length === 0 ? "primary" : "secondary",
+    });
+  }
+
+  if (data.requestedDocumentCount > 0) {
+    startActions.push({
+      href: taskListHref("requested-documents"),
+      label: "Follow up on requested documents",
+      detail: `${data.requestedDocumentCount} document request${data.requestedDocumentCount === 1 ? "" : "s"} waiting on clients.`,
+      variant: startActions.length === 0 ? "primary" : "secondary",
+    });
+  }
+
+  if (openReceivableCents > 0) {
+    startActions.push({
+      href: "/money?bucket=UNPAID",
+      label: "Work unpaid receivables",
+      detail: `${formatMoney(openReceivableCents)} still open.`,
+      variant: startActions.length === 0 ? "primary" : "secondary",
+    });
+  }
 
   return (
     <>
@@ -176,6 +225,21 @@ export default async function TodayPage() {
         <p className="mt-1 text-sm leading-6 text-slate-600">
           Start with leads that need a touch and overdue tasks, then work open claim deadlines and missing client documents, and finish with carrier follow-ups and unpaid fee invoices.
         </p>
+        <div className="mt-4 rounded-md border border-slate-200 bg-white p-3">
+          <p className="text-sm font-semibold text-slate-950">Start here</p>
+          {startActions.length > 0 ? (
+            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {startActions.map((action) => (
+                <div key={action.label} className="grid gap-1.5">
+                  <ButtonLink href={action.href} variant={action.variant}>{action.label}</ButtonLink>
+                  <p className="text-xs text-slate-500">{action.detail}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-slate-600">No urgent items are currently due. Review claims or leads for planned follow-ups.</p>
+          )}
+        </div>
         <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-teal-800">
           <Link href="/leads" className="hover:text-teal-900">Open leads</Link>
           <Link href="/claims" className="hover:text-teal-900">Open claims</Link>
@@ -210,7 +274,9 @@ export default async function TodayPage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Lead follow-ups due" description="Shows open leads with a follow-up date that is due now or coming up in the next few days.">
-          <LeadFollowUpList leads={data.leadFollowUps} />
+          <div id="lead-followups">
+            <LeadFollowUpList leads={data.leadFollowUps} />
+          </div>
         </Section>
 
         <Section title="Overdue tasks" description="Shows open work that is already past the due date and should be handled first.">
@@ -237,7 +303,7 @@ export default async function TodayPage() {
                 <Card key={claim.id}>
                   <div className="flex items-start gap-3">
                     <Clock className="mt-0.5 h-4 w-4 text-amber-600" aria-hidden="true" />
-                    <div>
+                    <div className="min-w-0">
                       <Link href={`/claims/${claim.id}`} className="font-medium text-slate-950 hover:text-teal-800">
                         {fullName(claim.contact)} · {claim.lossType}
                       </Link>
@@ -247,6 +313,10 @@ export default async function TodayPage() {
                       </div>
                       <p className="mt-1 text-sm text-slate-600">{propertyAddress(claim.property)}</p>
                       <p className="mt-1 text-sm text-slate-600">Next step: {claim.nextStep ?? "Review the file and set the next task."}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <ButtonLink href={`/claims/${claim.id}`} variant="secondary">Open claim</ButtonLink>
+                        <ButtonLink href={`/claims/${claim.id}/tasks`} variant="secondary">Open tasks</ButtonLink>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -259,7 +329,9 @@ export default async function TodayPage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Requested documents from clients" description="Shows claim documents the office already requested from the client and is still waiting to receive.">
-          <RequestedDocumentList documents={data.requestedDocuments} />
+          <div id="requested-documents">
+            <RequestedDocumentList documents={data.requestedDocuments} />
+          </div>
         </Section>
 
         <Section title="Waiting on carrier" description="Shows open claims marked as waiting on carrier so the office can decide on the next follow-up.">
@@ -271,12 +343,16 @@ export default async function TodayPage() {
                 <Card key={claim.id}>
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" aria-hidden="true" />
-                    <div>
+                    <div className="min-w-0">
                       <Link href={`/claims/${claim.id}`} className="font-medium text-slate-950 hover:text-teal-800">
                         {fullName(claim.contact)} · {claim.carrier?.name ?? "Carrier to confirm"}
                       </Link>
                       <p className="mt-1 text-sm text-slate-600">Assigned to {claim.assignedUser?.name ?? "Unassigned"} · Updated {formatDate(claim.updatedAt)}</p>
                       <p className="mt-1 text-sm text-slate-600">Next step: {claim.nextStep ?? "Open the claim and set the next carrier follow-up."}</p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <ButtonLink href={`/claims/${claim.id}`} variant="secondary">Open claim</ButtonLink>
+                        <ButtonLink href={`/claims/${claim.id}/communications?action=log-communication`} variant="secondary">Log note or call</ButtonLink>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -288,6 +364,7 @@ export default async function TodayPage() {
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Outstanding receivables" description="Shows sent, partially paid, and overdue fee invoices that still have money left to collect.">
+          <div id="receivables">
           {data.unpaidInvoices.length === 0 ? (
             <EmptyState title="Nothing unpaid" message="Every sent invoice is paid or written off." />
           ) : (
@@ -304,6 +381,9 @@ export default async function TodayPage() {
                         <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
                       </div>
                       <p className="mt-1 text-sm text-slate-600">Showing here because this invoice still has an open balance.</p>
+                      <div className="mt-3">
+                        <ButtonLink href={`/claims/${invoice.claim.id}/money`} variant="secondary">Open money</ButtonLink>
+                      </div>
                     </div>
                     <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
                   </div>
@@ -311,6 +391,7 @@ export default async function TodayPage() {
               ))}
             </div>
           )}
+          </div>
         </Section>
 
         <Section title="Coming up next" description="Open tasks due after today and within the next two weeks.">
