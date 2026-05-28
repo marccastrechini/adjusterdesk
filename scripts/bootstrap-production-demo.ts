@@ -459,7 +459,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         dateOfLoss: daysFromNow(-3),
         status: LeadStatus.APPOINTMENT_SET,
         followUpDate: daysFromNow(0, 10),
-        notes: "Ready to convert after the agreement is signed.",
+        notes: "Ready for a same-day follow-up and likely conversion after the agreement call.",
       },
     });
 
@@ -479,7 +479,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
       },
     });
 
-    await tx.lead.create({
+    const leadThree = await tx.lead.create({
       data: {
         firmId: firm.id,
         contactId: leadThreeContact.id,
@@ -490,8 +490,8 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         lossType: "Fire smoke damage",
         dateOfLoss: daysFromNow(-5),
         status: LeadStatus.NEW,
-        followUpDate: daysFromNow(2, 14),
-        notes: "Needs a second touch after photos were sent.",
+        followUpDate: daysFromNow(-1, 14),
+        notes: "New lead with an overdue follow-up after initial intake photos came in.",
       },
     });
 
@@ -512,7 +512,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         status: ClaimStatus.NEGOTIATING,
         nextStep: "Confirm the final settlement check and release the fee invoice.",
         publicSummary: "Negotiating the final settlement amount after the carrier review.",
-        notes: "Converted lead plus payments, documents, status link, and invoice for the demo.",
+        notes: "Converted lead with a settlement check posted and fee collection in progress.",
       },
     });
 
@@ -530,8 +530,9 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         inspectionDate: daysFromNow(-4),
         deadlineDate: daysFromNow(6),
         status: ClaimStatus.WAITING_ON_CLIENT,
-        nextStep: "Collect the missing room photos from the client.",
-        publicSummary: "Waiting on the client to send a few more interior photos.",
+        nextStep: "Collect the remaining kitchen and hallway photos from the client.",
+        publicSummary: "Waiting on the client to finish sending requested interior photo proof.",
+        notes: "One photo packet arrived, but key room angles are still missing for review.",
       },
     });
 
@@ -549,8 +550,9 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         inspectionDate: daysFromNow(-13),
         deadlineDate: daysFromNow(22),
         status: ClaimStatus.WAITING_ON_CARRIER,
-        nextStep: "Call the carrier desk and confirm the supplement review date.",
-        publicSummary: "The office is waiting on the carrier to finish the review.",
+        nextStep: "Call the carrier desk and lock in the supplement review date.",
+        publicSummary: "Carrier follow-up is pending while the supplement is in review.",
+        notes: "Desk follow-up is active and waiting on the assigned examiner callback.",
       },
     });
 
@@ -615,9 +617,10 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           claimId: claimThree.id,
           assignedUserId: assistant.id,
           title: "Call carrier desk for review date",
+          notes: "Confirm who owns the review and request a target response date.",
           status: TaskStatus.OPEN,
           priority: TaskPriority.NORMAL,
-          dueDate: daysFromNow(5, 13),
+          dueDate: daysFromNow(0, 13),
         },
       ],
     });
@@ -625,11 +628,17 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
     const documentFiles: FileDefinition[] = [];
     const claimOnePolicyPath = storedUploadPath(config.uploadsDir, demoUploadsFolder, "claims", claimOne.id, "policy-declarations.txt");
     const claimOnePhotosPath = storedUploadPath(config.uploadsDir, demoUploadsFolder, "claims", claimOne.id, "demo-loss-photos.txt");
+    const claimTwoReceivedPhotosPath = storedUploadPath(config.uploadsDir, demoUploadsFolder, "claims", claimTwo.id, "client-hallway-photos.txt");
+    const claimThreeCarrierPacketPath = storedUploadPath(config.uploadsDir, demoUploadsFolder, "claims", claimThree.id, "carrier-supplement-packet.txt");
     const claimOnePolicyContent = ["AdjusterDesk Demo Office", "Fake policy declarations for the demo claim."].join("\n");
     const claimOnePhotosContent = ["AdjusterDesk Demo Office", "Fake photo notes for the demo claim."].join("\n");
+    const claimTwoReceivedPhotosContent = ["AdjusterDesk Demo Office", "Client uploaded hallway and ceiling photo notes for claim review."].join("\n");
+    const claimThreeCarrierPacketContent = ["AdjusterDesk Demo Office", "Carrier supplement packet summary and line-item review notes."].join("\n");
 
     documentFiles.push({ relativePath: claimOnePolicyPath, content: claimOnePolicyContent });
     documentFiles.push({ relativePath: claimOnePhotosPath, content: claimOnePhotosContent });
+    documentFiles.push({ relativePath: claimTwoReceivedPhotosPath, content: claimTwoReceivedPhotosContent });
+    documentFiles.push({ relativePath: claimThreeCarrierPacketPath, content: claimThreeCarrierPacketContent });
 
     await tx.document.createMany({
       data: [
@@ -639,6 +648,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           uploadedByUserId: assistant.id,
           category: DocumentCategory.POLICY,
           title: "Policy declarations",
+          notes: "Carrier declarations page received and checked against policy dates.",
           fileName: "policy-declarations.txt",
           filePath: claimOnePolicyPath,
           mimeType: "text/plain",
@@ -651,6 +661,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           uploadedByUserId: owner.id,
           category: DocumentCategory.PHOTOS,
           title: "Demo loss photos",
+          notes: "Initial interior and exterior loss photos uploaded to support estimate review.",
           fileName: "demo-loss-photos.txt",
           filePath: claimOnePhotosPath,
           mimeType: "text/plain",
@@ -662,16 +673,42 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           claimId: claimTwo.id,
           category: DocumentCategory.OTHER,
           title: "Request interior ceiling photos",
-          notes: "Requested from the client for the public status page.",
+          notes: "Requested from client. Still missing kitchen ceiling angles needed for final estimate support.",
           requestedFromClient: true,
+        },
+        {
+          firmId: firm.id,
+          claimId: claimTwo.id,
+          uploadedByUserId: owner.id,
+          category: DocumentCategory.PHOTOS,
+          title: "Client hallway photo upload",
+          notes: "Received from client. Hallway and entry photos are in; kitchen set is still pending.",
+          fileName: "client-hallway-photos.txt",
+          filePath: claimTwoReceivedPhotosPath,
+          mimeType: "text/plain",
+          sizeBytes: Buffer.byteLength(claimTwoReceivedPhotosContent, "utf8"),
+          receivedAt: daysFromNow(-1, 13),
         },
         {
           firmId: firm.id,
           claimId: claimThree.id,
           category: DocumentCategory.OTHER,
           title: "Request smoke cleanup estimate",
-          notes: "Requested from the client for the public status page.",
+          notes: "Requested from client. Waiting for contractor estimate and final smoke cleanup invoice.",
           requestedFromClient: true,
+        },
+        {
+          firmId: firm.id,
+          claimId: claimThree.id,
+          uploadedByUserId: assistant.id,
+          category: DocumentCategory.CARRIER_CORRESPONDENCE,
+          title: "Carrier supplement packet",
+          notes: "Received from carrier desk. Waiting on assigned examiner to confirm review completion date.",
+          fileName: "carrier-supplement-packet.txt",
+          filePath: claimThreeCarrierPacketPath,
+          mimeType: "text/plain",
+          sizeBytes: Buffer.byteLength(claimThreeCarrierPacketContent, "utf8"),
+          receivedAt: daysFromNow(-2, 16),
         },
       ],
     });
@@ -685,8 +722,18 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           userId: owner.id,
           type: ActivityType.CALL,
           subject: "Intro call complete",
-          body: "Reviewed the loss summary and prepared the lead for conversion.",
+          body: "Reviewed the intake details, explained next documents, and confirmed a same-day conversion call window.",
           occurredAt: daysFromNow(-1, 15),
+        },
+        {
+          firmId: firm.id,
+          leadId: leadThree.id,
+          contactId: leadThreeContact.id,
+          userId: assistant.id,
+          type: ActivityType.TEXT,
+          subject: "Overdue lead follow-up text",
+          body: "Sent a quick text check-in and requested preferred callback time to keep intake moving.",
+          occurredAt: daysFromNow(-1, 16),
         },
         {
           firmId: firm.id,
@@ -700,12 +747,22 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         },
         {
           firmId: firm.id,
+          claimId: claimOne.id,
+          contactId: leadTwoContact.id,
+          userId: adjuster.id,
+          type: ActivityType.EMAIL,
+          subject: "Client follow-up starter used",
+          body: "Template starter used: Hi Monica, quick claim follow-up from our office. We posted your settlement check and will update you when the fee balance is fully received.",
+          occurredAt: daysFromNow(-1, 9),
+        },
+        {
+          firmId: firm.id,
           claimId: claimTwo.id,
           contactId: claimOneContact.id,
           userId: owner.id,
           type: ActivityType.EMAIL,
           subject: "Missing photos requested",
-          body: "Sent the client a short reminder about the missing interior photos.",
+          body: "Template starter used: quick reminder that we still need the kitchen and hallway interior photos to finalize review.",
           occurredAt: daysFromNow(-2, 9),
         },
         {
@@ -713,10 +770,20 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
           claimId: claimThree.id,
           contactId: claimTwoContact.id,
           userId: assistant.id,
+          type: ActivityType.CALL,
+          subject: "Carrier desk follow-up call",
+          body: "Spoke with the desk and requested a target date for supplement review completion.",
+          occurredAt: daysFromNow(-1, 11),
+        },
+        {
+          firmId: firm.id,
+          claimId: claimThree.id,
+          contactId: claimTwoContact.id,
+          userId: assistant.id,
           type: ActivityType.EMAIL,
-          subject: "Carrier review follow-up",
-          body: "Waiting on the desk to confirm the review window.",
-          occurredAt: daysFromNow(-1, 10),
+          subject: "Carrier follow-up starter used",
+          body: "Template starter used: following up on claim HSM-DEMO-0221 and requesting the current supplement review status.",
+          occurredAt: daysFromNow(0, 8),
         },
       ],
     });
@@ -787,7 +854,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
       ],
     });
 
-    const invoice = await tx.invoice.create({
+    await tx.invoice.create({
       data: {
         firmId: firm.id,
         claimId: claimOne.id,
@@ -804,16 +871,46 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
       },
     });
 
+    const partialInvoice = await tx.invoice.create({
+      data: {
+        firmId: firm.id,
+        claimId: claimThree.id,
+        feeRuleId: feeRule.id,
+        invoiceNumber: "AD-DEMO-1002",
+        status: InvoiceStatus.PARTIALLY_PAID,
+        settlementAmountCents: 2100000,
+        feePercentageBasisPoints: 1000,
+        feeAmountCents: 210000,
+        amountPaidCents: 60000,
+        issuedAt: daysFromNow(-3, 10),
+        dueAt: daysFromNow(5, 17),
+        notes: "Partial fee payment received while the supplement review is still active.",
+      },
+    });
+
     await tx.payment.create({
       data: {
         firmId: firm.id,
         claimId: claimOne.id,
-        invoiceId: invoice.id,
+        invoiceId: null,
         amountCents: 3800000,
         paidAt: daysFromNow(-2, 12),
         checkNumber: "DEMO-1084",
         payee: "AdjusterDesk Demo Office",
         notes: "Settlement check recorded for the demo claim.",
+      },
+    });
+
+    await tx.payment.create({
+      data: {
+        firmId: firm.id,
+        claimId: claimThree.id,
+        invoiceId: partialInvoice.id,
+        amountCents: 60000,
+        paidAt: daysFromNow(-1, 15),
+        checkNumber: "DEMO-1120",
+        payee: "AdjusterDesk Demo Office",
+        notes: "Partial fee payment logged while waiting on final carrier supplement review.",
       },
     });
 
