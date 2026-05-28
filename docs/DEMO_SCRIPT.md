@@ -1,121 +1,207 @@
-# AdjusterDesk Operator Demo Script
+# AdjusterDesk Production Demo Script
 
-Use this for a friendly 15-20 minute walkthrough with a public adjuster office.
+Use this script for a confident walkthrough of the production demo workspace at https://adjusterdesk.xyz.
 
-## Before Demo (3-5 minutes)
+Core positioning:
 
-1. Optional clean reset when you want a repeatable baseline:
+- Simple workspace for small public adjusting offices.
+- Reduce mental load.
+- Know what to work next.
+- Keep claims, documents, follow-ups, money, and communications together.
 
-```powershell
-npm run demo:reset:local -- -ConfirmReset
-```
+## Pre-Demo Checklist (2-3 minutes)
 
-2. Create a backup checkpoint:
+1. Confirm production task is running.
+2. Confirm production demo bootstrap completed.
+3. Confirm demo owner login is available.
+4. Confirm public URL is healthy.
 
-```powershell
-npm run backup:local
-```
-
-3. Start the app:
-
-```powershell
-npm run prisma:generate
-npm run build
-npm run start:local
-```
-
-4. Open `http://localhost:3000/login`.
-
-If port 3000 is in use:
+Recommended checks:
 
 ```powershell
-npm run start -- --port 3001
+npm run prod:task:status
+$env:DEMO_OWNER_PASSWORD = "AdjusterDeskDemo123!"
+npm run prod:demo:bootstrap -- -ConfirmProductionDemo
 ```
 
-Use `http://localhost:3001/login` for the demo.
+Sign in at https://adjusterdesk.xyz/login with:
 
-## Demo Walkthrough
+- Email: demo.owner@adjusterdesk.xyz
+- Password: runtime demo password used for bootstrap
 
-1. Sign in as system admin
+## Story You Are Showing
 
-- Email: `dana@harboradjusting.example`
-- Password: `AdjusterDeskDemo123!`
+The seeded production demo tells one small-office story from intake to money collection:
 
-2. Show system admin at a high level
+- Leads needing follow-up now (including due and overdue)
+- Claim work with overdue and due-today tasks
+- Waiting-on-client claim with requested and received documents
+- Waiting-on-carrier claim with clear follow-up action
+- Settlement and fee collection story with outstanding and partially paid invoices
+- Communication notes and starter templates for faster follow-up
 
-- Open `/system`.
-- Explain this is local global admin only (workspaces and users).
-- Keep it brief: counts, install status, and workspace management entry point.
+## 5-Minute Path (Fast Executive View)
 
-3. Continue as workspace user (same signed-in session is fine for demo)
+Use this when time is tight.
 
-- Open `/today`.
-- Show work order priorities: overdue tasks, due today, upcoming deadlines, waiting on carrier/client, and unpaid receivables.
+1. Today page
+- Open Today.
+- Click one Start here action.
+- Show row-level actions for leads, tasks, documents, and carrier follow-up.
 
-4. Lead intake
+What to say:
 
-- Open `/leads/new`.
-- Add a quick sample lead with follow-up date.
-- Save and open the lead detail.
+- This page is the office work order for today.
+- The team can see what to touch first without hunting across tabs.
 
-5. Convert lead to claim
+Do not dwell on:
 
-- Use Convert to claim on the lead detail.
-- Add basic carrier/policy/claim info only if useful for the audience.
-- Confirm first claim follow-up task is created.
+- Detailed filter combinations.
+- Every summary card.
 
-6. Claim overview
+2. Leads list and one lead detail
+- Open Leads.
+- Show Open lead, Log note or call, Add follow-up task, and Convert/Open converted claim actions.
+- Open one lead and point to compact lead action panel.
 
-- Open `/claims/<claim-id>`.
-- Show status, next step, and the "What to work next" shortcuts.
+What to say:
 
-7. Tasks and deadline
+- Leads stay simple: capture, follow up, and convert when ready.
+- Action buttons make the next step obvious.
 
-- Open `/claims/<claim-id>/tasks`.
-- Add one task, then show deadline and next-step update.
+Do not dwell on:
 
-8. Documents upload/download
+- Editing many lead fields.
+- Any custom workflow language.
 
-- Open `/claims/<claim-id>/documents`.
-- Upload one small file.
-- Confirm it appears in the claim file list.
-- Click "Open or download file".
+3. Claims and Money
+- Open Claims and show waiting-on-client and waiting-on-carrier examples.
+- Open Money and show outstanding receivables plus partial payment story.
 
-9. Client status page
+What to say:
 
-- Open `/claims/<claim-id>/client-status`.
-- Update summary/next step and create or copy a client status link.
-- Optionally open the public view under `/status/<token>`.
+- Claims, docs, follow-ups, and money stay tied to one file.
+- You can see what is still open and what got paid.
 
-10. Money and receivables
+Do not dwell on:
 
-- Open `/money`.
-- Show outstanding receivables and recent checks/payments.
-- Drill into one claim money page if asked.
+- Accounting edge cases.
+- Any roadmap features.
 
-11. Account security (self-service password change)
+## 12-Minute Path (Full Office Story)
 
-- Open `/settings/account`.
-- Explain users can rotate their own password here using current password + new password confirmation.
+Use this as the standard pilot walkthrough.
 
-## After Demo (2 minutes)
+1. Today: work order and first actions
+- Open Today.
+- Point out: lead follow-ups due, overdue/due-today tasks, requested client documents, waiting on carrier, and unpaid receivables.
+- Click one lead action and one claim action from rows.
 
-1. Backup again:
+What to say:
 
-```powershell
-npm run backup:local
-```
+- This is the daily control panel for a small PA office.
+- It helps the team decide what to work next in the right order.
 
-2. If this was a training-only run, reset to baseline:
+Do not dwell on:
 
-```powershell
-npm run demo:reset:local -- -ConfirmReset
-```
+- Every anchor link.
+- Internal scoring logic.
 
-3. If this was a pilot data session, do not reset. Keep backups and continue with normal local hosting routine in `docs/LOCAL_HOSTING.md`.
+2. Leads list: intake to conversion
+- Open Leads.
+- Show one new lead with due/overdue follow-up.
+- Show one converted lead with Open converted claim.
+- Use row actions to open a lead detail.
 
-## Presenter Notes
+What to say:
 
-- Use plain office language: Claim, Follow-up, Deadline, Documents, Check, Fee, Invoice.
-- Avoid deep technical details unless asked.
-- Favor one full story from intake to receivable over jumping around every screen.
+- Intake and follow-up are visible from one list.
+- Converting to claim is a clear handoff, not a separate system.
+
+Do not dwell on:
+
+- Bulk imports.
+- Long lead history cleanup.
+
+3. Lead detail actions
+- On lead detail, use compact actions (log note/call, add task, convert if applicable).
+- Show that actions open directly without modal-heavy steps.
+
+What to say:
+
+- The page keeps actions close to the core lead facts.
+- Staff can log touches quickly and keep momentum.
+
+Do not dwell on:
+
+- Rare lead statuses.
+- Non-demo data entry branches.
+
+4. Claims list: current office workload
+- Open Claims.
+- Point to one waiting-on-client claim with missing docs context.
+- Point to one waiting-on-carrier claim with next-step follow-up.
+- Point to one active claim with open tasks and money signal.
+
+What to say:
+
+- Each row answers: what is this claim and what do I do next?
+- The list supports quick triage without opening every file first.
+
+Do not dwell on:
+
+- Advanced reporting.
+- Deep status taxonomy debates.
+
+5. Claim detail tabs: tasks, documents, communications
+- Open one claim.
+- Tasks tab: show due work and complete/reopen flow.
+- Documents tab: show requested-from-client and received records with notes about what is still missing.
+- Communications tab: show realistic call/email/text history and starter-template language in activity.
+
+What to say:
+
+- This keeps file movement visible: tasks, docs, and communication in one claim workspace.
+- Notes explain what is missing versus what already came in.
+
+Do not dwell on:
+
+- Upload implementation details.
+- Any legal/coverage interpretation.
+
+6. Money: settlement to fee collection
+- Open Money list.
+- Show outstanding invoice.
+- Show partial payment example.
+- Open claim money page from row actions.
+
+What to say:
+
+- The office can track what was billed, what was paid, and what is still open.
+- Settlement checks and fee collections are visible in one place.
+
+Do not dwell on:
+
+- Full bookkeeping replacement claims.
+- Complex accounting workflows.
+
+7. Client status (close)
+- Open claim client-status tab.
+- Show plain-language client-facing progress summary.
+
+What to say:
+
+- This helps keep policyholders informed without separate manual updates.
+- The office can keep updates clear and consistent.
+
+Do not dwell on:
+
+- Public-link edge-case security discussion.
+- Deep admin operations.
+
+## Presenter Guardrails
+
+- Use plain office words: claim, follow-up, deadline, documents, settlement, check, fee, invoice.
+- Keep promises realistic: this is an MVP office workspace, not enterprise software.
+- Do not frame as legal advice, coverage decisions, or claim valuation automation.
+- Favor one connected story over feature-hopping.
