@@ -8,14 +8,14 @@ const officeResources = [
     whenToUse: "Use this when a new prospect calls, texts, or is referred and needs to be entered before details get lost.",
     items: ["Client name and best phone", "Damaged property address", "Loss type and date of loss", "Lead source", "Next follow-up date"],
     href: "/leads/new",
-    action: "Add lead",
+    action: "Start lead intake",
   },
   {
     title: "New claim file",
     whenToUse: "Use this after intake when the client is ready to open an active claim file with the next office step.",
     items: ["Client and property", "Carrier and claim number if known", "Policy number if available", "Deadline date", "Short next step"],
     href: "/claims/new",
-    action: "Add claim",
+    action: "Open new claim",
   },
   {
     title: "Client document request",
@@ -39,30 +39,32 @@ export default function OfficeResourcesPage() {
   return (
     <>
       <PageHeader
-        title="Templates & Checklists"
-        description="Reusable office checklists and task starters for common public adjusting work."
+        title="Office Playbook"
+        description="Use this page to choose where to start and follow a practical workflow for daily claim operations."
       />
 
       <Card className="grid gap-2 border-teal-200 bg-teal-50">
         <p className="text-sm leading-6 text-teal-950">
-          These are reusable office checklists and task starters for common public adjusting work.
+          This is guidance, not a separate work area.
         </p>
         <p className="text-sm leading-6 text-teal-900">
-          Real work still happens in Leads, Claims, Documents, Today, Money, and Activity.
+          Real work is still tracked in Leads, Claims, Documents, Today, Money, and Activity.
         </p>
       </Card>
 
-      <Section title="Office starters" description="Pick a starter based on where the office is in the day-to-day workflow.">
+      <Section title="Starter workflows" description="Pick the workflow that matches what the office needs to do next.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {officeResources.map((resource) => (
             <Card key={resource.title} className="grid content-start gap-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-950">{resource.title}</h2>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-normal text-slate-500">When to use this</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">{resource.whenToUse}</p>
               </div>
+              <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">What to collect/check</p>
               <ul className="grid gap-2 text-sm leading-6 text-slate-700">
                 {resource.items.map((item) => (
-                  <li key={item} className="flex gap-2"><Badge tone="teal">Item</Badge><span>{item}</span></li>
+                  <li key={item} className="list-inside list-disc">{item}</li>
                 ))}
               </ul>
               <div>
@@ -74,7 +76,7 @@ export default function OfficeResourcesPage() {
       </Section>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-        <Section title="Common task starters" description="Built-in starters shown in lead and claim task forms.">
+        <Section title="Common task starters" description="Reference only: these starter notes appear in lead and claim task forms when staff picks a task template.">
           <Card className="p-0">
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse text-sm">
@@ -118,7 +120,7 @@ export default function OfficeResourcesPage() {
         </Section>
       </div>
 
-      <Section title="Document request starters" description="These are available when adding a claim document request.">
+      <Section title="Document request starters" description="Reference only: these starter options are available when adding a claim document request.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {documentRequestTemplates.map((template) => (
             <Card key={template.key} className="grid content-start gap-2">
