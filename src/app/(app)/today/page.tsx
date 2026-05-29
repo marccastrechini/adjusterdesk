@@ -280,7 +280,7 @@ export default async function TodayPage() {
           <StatCard label="Unpaid receivables" value={formatMoney(openReceivableCents)} detail={overdueInvoiceCount > 0 ? `${overdueInvoiceCount} overdue invoice${overdueInvoiceCount === 1 ? "" : "s"}` : "Sent, partially paid, or overdue invoices"} />
         </SummaryLink>
         <SummaryLink href="/reports#settlement-activity">
-          <StatCard label="Settlements this month" value={formatMoney(data.settlementsThisMonthCents)} detail="Accepted settlement amounts recorded this calendar month" />
+          <StatCard label="Settled this month" value={formatMoney(data.settlementsThisMonthCents)} detail="Accepted settlement totals in the current calendar month" />
         </SummaryLink>
       </div>
 

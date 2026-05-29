@@ -27,9 +27,10 @@ export default async function ReportsPage() {
     leadFollowUpDueCount,
     receivables,
     receivableCents,
-    recentSettlements,
     acceptedSettlementCents,
     settlementsForMonthly,
+    avgLeadToClaimDays,
+    avgClaimToSettlementDays,
   } = await getReportsData();
 
   const settlementsByMonth = buildSettlementsByMonth(settlementsForMonthly);
@@ -249,33 +250,38 @@ export default async function ReportsPage() {
         </Section>
       </div>
 
-      <Section title="Recent settlement rounds" description="Accepted settlement rounds the office has already worked through." >
-        <div id="settlement-activity">
-          {recentSettlements.length === 0 ? (
-            <EmptyState
-              title="No settlement activity yet"
-              message="Accepted settlements will appear here once the office records them on claim money pages."
-              actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
-            />
+    <Section title="Office timing" description="Average number of days from lead intake to claim conversion and from claim creation to accepted settlement. Updates as records are added.">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <p className="text-sm font-medium text-slate-600">Lead to claim</p>
+          {avgLeadToClaimDays !== null ? (
+            <>
+              <p className="mt-1 text-3xl font-semibold text-slate-950">{avgLeadToClaimDays} days</p>
+              <p className="mt-1 text-sm text-slate-500">Average time from first contact to converted claim</p>
+            </>
           ) : (
-            <div className="grid gap-3">
-              {recentSettlements.map((round) => (
-                <Card key={round.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <Link href={`/claims/${round.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">
-                      {fullName(round.claim.contact)} · Round {round.roundNumber}
-                    </Link>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Accepted {formatMoney(round.acceptedAmountCents ?? 0)} · {round.offeredAt ? `Offered ${formatDate(round.offeredAt)}` : "No offer date set"}
-                    </p>
-                  </div>
-                  <Badge tone="green">Accepted</Badge>
-                </Card>
-              ))}
-            </div>
+            <>
+              <p className="mt-1 text-3xl font-semibold text-slate-400">—</p>
+              <p className="mt-1 text-sm text-slate-500">No converted leads yet. Convert a lead to see this timing.</p>
+            </>
           )}
-        </div>
-      </Section>
-    </>
+        </Card>
+        <Card>
+          <p className="text-sm font-medium text-slate-600">Claim to settlement</p>
+          {avgClaimToSettlementDays !== null ? (
+            <>
+              <p className="mt-1 text-3xl font-semibold text-slate-950">{avgClaimToSettlementDays} days</p>
+              <p className="mt-1 text-sm text-slate-500">Average time from claim creation to accepted settlement</p>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-3xl font-semibold text-slate-400">—</p>
+              <p className="mt-1 text-sm text-slate-500">No accepted settlements yet. Record a settlement to see this timing.</p>
+            </>
+          )}
+        </Card>
+      </div>
+    </Section>
+  </>
   );
 }

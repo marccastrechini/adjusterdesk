@@ -96,4 +96,23 @@ describe("report helpers", () => {
     assert.equal(averageDaysBetween([]), null);
     assert.equal(averageDaysBetween([{ from: null, to: "2026-01-01T00:00:00.000Z" }]), null);
   });
+
+  it("computes lead-to-claim timing (skips pairs with null claim)", () => {
+    const pairs = [
+      { from: "2026-01-01T00:00:00.000Z", to: "2026-01-11T00:00:00.000Z" }, // 10 days
+      { from: "2026-02-01T00:00:00.000Z", to: null },  // converted lead with deleted claim — skip
+      { from: "2026-03-01T00:00:00.000Z", to: "2026-03-21T00:00:00.000Z" }, // 20 days
+    ];
+    const avg = averageDaysBetween(pairs);
+    assert.equal(avg, 15);
+  });
+
+  it("computes claim-to-settlement timing using offeredAt fallback to createdAt", () => {
+    const pairs = [
+      { from: "2026-01-01T00:00:00.000Z", to: "2026-04-01T00:00:00.000Z" }, // 90 days
+      { from: "2026-02-01T00:00:00.000Z", to: "2026-03-03T00:00:00.000Z" }, // 30 days
+    ];
+    const avg = averageDaysBetween(pairs);
+    assert.equal(avg, 60);
+  });
 });

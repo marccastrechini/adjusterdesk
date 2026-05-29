@@ -22,6 +22,7 @@ import type { ClientStatusClaim } from "@/lib/client-status";
 import { getEnvStatus } from "@/lib/env";
 import { addDays, todayRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { averageDaysBetween } from "@/lib/reports";
 
 type SearchInput = Record<string, string | string[] | undefined>;
 
@@ -370,6 +371,8 @@ export async function getReportsData() {
     acceptedSettlementTotals,
     claimSourceCounts,
     settlementsForMonthly,
+    timingLeads,
+    timingSettlements,
   ] = await Promise.all([
     prisma.claim.groupBy({
       by: ["status"],
@@ -428,6 +431,18 @@ export async function getReportsData() {
       select: { acceptedAmountCents: true, offeredAt: true, updatedAt: true, createdAt: true },
       orderBy: { offeredAt: "desc" },
     }),
+    prisma.lead.findMany({
+      where: { firmId: firm.id, status: LeadStatus.CONVERTED, convertedClaimId: { not: null } },
+      select: { createdAt: true, convertedClaim: { select: { createdAt: true } } },
+      take: 50,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.settlementRound.findMany({
+      where: { firmId: firm.id, status: SettlementStatus.ACCEPTED },
+      select: { offeredAt: true, createdAt: true, claim: { select: { createdAt: true } } },
+      take: 50,
+      orderBy: { offeredAt: "desc" },
+    }),
   ]);
 
   const openClaimsCount = openClaimsByStatus.reduce((sum, item) => sum + (item._count?._all ?? 0), 0);
@@ -441,6 +456,12 @@ export async function getReportsData() {
     },
   });
   const receivableCents = receivables.reduce((sum, invoice) => sum + invoice.feeAmountCents - invoice.amountPaidCents, 0);
+  const avgLeadToClaimDays = averageDaysBetween(
+    timingLeads.map((lead) => ({ from: lead.createdAt, to: lead.convertedClaim?.createdAt ?? null }))
+  );
+  const avgClaimToSettlementDays = averageDaysBetween(
+    timingSettlements.map((s) => ({ from: s.claim.createdAt, to: s.offeredAt ?? s.createdAt }))
+  );
 
   return {
     firm,
@@ -459,6 +480,8 @@ export async function getReportsData() {
     recentSettlements,
     acceptedSettlementCents: acceptedSettlementTotals._sum.acceptedAmountCents ?? 0,
     settlementsForMonthly,
+    avgLeadToClaimDays,
+    avgClaimToSettlementDays,
   };
 }
 
