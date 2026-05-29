@@ -81,7 +81,7 @@ export default function HomePage() {
         <StepList steps={howItWorksSteps} />
       </PublicSection>
 
-      <CtaBand title="Pilot access is open for small public adjusting offices." description="Request a demo to see whether AdjusterDesk fits the way your office tracks claims, clients, documents, payments, fees, and invoices today." />
+      <CtaBand title="Start with a 14-day trial or request a demo." description="Request trial access to see whether AdjusterDesk fits the way your office tracks claims, clients, documents, payments, fees, and invoices today." />
     </>
   );
 }

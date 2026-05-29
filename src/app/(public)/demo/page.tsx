@@ -3,14 +3,14 @@ import { Mail } from "lucide-react";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 
 export const metadata: Metadata = {
-  title: "Request Demo | AdjusterDesk",
-  description: "Request an AdjusterDesk demo for a solo or small public adjusting office.",
+  title: "Request Demo or Trial Access | AdjusterDesk",
+  description: "Request an AdjusterDesk demo or trial access for a solo or small public adjusting office.",
 };
 
 const demoFit = [
   "You track claims in spreadsheets, inboxes, paper files, folders, or accounting notes.",
   "You want one place for clients, claims, documents, follow-ups, payments, fees, and invoices.",
-  "You run a solo practice or small public adjusting office and want a practical pilot walkthrough.",
+  "You run a solo practice or small public adjusting office and want a practical demo or trial walkthrough.",
 ];
 
 const requestDetails = ["Name", "Office name", "Email", "Current setup", "Rough number of open claims"];
@@ -19,11 +19,11 @@ export default function DemoPage() {
   return (
     <>
       <PublicPageHeader
-        eyebrow="Request demo"
+        eyebrow="Request demo or trial access"
         title="See AdjusterDesk with a small-office workflow."
-        description="Use a demo to compare AdjusterDesk against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices."
+        description="Use a demo or 14-day trial request to compare AdjusterDesk against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices. No credit card required."
       />
-      <PublicSection title="Request pilot access">
+      <PublicSection title="Request trial access">
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold text-slate-950">A good fit for the first demo</h2>
@@ -39,7 +39,7 @@ export default function DemoPage() {
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold text-slate-950">Demo request details</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Send a short email with the basics so the demo can focus on the way your office tracks claims today.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Send a short email with the basics so trial access or a demo can focus on the way your office tracks claims today.</p>
             {/* TODO: Wire this placeholder to a server action or route handler when public demo-request submissions are ready. */}
             <div className="mt-5 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4">
               {requestDetails.map((detail) => (

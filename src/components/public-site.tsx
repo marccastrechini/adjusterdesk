@@ -25,6 +25,8 @@ export const publicNavItems = [
   { href: "/resources", label: "Resources" },
 ];
 
+const trialAccessHref = "/demo";
+
 export const featureHighlights = [
   {
     title: "Claim tracking",
@@ -88,12 +90,18 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
-            <PublicButtonLink href="/demo" variant="primary">
+            <PublicButtonLink href={trialAccessHref} variant="primary">
+              Start Free Trial
+            </PublicButtonLink>
+            <PublicButtonLink href="/demo" variant="secondary">
               Request Demo
             </PublicButtonLink>
-            <PublicButtonLink href="/product" variant="secondary">
-              View Product
-            </PublicButtonLink>
+            <Link
+              href="/login"
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-700 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition hover:bg-teal-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+            >
+              Log in
+            </Link>
           </div>
         </div>
       </header>
@@ -112,11 +120,14 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
             <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
               A simple workspace for small public adjusting offices to keep claims, clients, documents, follow-ups, payments, fees, and invoices together.
             </p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+            </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             <FooterLinks title="Product" items={publicNavItems.slice(0, 3)} />
-            <FooterLinks title="Plan" items={[publicNavItems[3], publicNavItems[4], { href: "/demo", label: "Request Demo" }]} />
-            <FooterLinks title="App" items={[{ href: "/login", label: "Sign in" }, { href: "/demo", label: "Pilot access" }]} />
+            <FooterLinks title="Plan" items={[publicNavItems[3], publicNavItems[4], { href: trialAccessHref, label: "Start Free Trial" }]} />
+            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Request Demo" }]} />
           </div>
         </div>
       </footer>
@@ -163,13 +174,16 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
           <h1 className="mt-3 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <PublicButtonLink href="/demo" variant="primary">
+            <PublicButtonLink href={trialAccessHref} variant="primary">
+              Start Free Trial
+            </PublicButtonLink>
+            <PublicButtonLink href="/demo" variant="secondary">
               Request Demo
             </PublicButtonLink>
-            <PublicButtonLink href="/product" variant="secondary">
-              View Product
-            </PublicButtonLink>
           </div>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            14-day free trial. No credit card required. Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+          </p>
         </div>
         {children ? <div className="mt-10">{children}</div> : null}
       </div>
@@ -253,11 +267,11 @@ export function CtaBand({ title, description }: { title: string; description: st
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">{description}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3 sm:mt-0">
-            <PublicButtonLink href="/demo" variant="primary">
-              Request Demo
+            <PublicButtonLink href={trialAccessHref} variant="primary">
+              Start Free Trial
             </PublicButtonLink>
-            <PublicButtonLink href="/pricing" variant="secondary">
-              View Pricing
+            <PublicButtonLink href="/demo" variant="secondary">
+              Request Demo
             </PublicButtonLink>
           </div>
         </div>

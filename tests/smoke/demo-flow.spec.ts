@@ -81,7 +81,7 @@ test("public marketing pages render and workspace routes stay protected", async 
     { path: "/product", heading: "A daily operating workspace for public adjusting offices.", copy: "Lead and client intake" },
     { path: "/features", heading: "Practical tools for the work your office already does.", copy: "Claim tracking" },
     { path: "/how-it-works", heading: "Simple steps from scattered claim work to a shared office view.", copy: "Bring over the basics" },
-    { path: "/pricing", heading: "Simple plans for small public adjusting offices.", copy: "Request demo for pilot access." },
+    { path: "/pricing", heading: "Simple plans for small public adjusting offices.", copy: "14-day free trial. No credit card required." },
     { path: "/resources", heading: "Practical resources for small public adjusting offices.", copy: "Importing from spreadsheets" },
     { path: "/demo", heading: "See AdjusterDesk with a small-office workflow.", copy: "Email Demo Request" },
   ];
@@ -90,9 +90,26 @@ test("public marketing pages render and workspace routes stay protected", async 
     await page.goto(publicPage.path);
     await expect(page.getByRole("heading", { name: publicPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(publicPage.copy, { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Start Free Trial", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Request Demo" }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "View Product" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
   }
+
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
+  await expect(page.getByText("$49/month", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Small Office", exact: true })).toBeVisible();
+  await expect(page.getByText("$129/month", { exact: true })).toBeVisible();
+  await expect(page.getByText("Recommended", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Professional", exact: true })).toBeVisible();
+  await expect(page.getByText("Custom pricing", { exact: true })).toBeVisible();
+  await expect(page.getByText("Can I try AdjusterDesk before paying?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Do I need a credit card?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Can I change plans later?", { exact: true })).toBeVisible();
+  await expect(page.getByText("What if I have more than 3 users?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Do you help import spreadsheets?", { exact: true })).toBeVisible();
+  await expect(page.getByText("What is the Professional plan for?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Enterprise", { exact: true })).toHaveCount(0);
 
   await page.goto("/today");
   await expect(page).toHaveURL(/\/login(?:\?|$)/);
