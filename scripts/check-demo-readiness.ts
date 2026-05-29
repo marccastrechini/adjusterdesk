@@ -40,6 +40,7 @@ const profileConfig: Record<Profile, { workspaceName: string; users: ExpectedUse
 
 const appRoutes = [
   ["/start", "src/app/(app)/start/page.tsx"],
+  ["/start/import", "src/app/(app)/start/import/page.tsx"],
   ["/today", "src/app/(app)/today/page.tsx"],
   ["/leads", "src/app/(app)/leads/page.tsx"],
   ["/claims", "src/app/(app)/claims/page.tsx"],
