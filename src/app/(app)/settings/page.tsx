@@ -5,6 +5,12 @@ import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/compon
 
 const settingsCards = [
   {
+    title: "Start checklist",
+    description: "Guided first-run setup for leads, claims, tasks, documents, templates, users, and demo reset.",
+    href: "/start",
+    action: "Open start checklist",
+  },
+  {
     title: "Account security",
     description: "Change your own sign-in password for this office account.",
     href: "/settings/account",
@@ -28,7 +34,21 @@ const settingsCards = [
     href: "/settings/import",
     action: "Open import",
   },
+  {
+    title: "Resources",
+    description: "Plain office starters for intake, claim files, document requests, daily follow-up, and CSV cleanup.",
+    href: "/office-resources",
+    action: "Open resources",
+  },
+  {
+    title: "Pilot feedback",
+    description: "Capture demo and pilot notes from the office while the workflow is fresh.",
+    href: "/feedback",
+    action: "Open feedback",
+  },
 ] as const;
+
+const demoResetCommand = "npm run demo:reset:local -- -ConfirmReset";
 
 export default async function SettingsPage() {
   const { firm, user, users, counts } = await getPilotReadinessData();
@@ -47,12 +67,14 @@ export default async function SettingsPage() {
     "Money tracking",
     "Reports",
     "CSV import and export",
+    "Guided start checklist",
+    "User invites and password reset",
     "Client status links and client uploads",
+    "Pilot feedback capture",
   ] as const;
 
   const demoOnlyGaps = [
     "OAuth or SSO sign-in",
-    "User invites and account recovery",
     "Firm switching across offices",
     "External object storage",
     "Backups and deployment configuration",
@@ -63,7 +85,6 @@ export default async function SettingsPage() {
   const recommendedBeforeRealFirms = [
     "Set AUTH_SECRET on the deployment environment",
     "Set up production deployment and repeatable backups",
-    "Add password reset and account recovery",
     "Move uploads to managed object storage",
     "Define role-based permissions for office workflows",
     "Add operations runbooks for data restore and incident response",
@@ -90,7 +111,7 @@ export default async function SettingsPage() {
             This app now uses first-party email and password sign-in with firm-scoped sessions.
           </p>
           <p className="text-sm leading-6 text-teal-900">
-            OAuth, user invites, account recovery, firm switching, storage hardening, and production backup practices are still outside this MVP.
+            OAuth, firm switching, storage hardening, email/calendar integrations, and production backup practices are still outside this MVP.
           </p>
         </Card>
 
@@ -143,6 +164,22 @@ export default async function SettingsPage() {
             <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
           </ul>
           <p className="text-xs leading-5 text-slate-600">See docs/pilot-deployment-checklist.md for the full practical deployment checklist.</p>
+        </Card>
+      </Section>
+
+      <Section title="Demo data and reset" description="Use this only for demo or training workspaces, not real pilot office data.">
+        <Card className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <p className="text-sm font-semibold text-slate-950">Local demo reset is available.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              The reset script backs up the local profile, reseeds sample leads, claims, documents, money records, templates, users, and clears pilot feedback.
+            </p>
+            <code className="mt-3 block rounded-md bg-slate-950 px-3 py-2 text-sm text-white">{demoResetCommand}</code>
+          </div>
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            <ButtonLink href="/start" variant="secondary">Open start checklist</ButtonLink>
+            <ButtonLink href="/settings/import" variant="secondary">Open CSV import</ButtonLink>
+          </div>
         </Card>
       </Section>
 

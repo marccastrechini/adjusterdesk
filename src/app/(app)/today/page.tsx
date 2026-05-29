@@ -218,6 +218,7 @@ export default async function TodayPage() {
       <PageHeader
         title="Today"
         description="A plain-language office worklist for leads, claims, deadlines, missing documents, carrier follow-ups, and receivables."
+        actions={<ButtonLink href="/start" variant="secondary">Start checklist</ButtonLink>}
       />
 
       <Card className="bg-slate-50">
@@ -237,7 +238,14 @@ export default async function TodayPage() {
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-slate-600">No urgent items are currently due. Review claims or leads for planned follow-ups.</p>
+            <div className="mt-2 grid gap-3">
+              <p className="text-sm text-slate-600">No urgent items are currently due. Review claims or leads for planned follow-ups.</p>
+              <div className="flex flex-wrap gap-2">
+                <ButtonLink href="/start" variant="secondary">Open start checklist</ButtonLink>
+                <ButtonLink href="/claims" variant="secondary">Review claims</ButtonLink>
+                <ButtonLink href="/leads" variant="secondary">Review leads</ButtonLink>
+              </div>
+            </div>
           )}
         </div>
         <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-teal-800">

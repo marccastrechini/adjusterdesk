@@ -118,6 +118,7 @@ model Firm {
   invoices          Invoice[]
   clientStatusLinks ClientStatusLink[]
   templates         Template[]
+  pilotFeedbackEntries PilotFeedback[]
 }
 
 model User {
@@ -140,6 +141,7 @@ model User {
   activities        Activity[]
   passwordResetTokens PasswordResetToken[]
   userInvitationTokens UserInvitationToken[]
+  pilotFeedbackEntries PilotFeedback[]
 
   @@index([firmId])
 }
@@ -522,4 +524,22 @@ model Template {
 
   @@index([firmId])
   @@index([type])
+}
+
+model PilotFeedback {
+  id        String   @id @default(cuid())
+  firmId    String
+  userId    String?
+  page      String?
+  rating    Int?
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firm Firm  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([firmId])
+  @@index([userId])
+  @@index([createdAt])
 }

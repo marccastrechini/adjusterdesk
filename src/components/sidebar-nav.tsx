@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarCheck,
+  BookOpen,
   ChartNoAxesColumn,
   CircleDollarSign,
   FileText,
   Inbox,
   LayoutDashboard,
+  ListChecks,
+  MessageSquare,
   Settings,
   Users,
   type LucideIcon,
@@ -26,11 +29,13 @@ const navItems: { label: string; items: NavItem[] }[] = [
   {
     label: "Office",
     items: [
+      { href: "/start", label: "Start here", icon: ListChecks },
       { href: "/today", label: "Today", icon: LayoutDashboard },
       { href: "/leads", label: "Leads", icon: Inbox },
       { href: "/claims", label: "Claims", icon: FileText },
       { href: "/money", label: "Money", icon: CircleDollarSign },
       { href: "/reports", label: "Reports", icon: ChartNoAxesColumn },
+      { href: "/office-resources", label: "Resources", icon: BookOpen },
     ],
   },
   {
@@ -40,6 +45,7 @@ const navItems: { label: string; items: NavItem[] }[] = [
       { href: "/settings/templates", label: "Templates", icon: CalendarCheck },
       { href: "/settings/users", label: "Users", icon: Users },
       { href: "/settings/import", label: "CSV import", icon: Settings },
+      { href: "/feedback", label: "Feedback", icon: MessageSquare },
     ],
   },
 ];

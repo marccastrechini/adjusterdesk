@@ -117,7 +117,16 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
           </Card>
 
           {noTasksYet ? (
-            <EmptyState title="No tasks yet" message="Add a task for the next call, deadline, document request, or carrier follow-up." />
+            <EmptyState
+              title="No tasks yet"
+              message="Add a task for the next call, deadline, document request, carrier follow-up, or fee collection reminder."
+              actions={
+                <>
+                  <ButtonLink href={`${returnPath}?action=add-task`}>Add task</ButtonLink>
+                  <ButtonLink href={`${returnPath}?action=deadline`} variant="secondary">Set deadline</ButtonLink>
+                </>
+              }
+            />
           ) : null}
 
           {noFilteredResults ? (

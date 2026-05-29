@@ -496,6 +496,46 @@ export async function getPilotReadinessData() {
   };
 }
 
+export async function getActivationData() {
+  const { firm, user } = await getDemoContext();
+
+  const [leadCount, claimCount, openTaskCount, documentCount, templateCount, activeUserCount, feedbackCount] = await Promise.all([
+    prisma.lead.count({ where: { firmId: firm.id } }),
+    prisma.claim.count({ where: { firmId: firm.id } }),
+    prisma.task.count({ where: { firmId: firm.id, status: TaskStatus.OPEN } }),
+    prisma.document.count({ where: { firmId: firm.id } }),
+    prisma.template.count({ where: { firmId: firm.id } }),
+    prisma.user.count({ where: { firmId: firm.id, active: true } }),
+    prisma.pilotFeedback.count({ where: { firmId: firm.id } }),
+  ]);
+
+  return {
+    firm,
+    user,
+    counts: {
+      leads: leadCount,
+      claims: claimCount,
+      openTasks: openTaskCount,
+      documents: documentCount,
+      templates: templateCount,
+      users: activeUserCount,
+      feedback: feedbackCount,
+    },
+  };
+}
+
+export async function getPilotFeedbackPageData() {
+  const { firm, user } = await getDemoContext();
+  const recentFeedback = await prisma.pilotFeedback.findMany({
+    where: { firmId: firm.id },
+    include: { user: { select: { name: true, email: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+  });
+
+  return { firm, user, recentFeedback };
+}
+
 export async function getStatusPage(token: string): Promise<StatusPageLink> {
   const statusLink = await prisma.clientStatusLink.findUnique({
     where: { token },

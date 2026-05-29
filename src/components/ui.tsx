@@ -68,11 +68,12 @@ export function StatCard({ label, value, detail }: { label: string; value: React
   );
 }
 
-export function EmptyState({ title, message }: { title: string; message: string }) {
+export function EmptyState({ title, message, actions }: { title: string; message: string; actions?: ReactNode }) {
   return (
     <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center">
       <p className="font-medium text-slate-950">{title}</p>
       <p className="mt-1 text-sm leading-6 text-slate-600">{message}</p>
+      {actions ? <div className="mt-4 flex flex-wrap justify-center gap-2">{actions}</div> : null}
     </div>
   );
 }

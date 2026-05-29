@@ -109,7 +109,16 @@ export default async function LeadsPage({ searchParams }: PageProps) {
       </Card>
 
       {noLeadsYet ? (
-        <EmptyState title="No leads yet" message="Add the next intake so the office can start follow-up and convert it into a claim when ready." />
+        <EmptyState
+          title="No leads yet"
+          message="Add the next intake so the office can start follow-up and convert it into a claim when ready."
+          actions={
+            <>
+              <ButtonLink href="/leads/new">Add first lead</ButtonLink>
+              <ButtonLink href="/settings/import" variant="secondary">Import leads CSV</ButtonLink>
+            </>
+          }
+        />
       ) : noFilteredResults ? (
         <Card className="grid gap-3">
           <p className="font-medium text-slate-950">No leads match these filters.</p>

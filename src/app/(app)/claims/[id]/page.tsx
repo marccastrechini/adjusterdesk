@@ -82,7 +82,11 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
           <div className="grid gap-6 lg:grid-cols-2">
             <Section title="Open tasks" actions={<ButtonLink href={`/claims/${claim.id}/tasks`} variant="secondary">Manage tasks</ButtonLink>}>
               {openTasks.length === 0 ? (
-                <EmptyState title="No open tasks" message="This claim has no open follow-ups." />
+                <EmptyState
+                  title="No open tasks"
+                  message="This claim has no open follow-ups. Add the next call, carrier follow-up, document request, or deadline reminder."
+                  actions={<ButtonLink href={`/claims/${claim.id}/tasks?action=add-task`} variant="secondary">Add task</ButtonLink>}
+                />
               ) : (
                 <div className="grid gap-3">
                   {openTasks.slice(0, 4).map((task) => (
@@ -97,7 +101,11 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
 
             <Section title="Documents" actions={<ButtonLink href={`/claims/${claim.id}/documents`} variant="secondary">Manage documents</ButtonLink>}>
               {claim.documents.length === 0 ? (
-                <EmptyState title="No documents" message="Upload policy, photos, estimates, and carrier correspondence." />
+                <EmptyState
+                  title="No documents"
+                  message="Upload policy, photos, estimates, carrier correspondence, or add a client document request."
+                  actions={<ButtonLink href={`/claims/${claim.id}/documents?action=request-document`} variant="secondary">Request document</ButtonLink>}
+                />
               ) : (
                 <div className="grid gap-3">
                   {claim.documents.slice(0, 4).map((document) => (

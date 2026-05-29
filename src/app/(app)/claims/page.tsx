@@ -90,7 +90,17 @@ export default async function ClaimsPage({ searchParams }: PageProps) {
       </Card>
 
       {noClaimsYet ? (
-        <EmptyState title="No claims yet" message="Open the first claim from a lead or create one directly to start tracking tasks, deadlines, and money." />
+        <EmptyState
+          title="No claims yet"
+          message="Open the first claim from a lead or create one directly to start tracking tasks, deadlines, and money."
+          actions={
+            <>
+              <ButtonLink href="/claims/new">Add first claim</ButtonLink>
+              <ButtonLink href="/leads" variant="secondary">Open leads</ButtonLink>
+              <ButtonLink href="/settings/import" variant="secondary">Import claims CSV</ButtonLink>
+            </>
+          }
+        />
       ) : noFilteredResults ? (
         <Card className="grid gap-3">
           <p className="font-medium text-slate-950">No claims match these filters.</p>

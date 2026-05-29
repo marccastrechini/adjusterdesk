@@ -56,7 +56,11 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
 
           <Section title="Follow-up tasks">
             {lead.tasks.length === 0 ? (
-              <EmptyState title="No lead tasks" message="Add a follow-up task so the lead stays warm." />
+              <EmptyState
+                title="No lead tasks"
+                message="Add a follow-up task so the lead has a clear next touch date."
+                actions={<ButtonLink href={`${returnPath}?action=task`} variant="secondary">Add follow-up task</ButtonLink>}
+              />
             ) : (
               <div className="grid gap-3">
                 {lead.tasks.map((task) => (
@@ -81,7 +85,11 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
 
           <Section title="Lead notes and calls">
             {lead.activities.length === 0 ? (
-              <EmptyState title="No activity yet" message="Log calls, texts, and notes as the lead develops." />
+              <EmptyState
+                title="No activity yet"
+                message="Log calls, texts, and notes as the lead develops so the next person can see what happened."
+                actions={<ButtonLink href={`${returnPath}?action=activity`} variant="secondary">Log note or call</ButtonLink>}
+              />
             ) : (
               <div className="grid gap-3">
                 {lead.activities.map((activity) => (

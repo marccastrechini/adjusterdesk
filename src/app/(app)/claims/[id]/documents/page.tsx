@@ -99,7 +99,16 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
           </Card>
 
           {noDocumentsYet ? (
-            <EmptyState title="No documents in this claim file yet" message="Upload a file or add a document request so the office can track what is missing." />
+            <EmptyState
+              title="No documents in this claim file yet"
+              message="Upload a file or add a document request so the office can track what is missing."
+              actions={
+                <>
+                  <ButtonLink href={`${returnPath}?action=request-document`}>Request document</ButtonLink>
+                  <ButtonLink href={`${returnPath}?action=add-document`} variant="secondary">Upload or record document</ButtonLink>
+                </>
+              }
+            />
           ) : null}
 
           {noFilteredResults ? (
@@ -131,7 +140,11 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
 
           <Section title="Requested from client" description="These are the items the office is still waiting on from the client.">
             {requestedDocuments.length === 0 ? (
-              <EmptyState title="No client requests yet" message="Use the form on the right to request photos, policy pages, receipts, or other claim files." />
+              <EmptyState
+                title="No client requests yet"
+                message="Request photos, policy pages, receipts, carrier letters, or other claim files when the office is waiting on the client."
+                actions={<ButtonLink href={`${returnPath}?action=request-document`} variant="secondary">Request document</ButtonLink>}
+              />
             ) : (
               <div className="grid gap-3">
                 {requestedDocuments.map(({ document }) => (
@@ -160,7 +173,11 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
 
           <Section title="Received / uploaded" description="These documents are already in the office file.">
             {receivedDocuments.length === 0 ? (
-              <EmptyState title="No received documents yet" message="Uploaded files and office records will appear here." />
+              <EmptyState
+                title="No received documents yet"
+                message="Uploaded files and office records will appear here after the office saves them to the claim."
+                actions={<ButtonLink href={`${returnPath}?action=add-document`} variant="secondary">Upload or record document</ButtonLink>}
+              />
             ) : (
               <div className="grid gap-3">
                 {receivedDocuments.map(({ document, hasStoredFile }) => {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Badge, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
 import { getReportsData } from "@/lib/queries";
 
@@ -57,7 +57,11 @@ export default async function ReportsPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Open claims by status">
           {openClaimsByStatus.length === 0 ? (
-            <EmptyState title="No open claims" message="There are no active claims right now." />
+            <EmptyState
+              title="No open claims"
+              message="There are no active claims right now. Add a claim or convert a lead when the office is ready."
+              actions={<ButtonLink href="/claims/new" variant="secondary">Add claim</ButtonLink>}
+            />
           ) : (
             <div className="grid gap-3">
               {openClaimsByStatus.map((item) => (
@@ -78,7 +82,16 @@ export default async function ReportsPage() {
 
         <Section title="Leads by status">
           {leadStatusCounts.length === 0 ? (
-            <EmptyState title="No leads yet" message="There are no leads in the office yet." />
+            <EmptyState
+              title="No leads yet"
+              message="There are no leads in the office yet. Add the next intake or import a simple lead CSV."
+              actions={
+                <>
+                  <ButtonLink href="/leads/new" variant="secondary">Add lead</ButtonLink>
+                  <ButtonLink href="/settings/import" variant="secondary">Import CSV</ButtonLink>
+                </>
+              }
+            />
           ) : (
             <div className="grid gap-3">
               {leadStatusCounts.map((item) => (
@@ -101,7 +114,11 @@ export default async function ReportsPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Lead sources">
           {leadSourceCounts.length === 0 ? (
-            <EmptyState title="No lead sources yet" message="Lead sources will show up here after the office starts entering them." />
+            <EmptyState
+              title="No lead sources yet"
+              message="Lead sources will show up here after the office starts entering leads."
+              actions={<ButtonLink href="/leads/new" variant="secondary">Add lead</ButtonLink>}
+            />
           ) : (
             <div className="grid gap-3">
               {leadSourceCounts.map((item) => (
@@ -116,7 +133,11 @@ export default async function ReportsPage() {
 
         <Section title="Overdue tasks">
           {overdueTasks.length === 0 ? (
-            <EmptyState title="No overdue tasks right now" message="There are no open tasks past due." />
+            <EmptyState
+              title="No overdue tasks right now"
+              message="There are no open tasks past due. Open Today to review upcoming follow-ups."
+              actions={<ButtonLink href="/today" variant="secondary">Open Today</ButtonLink>}
+            />
           ) : (
             <div className="grid gap-3">
               {overdueTasks.map((task) => (
@@ -135,7 +156,11 @@ export default async function ReportsPage() {
 
         <Section title="Upcoming deadlines">
           {upcomingDeadlines.length === 0 ? (
-            <EmptyState title="No upcoming deadlines right now" message="No open claim deadlines are due in the next 30 days." />
+            <EmptyState
+              title="No upcoming deadlines right now"
+              message="No open claim deadlines are due in the next 30 days. Add deadline dates on claim task pages when they matter."
+              actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+            />
           ) : (
             <div className="grid gap-3">
               {upcomingDeadlines.map((claim) => (
@@ -153,7 +178,11 @@ export default async function ReportsPage() {
 
       <Section title="Outstanding receivables">
         {receivables.length === 0 ? (
-          <EmptyState title="No outstanding receivables right now" message="No sent, partially paid, or overdue invoices are open." />
+          <EmptyState
+            title="No outstanding receivables right now"
+            message="No sent, partially paid, or overdue invoices are open. Create fee invoices from claim money pages after settlement."
+            actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+          />
         ) : (
           <div className="grid gap-3">
             {receivables.map((invoice) => (
@@ -175,7 +204,11 @@ export default async function ReportsPage() {
       <Section title="Settlement activity" description="Accepted settlement rounds the office has already worked through." >
         <div id="settlement-activity">
           {recentSettlements.length === 0 ? (
-            <EmptyState title="No settlement activity yet" message="Accepted settlements will appear here once the office records them." />
+            <EmptyState
+              title="No settlement activity yet"
+              message="Accepted settlements will appear here once the office records them on claim money pages."
+              actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+            />
           ) : (
             <div className="grid gap-3">
               {recentSettlements.map((round) => (

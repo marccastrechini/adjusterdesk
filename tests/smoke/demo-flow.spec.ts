@@ -75,6 +75,30 @@ async function createDirectClaim(page: Page, suffix: string) {
   return page.url().split("?")[0];
 }
 
+test("public marketing pages render and workspace routes stay protected", async ({ page }) => {
+  const publicPages = [
+    { path: "/", heading: "AdjusterDesk", copy: "Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices" },
+    { path: "/product", heading: "A daily operating workspace for public adjusting offices.", copy: "Lead and client intake" },
+    { path: "/features", heading: "Practical tools for the work your office already does.", copy: "Claim tracking" },
+    { path: "/how-it-works", heading: "Simple steps from scattered claim work to a shared office view.", copy: "Bring over the basics" },
+    { path: "/pricing", heading: "Simple plans for small public adjusting offices.", copy: "Request demo for pilot access." },
+    { path: "/resources", heading: "Practical resources for small public adjusting offices.", copy: "Importing from spreadsheets" },
+    { path: "/demo", heading: "See AdjusterDesk with a small-office workflow.", copy: "Email Demo Request" },
+  ];
+
+  for (const publicPage of publicPages) {
+    await page.goto(publicPage.path);
+    await expect(page.getByRole("heading", { name: publicPage.heading, exact: true })).toBeVisible();
+    await expect(page.getByText(publicPage.copy, { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Request Demo" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "View Product" }).first()).toBeVisible();
+  }
+
+  await page.goto("/today");
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
+});
+
 test("critical demo flow works from Today through Lead, Claim, Documents, and Money", async ({ page }) => {
   const suffix = uniqueSuffix();
   const taskTitle = `Call client about smoke test ${suffix}`;
@@ -94,7 +118,7 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await loginAsSeededOwner(page);
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Log out", exact: true })).toBeVisible();
-  await expect(page.getByText("Dana Morris · Owner", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Dana Morris · Owner/)).toBeVisible();
   await expect(page.getByText("Work the office in this order")).toBeVisible();
 
   await page.goto("/settings/import");
@@ -134,7 +158,7 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.goto(`/leads?q=${encodeURIComponent(leadData.fullName)}&status=ALL&assignedUserId=ALL&followUp=ALL`);
   await expect(page.getByText("1 total", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: leadData.fullName })).toBeVisible();
-  await page.goto(leadData.leadUrl);
+  await page.goto(`${leadData.leadUrl}?action=task`);
 
   await page.locator('input[name="title"]').fill(taskTitle);
   await page.locator('input[name="dueDate"]').fill(dateInput(3));
@@ -142,12 +166,18 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Task saved", { exact: true })).toBeVisible();
   await expect(page.getByText(taskTitle)).toBeVisible();
 
+  await page.goto(`${leadData.leadUrl}?action=activity`);
+  await expect(page.getByRole("button", { name: "Log lead note" })).toBeVisible();
   await page.locator('input[name="subject"]').fill(`Smoke note ${suffix}`);
   await page.locator('textarea[name="body"]').fill("Client prefers a morning call and may have mitigation photos ready.");
-  await page.getByRole("button", { name: "Log lead note" }).click();
+  await Promise.all([
+    page.waitForURL(/notice=note-added/),
+    page.getByRole("button", { name: "Log lead note" }).click(),
+  ]);
   await expect(page.getByText("Note logged", { exact: true })).toBeVisible();
   await expect(page.getByText(`Smoke note ${suffix}`)).toBeVisible();
 
+  await page.goto(`${leadData.leadUrl}?action=convert`);
   await page.locator('input[name="carrierName"]').fill("Smoke Test Mutual");
   await page.locator('input[name="policyNumber"]').fill(`STM-HO-${suffix}`);
   await page.locator('input[name="claimNumber"]').fill(`STM-${suffix}`);
@@ -169,22 +199,29 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("Create a link when the office is ready to share this simple claim update with the client.")).toBeVisible();
   await expect(page.getByText("Send a document to the office")).toHaveCount(0);
 
-  await page.getByRole("link", { name: "Tasks", exact: true }).click();
-  await expect(page).toHaveURL(/\/tasks$/);
+  await page.goto(`${claimUrl}/tasks?action=add-task`);
+  await expect(page.getByRole("button", { name: "Add task to claim" })).toBeVisible();
   await page.locator('input[name="title"]').first().fill(claimTaskTitle);
   await page.locator('input[name="dueDate"]').first().fill(dateInput(4));
   await page.locator('textarea[name="notes"]').first().fill("Ask for dry-out invoice and moisture readings.");
-  await page.getByRole("button", { name: "Add task to claim" }).click();
+  await Promise.all([
+    page.waitForURL(/notice=task-created/),
+    page.getByRole("button", { name: "Add task to claim" }).click(),
+  ]);
 
   await page.goto(`${claimUrl}/tasks?q=${encodeURIComponent(claimTaskTitle)}&status=OPEN&priority=ALL&due=ALL`);
   await expect(page.getByText(claimTaskTitle, { exact: true })).toBeVisible();
   await expect(page.getByText("1 total", { exact: true })).toBeVisible();
 
-  await page.goto(`${claimUrl}/communications`);
+  await page.goto(`${claimUrl}/communications?action=log-communication`);
+  await expect(page.getByRole("button", { name: "Save claim note" })).toBeVisible();
   await page.locator('select[name="type"]').nth(1).selectOption("CALL");
   await page.locator('input[name="subject"]').fill(communicationSubject);
   await page.locator('textarea[name="body"]').fill("Spoke with carrier desk adjuster and confirmed estimate review timeline.");
-  await page.getByRole("button", { name: "Save claim note" }).click();
+  await Promise.all([
+    page.waitForURL(/notice=note-added/),
+    page.getByRole("button", { name: "Save claim note" }).click(),
+  ]);
   await expect(page.getByText("Note logged", { exact: true })).toBeVisible();
   await expect(page.getByText(communicationSubject, { exact: true })).toBeVisible();
 
@@ -192,11 +229,14 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText(communicationSubject, { exact: true })).toBeVisible();
   await expect(page.getByText("1 total", { exact: true })).toBeVisible();
 
-  await page.goto(`${claimUrl}/documents`);
+  await page.goto(`${claimUrl}/documents?action=request-document`);
+  await expect(page.getByRole("button", { name: "Save document request" })).toBeVisible();
   await page.locator('input[name="title"]').fill(documentTitle);
   await page.locator('textarea[name="notes"]').fill("Client needs to send the dry-out invoice and final moisture readings.");
-  await page.locator('input[name="requestedFromClient"]').check();
-  await page.getByRole("button", { name: "Save document or request" }).click();
+  await Promise.all([
+    page.waitForURL(/notice=document-requested/),
+    page.getByRole("button", { name: "Save document request" }).click(),
+  ]);
   await expect(page.getByText("Client document requested", { exact: true })).toBeVisible();
   await expect(page.getByText(documentTitle)).toBeVisible();
   await expect(page.getByText("1 requested", { exact: true })).toBeVisible();
@@ -206,24 +246,25 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText(documentTitle, { exact: true })).toBeVisible();
   await expect(page.getByText("1 requested", { exact: true })).toBeVisible();
 
-  await page.goto(`${claimUrl}/money`);
+  await page.goto(`${claimUrl}/money?action=settlement`);
   await page.locator('input[name="demandAmount"]').fill("28500");
   await page.locator('input[name="offerAmount"]').fill("21000");
   await page.locator('input[name="acceptedAmount"]').fill("24000");
   await page.locator('select[name="status"]').first().selectOption("ACCEPTED");
   await page.locator('input[name="offeredAt"]').fill(dateInput(5));
-  await page.locator('textarea[name="notes"]').first().fill("Accepted after revised cabinet allowance.");
+  await page.locator('textarea[name="notes"]').fill("Accepted after revised cabinet allowance.");
   await page.getByRole("button", { name: "Save settlement round" }).click();
   await expect(page.getByText("Settlement round saved", { exact: true })).toBeVisible();
   await expect(page.getByText("$24,000").first()).toBeVisible();
 
+  await page.goto(`${claimUrl}/money?action=invoice`);
   await page.locator('input[name="invoiceNumber"]').fill(invoiceNumber);
   await page.locator('input[name="settlementAmount"]').fill("24000");
   await page.locator('input[name="feePercent"]').fill("10");
-  await page.locator('select[name="status"]').last().selectOption("SENT");
+  await page.locator('select[name="status"]').selectOption("SENT");
   await page.locator('input[name="issuedAt"]').fill(dateInput(6));
   await page.locator('input[name="dueAt"]').fill(dateInput(13));
-  await page.locator('textarea[name="notes"]').last().fill("10% fee on accepted settlement.");
+  await page.locator('textarea[name="notes"]').fill("10% fee on accepted settlement.");
   await page.getByRole("button", { name: "Create fee invoice" }).click();
   await expect(page.getByText("Invoice saved", { exact: true })).toBeVisible();
   await expect(page.getByText(invoiceNumber).first()).toBeVisible();
@@ -233,13 +274,13 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByRole("heading", { name: "Receivables" })).toBeVisible();
   await expect(page.getByRole("link", { name: new RegExp(invoiceNumber) })).toBeVisible();
 
-  await page.goto(`${claimUrl}/money`);
+  await page.goto(`${claimUrl}/money?action=payment`);
   await page.locator('select[name="invoiceId"]').selectOption({ label: invoiceNumber });
   await page.locator('input[name="amount"]').fill("1200");
   await page.locator('input[name="paidAt"]').fill(dateInput(7));
   await page.locator('input[name="checkNumber"]').fill(`CHK-${suffix.slice(-6)}`);
   await page.locator('input[name="payee"]').fill("Harbor Public Adjusting");
-  await page.locator('textarea[name="notes"]').nth(1).fill("Partial smoke test fee payment.");
+  await page.locator('textarea[name="notes"]').fill("Partial smoke test fee payment.");
   await page.getByRole("button", { name: "Record check or payment" }).click();
   await expect(page.getByText("Payment recorded", { exact: true })).toBeVisible();
   await expect(page.getByText(`Fee payment for ${invoiceNumber}`).first()).toBeVisible();
@@ -280,13 +321,14 @@ test("friendly validation appears for missing lead, claim, invoice, and payment 
   const claimUrl = await createDirectClaim(page, suffix);
   await page.goto(`${claimUrl}/money`);
 
+  await page.getByRole("link", { name: "Create fee invoice" }).click();
+  await expect(page).toHaveURL(/\/money\?action=invoice$/);
   await page.getByRole("button", { name: "Create fee invoice" }).click();
-  await expect(page).toHaveURL(/\/money$/);
   await expect(page.getByText("Add an invoice number, settlement amount, and fee percent before creating this invoice.")).toBeVisible();
   await expect(page.getByText("Add the office invoice number.")).toBeVisible();
   await expect(page.getByText("Add a settlement amount greater than $0.")).toBeVisible();
 
-  await page.goto(`${claimUrl}/money`);
+  await page.goto(`${claimUrl}/money?action=invoice`);
   await page.locator('input[name="invoiceNumber"]').fill(`BAD-${suffix.slice(-6)}`);
   await page.locator('input[name="settlementAmount"]').fill("1000");
   await page.locator('input[name="feePercent"]').fill("0");
@@ -294,6 +336,8 @@ test("friendly validation appears for missing lead, claim, invoice, and payment 
   await expect(page.getByText("Add a fee percent greater than 0.")).toBeVisible();
 
   await page.goto(`${claimUrl}/money`);
+  await page.getByRole("link", { name: "Record payment/check" }).click();
+  await expect(page).toHaveURL(/\/money\?action=payment$/);
   await page.getByRole("button", { name: "Record check or payment" }).click();
   await expect(page.getByText("Add the payment amount and payee before recording this check or payment.")).toBeVisible();
   await expect(page.getByText("Add a payment amount greater than $0.")).toBeVisible();

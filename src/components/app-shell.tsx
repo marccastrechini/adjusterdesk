@@ -11,7 +11,6 @@ export function AppShell({
   firmName,
   userName,
   userRole,
-  isSystemAdmin,
   workspaceOverride,
 }: {
   children: ReactNode;
@@ -48,10 +47,7 @@ export function AppShell({
             <div className="flex items-center gap-3">
               <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
                 <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current user</p>
-                <p className="text-sm font-semibold text-slate-950">
-                  {userName} · {labelFromEnum(userRole)}
-                  {isSystemAdmin ? " · System admin" : ""}
-                </p>
+                <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
               </div>
               <form action={logout}>
                 <SubmitButton variant="secondary">Log out</SubmitButton>

@@ -7,11 +7,14 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 ## What Works
 
 - Today dashboard for overdue tasks, due today, upcoming deadlines, carrier follow-ups, unpaid receivables, and recent claims.
+- Guided Start checklist for first-run setup, CSV import, demo reset guidance, and pilot feedback.
 - Lead intake, lead list/search/filter, lead detail, follow-up tasks, communication notes, and conversion to claim.
 - Claim list/search/filter, claim creation, claim overview, task editing/completion, documents/photos upload metadata, communication log, and money tab.
 - Settlement rounds, payments/checks, fee percentage calculation, invoices, and office-wide receivables.
 - Reports for claim status, overdue tasks, upcoming deadlines, leads by source, and outstanding receivables.
 - Templates and demo user management.
+- Authenticated Resources area with office starters, task defaults, document request starters, and CSV cleanup guidance.
+- Lightweight pilot feedback capture saved inside the workspace.
 - Forgot-password and reset-password flow with transactional Resend email.
 - Secure user invitation flow for workspace onboarding with one-time accept-invite links.
 - Public client status page by token with requested documents and upload form.
@@ -73,10 +76,13 @@ Open `http://localhost:3000`.
 
 - Login: `http://localhost:3000/login`
 - Workspace: `http://localhost:3000/today` (after sign-in)
+- Start checklist: `http://localhost:3000/start` (after sign-in)
 - Leads: `http://localhost:3000/leads`
 - Claims: `http://localhost:3000/claims`
 - Money: `http://localhost:3000/money`
 - Reports: `http://localhost:3000/reports`
+- Office resources: `http://localhost:3000/office-resources`
+- Pilot feedback: `http://localhost:3000/feedback`
 - Client status: `http://localhost:3000/status/sarah-water-demo`
 
 ## Scripts
@@ -90,7 +96,10 @@ npm run db:generate
 npm run db:push
 npm run db:seed
 npm run db:studio
+npm run demo:reset:local -- -ConfirmReset
 ```
+
+`demo:reset:local` is destructive and only safe for demo/training data. It creates a local backup before reseeding unless the script is explicitly run with its skip-backup option.
 
 ## Local Data
 

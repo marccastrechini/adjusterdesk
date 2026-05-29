@@ -39,6 +39,7 @@ const optionalText = z.string().trim().optional().transform((value) => value || 
 const requiredText = z.string().trim().min(1, "Required");
 const clientSummaryMaxLength = 600;
 const clientNextStepMaxLength = 280;
+const pilotFeedbackMaxLength = 1200;
 
 const leadSchema = z.object({
   firstName: requiredText,
@@ -1139,6 +1140,48 @@ export async function deleteTemplate(templateId: string) {
   await prisma.template.deleteMany({ where: { id: templateId, firmId: firm.id } });
 
   revalidatePath("/settings/templates");
+}
+
+export async function createPilotFeedbackWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+  const { firm, user } = await getDemoContext();
+  const errors: FieldErrors = {};
+  const page = textValue(formData, "page");
+  const message = textValue(formData, "message");
+  const rawRating = textValue(formData, "rating");
+  const rating = rawRating ? Number(rawRating) : undefined;
+
+  if (message.length < 10) {
+    errors.message = "Add a little detail about what felt confusing, missing, or useful.";
+  }
+
+  if (message.length > pilotFeedbackMaxLength) {
+    errors.message = `Keep feedback under ${pilotFeedbackMaxLength} characters.`;
+  }
+
+  if (page.length > 140) {
+    errors.page = "Keep the page or workflow name short.";
+  }
+
+  if (rating !== undefined && (!Number.isInteger(rating) || rating < 1 || rating > 5)) {
+    errors.rating = "Choose a rating from 1 to 5, or leave it blank.";
+  }
+
+  if (hasErrors(errors)) {
+    return formError("Add a short note before sending pilot feedback.", errors);
+  }
+
+  await prisma.pilotFeedback.create({
+    data: {
+      firmId: firm.id,
+      userId: user.id,
+      page: page || undefined,
+      rating,
+      message,
+    },
+  });
+
+  revalidatePath("/feedback");
+  redirect(withNotice("/feedback", "pilot-feedback-sent"));
 }
 
 export async function createUser(formData: FormData) {

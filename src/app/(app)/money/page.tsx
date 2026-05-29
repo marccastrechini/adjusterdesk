@@ -148,7 +148,16 @@ export default async function MoneyPage({ searchParams }: PageProps) {
 
       <Section title="Outstanding receivables" description="Open fee invoices that still need collection or follow-up.">
         {noMoneyRecords ? (
-          <EmptyState title="No money records yet" message="Record a settlement, create a fee invoice, or add a payment from a claim money page." />
+          <EmptyState
+            title="No money records yet"
+            message="Record a settlement, create a fee invoice, or add a payment from a claim money page."
+            actions={
+              <>
+                <ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>
+                <ButtonLink href="/office-resources" variant="secondary">Money checklist</ButtonLink>
+              </>
+            }
+          />
         ) : noFilteredResults ? null : openInvoices.length === 0 ? (
           <EmptyState title="No open receivables" message="Every matching invoice is paid or written off." />
         ) : (
@@ -191,7 +200,11 @@ export default async function MoneyPage({ searchParams }: PageProps) {
 
       <Section title="Recent checks and fee payments" description="Recent settlement checks and fee payments already recorded on claim money pages.">
         {noMoneyRecords ? (
-          <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
+          <EmptyState
+            title="No payments"
+            message="Record settlement checks or invoice payments from a claim money tab."
+            actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+          />
         ) : noFilteredResults ? null : filteredPayments.length === 0 ? (
           <EmptyState title="No payments" message="Record settlement checks or invoice payments from a claim money tab." />
         ) : (
