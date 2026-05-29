@@ -57,7 +57,7 @@ This script runs:
 
 1. working tree status check
 2. `git pull --ff-only`
-3. `npm install`
+3. `npm install --include=dev`
 4. `npm run prod:schema:apply -- -ConfirmProductionSchema`
 5. `npm run build`
 

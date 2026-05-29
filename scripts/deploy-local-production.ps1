@@ -39,7 +39,7 @@ try {
   }
 
   Invoke-Step -Description "git pull --ff-only" -ScriptBlock { git pull --ff-only }
-  Invoke-Step -Description "npm install" -ScriptBlock { npm install }
+  Invoke-Step -Description "npm install --include=dev" -ScriptBlock { npm install --include=dev }
   Invoke-Step -Description "npm run prod:schema:apply -- -ConfirmProductionSchema" -ScriptBlock { npm run prod:schema:apply -- -ConfirmProductionSchema }
   Invoke-Step -Description "npm run build" -ScriptBlock { npm run build }
 }
