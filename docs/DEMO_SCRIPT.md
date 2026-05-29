@@ -20,14 +20,14 @@ Recommended checks:
 
 ```powershell
 npm run prod:task:status
-$env:DEMO_OWNER_PASSWORD = "AdjusterDeskDemo123!"
+$env:DEMO_OWNER_PASSWORD = "<set a strong local-only password>"
 npm run prod:demo:bootstrap -- -ConfirmProductionDemo
 ```
 
 Sign in at https://adjusterdesk.xyz/login with:
 
 - Email: demo.owner@adjusterdesk.xyz
-- Password: runtime demo password used for bootstrap
+- Password: value set through `DEMO_OWNER_PASSWORD` during bootstrap
 
 ## Admin Workspace View
 

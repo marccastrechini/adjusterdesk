@@ -56,9 +56,9 @@ npm run db:seed
 
 Seeded office sign-in credentials after `npm run db:seed`:
 
-- `dana@harboradjusting.example` / `AdjusterDeskDemo123!`
-- `luis@harboradjusting.example` / `AdjusterDeskDemo123!`
-- `kim@harboradjusting.example` / `AdjusterDeskDemo123!`
+- `dana@harboradjusting.example` / demo password from the local seed/bootstrap instructions
+- `luis@harboradjusting.example` / demo password from the local seed/bootstrap instructions
+- `kim@harboradjusting.example` / demo password from the local seed/bootstrap instructions
 
 The seeded inactive user (`avery@harboradjusting.example`) cannot sign in.
 
