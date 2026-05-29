@@ -23,9 +23,18 @@ export const publicNavItems = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
   { href: "/resources", label: "Resources" },
+  { href: "/demo", label: "Demo" },
 ];
 
 const trialAccessHref = "/demo";
+
+const trustNavItems = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/cookies", label: "Cookies" },
+  { href: "/accessibility", label: "Accessibility" },
+  { href: "/security", label: "Security" },
+];
 
 export const featureHighlights = [
   {
@@ -124,10 +133,11 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
               Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <FooterLinks title="Product" items={publicNavItems.slice(0, 3)} />
-            <FooterLinks title="Plan" items={[publicNavItems[3], publicNavItems[4], { href: trialAccessHref, label: "Start Free Trial" }]} />
-            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Request Demo" }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: trialAccessHref, label: "Start Free Trial" }]} />
+            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Contact / Request Demo" }]} />
+            <FooterLinks title="Trust" items={trustNavItems} />
           </div>
         </div>
       </footer>

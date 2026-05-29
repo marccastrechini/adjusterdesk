@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CtaBand, FeatureGrid, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "AdjusterDesk | Simple Workspace for Public Adjusters",
   description: "AdjusterDesk keeps claims, clients, documents, follow-ups, payments, fees, and invoices together for small public adjusting offices.",
-};
+  path: "/",
+});
 
 const scatteredItems = ["Spreadsheets", "Email folders", "Text messages", "Scattered documents", "Calendar reminders", "QuickBooks notes"];
 

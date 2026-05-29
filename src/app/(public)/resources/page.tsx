@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CtaBand, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "Resources | AdjusterDesk",
   description: "Getting started, spreadsheet import, demo walkthrough, claim tracking checklist, and template resources for AdjusterDesk.",
-};
+  path: "/resources",
+});
 
 const resources = [
   {

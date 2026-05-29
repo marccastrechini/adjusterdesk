@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "Pricing | AdjusterDesk",
   description: "Simple AdjusterDesk pricing for solo and small public adjusting offices.",
-};
+  path: "/pricing",
+});
 
 const plans = [
   {

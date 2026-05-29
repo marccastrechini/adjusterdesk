@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "Request Demo or Trial Access | AdjusterDesk",
   description: "Request an AdjusterDesk demo or trial access for a solo or small public adjusting office.",
-};
+  path: "/demo",
+});
 
 const demoFit = [
   "You track claims in spreadsheets, inboxes, paper files, folders, or accounting notes.",

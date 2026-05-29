@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CtaBand, PublicPageHeader, PublicSection, StepList, WorkspacePreview } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "Product | AdjusterDesk",
   description: "See how AdjusterDesk supports the daily claim workflow for small public adjusting offices.",
-};
+  path: "/product",
+});
 
 const workflowSteps = [
   {

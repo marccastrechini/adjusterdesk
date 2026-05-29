@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CtaBand, FeatureGrid, PublicPageHeader, PublicSection, extendedFeatureHighlights } from "@/components/public-site";
+import { publicPageMetadata } from "@/lib/public-metadata";
 
-export const metadata: Metadata = {
+export const metadata = publicPageMetadata({
   title: "Features | AdjusterDesk",
   description: "Simple claim tracking, contacts, documents, follow-ups, payments, fees, invoices, templates, and spreadsheet import for small public adjusting offices.",
-};
+  path: "/features",
+});
 
 export default function FeaturesPage() {
   return (
