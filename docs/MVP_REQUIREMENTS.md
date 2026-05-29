@@ -36,6 +36,7 @@
 - `/money`
 - `/settings/templates`
 - `/settings/users`
+- `/start/import`
 - `/settings/import`
 - `/reports`
 - `/status/[token]`
@@ -53,7 +54,7 @@
 9. Record settlement offers, payments/checks, fee percentage, calculated fee amount, invoices, and receivables.
 10. Provide a public client status page by token.
 11. Export leads, claims, and invoices to CSV.
-12. Import basic leads and claims from CSV.
+12. Import leads and claims from CSV with template downloads, row review, and plain validation messages before records are created.
 13. Show simple reports for claim status, overdue work, deadlines, lead sources, and receivables.
 
 ## Non-Goals For MVP

@@ -4,6 +4,6 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function ImportPage({ searchParams }: PageProps) {
-  return <SpreadsheetImportPage searchParams={await searchParams} returnPath="/settings/import" />;
+export default async function StartImportPage({ searchParams }: PageProps) {
+  return <SpreadsheetImportPage searchParams={await searchParams} returnPath="/start/import" />;
 }

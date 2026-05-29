@@ -33,7 +33,7 @@ AdjusterDesk does not provide legal advice, automated coverage determinations, c
 - Reports
 - Templates
 - Users
-- CSV Import
+- Spreadsheet import
 - Public claim status page by token
 
 ## Demo Firm

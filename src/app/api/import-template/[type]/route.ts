@@ -16,6 +16,11 @@ function csvResponse(fileName: string, csv: string) {
 
 export async function GET(_request: Request, context: RouteContext) {
   const { type } = await context.params;
+  if (type === "sample-office-leads") {
+    const csv = importTemplateCsv("leads", "sample-office");
+    return csvResponse("adjusterdesk-sample-office-leads.csv", csv);
+  }
+
   const normalizedType = normalizeImportType(type);
   if (!normalizedType) {
     return NextResponse.json({ error: "Unknown template type" }, { status: 404 });

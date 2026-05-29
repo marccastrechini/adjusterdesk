@@ -142,7 +142,7 @@ What to say:
 
 Do not dwell on:
 
-- Bulk imports.
+- Large spreadsheet cleanup.
 - Long lead history cleanup.
 
 3. Lead detail actions

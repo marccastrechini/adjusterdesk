@@ -18,8 +18,8 @@ test("activation checklist points new offices to first actions", () => {
 
   assert.equal(progress.completed, 0);
   assert.equal(progress.total, 6);
-  assert.equal(items[0].href, "/leads/new");
-  assert.equal(items[0].action, "Add first lead");
+  assert.equal(items[0].href, "/start/import");
+  assert.equal(items[0].action, "Import lead list");
   assert.equal(items[1].href, "/claims/new");
   assert.equal(items[5].href, "/settings/users");
 });

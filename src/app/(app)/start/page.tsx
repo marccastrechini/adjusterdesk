@@ -17,7 +17,7 @@ export default async function StartPage() {
         actions={
           <>
             <ButtonLink href="/office-resources" variant="secondary">Open resources</ButtonLink>
-            <ButtonLink href="/settings/import" variant="secondary">Import CSV</ButtonLink>
+            <ButtonLink href="/start/import" variant="secondary">Spreadsheet import</ButtonLink>
           </>
         }
       />
@@ -67,12 +67,13 @@ export default async function StartPage() {
         <Section title="Coming from a spreadsheet">
           <Card className="grid content-start gap-3">
             <p className="text-sm leading-6 text-slate-600">
-              Start with a simple leads or claims CSV. After import, open each record and fill in the missing carrier, policy, deadline, and next-step details.
+              Start with a simple leads or claims CSV. Review the rows first, then import the rows that are ready.
             </p>
             <div className="flex flex-wrap gap-2">
-              <ButtonLink href="/settings/import" variant="secondary">Open CSV import</ButtonLink>
-              <ButtonLink href="/api/import-template/leads" variant="secondary">Lead sample</ButtonLink>
-              <ButtonLink href="/api/import-template/claims" variant="secondary">Claim sample</ButtonLink>
+              <ButtonLink href="/start/import" variant="secondary">Open spreadsheet import</ButtonLink>
+              <ButtonLink href="/api/import-template/leads" variant="secondary">Lead template</ButtonLink>
+              <ButtonLink href="/api/import-template/claims" variant="secondary">Claim template</ButtonLink>
+              <ButtonLink href="/api/import-template/sample-office-leads" variant="secondary">Sample office list</ButtonLink>
             </div>
           </Card>
         </Section>

@@ -1,7 +1,6 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { parse } from "csv-parse/sync";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -33,7 +32,6 @@ import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
 import { clearAdminWorkspaceOverride, setAdminWorkspaceOverride } from "@/lib/session";
 import { activityInputFromTemplate, documentInputFromTemplate, messageTemplateTypes, taskInputFromTemplate } from "@/lib/templates";
-import { hasUsableCsvRows, normalizeImportType } from "@/lib/import-utils";
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
@@ -238,13 +236,6 @@ async function issueUserInvitation({
   });
 
   return { ok: true as const };
-}
-
-async function findOrCreateCarrier(firmId: string, name?: string) {
-  if (!name) return undefined;
-  const existing = await prisma.carrier.findFirst({ where: { firmId, name } });
-  if (existing) return existing;
-  return prisma.carrier.create({ data: { firmId, name } });
 }
 
 async function requireOwnedClaimId(firmId: string, claimId: string) {
@@ -1284,107 +1275,6 @@ export async function setUserActive(userId: string, nextActive: boolean) {
   revalidatePath("/settings/users");
   revalidatePath("/settings");
   redirect(withNotice("/settings/users", nextActive ? "user-activated" : "user-deactivated"));
-}
-
-export async function importCsv(formData: FormData) {
-  const { firm, user } = await getDemoContext();
-  const importType = normalizeImportType(formData.get("importType")?.toString());
-  if (!importType) redirect("/settings/import?error=import-type");
-
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) redirect(`/settings/import?error=file&type=${importType}`);
-
-  const text = await file.text();
-  let records: Record<string, string>[] = [];
-  try {
-    records = parse(text, { columns: true, skip_empty_lines: true, trim: true }) as Record<string, string>[];
-  } catch {
-    redirect(`/settings/import?error=csv&type=${importType}`);
-  }
-
-  if (!hasUsableCsvRows(records)) {
-    redirect(`/settings/import?error=rows&type=${importType}`);
-  }
-
-  let created = 0;
-
-  for (const record of records) {
-    const firstName = record.firstName || record["First Name"] || "Unknown";
-    const lastName = record.lastName || record["Last Name"] || "Client";
-    const contact = await prisma.contact.create({
-      data: {
-        firmId: firm.id,
-        firstName,
-        lastName,
-        email: record.email || record.Email || undefined,
-        phone: record.phone || record.Phone || undefined,
-      },
-    });
-
-    const property = await prisma.property.create({
-      data: {
-        firmId: firm.id,
-        address1: record.address1 || record.Address || "Address to confirm",
-        city: record.city || record.City || "City",
-        state: record.state || record.State || "FL",
-        postalCode: record.postalCode || record.Zip || "00000",
-      },
-    });
-
-    if (importType === "claims") {
-      const carrier = await findOrCreateCarrier(firm.id, record.carrierName || record.Carrier || undefined);
-      const policyNumber = record.policyNumber || record.Policy || "Policy to confirm";
-      const policy = await prisma.policy.create({
-        data: {
-          firmId: firm.id,
-          carrierId: carrier?.id,
-          policyNumber,
-          claimNumber: record.claimNumber || record["Claim Number"] || undefined,
-        },
-      });
-
-      await prisma.claim.create({
-        data: {
-          firmId: firm.id,
-          contactId: contact.id,
-          propertyId: property.id,
-          carrierId: carrier?.id,
-          policyId: policy.id,
-          assignedUserId: user.id,
-          claimNumber: record.claimNumber || record["Claim Number"] || undefined,
-          lossType: record.lossType || record["Loss Type"] || "Loss to confirm",
-          dateOfLoss: asDate(record.dateOfLoss || record["Date of Loss"]),
-          status: ClaimStatus.NEW,
-          nextStep: "Review imported claim details.",
-        },
-      });
-    } else {
-      await prisma.lead.create({
-        data: {
-          firmId: firm.id,
-          contactId: contact.id,
-          propertyId: property.id,
-          assignedUserId: user.id,
-          source: record.source || record.Source || "CSV import",
-          referralSource: record.referralSource || record.Referral || undefined,
-          lossType: record.lossType || record["Loss Type"] || "Loss to confirm",
-          dateOfLoss: asDate(record.dateOfLoss || record["Date of Loss"]),
-          status: LeadStatus.NEW,
-          followUpDate: asDate(record.followUpDate || record["Follow Up"]),
-          notes: record.notes || record.Notes || undefined,
-        },
-      });
-    }
-
-    created += 1;
-  }
-
-  if (created === 0) {
-    redirect(`/settings/import?error=rows&type=${importType}`);
-  }
-
-  revalidatePath(importType === "claims" ? "/claims" : "/leads");
-  redirect(`/settings/import?imported=${created}&type=${importType}`);
 }
 
 export async function uploadStatusDocument(token: string, formData: FormData) {

@@ -138,10 +138,28 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText(/Dana Morris · Owner/)).toBeVisible();
   await expect(page.getByText("Work the office in this order")).toBeVisible();
 
-  await page.goto("/settings/import");
-  await expect(page.getByRole("heading", { name: "CSV Import", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Download leads sample CSV" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Download claims sample CSV" })).toBeVisible();
+  await page.goto("/start/import");
+  await expect(page.getByRole("heading", { name: "Spreadsheet import", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review spreadsheet", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download leads template", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download claims template", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download sample office lead list", exact: true })).toBeVisible();
+
+  await page.locator('input[name="file"]').setInputFiles({
+    name: "office-leads.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from([
+      "First Name,Last Name,Email,Property Address,City,State,Zip,Source,Loss Type,Date of Loss",
+      "Sam,Office,sam@example.com,10 Main Street,Tampa,FL,33602,Referral,Water damage,5/1/2026",
+      "Broken,Row,not-email,,Tampa,FL,33602,,Wind,13/1/2026",
+    ].join("\n")),
+  });
+  await page.getByRole("button", { name: "Review spreadsheet", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Review before importing", exact: true })).toBeVisible();
+  await expect(page.getByText("Sam Office", { exact: true })).toBeVisible();
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  await expect(page.getByText("Needs work", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Add the damaged property address.", { exact: true })).toBeVisible();
 
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();

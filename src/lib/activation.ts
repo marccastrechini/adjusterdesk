@@ -21,8 +21,8 @@ export function buildActivationChecklist(counts: ActivationCounts): ActivationCh
     {
       title: "Add or import the first lead",
       description: "Capture the next new call, referral, or spreadsheet row so follow-up work has a home.",
-      href: counts.leads > 0 ? "/leads" : "/leads/new",
-      action: counts.leads > 0 ? "Review leads" : "Add first lead",
+      href: counts.leads > 0 ? "/leads" : "/start/import",
+      action: counts.leads > 0 ? "Review leads" : "Import lead list",
       completed: counts.leads > 0,
     },
     {

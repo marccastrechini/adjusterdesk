@@ -7,7 +7,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 ## What Works
 
 - Today dashboard for overdue tasks, due today, upcoming deadlines, carrier follow-ups, unpaid receivables, and recent claims.
-- Guided Start checklist for first-run setup, CSV import, demo reset guidance, and pilot feedback.
+- Guided Start checklist for first-run setup, spreadsheet import, demo reset guidance, and pilot feedback.
 - Lead intake, lead list/search/filter, lead detail, follow-up tasks, communication notes, and conversion to claim.
 - Claim list/search/filter, claim creation, claim overview, task editing/completion, documents/photos upload metadata, communication log, and money tab.
 - Settlement rounds, payments/checks, fee percentage calculation, invoices, and office-wide receivables.
@@ -19,7 +19,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 - Secure user invitation flow for workspace onboarding with one-time accept-invite links.
 - Public client status page by token with requested documents and upload form.
 - CSV export for leads, claims, and invoices.
-- Basic CSV import for leads and claims.
+- Spreadsheet import for leads and claims with templates, row review, and plain validation messages.
 
 ## Setup
 
@@ -77,6 +77,7 @@ Open `http://localhost:3000`.
 - Login: `http://localhost:3000/login`
 - Workspace: `http://localhost:3000/today` (after sign-in)
 - Start checklist: `http://localhost:3000/start` (after sign-in)
+- Spreadsheet import: `http://localhost:3000/start/import` (after sign-in)
 - Leads: `http://localhost:3000/leads`
 - Claims: `http://localhost:3000/claims`
 - Money: `http://localhost:3000/money`
@@ -116,13 +117,15 @@ npm run prod:demo:readiness
 
 Both are ignored by Git. Keep uploaded documents and local database files out of commits.
 
-## CSV Import
+## Spreadsheet Import
 
-Use `/settings/import` for basic CSV imports.
+Use `/start/import` for first-office spreadsheet import. `/settings/import` remains available and uses the same review flow.
+
+Download a starter leads or claims template, fill it out, upload the CSV, then review the rows before importing. Rows marked Ready can be imported; rows marked Needs work are skipped until the office fixes the missing or unclear details. A sample office lead list is available at `/api/import-template/sample-office-leads` for demos and training.
 
 Lead columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `state`, `postalCode`, `source`, `referralSource`, `lossType`, `dateOfLoss`, `followUpDate`, `notes`.
 
-Claim columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `state`, `postalCode`, `carrierName`, `policyNumber`, `claimNumber`, `lossType`, `dateOfLoss`.
+Claim columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `state`, `postalCode`, `carrierName`, `policyNumber`, `claimNumber`, `lossType`, `dateOfLoss`, `reportedDate`, `inspectionDate`, `deadlineDate`, `notes`.
 
 ## MVP Boundaries
 
