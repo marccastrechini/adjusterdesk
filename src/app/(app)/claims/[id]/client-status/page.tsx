@@ -40,7 +40,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
         <aside className="grid gap-6 content-start">
           <Card>
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h2 className="text-base font-semibold text-slate-950">Share preview</h2>
+              <h2 className="text-base font-semibold text-slate-950">Share with client</h2>
               {statusLink ? <Badge tone={statusLink.isActive ? "green" : "slate"}>{statusLink.isActive ? "Active link" : "Inactive link"}</Badge> : null}
             </div>
             {statusLink ? (
@@ -108,7 +108,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
             <h2 className="text-base font-semibold text-slate-950">Suggested next steps</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">Add a common follow-up task when the client-facing update needs a same-day check.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=update-client-status-link&duePreset=TODAY`} variant="secondary">Add update client status task</ButtonLink>
+              <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=update-client-status-link&duePreset=TODAY`} variant="secondary">Add client status follow-up task</ButtonLink>
             </div>
           </Card>
 

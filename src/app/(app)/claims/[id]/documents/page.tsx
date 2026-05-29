@@ -271,6 +271,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
         <aside className="grid gap-6 content-start">
           <Card className="grid gap-4">
             <h2 className="text-base font-semibold text-slate-950">Document actions</h2>
+            <p className="text-sm leading-6 text-slate-600">Choose one path: request a missing file from the client, or upload/record a file the office already has.</p>
 
             {!selectedAction ? (
               <div className="grid gap-4">
@@ -307,7 +308,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                 <Field label="Office notes (optional)" hint="Internal office note. This does not show on the client status page."><textarea name="notes" className={textareaClassName} /></Field>
                 <div className="flex flex-wrap items-center gap-2">
                   <SubmitButton>Save document request</SubmitButton>
-                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                  <ButtonLink href={returnPath} variant="secondary">Back to document actions</ButtonLink>
                 </div>
               </ActionForm>
             ) : null}
@@ -330,7 +331,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                 <Field label="Notes" hint="Optional office notes about this record."><textarea name="notes" className={textareaClassName} /></Field>
                 <div className="flex flex-wrap items-center gap-2">
                   <SubmitButton>{requestedDocument ? "Save and mark request received" : "Save uploaded or office document"}</SubmitButton>
-                  <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
+                  <ButtonLink href={returnPath} variant="secondary">Back to document actions</ButtonLink>
                 </div>
               </ActionForm>
             ) : null}

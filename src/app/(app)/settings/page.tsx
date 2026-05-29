@@ -30,7 +30,7 @@ const settingsCards = [
   },
   {
     title: "CSV import",
-    description: "Bring a simple lead or claim spreadsheet into the local MVP.",
+    description: "Bring a simple lead or claim spreadsheet into the office workspace.",
     href: "/settings/import",
     action: "Open import",
   },
@@ -94,6 +94,18 @@ export default async function SettingsPage() {
     <>
       <PageHeader title="Settings" description="Simple office defaults that reduce repeated setup work across leads and claims." />
 
+      <Card className="grid gap-3 border-slate-200 bg-white">
+        <h2 className="text-base font-semibold text-slate-950">What to do here</h2>
+        <p className="text-sm leading-6 text-slate-600">
+          Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review pilot readiness before sharing with real clients.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <ButtonLink href="/settings/users" variant="secondary">Review office users</ButtonLink>
+          <ButtonLink href="/settings/templates" variant="secondary">Review templates</ButtonLink>
+          <ButtonLink href="/start" variant="secondary">Open start checklist</ButtonLink>
+        </div>
+      </Card>
+
       <Section title="Pilot readiness">
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
           <p className="text-sm font-semibold text-teal-900">Office sign-in is active.</p>
@@ -111,7 +123,7 @@ export default async function SettingsPage() {
             This app now uses first-party email and password sign-in with firm-scoped sessions.
           </p>
           <p className="text-sm leading-6 text-teal-900">
-            OAuth, firm switching, storage hardening, email/calendar integrations, and production backup practices are still outside this MVP.
+            Some advanced setup items are still outside this pilot pass, including external storage, email/calendar integrations, and production backup operations.
           </p>
         </Card>
 

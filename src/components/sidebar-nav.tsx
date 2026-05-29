@@ -45,7 +45,7 @@ const navItems: { label: string; items: NavItem[] }[] = [
       { href: "/settings/templates", label: "Templates", icon: CalendarCheck },
       { href: "/settings/users", label: "Users", icon: Users },
       { href: "/settings/import", label: "CSV import", icon: Settings },
-      { href: "/feedback", label: "Feedback", icon: MessageSquare },
+      { href: "/feedback", label: "Pilot feedback", icon: MessageSquare },
     ],
   },
 ];

@@ -19,10 +19,10 @@ export default async function TemplatesPage() {
 
   return (
     <>
-      <PageHeader title="Templates" description="Common office defaults for follow-ups, document requests, categories, and reusable client-facing language." />
+      <PageHeader title="Templates" description="Save common follow-ups, document requests, and message starters so staff do not rewrite the same notes each day." />
 
       <div className="grid gap-6">
-        <Section title="Where templates are used" description="This map shows which template types are active today and which ones are still setup-only.">
+        <Section title="Where templates are used" description="Use this quick map to see what is already active in daily workflows and what is still setup-only.">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {templateUsageSummaries.map((item) => (
               <Card key={item.title} className="grid content-start gap-3">
@@ -37,7 +37,7 @@ export default async function TemplatesPage() {
           </div>
         </Section>
 
-        <Section title="Task templates" description="Common follow-ups used from lead and claim task forms.">
+        <Section title="Task templates" description="Common follow-ups your office can add quickly from lead and claim task forms.">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {taskTemplates.map((template) => (
               <Card key={template.key} className="grid content-start gap-3">
@@ -53,7 +53,7 @@ export default async function TemplatesPage() {
         </Section>
 
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <Section title="Document request templates" description="Common client requests used from claim document forms.">
+          <Section title="Document request templates" description="Common client document requests used from claim document forms.">
             <div className="grid gap-3 md:grid-cols-2">
               {documentRequestTemplates.map((template) => (
                 <Card key={template.key} className="grid content-start gap-3">
@@ -113,7 +113,7 @@ export default async function TemplatesPage() {
               )}
             </Section>
 
-            <Section title="Checklist templates" description="Checklists stay in Settings for now. They are useful for office prep, but they are not connected to a claim screen yet.">
+            <Section title="Checklist templates" description="Checklists stay in Settings for now. Use them for office prep while claim-level checklist workflow is still pending.">
               {checklistTemplates.length === 0 ? (
                 <EmptyState title="No checklist templates" message="Add one if your office wants a simple prep checklist." />
               ) : (
@@ -142,7 +142,7 @@ export default async function TemplatesPage() {
 
           <Card className="grid gap-4 content-start">
             <h2 className="text-base font-semibold text-slate-950">Add template</h2>
-            <p className="text-sm leading-6 text-slate-600">Email, text, and letter templates can start claim communications. Checklist templates stay in Settings until a workflow needs them.</p>
+            <p className="text-sm leading-6 text-slate-600">Email, text, and letter templates can start claim communication notes. Checklist templates remain Settings-only for this pilot pass.</p>
             <form action={createTemplate} className="grid gap-3">
               <Field label="Name"><input name="name" required className={inputClassName} /></Field>
               <Field label="Type">
