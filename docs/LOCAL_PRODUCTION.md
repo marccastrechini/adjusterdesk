@@ -58,10 +58,10 @@ This script runs:
 1. working tree status check
 2. `git pull --ff-only`
 3. `npm install`
-4. `npm run prisma:generate`
-5. `npm run db:push`
-6. `npm run build`
-7. `npm run prod:backup:local`
+4. `npm run prod:schema:apply -- -ConfirmProductionSchema`
+5. `npm run build`
+
+`prod:schema:apply` creates a production backup before applying the Prisma schema with `db push`. This SQLite MVP does not have Prisma migration files yet, so `prisma migrate deploy` is not the correct command for this app today.
 
 After deploy/update, restart the runtime task:
 
@@ -159,6 +159,12 @@ Check scheduled task, listener, and local/public URL health:
 npm run prod:task:status
 ```
 
+Run the production demo readiness check after a schema or demo-data change:
+
+```powershell
+npm run prod:demo:readiness
+```
+
 Back up production database and uploads:
 
 ```powershell
@@ -169,12 +175,18 @@ For the fixed production demo workspace and shared owner login, see [docs/PRODUC
 
 Run `npm run prod:demo:bootstrap -- -ConfirmProductionDemo` only after setting `DEMO_OWNER_PASSWORD` at runtime or passing `--password` on the command line.
 
-The bootstrap creates or refreshes fake demo data only, requires a fresh production backup first, and verifies that `admin@adjusterdesk.xyz` still remains system admin without changing that account.
+The bootstrap creates or refreshes fake demo data only, requires a fresh production backup first, verifies that `admin@adjusterdesk.xyz` still remains system admin without changing that account, and refuses to run by default if the production database contains non-demo customer workspaces.
 
 Confirm the public tunnel URL is serving the app:
 
 ```powershell
 Invoke-WebRequest https://adjusterdesk.xyz/system -UseBasicParsing
+```
+
+Confirm database, demo users, pilot feedback, route files, and public pages:
+
+```powershell
+npm run prod:demo:readiness
 ```
 
 ## Cloudflare Tunnel Target

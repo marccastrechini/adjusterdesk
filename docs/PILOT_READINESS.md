@@ -38,8 +38,22 @@ See `docs/LOCAL_HOSTING.md` for exact setup and recovery steps.
 - Keep backup folders private because they can include local database files, uploaded files, and `.env`.
 - Verify restore flow at least once on a safe non-live copy path.
 - Use `npm run demo:reset:local -- -ConfirmReset` only for development/demo datasets.
-- Production demo reset requires an explicit `-ConfirmProductionReset` flag and should stay blocked by default.
+- Full production demo reset is blocked. Use `npm run prod:demo:bootstrap -- -ConfirmProductionDemo` only for the firm-scoped fake production demo workspace.
 - Do not run demo reset once real pilot office data exists in that local database.
+
+## Production Demo Readiness Commands
+
+Apply schema changes to the local production profile with a backup first:
+
+```powershell
+npm run prod:schema:apply -- -ConfirmProductionSchema
+```
+
+Verify the demo database, seeded users, pilot feedback table, key route files, and public marketing pages:
+
+```powershell
+npm run prod:demo:readiness
+```
 
 ## Suggested Pilot Questions
 

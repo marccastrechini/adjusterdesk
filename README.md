@@ -50,7 +50,7 @@ npm install
 3. Create the local SQLite database and seed demo data:
 
 ```bash
-npm run db:push
+npm run schema:apply:local
 npm run db:seed
 ```
 
@@ -94,12 +94,18 @@ npm run lint
 npm run typecheck
 npm run db:generate
 npm run db:push
+npm run schema:apply:local
+npm run prod:schema:apply -- -ConfirmProductionSchema
 npm run db:seed
 npm run db:studio
 npm run demo:reset:local -- -ConfirmReset
+npm run demo:readiness -- --base-url http://localhost:3000
+npm run prod:demo:readiness
 ```
 
-`demo:reset:local` is destructive and only safe for demo/training data. It creates a local backup before reseeding unless the script is explicitly run with its skip-backup option.
+`schema:apply:local` and `prod:schema:apply -- -ConfirmProductionSchema` are the current Prisma schema apply commands for this SQLite MVP. There is no Prisma migration history yet, so do not use `prisma migrate deploy` for this project until migrations are introduced.
+
+`demo:reset:local` is destructive and only safe for local development demo/training data. It creates a local backup before reseeding unless the script is explicitly run with its skip-backup option. Full production reseeding is blocked; use `prod:demo:bootstrap -- -ConfirmProductionDemo` for the firm-scoped production demo workspace refresh.
 
 ## Local Data
 
@@ -129,3 +135,24 @@ Production authentication, billing, carrier integrations, QuickBooks sync, email
 Before inviting real pilot users, review the practical checklist in `docs/pilot-deployment-checklist.md`.
 For operator-facing demo and pilot guardrails, also review `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md`.
 For the production run/update/task workflow on the local machine, review `docs/LOCAL_PRODUCTION.md`.
+
+Minimum production/demo update flow:
+
+```powershell
+npm run prod:backup:local
+npm run prod:schema:apply -- -ConfirmProductionSchema
+npm run build
+npm run prod:task:stop -- -ConfirmStop
+npm run prod:task:start
+npm run prod:demo:readiness
+```
+
+Before merging or pushing a demo-readiness change, keep these checks green:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:smoke
+```

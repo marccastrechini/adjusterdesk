@@ -15,6 +15,7 @@ import {
   UserRole,
 } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/auth";
+import { assertDemoSeedTarget } from "../src/lib/demo-safety";
 
 const prisma = new PrismaClient({
   adapter: new PrismaBetterSqlite3({
@@ -34,6 +35,11 @@ function cents(amount: number) {
 const seededDevPassword = "AdjusterDeskDemo123!";
 
 async function main() {
+  assertDemoSeedTarget({
+    appEnv: process.env.APP_ENV,
+    databaseUrl: process.env.DATABASE_URL,
+  });
+
   const demoPasswordHash = hashPassword(seededDevPassword);
 
   await prisma.$transaction(async (tx) => {

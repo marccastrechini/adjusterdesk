@@ -28,6 +28,10 @@ if ($config.Profile -eq "production" -and -not $ConfirmProductionReset) {
   Write-Error "Demo reset aborted. Production data requires -ConfirmProductionReset and a production profile file."
 }
 
+if ($config.Profile -eq "production") {
+  Write-Error "Demo reset aborted. Full production database reseeding is disabled. Use npm run prod:demo:bootstrap -- -ConfirmProductionDemo for the firm-scoped production demo workspace refresh."
+}
+
 Assert-LocalRuntimeSafety -Config $config
 
 Write-Warning "This reset is destructive and is only safe for demo/training data."

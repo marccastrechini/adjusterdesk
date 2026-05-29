@@ -11,7 +11,8 @@ Use this checklist before inviting real pilot firms.
 ## 2) Database and Prisma
 
 - Run `npm run db:generate` before build/release.
-- Apply schema changes before startup (for this app, use the same Prisma workflow used in development).
+- Apply schema changes before startup with `npm run prod:schema:apply -- -ConfirmProductionSchema` for the local production profile.
+- This SQLite MVP currently uses guarded `prisma db push`; do not use `prisma migrate deploy` until migration files are introduced.
 - Decide if seed/demo data should be loaded for pilot:
   - For internal walkthroughs: seed data can be helpful.
   - For real pilot data: do not load demo seed records.
@@ -23,11 +24,11 @@ Use this checklist before inviting real pilot firms.
 - Plan external object storage before real customer data.
 - Keep upload/download limits and blocked file types enabled.
 
-## 4) Auth and Session Gaps
+## 4) Auth and Session Guardrails
 
-- Real sign-in is not implemented yet.
-- Firm/user session isolation is not implemented yet.
-- Do not treat demo-mode scoping as production security.
+- Seeded email/password sign-in and firm-scoped sessions are active for the MVP.
+- Keep `AUTH_SECRET` stable and private before any shared pilot use.
+- Keep system admin access limited to trusted operators.
 
 ## 5) Public Status Links
 
@@ -46,6 +47,7 @@ Use this checklist before inviting real pilot firms.
 - Run `npm run build` before deployment.
 - Run `npm run test:smoke` before deployment.
 - Keep `npm run lint`, `npm run typecheck`, and `npm run test` green.
+- Run `npm run prod:demo:readiness` after production demo bootstrap or schema changes.
 
 ## 8) Rollback Plan
 

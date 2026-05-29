@@ -31,6 +31,7 @@ The script refuses to run unless all of these are true:
 - `APP_BASE_URL=https://adjusterdesk.xyz`
 - `DATABASE_URL` points to `prisma/production.db`
 - You pass `-ConfirmProductionDemo`
+- The database contains only the demo workspace and system-admin-only support workspaces, unless you explicitly set the mixed-database override described below
 
 Run it like this:
 
@@ -46,6 +47,20 @@ npm run prod:demo:bootstrap -- -ConfirmProductionDemo --password "Use-A-Strong-L
 ```
 
 The script never prints the full password.
+
+If a future production database contains real pilot/customer workspaces, the bootstrap refuses to run by default. The only override is:
+
+```powershell
+$env:ALLOW_PRODUCTION_DEMO_BOOTSTRAP_WITH_OTHER_FIRMS = "I_UNDERSTAND_THIS_DATABASE_HAS_NON_DEMO_WORKSPACES"
+```
+
+Set that only after confirming the bootstrap is still appropriate. The script only refreshes the `AdjusterDesk Demo Office` workspace, but this guard keeps demo operations from becoming a casual habit on mixed data.
+
+After bootstrapping, verify the demo:
+
+```powershell
+npm run prod:demo:readiness
+```
 
 ## Why The Demo Owner Is Not A System Admin
 

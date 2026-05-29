@@ -56,6 +56,8 @@ const expectedAppBaseUrl = "https://adjusterdesk.xyz";
 const expectedDatabaseFragment = "production.db";
 const expectedUploadsDir = "storage/uploads-production";
 const demoUploadsFolder = "adjusterdesk-demo-office";
+const mixedDatabaseOverrideEnvVar = "ALLOW_PRODUCTION_DEMO_BOOTSTRAP_WITH_OTHER_FIRMS";
+const mixedDatabaseOverrideValue = "I_UNDERSTAND_THIS_DATABASE_HAS_NON_DEMO_WORKSPACES";
 
 function daysFromNow(days: number, hour = 9) {
   const now = new Date();
@@ -188,6 +190,34 @@ function ensureProductionBackup(repoRoot: string) {
   execFileSync("powershell", ["-ExecutionPolicy", "Bypass", "-File", backupScript, "-Profile", "production"], {
     stdio: "inherit",
   });
+}
+
+async function assertProductionDemoDatabase(prisma: PrismaClient) {
+  const firms = await prisma.firm.findMany({
+    select: {
+      name: true,
+      users: { select: { email: true, isSystemAdmin: true } },
+    },
+  });
+
+  const nonDemoFirms = firms.filter((firm) => {
+    if (firm.name === demoWorkspaceName) return false;
+
+    return !firm.users.every((user) => user.isSystemAdmin);
+  });
+
+  if (nonDemoFirms.length === 0) {
+    return "Production database contains only demo/system-admin workspaces.";
+  }
+
+  if (process.env[mixedDatabaseOverrideEnvVar] === mixedDatabaseOverrideValue) {
+    return `Production database contains non-demo workspaces; continuing because ${mixedDatabaseOverrideEnvVar} was explicitly set.`;
+  }
+
+  throw new Error(
+    `Refusing to bootstrap demo data because this database contains non-demo workspaces: ${nonDemoFirms.map((firm) => firm.name).join(", ")}. ` +
+      `Set ${mixedDatabaseOverrideEnvVar}=${mixedDatabaseOverrideValue} only after confirming this is intentional.`,
+  );
 }
 
 async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof loadProductionProfile>, passwordHash: string) {
@@ -952,6 +982,8 @@ async function main() {
     console.log(`Production database: ${config.databaseUrl}`);
     console.log(`Production uploads: ${config.uploadsDir}`);
 
+    console.log(await assertProductionDemoDatabase(prisma));
+
     ensureProductionBackup(config.repoRoot);
 
     const result = await bootstrapDemoData(prisma, config, passwordHash);
@@ -1034,5 +1066,6 @@ main().catch((error: unknown) => {
   console.error("  npm run prod:demo:bootstrap -- -ConfirmProductionDemo");
   console.error(`  $env:${demoPasswordEnvVar} = \"<password>\"`);
   console.error("  npm run prod:demo:bootstrap -- -ConfirmProductionDemo --password \"<password>\"");
+  console.error(`  Optional mixed-database override: $env:${mixedDatabaseOverrideEnvVar} = \"${mixedDatabaseOverrideValue}\"`);
   process.exit(1);
 });

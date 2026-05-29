@@ -40,10 +40,8 @@ try {
 
   Invoke-Step -Description "git pull --ff-only" -ScriptBlock { git pull --ff-only }
   Invoke-Step -Description "npm install" -ScriptBlock { npm install }
-  Invoke-Step -Description "npm run prisma:generate" -ScriptBlock { npm run prisma:generate }
-  Invoke-Step -Description "npm run db:push" -ScriptBlock { npm run db:push }
+  Invoke-Step -Description "npm run prod:schema:apply -- -ConfirmProductionSchema" -ScriptBlock { npm run prod:schema:apply -- -ConfirmProductionSchema }
   Invoke-Step -Description "npm run build" -ScriptBlock { npm run build }
-  Invoke-Step -Description "npm run prod:backup:local" -ScriptBlock { npm run prod:backup:local }
 }
 finally {
   Pop-Location
