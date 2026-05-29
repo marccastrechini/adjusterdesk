@@ -6,7 +6,7 @@ import { formatDate, fullName, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { taskPriorityOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
-import { taskTemplates } from "@/lib/templates";
+import { dueDatePresetOptions, normalizeDueDatePreset, taskTemplates } from "@/lib/templates";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -49,6 +49,10 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
   const editingTaskId = rawEditTask && claim.tasks.some((task) => task.id === rawEditTask) ? rawEditTask : undefined;
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
+  const templateKeyQuery = firstValue(query.taskTemplateKey)?.trim() ?? "";
+  const selectedTemplateKey = taskTemplates.some((template) => template.key === templateKeyQuery) ? templateKeyQuery : "";
+  const duePreset = normalizeDueDatePreset(firstValue(query.duePreset)?.trim());
+  const customDueDate = duePreset === "CUSTOM" ? firstValue(query.dueDate)?.trim() ?? "" : "";
   const status = firstValue(query.status)?.trim() ?? "ALL";
   const priority = firstValue(query.priority)?.trim() ?? "ALL";
   const due = firstValue(query.due)?.trim() ?? "ALL";
@@ -238,13 +242,18 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <p className="text-sm leading-6 text-slate-600">Start from a common task or write your own so the next office action stays clear.</p>
                 <Field label="Start from a template" hint="Used when adding claim tasks. Or write your own task below.">
-                  <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                  <select name="taskTemplateKey" defaultValue={selectedTemplateKey} className={selectClassName}>
                     <option value="">Or write your own</option>
                     {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
                   </select>
                 </Field>
                 <Field label="Or write your own" hint="Example: Call carrier for estimate status."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
-                <Field label="Due date" hint="Tasks with dates appear on Today when due."><input name="dueDate" type="date" className={inputClassName} /></Field>
+                <Field label="Due date default" hint="Use a simple default, or pick Custom date.">
+                  <select name="duePreset" defaultValue={duePreset} className={selectClassName}>
+                    {dueDatePresetOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Custom due date" hint="Required only when Due date default is Custom date."><input name="dueDate" type="date" defaultValue={customDueDate} className={inputClassName} /><FieldError name="dueDate" /></Field>
                 <Field label="Assigned adjuster" hint="Choose the person responsible for this task.">
                   <select name="assignedUserId" className={selectClassName} defaultValue={claim.assignedUserId ?? ""}>
                     <option value="">Unassigned</option>
@@ -286,6 +295,17 @@ export default async function ClaimTasksPage({ params, searchParams }: PageProps
               <p className="mt-1">{formatDate(claim.deadlineDate)}</p>
               <p className="mt-3 font-medium text-slate-950">Next open task</p>
               <p className="mt-1">{nextOpenTask ? `${nextOpenTask.title} · ${formatDate(nextOpenTask.dueDate)}` : "No open task scheduled."}</p>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+              <p className="font-medium text-slate-950">Suggested next steps</p>
+              <p className="mt-1 text-xs text-slate-500">Add common follow-ups fast without writing each task from scratch.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ButtonLink href={`${returnPath}?action=add-task&taskTemplateKey=request-policy-documents&duePreset=TODAY`} variant="secondary">Request policy documents</ButtonLink>
+                <ButtonLink href={`${returnPath}?action=add-task&taskTemplateKey=upload-photos&duePreset=TOMORROW`} variant="secondary">Upload photos</ButtonLink>
+                <ButtonLink href={`${returnPath}?action=add-task&taskTemplateKey=follow-up-with-carrier&duePreset=IN_3_DAYS`} variant="secondary">Follow up with carrier</ButtonLink>
+                <ButtonLink href={`${returnPath}?action=add-task&taskTemplateKey=update-client-status-link&duePreset=TODAY`} variant="secondary">Update client status</ButtonLink>
+              </div>
             </div>
           </Card>
         </aside>

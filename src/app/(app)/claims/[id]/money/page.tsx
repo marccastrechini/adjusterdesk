@@ -139,6 +139,14 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                   <ButtonLink href={`${returnPath}?action=invoice`} variant="secondary">Create fee invoice</ButtonLink>
                   <p className="mt-1.5 text-xs text-slate-500">Create a fee invoice once settlement and fee terms are known.</p>
                 </div>
+                <div>
+                  <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=send-invoice&duePreset=TODAY`} variant="secondary">Add send invoice follow-up</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Create a same-day reminder to send the fee invoice.</p>
+                </div>
+                <div>
+                  <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-on-receivable&duePreset=IN_3_DAYS`} variant="secondary">Add receivable follow-up</ButtonLink>
+                  <p className="mt-1.5 text-xs text-slate-500">Set the next check-in for unpaid invoice balances.</p>
+                </div>
               </div>
             ) : null}
 
@@ -209,6 +217,15 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                 </div>
               </ActionForm>
             ) : null}
+
+            <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+              <p className="font-medium text-slate-950">Suggested next steps</p>
+              <p className="mt-1 text-xs text-slate-500">Use simple reminders for invoice and receivable follow-ups.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=send-invoice&duePreset=TODAY`} variant="secondary">Send invoice</ButtonLink>
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-on-receivable&duePreset=IN_3_DAYS`} variant="secondary">Follow up on receivable</ButtonLink>
+              </div>
+            </div>
           </Card>
         </aside>
       </div>

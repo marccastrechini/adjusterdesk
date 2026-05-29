@@ -101,6 +101,14 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
             </ActionForm>
           </Card>
 
+          <Card>
+            <h2 className="text-base font-semibold text-slate-950">Suggested next steps</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Add a common follow-up task when the client-facing update needs a same-day check.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=update-client-status-link&duePreset=TODAY`} variant="secondary">Add update client status task</ButtonLink>
+            </div>
+          </Card>
+
           <Section title="Client status links" description="Manage the shareable status link for this claim. Regenerating the link replaces the old URL.">
             <div className="grid gap-3">
               <form action={createClientStatusLink.bind(null, claim.id)} className="flex flex-wrap items-center gap-2">

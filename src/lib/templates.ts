@@ -10,6 +10,10 @@ export type TaskTemplate = {
   priority: TaskPriorityValue;
 };
 
+export type DueDatePreset = "TODAY" | "TOMORROW" | "IN_3_DAYS" | "IN_1_WEEK" | "CUSTOM";
+
+export type TaskAssociationTarget = "claim" | "lead" | "general";
+
 export type DocumentCategoryGuide = {
   category: DocumentCategoryValue;
   label: string;
@@ -39,8 +43,17 @@ export type TemplateUsageSummary = {
 
 const taskPriorityValues = new Set<string>(Object.values(TaskPriority));
 const documentCategoryValues = new Set<string>(Object.values(DocumentCategory));
+const dueDatePresetValues = new Set<DueDatePreset>(["TODAY", "TOMORROW", "IN_3_DAYS", "IN_1_WEEK", "CUSTOM"]);
 
 export const messageTemplateTypes: TemplateTypeValue[] = [TemplateType.EMAIL, TemplateType.TEXT, TemplateType.LETTER];
+
+export const dueDatePresetOptions = [
+  ["TODAY", "Today"],
+  ["TOMORROW", "Tomorrow"],
+  ["IN_3_DAYS", "In 3 days"],
+  ["IN_1_WEEK", "In 1 week"],
+  ["CUSTOM", "Custom date"],
+] as const satisfies readonly [DueDatePreset, string][];
 
 export const templateUsageSummaries = [
   {
@@ -124,6 +137,12 @@ export const taskTemplates = [
     notes: "Check on unpaid fee balance, expected payment date, and any missing invoice details.",
     priority: TaskPriority.HIGH,
   },
+  {
+    key: "update-client-status-link",
+    title: "Update client status link",
+    notes: "Update the client-facing status summary and next step, then confirm the share link is active.",
+    priority: TaskPriority.NORMAL,
+  },
 ] as const satisfies readonly TaskTemplate[];
 
 export const documentCategoryGuides = [
@@ -192,10 +211,98 @@ function cleanText(value: MaybeText) {
   return value?.trim() || undefined;
 }
 
+function dateAtNoon(value: Date) {
+  const nextDate = new Date(value);
+  nextDate.setHours(12, 0, 0, 0);
+  return nextDate;
+}
+
+function parseDateInput(value: MaybeText) {
+  const dateText = cleanText(value);
+  if (!dateText) return undefined;
+  return new Date(`${dateText}T12:00:00`);
+}
+
 export function getTaskTemplate(key: MaybeText) {
   const cleanKey = cleanText(key);
   if (!cleanKey) return undefined;
   return taskTemplates.find((template) => template.key === cleanKey);
+}
+
+export function normalizeDueDatePreset(value: MaybeText): DueDatePreset {
+  const preset = cleanText(value);
+  if (preset && dueDatePresetValues.has(preset as DueDatePreset)) return preset as DueDatePreset;
+  return "TODAY";
+}
+
+export function dueDateFromPreset(preset: DueDatePreset, now = new Date()) {
+  const baseDate = dateAtNoon(now);
+  if (preset === "TODAY") return baseDate;
+
+  const nextDate = new Date(baseDate);
+  if (preset === "TOMORROW") {
+    nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate;
+  }
+  if (preset === "IN_3_DAYS") {
+    nextDate.setDate(nextDate.getDate() + 3);
+    return nextDate;
+  }
+  if (preset === "IN_1_WEEK") {
+    nextDate.setDate(nextDate.getDate() + 7);
+    return nextDate;
+  }
+
+  return undefined;
+}
+
+export function taskDueDateFromInput(input: {
+  duePreset?: MaybeText;
+  dueDate?: MaybeText;
+  now?: Date;
+}) {
+  const preset = normalizeDueDatePreset(input.duePreset);
+  if (preset === "CUSTOM") return parseDateInput(input.dueDate);
+  return dueDateFromPreset(preset, input.now);
+}
+
+export function taskAssociationFromInput(input: {
+  claimId?: MaybeText;
+  leadId?: MaybeText;
+}) {
+  const claimId = cleanText(input.claimId);
+  const leadId = cleanText(input.leadId);
+
+  if (claimId && leadId) {
+    return {
+      claimId,
+      leadId,
+      target: "general" as const,
+      error: "Choose either a claim or a lead when creating a task.",
+    };
+  }
+
+  if (claimId) return { claimId, leadId: undefined, target: "claim" as const, error: undefined };
+  if (leadId) return { claimId: undefined, leadId, target: "lead" as const, error: undefined };
+  return { claimId: undefined, leadId: undefined, target: "general" as const, error: undefined };
+}
+
+export function taskTemplateActivityNote(input: {
+  templateKey?: MaybeText;
+  taskTitle: string;
+  dueDate?: Date;
+  target: TaskAssociationTarget;
+}) {
+  const template = getTaskTemplate(input.templateKey);
+  if (!template) return undefined;
+
+  const targetLabel = input.target === "claim" ? "claim" : input.target === "lead" ? "lead" : "record";
+  const dueSummary = input.dueDate ? `Due ${input.dueDate.toISOString().slice(0, 10)}.` : "No due date set.";
+
+  return {
+    subject: `Task added from template: ${input.taskTitle}`,
+    body: `Added from the "${template.title}" template for this ${targetLabel}. ${dueSummary}`,
+  };
 }
 
 export function getDocumentRequestTemplate(key: MaybeText) {

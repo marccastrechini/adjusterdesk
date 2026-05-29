@@ -178,6 +178,9 @@ export default async function MoneyPage({ searchParams }: PageProps) {
                       <Link href={`/claims/${invoice.claim.id}/money`} className="inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100">
                         Open money
                       </Link>
+                      <Link href={`/claims/${invoice.claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-on-receivable&duePreset=IN_3_DAYS`} className="inline-flex h-8 items-center justify-center rounded-md border border-teal-300 bg-teal-50 px-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100">
+                        Add receivable follow-up task
+                      </Link>
                       <Link href={`/claims/${invoice.claim.id}/money?action=payment`} className="inline-flex h-8 items-center justify-center rounded-md border border-teal-300 bg-teal-50 px-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100">
                         Record payment
                       </Link>

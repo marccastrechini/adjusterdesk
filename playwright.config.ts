@@ -19,9 +19,10 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+        // Use the profile-aware local runtime so smoke always targets development demo data.
+        command: `npm run dev:local -- -BindHost 127.0.0.1 -Port ${port}`,
         url: `${baseURL}/today`,
-        reuseExistingServer: true,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });

@@ -5,7 +5,7 @@ import { activityTypeOptions, taskPriorityOptions } from "@/lib/options";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getLead } from "@/lib/queries";
-import { taskTemplates } from "@/lib/templates";
+import { dueDatePresetOptions, normalizeDueDatePreset, taskTemplates } from "@/lib/templates";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 
 type PageProps = {
@@ -25,6 +25,10 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
   const returnPath = `/leads/${lead.id}`;
   const action = firstValue(query.action);
   const selectedAction = action === "convert" || action === "task" || action === "activity" ? action : undefined;
+  const templateKeyQuery = firstValue(query.taskTemplateKey)?.trim() ?? "";
+  const selectedTemplateKey = taskTemplates.some((template) => template.key === templateKeyQuery) ? templateKeyQuery : "";
+  const duePreset = normalizeDueDatePreset(firstValue(query.duePreset)?.trim());
+  const customDueDate = duePreset === "CUSTOM" ? firstValue(query.dueDate)?.trim() ?? "" : "";
 
   return (
     <>
@@ -171,13 +175,18 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                 <input type="hidden" name="leadId" value={lead.id} />
                 <input type="hidden" name="returnPath" value={returnPath} />
                 <Field label="Common task" hint="Optional office default for routine lead work.">
-                  <select name="taskTemplateKey" defaultValue="" className={selectClassName}>
+                  <select name="taskTemplateKey" defaultValue={selectedTemplateKey} className={selectClassName}>
                     <option value="">Custom task</option>
                     {taskTemplates.map((template) => <option key={template.key} value={template.key}>{template.title}</option>)}
                   </select>
                 </Field>
                 <Field label="Custom task" hint="Use this when the common task list does not fit."><input name="title" className={inputClassName} /><FieldError name="title" /></Field>
-                <Field label="Due date" hint="Leave blank only if there is no date yet."><input name="dueDate" type="date" className={inputClassName} /></Field>
+                <Field label="Due date default" hint="Use a simple default, or pick Custom date.">
+                  <select name="duePreset" defaultValue={duePreset} className={selectClassName}>
+                    {dueDatePresetOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Custom due date" hint="Required only when Due date default is Custom date."><input name="dueDate" type="date" defaultValue={customDueDate} className={inputClassName} /><FieldError name="dueDate" /></Field>
                 <Field label="Assigned adjuster" hint="Choose who should see this follow-up.">
                   <select name="assignedUserId" className={selectClassName} defaultValue={lead.assignedUserId ?? ""}>
                     <option value="">Unassigned</option>
@@ -215,6 +224,17 @@ export default async function LeadDetailPage({ params, searchParams }: PageProps
                   <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
                 </div>
               </ActionForm>
+            ) : null}
+
+            {lead.status === "NEW" ? (
+              <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                <p className="font-medium text-slate-950">Suggested next steps</p>
+                <p className="mt-1 text-xs text-slate-500">Use common follow-ups to keep new leads moving.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <ButtonLink href={`${returnPath}?action=task&taskTemplateKey=follow-up-with-lead&duePreset=TOMORROW`} variant="secondary">Follow up with lead</ButtonLink>
+                  <ButtonLink href={`${returnPath}?action=task&taskTemplateKey=schedule-inspection&duePreset=IN_3_DAYS`} variant="secondary">Schedule inspection</ButtonLink>
+                </div>
+              </div>
             ) : null}
           </Card>
         </aside>

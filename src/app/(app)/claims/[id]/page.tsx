@@ -79,6 +79,17 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
             </div>
           </Section>
 
+          {claim.status !== "SETTLED" && claim.status !== "CLOSED" ? (
+            <Section title="Suggested next steps" description="Use common follow-ups to keep active claims moving.">
+              <div className="flex flex-wrap gap-2">
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=request-policy-documents&duePreset=TODAY`} variant="secondary">Request policy documents</ButtonLink>
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=upload-photos&duePreset=TOMORROW`} variant="secondary">Upload photos</ButtonLink>
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-with-carrier&duePreset=IN_3_DAYS`} variant="secondary">Follow up with carrier</ButtonLink>
+                <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=update-client-status-link&duePreset=TODAY`} variant="secondary">Update client status</ButtonLink>
+              </div>
+            </Section>
+          ) : null}
+
           <div className="grid gap-6 lg:grid-cols-2">
             <Section title="Open tasks" actions={<ButtonLink href={`/claims/${claim.id}/tasks`} variant="secondary">Manage tasks</ButtonLink>}>
               {openTasks.length === 0 ? (

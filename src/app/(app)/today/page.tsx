@@ -122,6 +122,7 @@ function LeadFollowUpList({ leads }: { leads: TodayData["leadFollowUps"] }) {
               <p className="text-sm text-slate-600">Assigned to {lead.assignedUser?.name ?? "Unassigned"}</p>
               <div className="flex flex-wrap items-center gap-2">
                 <ButtonLink href={`/leads/${lead.id}`} variant="secondary">Open lead</ButtonLink>
+                  <ButtonLink href={`/leads/${lead.id}?action=task&taskTemplateKey=follow-up-with-lead&duePreset=TOMORROW`} variant="secondary">Add follow-up task</ButtonLink>
                 <ButtonLink href={`/leads/${lead.id}?action=activity`} variant="secondary">Log note or call</ButtonLink>
               </div>
             </div>
@@ -359,6 +360,7 @@ export default async function TodayPage() {
                       <p className="mt-1 text-sm text-slate-600">Next step: {claim.nextStep ?? "Open the claim and set the next carrier follow-up."}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <ButtonLink href={`/claims/${claim.id}`} variant="secondary">Open claim</ButtonLink>
+                        <ButtonLink href={`/claims/${claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-with-carrier&duePreset=IN_3_DAYS`} variant="secondary">Add carrier follow-up task</ButtonLink>
                         <ButtonLink href={`/claims/${claim.id}/communications?action=log-communication`} variant="secondary">Log note or call</ButtonLink>
                       </div>
                     </div>
@@ -390,7 +392,10 @@ export default async function TodayPage() {
                       </div>
                       <p className="mt-1 text-sm text-slate-600">Showing here because this invoice still has an open balance.</p>
                       <div className="mt-3">
-                        <ButtonLink href={`/claims/${invoice.claim.id}/money`} variant="secondary">Open money</ButtonLink>
+                        <div className="flex flex-wrap gap-2">
+                          <ButtonLink href={`/claims/${invoice.claim.id}/money`} variant="secondary">Open money</ButtonLink>
+                          <ButtonLink href={`/claims/${invoice.claim.id}/tasks?action=add-task&taskTemplateKey=follow-up-on-receivable&duePreset=IN_3_DAYS`} variant="secondary">Add receivable follow-up task</ButtonLink>
+                        </div>
                       </div>
                     </div>
                     <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>

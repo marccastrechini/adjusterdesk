@@ -32,7 +32,16 @@ import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
 import { clearAdminWorkspaceOverride, setAdminWorkspaceOverride } from "@/lib/session";
-import { activityInputFromTemplate, documentInputFromTemplate, messageTemplateTypes, taskInputFromTemplate } from "@/lib/templates";
+import {
+  activityInputFromTemplate,
+  documentInputFromTemplate,
+  messageTemplateTypes,
+  normalizeDueDatePreset,
+  taskAssociationFromInput,
+  taskDueDateFromInput,
+  taskInputFromTemplate,
+  taskTemplateActivityNote,
+} from "@/lib/templates";
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
@@ -746,32 +755,83 @@ export async function setClientStatusLinkActive(claimId: string, linkId: string,
 }
 
 export async function createTask(formData: FormData) {
-  const { firm } = await getDemoContext();
-  const rawClaimId = formData.get("claimId")?.toString() || undefined;
-  const rawLeadId = formData.get("leadId")?.toString() || undefined;
+  const { firm, user } = await getDemoContext();
+  const taskAssociation = taskAssociationFromInput({
+    claimId: formData.get("claimId")?.toString(),
+    leadId: formData.get("leadId")?.toString(),
+  });
+  if (taskAssociation.error) throw new Error(taskAssociation.error);
+
+  const rawClaimId = taskAssociation.claimId;
+  const rawLeadId = taskAssociation.leadId;
   const rawAssignedUserId = formData.get("assignedUserId")?.toString() || undefined;
+  const taskTemplateKey = formData.get("taskTemplateKey")?.toString();
   const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
   const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
   const assignedUserId = rawAssignedUserId ? await requireOwnedUserId(firm.id, rawAssignedUserId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/today";
   const taskInput = taskInputFromTemplate({
-    templateKey: formData.get("taskTemplateKey")?.toString(),
+    templateKey: taskTemplateKey,
     title: formData.get("title")?.toString(),
     notes: formData.get("notes")?.toString(),
     priority: formData.get("priority")?.toString(),
   });
+  const dueDate = taskDueDateFromInput({
+    duePreset: formData.get("duePreset")?.toString(),
+    dueDate: formData.get("dueDate")?.toString(),
+  });
 
-  await prisma.task.create({
-    data: {
-      firmId: firm.id,
-      claimId,
-      leadId,
-      assignedUserId,
-      title: requiredText.parse(taskInput.title),
-      notes: taskInput.notes,
-      priority: taskInput.priority,
-      dueDate: asDate(formData.get("dueDate")?.toString()),
-    },
+  const [claimTaskContext, leadTaskContext] = await Promise.all([
+    claimId
+      ? prisma.claim.findFirst({
+          where: { id: claimId, firmId: firm.id },
+          select: { assignedUserId: true, contactId: true },
+        })
+      : Promise.resolve(null),
+    leadId
+      ? prisma.lead.findFirst({
+          where: { id: leadId, firmId: firm.id },
+          select: { assignedUserId: true, contactId: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const resolvedAssignedUserId = assignedUserId ?? claimTaskContext?.assignedUserId ?? leadTaskContext?.assignedUserId ?? user.id;
+  const activityNote = taskTemplateActivityNote({
+    templateKey: taskTemplateKey,
+    taskTitle: requiredText.parse(taskInput.title),
+    dueDate,
+    target: taskAssociation.target,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.task.create({
+      data: {
+        firmId: firm.id,
+        claimId,
+        leadId,
+        assignedUserId: resolvedAssignedUserId,
+        title: requiredText.parse(taskInput.title),
+        notes: taskInput.notes,
+        priority: taskInput.priority,
+        dueDate,
+      },
+    });
+
+    if (activityNote && (claimId || leadId)) {
+      await tx.activity.create({
+        data: {
+          firmId: firm.id,
+          userId: user.id,
+          claimId,
+          leadId,
+          contactId: claimTaskContext?.contactId ?? leadTaskContext?.contactId,
+          type: ActivityType.NOTE,
+          subject: activityNote.subject,
+          body: activityNote.body,
+        },
+      });
+    }
   });
 
   revalidatePath(returnPath);
@@ -780,17 +840,24 @@ export async function createTask(formData: FormData) {
 
 export async function createTaskWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
+  const taskAssociation = taskAssociationFromInput({
+    claimId: formData.get("claimId")?.toString(),
+    leadId: formData.get("leadId")?.toString(),
+  });
   const taskInput = taskInputFromTemplate({
     templateKey: formData.get("taskTemplateKey")?.toString(),
     title: formData.get("title")?.toString(),
     notes: formData.get("notes")?.toString(),
     priority: formData.get("priority")?.toString(),
   });
+  const duePreset = normalizeDueDatePreset(formData.get("duePreset")?.toString());
 
   if (!taskInput.title) errors.title = "Choose a common task or add a short task name.";
+  if (duePreset === "CUSTOM" && !textValue(formData, "dueDate")) errors.dueDate = "Choose a custom due date.";
+  if (taskAssociation.error) errors.title = "Choose a lead or a claim for this task.";
 
   if (hasErrors(errors)) {
-    return formError("Choose a common task or add a task name before saving this follow-up.", errors);
+    return formError("Choose a common task and due date before saving this follow-up.", errors);
   }
 
   await createTask(formData);

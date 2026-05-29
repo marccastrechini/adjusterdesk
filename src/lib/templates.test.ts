@@ -1,9 +1,36 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DocumentCategory, TaskPriority } from "@/generated/prisma/client";
-import { activityInputFromTemplate, documentInputFromTemplate, taskInputFromTemplate } from "./templates";
+import {
+  activityInputFromTemplate,
+  documentInputFromTemplate,
+  dueDateFromPreset,
+  normalizeDueDatePreset,
+  taskAssociationFromInput,
+  taskDueDateFromInput,
+  taskInputFromTemplate,
+  taskTemplateActivityNote,
+  taskTemplates,
+} from "./templates";
 
 describe("office templates", () => {
+  it("includes expected task templates for common follow-ups", () => {
+    const templateKeys = taskTemplates.map((template) => template.key);
+
+    assert.deepEqual(templateKeys, [
+      "follow-up-with-lead",
+      "schedule-inspection",
+      "request-policy-documents",
+      "upload-photos",
+      "send-estimate-proposal",
+      "follow-up-with-carrier",
+      "check-settlement-payment",
+      "send-invoice",
+      "follow-up-on-receivable",
+      "update-client-status-link",
+    ]);
+  });
+
   it("uses a selected task template when the task name is blank", () => {
     const input = taskInputFromTemplate({ templateKey: "follow-up-with-carrier", title: "", priority: "" });
 
@@ -79,5 +106,69 @@ describe("office templates", () => {
 
     assert.equal(input.subject, "Client text follow-up");
     assert.equal(input.body, "Hi {{clientFirstName}}, please send the photos.");
+  });
+
+  it("calculates predictable due dates from presets", () => {
+    const now = new Date("2026-05-29T09:30:00.000Z");
+    const todayDue = dueDateFromPreset("TODAY", now);
+    const tomorrowDue = dueDateFromPreset("TOMORROW", now);
+    const inThreeDaysDue = dueDateFromPreset("IN_3_DAYS", now);
+    const inOneWeekDue = dueDateFromPreset("IN_1_WEEK", now);
+
+    assert.equal(todayDue?.getDate(), 29);
+    assert.equal(todayDue?.getHours(), 12);
+    assert.equal(tomorrowDue?.getDate(), 30);
+    assert.equal(tomorrowDue?.getHours(), 12);
+    assert.equal(inThreeDaysDue?.getDate(), 1);
+    assert.equal(inThreeDaysDue?.getMonth(), 5);
+    assert.equal(inThreeDaysDue?.getHours(), 12);
+    assert.equal(inOneWeekDue?.getDate(), 5);
+    assert.equal(inOneWeekDue?.getMonth(), 5);
+    assert.equal(inOneWeekDue?.getHours(), 12);
+  });
+
+  it("resolves due date defaults and custom date input", () => {
+    const now = new Date("2026-05-29T09:30:00.000Z");
+    const tomorrowDue = taskDueDateFromInput({ duePreset: "TOMORROW", now });
+    const customDue = taskDueDateFromInput({ duePreset: "CUSTOM", dueDate: "2026-06-11", now });
+
+    assert.equal(tomorrowDue?.getDate(), 30);
+    assert.equal(tomorrowDue?.getHours(), 12);
+    assert.equal(customDue?.getDate(), 11);
+    assert.equal(customDue?.getMonth(), 5);
+    assert.equal(customDue?.getHours(), 12);
+    assert.equal(taskDueDateFromInput({ duePreset: "CUSTOM", dueDate: "", now }), undefined);
+    assert.equal(normalizeDueDatePreset("unknown"), "TODAY");
+  });
+
+  it("keeps task association scoped to a claim or lead", () => {
+    assert.deepEqual(taskAssociationFromInput({ claimId: "claim-1" }), {
+      claimId: "claim-1",
+      leadId: undefined,
+      target: "claim",
+      error: undefined,
+    });
+
+    assert.deepEqual(taskAssociationFromInput({ leadId: "lead-1" }), {
+      claimId: undefined,
+      leadId: "lead-1",
+      target: "lead",
+      error: undefined,
+    });
+
+    assert.equal(taskAssociationFromInput({ claimId: "claim-1", leadId: "lead-1" }).error, "Choose either a claim or a lead when creating a task.");
+  });
+
+  it("creates an activity note when a task comes from a template", () => {
+    const activity = taskTemplateActivityNote({
+      templateKey: "follow-up-with-carrier",
+      taskTitle: "Follow up with carrier",
+      dueDate: new Date("2026-06-02T12:00:00.000Z"),
+      target: "claim",
+    });
+
+    assert.equal(activity?.subject, "Task added from template: Follow up with carrier");
+    assert.match(activity?.body ?? "", /follow up with carrier/i);
+    assert.match(activity?.body ?? "", /2026-06-02/);
   });
 });
