@@ -78,6 +78,7 @@ What to say:
 - Use suggested next steps to add common follow-ups fast.
 - Request client documents and mark them received.
 - Open the activity timeline to see the claim history in one place.
+- Open Reports to see open claims, overdue work, settlements, and unpaid invoices.
 
 Do not dwell on:
 

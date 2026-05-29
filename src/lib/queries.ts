@@ -108,6 +108,7 @@ export async function getTodayData() {
     requestedDocumentCount,
     unpaidInvoices,
     activeClaimCount,
+    settlementsThisMonthAggregate,
   ] =
     await Promise.all([
       prisma.task.findMany({
@@ -179,6 +180,14 @@ export async function getTodayData() {
       prisma.claim.count({
         where: activeClaimWhere,
       }),
+      prisma.settlementRound.aggregate({
+        where: {
+          firmId: firm.id,
+          status: SettlementStatus.ACCEPTED,
+          offeredAt: { gte: new Date(start.getFullYear(), start.getMonth(), 1) },
+        },
+        _sum: { acceptedAmountCents: true },
+      }),
     ]);
 
   return {
@@ -199,6 +208,7 @@ export async function getTodayData() {
     requestedDocumentCount,
     unpaidInvoices,
     activeClaimCount,
+    settlementsThisMonthCents: settlementsThisMonthAggregate._sum.acceptedAmountCents ?? 0,
   };
 }
 
@@ -345,6 +355,8 @@ export async function getMoneyData() {
 export async function getReportsData() {
   const { firm } = await getDemoContext();
   const { start } = todayRange();
+  const twelveMonthsAgo = new Date(start);
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
   const openClaimStatuses: ClaimStatus[] = [ClaimStatus.NEW, ClaimStatus.IN_REVIEW, ClaimStatus.WAITING_ON_CLIENT, ClaimStatus.WAITING_ON_CARRIER, ClaimStatus.ESTIMATE_SENT, ClaimStatus.NEGOTIATING];
 
   const [
@@ -356,6 +368,8 @@ export async function getReportsData() {
     receivables,
     recentSettlements,
     acceptedSettlementTotals,
+    claimSourceCounts,
+    settlementsForMonthly,
   ] = await Promise.all([
     prisma.claim.groupBy({
       by: ["status"],
@@ -403,6 +417,17 @@ export async function getReportsData() {
       where: { firmId: firm.id, status: SettlementStatus.ACCEPTED },
       _sum: { acceptedAmountCents: true },
     }),
+    prisma.lead.groupBy({
+      by: ["source"],
+      where: { firmId: firm.id, claim: { isNot: null } },
+      _count: { _all: true },
+      orderBy: { source: "asc" },
+    }),
+    prisma.settlementRound.findMany({
+      where: { firmId: firm.id, status: SettlementStatus.ACCEPTED, offeredAt: { gte: twelveMonthsAgo } },
+      select: { acceptedAmountCents: true, offeredAt: true, updatedAt: true, createdAt: true },
+      orderBy: { offeredAt: "desc" },
+    }),
   ]);
 
   const openClaimsCount = openClaimsByStatus.reduce((sum, item) => sum + (item._count?._all ?? 0), 0);
@@ -423,6 +448,7 @@ export async function getReportsData() {
     openClaimsCount,
     leadStatusCounts,
     leadSourceCounts,
+    claimSourceCounts,
     overdueTasks,
     overdueTaskCount,
     upcomingDeadlines,
@@ -432,6 +458,7 @@ export async function getReportsData() {
     receivableCents,
     recentSettlements,
     acceptedSettlementCents: acceptedSettlementTotals._sum.acceptedAmountCents ?? 0,
+    settlementsForMonthly,
   };
 }
 

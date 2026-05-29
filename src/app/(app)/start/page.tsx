@@ -16,7 +16,7 @@ export default async function StartPage() {
         description="A short setup path for a small public adjusting office moving from spreadsheets, email folders, texts, and paper checklists."
         actions={
           <>
-            <ButtonLink href="/office-resources" variant="secondary">Open resources</ButtonLink>
+            <ButtonLink href="/office-resources" variant="secondary">Open Templates & Checklists</ButtonLink>
             <ButtonLink href="/start/import" variant="secondary">Spreadsheet import</ButtonLink>
           </>
         }

@@ -35,10 +35,10 @@ const settingsCards = [
     action: "Open import",
   },
   {
-    title: "Resources",
+    title: "Templates & Checklists",
     description: "Plain office starters for intake, claim files, document requests, daily follow-up, and CSV cleanup.",
     href: "/office-resources",
-    action: "Open resources",
+    action: "Open Templates & Checklists",
   },
   {
     title: "Pilot feedback",

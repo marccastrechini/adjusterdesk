@@ -35,7 +35,7 @@ const navItems: { label: string; items: NavItem[] }[] = [
       { href: "/claims", label: "Claims", icon: FileText },
       { href: "/money", label: "Money", icon: CircleDollarSign },
       { href: "/reports", label: "Reports", icon: ChartNoAxesColumn },
-      { href: "/office-resources", label: "Resources", icon: BookOpen },
+      { href: "/office-resources", label: "Templates & Checklists", icon: BookOpen },
     ],
   },
   {

@@ -5,49 +5,61 @@ import { documentCategoryGuides, documentRequestTemplates, taskTemplates } from 
 const officeResources = [
   {
     title: "New lead intake",
+    whenToUse: "Use this when a new prospect calls, texts, or is referred and needs to be entered before details get lost.",
     items: ["Client name and best phone", "Damaged property address", "Loss type and date of loss", "Lead source", "Next follow-up date"],
     href: "/leads/new",
     action: "Add lead",
   },
   {
     title: "New claim file",
+    whenToUse: "Use this after intake when the client is ready to open an active claim file with the next office step.",
     items: ["Client and property", "Carrier and claim number if known", "Policy number if available", "Deadline date", "Short next step"],
     href: "/claims/new",
     action: "Add claim",
   },
   {
     title: "Client document request",
+    whenToUse: "Use this when the office needs missing policy, contract, photo, or carrier paperwork to move a claim forward.",
     items: ["Policy declarations", "Signed adjusting contract", "Damage photos", "Carrier letters", "Settlement or check details"],
     href: "/claims",
-    action: "Open claims",
+    action: "Open claim documents",
   },
   {
     title: "Daily close-out",
+    whenToUse: "Use this at the end of each day to clear overdue items and set up tomorrow's work queue.",
     items: ["Clear overdue tasks", "Set tomorrow's lead follow-ups", "Log carrier calls", "Request missing client documents", "Check unpaid invoices"],
     href: "/today",
     action: "Open Today",
   },
 ] as const;
 
+const defaultDueLabel = "Today (change in task form)";
+
 export default function OfficeResourcesPage() {
   return (
     <>
       <PageHeader
-        title="Resources"
-        description="Plain office starters for intake, claim files, document requests, daily follow-up, and spreadsheet cleanup."
-        actions={
-          <>
-            <ButtonLink href="/start" variant="secondary">Start checklist</ButtonLink>
-            <ButtonLink href="/settings/templates" variant="secondary">Templates</ButtonLink>
-          </>
-        }
+        title="Templates & Checklists"
+        description="Reusable office checklists and task starters for common public adjusting work."
       />
 
-      <Section title="Office starters" description="Use these as practical checklists for routine public adjusting office work. They do not replace professional judgment on a claim.">
+      <Card className="grid gap-2 border-teal-200 bg-teal-50">
+        <p className="text-sm leading-6 text-teal-950">
+          These are reusable office checklists and task starters for common public adjusting work.
+        </p>
+        <p className="text-sm leading-6 text-teal-900">
+          Real work still happens in Leads, Claims, Documents, Today, Money, and Activity.
+        </p>
+      </Card>
+
+      <Section title="Office starters" description="Pick a starter based on where the office is in the day-to-day workflow.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {officeResources.map((resource) => (
             <Card key={resource.title} className="grid content-start gap-4">
-              <h2 className="text-base font-semibold text-slate-950">{resource.title}</h2>
+              <div>
+                <h2 className="text-base font-semibold text-slate-950">{resource.title}</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{resource.whenToUse}</p>
+              </div>
               <ul className="grid gap-2 text-sm leading-6 text-slate-700">
                 {resource.items.map((item) => (
                   <li key={item} className="flex gap-2"><Badge tone="teal">Item</Badge><span>{item}</span></li>
@@ -62,18 +74,33 @@ export default function OfficeResourcesPage() {
       </Section>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-        <Section title="Common task starters" description="These are the built-in task defaults available from lead and claim task forms.">
-          <div className="grid gap-3 md:grid-cols-2">
-            {taskTemplates.map((template) => (
-              <Card key={template.key} className="grid content-start gap-2">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="font-semibold text-slate-950">{template.title}</h2>
-                  <Badge tone={template.priority === "HIGH" ? "red" : "slate"}>{template.priority === "HIGH" ? "High" : "Normal"}</Badge>
-                </div>
-                <p className="text-sm leading-6 text-slate-600">{template.notes}</p>
-              </Card>
-            ))}
-          </div>
+        <Section title="Common task starters" description="Built-in starters shown in lead and claim task forms.">
+          <Card className="p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-normal text-slate-600">
+                    <th className="px-4 py-2 font-semibold">Template</th>
+                    <th className="px-4 py-2 font-semibold">Starter note</th>
+                    <th className="px-4 py-2 font-semibold">Priority</th>
+                    <th className="px-4 py-2 font-semibold">Due default</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taskTemplates.map((template) => (
+                    <tr key={template.key} className="border-b border-slate-100 align-top last:border-b-0">
+                      <td className="px-4 py-3 font-medium text-slate-950">{template.title}</td>
+                      <td className="px-4 py-3 text-slate-600">{template.notes}</td>
+                      <td className="px-4 py-3">
+                        <Badge tone={template.priority === "HIGH" ? "red" : "slate"}>{template.priority === "HIGH" ? "High" : "Normal"}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{defaultDueLabel}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </Section>
 
         <Section title="Document categories" description="Use the same categories each time so claim files stay easy to scan.">

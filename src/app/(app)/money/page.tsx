@@ -154,7 +154,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
             actions={
               <>
                 <ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>
-                <ButtonLink href="/office-resources" variant="secondary">Money checklist</ButtonLink>
+                <ButtonLink href="/office-resources" variant="secondary">Open Templates & Checklists</ButtonLink>
               </>
             }
           />

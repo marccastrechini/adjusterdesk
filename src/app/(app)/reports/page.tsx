@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
 import { getReportsData } from "@/lib/queries";
+import { buildSettlementsByMonth } from "@/lib/reports";
 
 function SummaryLink({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default async function ReportsPage() {
     openClaimsCount,
     leadStatusCounts,
     leadSourceCounts,
+    claimSourceCounts,
     overdueTasks,
     overdueTaskCount,
     upcomingDeadlines,
@@ -27,7 +29,10 @@ export default async function ReportsPage() {
     receivableCents,
     recentSettlements,
     acceptedSettlementCents,
+    settlementsForMonthly,
   } = await getReportsData();
+
+  const settlementsByMonth = buildSettlementsByMonth(settlementsForMonthly);
 
   return (
     <>
@@ -131,6 +136,25 @@ export default async function ReportsPage() {
           )}
         </Section>
 
+        <Section title="Claims by source" description="Counts converted claims grouped by the source of the original lead.">
+          {claimSourceCounts.length === 0 ? (
+            <EmptyState
+              title="No claim sources yet"
+              message="Claim sources appear here once leads are converted to claims."
+              actions={<ButtonLink href="/leads" variant="secondary">Open leads</ButtonLink>}
+            />
+          ) : (
+            <div className="grid gap-3">
+              {claimSourceCounts.map((item) => (
+                <Card key={item.source} className="flex items-center justify-between">
+                  <p className="font-medium text-slate-950">{item.source}</p>
+                  <p className="text-lg font-semibold text-slate-950">{item._count?._all ?? 0}</p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Section>
+
         <Section title="Overdue tasks">
           {overdueTasks.length === 0 ? (
             <EmptyState
@@ -176,32 +200,56 @@ export default async function ReportsPage() {
         </Section>
       </div>
 
-      <Section title="Outstanding receivables">
-        {receivables.length === 0 ? (
-          <EmptyState
-            title="No outstanding receivables right now"
-            message="No sent, partially paid, or overdue invoices are open. Create fee invoices from claim money pages after settlement."
-            actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
-          />
-        ) : (
-          <div className="grid gap-3">
-            {receivables.map((invoice) => (
-              <Card key={invoice.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <Link href={`/claims/${invoice.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">{invoice.invoiceNumber} · {fullName(invoice.claim.contact)}</Link>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                    <span>Due {formatDate(invoice.dueAt)}</span>
-                    <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Section title="Outstanding receivables">
+          {receivables.length === 0 ? (
+            <EmptyState
+              title="No outstanding receivables right now"
+              message="No sent, partially paid, or overdue invoices are open. Create fee invoices from claim money pages after settlement."
+              actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+            />
+          ) : (
+            <div className="grid gap-3">
+              {receivables.map((invoice) => (
+                <Card key={invoice.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Link href={`/claims/${invoice.claim.id}/money`} className="font-semibold text-slate-950 hover:text-teal-800">{invoice.invoiceNumber} · {fullName(invoice.claim.contact)}</Link>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                      <span>Due {formatDate(invoice.dueAt)}</span>
+                      <Badge tone={invoiceStatusTone(invoice)}>{invoiceDisplayStatus(invoice)}</Badge>
+                    </div>
                   </div>
-                </div>
-                <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
-              </Card>
-            ))}
-          </div>
-        )}
-      </Section>
+                  <p className="text-lg font-semibold text-slate-950">{formatMoney(invoiceAmountDue(invoice))}</p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Section>
 
-      <Section title="Settlement activity" description="Accepted settlement rounds the office has already worked through." >
+        <Section title="Settlements by month" description="Accepted settlement totals for the last 12 months. Use this to see when claims close and money comes in.">
+          {settlementsByMonth.length === 0 ? (
+            <EmptyState
+              title="No settlements recorded yet"
+              message="Accepted settlements will appear here by month once the office records them on claim money pages."
+              actions={<ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>}
+            />
+          ) : (
+            <div className="grid gap-3">
+              {settlementsByMonth.map((row) => (
+                <Card key={row.monthKey} className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-950">{row.monthLabel}</p>
+                    <p className="text-sm text-slate-600">{row.count} settlement{row.count === 1 ? "" : "s"}</p>
+                  </div>
+                  <p className="text-lg font-semibold text-slate-950">{formatMoney(row.totalCents)}</p>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Section>
+      </div>
+
+      <Section title="Recent settlement rounds" description="Accepted settlement rounds the office has already worked through." >
         <div id="settlement-activity">
           {recentSettlements.length === 0 ? (
             <EmptyState
