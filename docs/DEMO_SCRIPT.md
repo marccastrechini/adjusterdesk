@@ -76,6 +76,7 @@ What to say:
 - This page is the office work order for today.
 - The team can see what to touch first without hunting across tabs.
 - Use suggested next steps to add common follow-ups fast.
+- Request client documents and mark them received.
 
 Do not dwell on:
 

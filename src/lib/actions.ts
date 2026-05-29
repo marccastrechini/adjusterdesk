@@ -8,6 +8,7 @@ import {
   ActivityType,
   ClaimStatus,
   DocumentCategory,
+  DocumentRequestStatus,
   InvoiceStatus,
   LeadStatus,
   SettlementStatus,
@@ -26,6 +27,7 @@ import {
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
 import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib/client-status";
+import { documentRequestResolution, validateClientStatusUploadInput, validateDocumentCreateInput } from "@/lib/document-requests";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
@@ -932,6 +934,7 @@ export async function createDocument(formData: FormData) {
   const { firm, user } = await getDemoContext();
   const rawClaimId = formData.get("claimId")?.toString() || undefined;
   const rawLeadId = formData.get("leadId")?.toString() || undefined;
+  const rawRequestedDocumentId = formData.get("requestedDocumentId")?.toString() || undefined;
   const claimId = rawClaimId ? await requireOwnedClaimId(firm.id, rawClaimId) : undefined;
   const leadId = rawLeadId ? await requireOwnedLeadId(firm.id, rawLeadId) : undefined;
   const returnPath = formData.get("returnPath")?.toString() || "/claims";
@@ -949,6 +952,62 @@ export async function createDocument(formData: FormData) {
     requestedFromClient: formData.get("requestedFromClient") === "on",
     hasFile: hasUpload,
   });
+  const clientVisibleNote = formData.get("clientVisibleNote")?.toString().trim() || undefined;
+
+  if (rawRequestedDocumentId) {
+    const requestedDocument = await prisma.document.findFirst({
+      where: {
+        id: rawRequestedDocumentId,
+        firmId: firm.id,
+        claimId,
+        OR: [
+          { requestedFromClient: true },
+          { requestStatus: DocumentRequestStatus.REQUESTED },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+      },
+    });
+
+    if (!requestedDocument) {
+      throw new Error("Document request not found.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.document.update({
+        where: { id: requestedDocument.id },
+        data: {
+          uploadedByUserId: user.id,
+          title: documentInput.title || requestedDocument.title,
+          category: documentInput.category || requestedDocument.category,
+          notes: documentInput.notes,
+          clientVisibleNote,
+          ...documentRequestResolution(DocumentRequestStatus.RECEIVED),
+          clientProvided: false,
+          ...upload,
+        },
+      });
+
+      await tx.activity.create({
+        data: {
+          firmId: firm.id,
+          userId: user.id,
+          claimId,
+          type: ActivityType.NOTE,
+          subject: "Document request marked received",
+          body: hasUpload
+            ? `Marked \"${documentInput.title || requestedDocument.title}\" received and attached an uploaded file.`
+            : `Marked \"${documentInput.title || requestedDocument.title}\" received.`,
+        },
+      });
+    });
+
+    revalidatePath(returnPath);
+    redirect(withNotice(returnPath, "document-request-received"));
+  }
 
   await prisma.document.create({
     data: {
@@ -959,11 +1018,27 @@ export async function createDocument(formData: FormData) {
       category: documentInput.category,
       title: documentInput.title || fallbackTitle,
       notes: documentInput.notes,
+      clientVisibleNote,
+      requestStatus: documentInput.requestedFromClient ? DocumentRequestStatus.REQUESTED : null,
+      clientProvided: false,
       requestedFromClient: documentInput.requestedFromClient,
       receivedAt: documentInput.requestedFromClient ? null : new Date(),
       ...upload,
     },
   });
+
+  if (documentInput.requestedFromClient && claimId) {
+    await prisma.activity.create({
+      data: {
+        firmId: firm.id,
+        userId: user.id,
+        claimId,
+        type: ActivityType.NOTE,
+        subject: "Document request created",
+        body: `Requested \"${documentInput.title || fallbackTitle}\" from the client.`,
+      },
+    });
+  }
 
   revalidatePath(returnPath);
   redirect(withNotice(returnPath, documentInput.requestedFromClient ? "document-requested" : "document-added"));
@@ -972,6 +1047,7 @@ export async function createDocument(formData: FormData) {
 export async function createDocumentWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const errors: FieldErrors = {};
   const hasUploadedFile = hasFile(formData, "file");
+  const requestedDocumentId = formData.get("requestedDocumentId")?.toString() || "";
   const fileError = uploadFileError(formData, "file");
   const documentInput = documentInputFromTemplate({
     templateKey: formData.get("documentTemplateKey")?.toString(),
@@ -982,12 +1058,16 @@ export async function createDocumentWithState(_state: ActionFormState, formData:
     hasFile: hasUploadedFile,
   });
   const requestedFromClient = documentInput.requestedFromClient;
-  const hasTitle = Boolean(documentInput.title);
 
-  if (requestedFromClient && !hasTitle) {
-    errors.title = "Name the document or photo you need from the client.";
-  } else if (!requestedFromClient && !hasTitle && !hasUploadedFile) {
-    errors.title = "Add a document title or choose a file before saving.";
+  const documentValidationError = validateDocumentCreateInput({
+    requestedFromClient,
+    requestedDocumentId,
+    title: documentInput.title,
+    hasUploadedFile,
+  });
+
+  if (documentValidationError) {
+    errors.title = documentValidationError;
   }
 
   if (fileError) {
@@ -1000,6 +1080,57 @@ export async function createDocumentWithState(_state: ActionFormState, formData:
 
   await createDocument(formData);
   return {};
+}
+
+export async function markDocumentRequestStatus(claimId: string, documentId: string, status: DocumentRequestStatus, returnPath: string) {
+  const { firm, user } = await getDemoContext();
+  const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
+  const requestedDocument = await prisma.document.findFirst({
+    where: {
+      id: documentId,
+      firmId: firm.id,
+      claimId: ownedClaimId,
+      OR: [
+        { requestedFromClient: true },
+        { requestStatus: DocumentRequestStatus.REQUESTED },
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+    },
+  });
+
+  if (!requestedDocument) {
+    throw new Error("Document request not found.");
+  }
+
+  const isReceived = status === DocumentRequestStatus.RECEIVED;
+  await prisma.$transaction(async (tx) => {
+    await tx.document.update({
+      where: { id: requestedDocument.id },
+      data: {
+        ...documentRequestResolution(status),
+        clientProvided: false,
+      },
+    });
+
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        userId: user.id,
+        claimId: ownedClaimId,
+        type: ActivityType.NOTE,
+        subject: isReceived ? "Document request marked received" : "Document request marked not needed",
+        body: isReceived
+          ? `Marked \"${requestedDocument.title}\" received.`
+          : `Marked \"${requestedDocument.title}\" not needed.`,
+      },
+    });
+  });
+
+  revalidatePath(returnPath);
+  redirect(withNotice(returnPath, isReceived ? "document-request-received" : "document-request-not-needed"));
 }
 
 export async function createActivity(formData: FormData) {
@@ -1429,6 +1560,7 @@ export async function setUserActive(userId: string, nextActive: boolean) {
 }
 
 export async function uploadStatusDocument(token: string, formData: FormData) {
+  const now = new Date();
   const statusLink = await prisma.clientStatusLink.findUnique({
     where: { token },
     include: {
@@ -1443,16 +1575,20 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file to upload.");
-  const fileError = validateUploadFile(file);
+  const fileError = validateClientStatusUploadInput({ size: file.size, mimeType: file.type, fileName: file.name });
   if (fileError) throw new Error(fileError);
 
   const requestedDocumentId = formData.get("requestedDocumentId")?.toString() || undefined;
   const replacementTitle = formData.get("title")?.toString().trim() || undefined;
   const uploadedNote = clientStatusUploadMarker;
+  const claimLabel = statusLink.claim.claimNumber ? `Claim #${statusLink.claim.claimNumber}` : "this claim";
 
   if (requestedDocumentId) {
     const requestedDocument = statusLink.claim.documents.find(
-      (document) => document.id === requestedDocumentId && document.requestedFromClient && document.firmId === statusLink.firmId,
+      (document) =>
+        document.id === requestedDocumentId &&
+        (document.requestedFromClient || document.requestStatus === DocumentRequestStatus.REQUESTED) &&
+        document.firmId === statusLink.firmId,
     );
 
     if (!requestedDocument) throw new Error("Choose a requested document from this claim.");
@@ -1469,8 +1605,19 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
         mimeType: upload.mimeType,
         sizeBytes: upload.sizeBytes,
         notes: mergedNotes,
-        requestedFromClient: false,
-        receivedAt: new Date(),
+        ...documentRequestResolution(DocumentRequestStatus.RECEIVED, now),
+        clientProvided: true,
+      },
+    });
+
+    await prisma.activity.create({
+      data: {
+        firmId: statusLink.firmId,
+        claimId: statusLink.claimId,
+        contactId: statusLink.claim.contactId,
+        type: ActivityType.NOTE,
+        subject: "Client uploaded requested document",
+        body: `Client uploaded \"${replacementTitle || requestedDocument.title}\" from the status link for ${claimLabel}.`,
       },
     });
   } else {
@@ -1483,8 +1630,20 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
         category: DocumentCategory.OTHER,
         title: replacementTitle || file.name,
         notes: uploadedNote,
-        receivedAt: new Date(),
+        ...documentRequestResolution(DocumentRequestStatus.RECEIVED, now),
+        clientProvided: true,
         ...upload,
+      },
+    });
+
+    await prisma.activity.create({
+      data: {
+        firmId: statusLink.firmId,
+        claimId: statusLink.claimId,
+        contactId: statusLink.claim.contactId,
+        type: ActivityType.NOTE,
+        subject: "Client uploaded document",
+        body: `Client uploaded \"${replacementTitle || file.name}\" from the status link for ${claimLabel}.`,
       },
     });
   }
@@ -1501,7 +1660,7 @@ export async function uploadStatusDocumentWithState(token: string, _state: Actio
     return formError("Choose a file to upload before sending it to the office.", { file: "Choose a file to upload." });
   }
 
-  const fileError = validateUploadFile(file);
+  const fileError = validateClientStatusUploadInput({ size: file.size, mimeType: file.type, fileName: file.name });
   if (fileError) {
     return formError(fileError, { file: fileError });
   }

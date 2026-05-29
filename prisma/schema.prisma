@@ -62,6 +62,12 @@ enum DocumentCategory {
   OTHER
 }
 
+enum DocumentRequestStatus {
+  REQUESTED
+  RECEIVED
+  NOT_NEEDED
+}
+
 enum ActivityType {
   NOTE
   CALL
@@ -362,12 +368,15 @@ model Document {
   leadId              String?
   uploadedByUserId    String?
   category            DocumentCategory @default(OTHER)
+  requestStatus       DocumentRequestStatus?
   title               String
   fileName            String?
   filePath            String?
   mimeType            String?
   sizeBytes           Int?
   notes               String?
+  clientVisibleNote   String?
+  clientProvided      Boolean          @default(false)
   requestedFromClient Boolean          @default(false)
   receivedAt          DateTime?
   createdAt           DateTime         @default(now())

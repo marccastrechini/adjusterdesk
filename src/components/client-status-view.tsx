@@ -84,7 +84,10 @@ export function ClientStatusView({
                   <div key={document.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="font-medium text-slate-950">{document.title}</p>
-                      <Badge tone={document.tone}>{document.statusLabel}</Badge>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge tone={document.tone}>{document.statusLabel}</Badge>
+                        {document.clientProvided ? <Badge tone="teal">Client uploaded</Badge> : null}
+                      </div>
                     </div>
                     <p className="mt-1 text-xs font-medium uppercase tracking-normal text-slate-500">{document.categoryLabel}</p>
                     {document.note ? <p className="mt-2 text-sm leading-6 text-slate-700">{document.note}</p> : null}

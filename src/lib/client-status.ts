@@ -1,4 +1,5 @@
-import { ClaimStatus, type DocumentCategory } from "@/generated/prisma/client";
+import { ClaimStatus, DocumentRequestStatus, type DocumentCategory } from "@/generated/prisma/client";
+import { resolveDocumentRequestStatus } from "@/lib/document-requests";
 import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 
 export const clientSummaryMaxLength = 600;
@@ -17,7 +18,10 @@ type ClientStatusDocument = {
   id: string;
   title: string;
   category: DocumentCategory;
+  requestStatus?: DocumentRequestStatus | null;
   notes?: string | null;
+  clientVisibleNote?: string | null;
+  clientProvided?: boolean;
   requestedFromClient: boolean;
   receivedAt?: Date | string | null;
   createdAt: Date | string;
@@ -59,9 +63,10 @@ export type ClientStatusViewModel = {
     id: string;
     title: string;
     categoryLabel: string;
-    statusLabel: "Requested" | "Received";
-    tone: "amber" | "green";
+    statusLabel: "Requested" | "Received" | "Not needed";
+    tone: "amber" | "green" | "slate";
     note?: string;
+    clientProvided?: boolean;
   }>;
   officeContact: {
     adjuster: string;
@@ -116,13 +121,29 @@ export function validateClientStatusUpdateInput(input: ClientStatusUpdateInput) 
 }
 
 function clientVisibleDocumentNote(notes?: string | null) {
-  if (!notes) return undefined;
+  if (!notes || !notes.includes(clientStatusUploadMarker)) return undefined;
   const [visibleNote] = notes.split(clientStatusUploadMarker);
   return visibleNote.trim() || undefined;
 }
 
 function isClientVisibleDocument(document: ClientStatusDocument) {
+  if (document.requestStatus) return true;
+  if (document.clientProvided) return true;
   return document.requestedFromClient || Boolean(document.receivedAt && document.notes?.includes(clientStatusUploadMarker));
+}
+
+function clientDocumentStatus(document: ClientStatusDocument) {
+  const status = resolveDocumentRequestStatus(document);
+
+  if (status === DocumentRequestStatus.REQUESTED) {
+    return { statusLabel: "Requested" as const, tone: "amber" as const };
+  }
+
+  if (status === DocumentRequestStatus.NOT_NEEDED) {
+    return { statusLabel: "Not needed" as const, tone: "slate" as const };
+  }
+
+  return { statusLabel: "Received" as const, tone: "green" as const };
 }
 
 export function buildClientStatusViewModel({
@@ -146,14 +167,18 @@ export function buildClientStatusViewModel({
     lastUpdateText: claim.publicSummary?.trim() || "The office is tracking this claim and will update the next step as work progresses.",
     lastUpdatedAt: formatDateTime(claim.updatedAt),
     nextStep: claim.nextStep?.trim() || undefined,
-    requestedDocuments: claim.documents.filter(isClientVisibleDocument).map((document) => ({
-      id: document.id,
-      title: document.title,
-      categoryLabel: labelFromEnum(document.category),
-      statusLabel: document.requestedFromClient ? "Requested" : "Received",
-      tone: document.requestedFromClient ? "amber" : "green",
-      note: clientVisibleDocumentNote(document.notes),
-    })),
+    requestedDocuments: claim.documents.filter(isClientVisibleDocument).map((document) => {
+      const status = clientDocumentStatus(document);
+      return {
+        id: document.id,
+        title: document.title,
+        categoryLabel: labelFromEnum(document.category),
+        statusLabel: status.statusLabel,
+        tone: status.tone,
+        note: document.clientVisibleNote?.trim() || clientVisibleDocumentNote(document.notes),
+        clientProvided: Boolean(document.clientProvided || document.notes?.includes(clientStatusUploadMarker)),
+      };
+    }),
     officeContact: {
       adjuster: claim.assignedUser?.name ?? "Office team",
       phone: firm.phone ?? "Phone not set",

@@ -9,6 +9,7 @@ import { getNoticeMessage } from "@/lib/notices";
 import { claimStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
 import { clientStatusPath } from "@/lib/status-links";
+import { DocumentRequestStatus } from "@/generated/prisma/client";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -21,7 +22,9 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
   const { firm, claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const statusLink = claim.statusLinks[0];
-  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
+  const requestedDocuments = claim.documents.filter((document) =>
+    document.requestStatus === DocumentRequestStatus.REQUESTED || document.requestedFromClient,
+  );
 
   return (
     <>

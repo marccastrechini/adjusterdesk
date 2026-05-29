@@ -171,7 +171,7 @@ export const documentRequestTemplates = [
   },
   {
     key: "estimate",
-    title: "Estimate or repair proposal",
+    title: "Contractor estimate",
     category: DocumentCategory.ESTIMATE,
     notes: "Please send any carrier, contractor, or repair estimate related to the loss.",
   },
@@ -195,9 +195,15 @@ export const documentRequestTemplates = [
   },
   {
     key: "invoice",
-    title: "Invoice or payment backup",
+    title: "Receipts or invoices",
     category: DocumentCategory.INVOICE,
     notes: "Please send the invoice, check copy, receipt, or payment backup for the claim file.",
+  },
+  {
+    key: "mortgage-company-info",
+    title: "Mortgage company information",
+    category: DocumentCategory.OTHER,
+    notes: "Please send the mortgage company name, claim/loss draft details, and contact information.",
   },
   {
     key: "other",

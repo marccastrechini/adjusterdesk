@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DocumentRequestStatus } from "@/generated/prisma/client";
 import { ClaimTabs } from "@/components/claim-tabs";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, PageHeader, Section } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, labelFromEnum, propertyAddress } from "@/lib/format";
@@ -17,7 +18,9 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
   const notice = getNoticeMessage(query);
   const openTasks = claim.tasks.filter((task) => task.status === "OPEN");
   const nextTask = openTasks[0];
-  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
+  const requestedDocuments = claim.documents.filter((document) =>
+    document.requestStatus === DocumentRequestStatus.REQUESTED || document.requestedFromClient,
+  );
   const latestActivity = claim.activities[0];
   const latestInvoice = claim.invoices[0];
   const openInvoiceCents = claim.invoices.reduce((sum, invoice) => sum + invoiceAmountDue(invoice), 0);

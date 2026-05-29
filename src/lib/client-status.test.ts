@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ClaimStatus, DocumentCategory } from "@/generated/prisma/client";
+import { ClaimStatus, DocumentCategory, DocumentRequestStatus } from "@/generated/prisma/client";
 import {
   buildClientStatusViewModel,
   clientNextStepMaxLength,
@@ -27,7 +27,10 @@ describe("client status view model", () => {
         id: "requested_doc",
         title: "Policy declarations page",
         category: DocumentCategory.POLICY,
-        notes: "Please send the declarations page when you can.",
+        requestStatus: DocumentRequestStatus.REQUESTED,
+        clientVisibleNote: "Please send the declarations page when you can.",
+        notes: "Internal office note should not be shown.",
+        clientProvided: false,
         requestedFromClient: true,
         receivedAt: null,
         createdAt: new Date("2026-05-02T12:00:00"),
@@ -36,16 +39,34 @@ describe("client status view model", () => {
         id: "received_doc",
         title: "Kitchen photos",
         category: DocumentCategory.PHOTOS,
-        notes: `Photo request\n${clientStatusUploadMarker}`,
+        requestStatus: DocumentRequestStatus.RECEIVED,
+        clientVisibleNote: "Photo request",
+        notes: `Internal upload trail\n${clientStatusUploadMarker}`,
+        clientProvided: true,
         requestedFromClient: false,
         receivedAt: new Date("2026-05-03T12:00:00"),
         createdAt: new Date("2026-05-02T12:00:00"),
+      },
+      {
+        id: "not_needed_doc",
+        title: "Mortgage company information",
+        category: DocumentCategory.OTHER,
+        requestStatus: DocumentRequestStatus.NOT_NEEDED,
+        clientVisibleNote: "No mortgage company is involved on this claim.",
+        notes: "Internal closure detail.",
+        clientProvided: false,
+        requestedFromClient: false,
+        receivedAt: null,
+        createdAt: new Date("2026-05-03T12:00:00"),
       },
       {
         id: "private_doc",
         title: "Private estimate strategy",
         category: DocumentCategory.ESTIMATE,
         notes: "Do not show this internal estimate note.",
+        clientVisibleNote: null,
+        requestStatus: null,
+        clientProvided: false,
         requestedFromClient: false,
         receivedAt: new Date("2026-05-03T12:00:00"),
         createdAt: new Date("2026-05-02T12:00:00"),
@@ -71,15 +92,19 @@ describe("client status view model", () => {
 
     assert.equal(model.heading, "Jamie Cole claim status");
     assert.equal(model.statusLabel, "Waiting On Client");
-    assert.equal(model.requestedDocuments.length, 2);
+    assert.equal(model.requestedDocuments.length, 3);
     assert.equal(model.requestedDocuments[0]?.statusLabel, "Requested");
     assert.equal(model.requestedDocuments[1]?.statusLabel, "Received");
+    assert.equal(model.requestedDocuments[2]?.statusLabel, "Not needed");
+    assert.equal(model.requestedDocuments[1]?.clientProvided, true);
     assert.doesNotMatch(serialized, /PRIVATE-CLAIM-NUMBER/);
     assert.doesNotMatch(serialized, /Internal admin note/);
     assert.doesNotMatch(serialized, /Internal task/);
     assert.doesNotMatch(serialized, /PRIVATE-INVOICE/);
     assert.doesNotMatch(serialized, /Settlement strategy/);
     assert.doesNotMatch(serialized, /Private estimate strategy/);
+    assert.doesNotMatch(serialized, /Internal office note should not be shown/);
+    assert.doesNotMatch(serialized, /Internal upload trail/);
     assert.doesNotMatch(serialized, new RegExp(clientStatusUploadMarker));
   });
 

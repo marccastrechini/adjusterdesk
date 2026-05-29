@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import {
   type Carrier,
   ClaimStatus,
+  DocumentRequestStatus,
   type Claim,
   type Contact,
   type Firm,
@@ -85,7 +86,10 @@ export async function getTodayData() {
   };
   const requestedDocumentWhere = {
     firmId: firm.id,
-    requestedFromClient: true,
+    OR: [
+      { requestStatus: DocumentRequestStatus.REQUESTED },
+      { requestedFromClient: true },
+    ],
     claim: { is: activeClaimWhere },
   };
 
@@ -566,7 +570,10 @@ export async function getStatusPage(token: string): Promise<StatusPageLink> {
               id: true,
               title: true,
               category: true,
+              requestStatus: true,
               notes: true,
+              clientVisibleNote: true,
+              clientProvided: true,
               requestedFromClient: true,
               receivedAt: true,
               createdAt: true,

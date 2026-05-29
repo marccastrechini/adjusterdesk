@@ -31,6 +31,14 @@ export const noticeMessages = {
     title: "Client document requested",
     message: "The request now appears on this claim and in Today until it is resolved.",
   },
+  "document-request-received": {
+    title: "Document request marked received",
+    message: "This request is now marked received in the claim file.",
+  },
+  "document-request-not-needed": {
+    title: "Document request marked not needed",
+    message: "This request is closed and no longer appears as waiting on client.",
+  },
   "note-added": {
     title: "Note logged",
     message: "The call, text, email, or office note was added to the record.",

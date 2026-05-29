@@ -1,7 +1,9 @@
+import { DocumentRequestStatus } from "@/generated/prisma/client";
 import { ClaimTabs } from "@/components/claim-tabs";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createDocumentWithState } from "@/lib/actions";
+import { createDocumentWithState, markDocumentRequestStatus } from "@/lib/actions";
+import { resolveDocumentRequestStatus } from "@/lib/document-requests";
 import { formatDate, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { documentCategoryOptions } from "@/lib/options";
@@ -18,6 +20,7 @@ const statusFilterOptions = [
   ["ALL", "All"],
   ["REQUESTED", "Requested from client"],
   ["RECEIVED", "Received / uploaded"],
+  ["NOT_NEEDED", "Not needed"],
 ] as const;
 
 function firstValue(value: string | string[] | undefined) {
@@ -32,6 +35,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
   const returnPath = `/claims/${claim.id}/documents`;
   const action = firstValue(query.action);
   const selectedAction = action === "request-document" || action === "add-document" ? action : undefined;
+  const requestedDocumentId = firstValue(query.requestedDocumentId)?.trim() ?? "";
+  const requestedDocument = claim.documents.find((document) => document.id === requestedDocumentId);
   const q = firstValue(query.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const category = firstValue(query.category)?.trim() ?? "ALL";
@@ -53,14 +58,19 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
       searchableValues.some((value) => value.toLowerCase().includes(normalizedQuery));
 
     const matchesCategory = category === "ALL" || document.category === category;
+    const resolvedStatus = resolveDocumentRequestStatus(document);
     const matchesStatus =
-      status === "ALL" || (status === "REQUESTED" ? document.requestedFromClient : !document.requestedFromClient);
+      status === "ALL" ||
+      (status === "REQUESTED" && resolvedStatus === DocumentRequestStatus.REQUESTED) ||
+      (status === "RECEIVED" && resolvedStatus === DocumentRequestStatus.RECEIVED) ||
+      (status === "NOT_NEEDED" && resolvedStatus === DocumentRequestStatus.NOT_NEEDED);
 
     return matchesQuery && matchesCategory && matchesStatus;
   });
 
-  const requestedDocuments = filteredDocuments.filter(({ document }) => document.requestedFromClient);
-  const receivedDocuments = filteredDocuments.filter(({ document }) => !document.requestedFromClient);
+  const requestedDocuments = filteredDocuments.filter(({ document }) => resolveDocumentRequestStatus(document) === DocumentRequestStatus.REQUESTED);
+  const notNeededDocuments = filteredDocuments.filter(({ document }) => resolveDocumentRequestStatus(document) === DocumentRequestStatus.NOT_NEEDED);
+  const receivedDocuments = filteredDocuments.filter(({ document }) => resolveDocumentRequestStatus(document) === DocumentRequestStatus.RECEIVED || resolveDocumentRequestStatus(document) === null);
   const noDocumentsYet = claim.documents.length === 0;
   const noFilteredResults = !noDocumentsYet && filteredDocuments.length === 0;
 
@@ -160,7 +170,16 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                           <p>Property: {propertyAddress(claim.property)}</p>
                           <p>Requested by: {document.uploadedByUser?.name ?? "Office"}</p>
                           <p>Requested {formatDate(document.createdAt)}</p>
-                          <p>{document.notes ?? "No notes added"}</p>
+                          <p>{document.clientVisibleNote ?? "No client note added"}</p>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <form action={markDocumentRequestStatus.bind(null, claim.id, document.id, DocumentRequestStatus.RECEIVED, returnPath)}>
+                            <SubmitButton variant="secondary">Mark received</SubmitButton>
+                          </form>
+                          <form action={markDocumentRequestStatus.bind(null, claim.id, document.id, DocumentRequestStatus.NOT_NEEDED, returnPath)}>
+                            <SubmitButton variant="secondary">Mark not needed</SubmitButton>
+                          </form>
+                          <ButtonLink href={`${returnPath}?action=add-document&requestedDocumentId=${document.id}`} variant="secondary">Upload and mark received</ButtonLink>
                         </div>
                       </div>
                       <Badge tone="amber">Waiting on client</Badge>
@@ -170,6 +189,27 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               </div>
             )}
           </Section>
+
+          {notNeededDocuments.length > 0 ? (
+            <Section title="Not needed" description="These requests were closed because the document is not needed for this claim.">
+              <div className="grid gap-3">
+                {notNeededDocuments.map(({ document }) => (
+                  <Card key={document.id}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-slate-950">{document.title}</p>
+                          <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{document.clientVisibleNote ?? "No client note added"}</p>
+                      </div>
+                      <Badge tone="slate">Not needed</Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </Section>
+          ) : null}
 
           <Section title="Received / uploaded" description="These documents are already in the office file.">
             {receivedDocuments.length === 0 ? (
@@ -194,6 +234,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                             <p className="font-semibold text-slate-950">{document.title}</p>
                             <Badge tone="slate">{labelFromEnum(document.category)}</Badge>
                             {isReceived ? <Badge tone="green">Received</Badge> : null}
+                            {document.clientProvided ? <Badge tone="teal">Client uploaded</Badge> : null}
                             {fileIsMissing ? <Badge tone="red">Local file missing</Badge> : null}
                           </div>
                           <div className="mt-3 grid gap-1 text-sm leading-6 text-slate-600">
@@ -202,7 +243,7 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                             <p>Added by: {document.uploadedByUser?.name ?? "Office"}</p>
                             {document.fileName ? <p>File name: {document.fileName}</p> : null}
                             <p>Uploaded {formatDate(document.receivedAt ?? document.createdAt)}</p>
-                            <p>{document.notes ?? "No notes added"}</p>
+                            <p>{document.notes ?? "No internal notes added"}</p>
                           </div>
                           {showDownload ? (
                             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -262,7 +303,8 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
                     {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </Field>
-                <Field label="Request notes" hint="Say exactly what the client needs to send and any due date."><textarea name="notes" className={textareaClassName} /></Field>
+                <Field label="Client note (optional)" hint="This note is shown on the client status page."><textarea name="clientVisibleNote" className={textareaClassName} placeholder="Please upload clear photos of all damaged rooms." /></Field>
+                <Field label="Office notes (optional)" hint="Internal office note. This does not show on the client status page."><textarea name="notes" className={textareaClassName} /></Field>
                 <div className="flex flex-wrap items-center gap-2">
                   <SubmitButton>Save document request</SubmitButton>
                   <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
@@ -274,17 +316,20 @@ export default async function ClaimDocumentsPage({ params, searchParams }: PageP
               <ActionForm action={createDocumentWithState} className="grid gap-3">
                 <input type="hidden" name="claimId" value={claim.id} />
                 <input type="hidden" name="returnPath" value={returnPath} />
+                {requestedDocument ? <input type="hidden" name="requestedDocumentId" value={requestedDocument.id} /> : null}
                 <p className="text-sm leading-6 text-slate-600">Use this for files the office already has or records without an uploaded file yet.</p>
-                <Field label="Document title" hint="Use a name the office will recognize later."><input name="title" className={inputClassName} placeholder="Estimate packet, signed agreement..." /><FieldError name="title" /></Field>
+                {requestedDocument ? <p className="rounded-md border border-teal-200 bg-teal-50 p-3 text-sm leading-6 text-teal-900">Uploading for request: {requestedDocument.title}. Saving here marks the request received.</p> : null}
+                <Field label="Document title" hint="Use a name the office will recognize later."><input name="title" defaultValue={requestedDocument?.title ?? ""} className={inputClassName} placeholder="Estimate packet, signed agreement..." /><FieldError name="title" /></Field>
                 <Field label="Category" hint="Choose the closest type of record.">
-                  <select name="category" defaultValue="OTHER" className={selectClassName}>
+                  <select name="category" defaultValue={requestedDocument?.category ?? "OTHER"} className={selectClassName}>
                     {documentCategoryOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </Field>
                 <Field label="File" hint="Attach the file when available (up to 25 MB)."><input name="file" type="file" className={inputClassName} /><FieldError name="file" /></Field>
+                <Field label="Client note (optional)" hint="This note can be shown on the client status page for this requested item."><textarea name="clientVisibleNote" defaultValue={requestedDocument?.clientVisibleNote ?? ""} className={textareaClassName} /></Field>
                 <Field label="Notes" hint="Optional office notes about this record."><textarea name="notes" className={textareaClassName} /></Field>
                 <div className="flex flex-wrap items-center gap-2">
-                  <SubmitButton>Save uploaded or office document</SubmitButton>
+                  <SubmitButton>{requestedDocument ? "Save and mark request received" : "Save uploaded or office document"}</SubmitButton>
                   <ButtonLink href={returnPath} variant="secondary">Back to actions</ButtonLink>
                 </div>
               </ActionForm>
