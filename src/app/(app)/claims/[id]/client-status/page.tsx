@@ -3,7 +3,7 @@ import { ClientStatusView } from "@/components/client-status-view";
 import { CopyLinkField } from "@/components/copy-link-field";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createClientStatusLink, pauseClientStatusLink, reactivateClientStatusLink, updateClaimClientStatusWithState } from "@/lib/actions";
+import { createClientStatusLink, pauseClientStatusLink, reactivateClientStatusLink, regenerateClientStatusLink, updateClaimClientStatusWithState } from "@/lib/actions";
 import { formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { claimStatusOptions } from "@/lib/options";
@@ -22,7 +22,6 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
   const notice = getNoticeMessage(query);
   const statusLink = claim.statusLinks[0];
   const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
-  const latestActivity = claim.activities[0];
 
   return (
     <>
@@ -49,14 +48,20 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
                   <div className="flex flex-wrap gap-2">
                     <ButtonLink href={clientStatusPath(statusLink.token)} variant="secondary">Open client view</ButtonLink>
                     <form action={pauseClientStatusLink.bind(null, claim.id, statusLink.id)}>
-                      <SubmitButton variant="secondary">Pause client link</SubmitButton>
+                      <SubmitButton variant="secondary">Disable client link</SubmitButton>
+                    </form>
+                    <form action={regenerateClientStatusLink.bind(null, claim.id, statusLink.id)}>
+                      <SubmitButton variant="secondary">Regenerate link</SubmitButton>
                     </form>
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    <ButtonLink href={clientStatusPath(statusLink.token)} variant="secondary">Open paused page</ButtonLink>
+                    <ButtonLink href={clientStatusPath(statusLink.token)} variant="secondary">Open disabled page</ButtonLink>
                     <form action={reactivateClientStatusLink.bind(null, claim.id, statusLink.id)}>
-                      <SubmitButton>Reactivate client link</SubmitButton>
+                      <SubmitButton>Enable client link</SubmitButton>
+                    </form>
+                    <form action={regenerateClientStatusLink.bind(null, claim.id, statusLink.id)}>
+                      <SubmitButton variant="secondary">Regenerate link</SubmitButton>
                     </form>
                   </div>
                 )}
@@ -78,7 +83,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
               <p className="mt-1 text-sm leading-6 text-slate-600">These fields control what the client sees in the status page preview.</p>
             </div>
             <ActionForm action={updateClaimClientStatusWithState.bind(null, claim.id)} className="grid gap-3">
-              <Field label="Client-facing summary" hint="A short plain-language update for the client. Leave blank to use the default preview wording.">
+              <Field label="Last update for the client" hint="A short plain-language update for the client. Leave blank to use the default preview wording.">
                 <textarea name="publicSummary" defaultValue={claim.publicSummary ?? ""} maxLength={600} className={textareaClassName} />
                 <FieldError name="publicSummary" />
               </Field>
@@ -96,7 +101,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
             </ActionForm>
           </Card>
 
-          <Section title="Client status links" description="Manage every client status link for this claim. New links stay in history so you can pause and reactivate them later.">
+          <Section title="Client status links" description="Manage the shareable status link for this claim. Regenerating the link replaces the old URL.">
             <div className="grid gap-3">
               <form action={createClientStatusLink.bind(null, claim.id)} className="flex flex-wrap items-center gap-2">
                 <SubmitButton>Create new client status link</SubmitButton>
@@ -112,7 +117,7 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-medium text-slate-950">{clientStatusPath(link.token)}</p>
-                            <Badge tone={link.isActive ? "green" : "slate"}>{link.isActive ? "Active" : "Paused"}</Badge>
+                            <Badge tone={link.isActive ? "green" : "slate"}>{link.isActive ? "Active" : "Disabled"}</Badge>
                           </div>
                           <p className="mt-1 text-xs leading-5 text-slate-500">Created {formatDateTime(link.createdAt)}</p>
                           {link.lastViewedAt ? <p className="mt-1 text-xs leading-5 text-slate-500">Last viewed {formatDateTime(link.lastViewedAt)}</p> : null}
@@ -122,16 +127,19 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
                       <CopyLinkField path={clientStatusPath(link.token)} />
 
                       <div className="flex flex-wrap gap-2">
-                        {link.isActive ? <ButtonLink href={clientStatusPath(link.token)} variant="secondary">Open client view</ButtonLink> : null}
+                        <ButtonLink href={clientStatusPath(link.token)} variant="secondary">{link.isActive ? "Open client view" : "Open disabled page"}</ButtonLink>
                         {link.isActive ? (
                           <form action={pauseClientStatusLink.bind(null, claim.id, link.id)}>
-                            <SubmitButton variant="secondary">Pause link</SubmitButton>
+                            <SubmitButton variant="secondary">Disable link</SubmitButton>
                           </form>
                         ) : (
                           <form action={reactivateClientStatusLink.bind(null, claim.id, link.id)}>
-                            <SubmitButton>Reactivate link</SubmitButton>
+                            <SubmitButton>Enable link</SubmitButton>
                           </form>
                         )}
+                        <form action={regenerateClientStatusLink.bind(null, claim.id, link.id)}>
+                          <SubmitButton variant="secondary">Regenerate link</SubmitButton>
+                        </form>
                       </div>
                     </Card>
                   ))}
@@ -156,8 +164,8 @@ export default async function ClaimClientStatusPage({ params, searchParams }: Pa
                 <dd className="mt-1 text-sm text-slate-950">{requestedDocuments.length} open</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Latest update</dt>
-                <dd className="mt-1 text-sm leading-6 text-slate-950">{latestActivity ? `${latestActivity.subject} · ${formatDateTime(latestActivity.occurredAt)}` : "No update posted yet"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Last update</dt>
+                <dd className="mt-1 text-sm leading-6 text-slate-950">{claim.publicSummary ?? `Updated ${formatDateTime(claim.updatedAt)}`}</dd>
               </div>
             </dl>
           </Card>

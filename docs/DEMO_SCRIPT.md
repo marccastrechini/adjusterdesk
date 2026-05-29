@@ -210,10 +210,12 @@ Do not dwell on:
 7. Client status (close)
 - Open claim client-status tab.
 - Show plain-language client-facing progress summary.
+- Send a client a simple claim status link.
+- Point out that the public page leaves out internal notes, tasks, money, invoices, and private files.
 
 What to say:
 
-- This helps keep policyholders informed without separate manual updates.
+- This helps keep policyholders informed without a client portal or separate manual updates.
 - The office can keep updates clear and consistent.
 
 Do not dwell on:

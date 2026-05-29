@@ -233,6 +233,24 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await expect(page.getByText("No client status link yet", { exact: true })).toBeVisible();
   await expect(page.getByText("Create a link when the office is ready to share this simple claim update with the client.")).toBeVisible();
   await expect(page.getByText("Send a document to the office")).toHaveCount(0);
+  await page.locator('textarea[name="publicSummary"]').fill(`Client status update ${suffix}`);
+  await page.locator('textarea[name="nextStep"]').fill("We will call after the inspection is scheduled.");
+  await page.locator('select[name="status"]').selectOption("WAITING_ON_CLIENT");
+  await Promise.all([
+    page.waitForURL(/notice=client-status-updated/),
+    page.getByRole("button", { name: "Save client status" }).click(),
+  ]);
+  await expect(page.getByText("Client status updated", { exact: true })).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/notice=client-link-created/),
+    page.getByRole("button", { name: "Create client status link", exact: true }).click(),
+  ]);
+  await expect(page.getByRole("button", { name: "Copy client status link", exact: true }).first()).toBeVisible();
+  const clientStatusPath = await page.getByLabel("Client status link").first().inputValue();
+  await page.goto(clientStatusPath);
+  await expect(page.getByRole("heading", { name: /claim status/ })).toBeVisible();
+  await expect(page.getByText(`Client status update ${suffix}`, { exact: true })).toBeVisible();
+  await expect(page.getByText("Next step: We will call after the inspection is scheduled.", { exact: true })).toBeVisible();
 
   await page.goto(`${claimUrl}/tasks?action=add-task`);
   await expect(page.getByRole("button", { name: "Add task to claim" })).toBeVisible();

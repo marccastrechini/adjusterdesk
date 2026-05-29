@@ -1,25 +1,9 @@
-import type { Activity, Carrier, Claim, ClientStatusLink, Contact, Document as ClaimDocument, Firm, Property, Task, User } from "@/generated/prisma/client";
+import type { ClientStatusLink, Firm } from "@/generated/prisma/client";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
+import { buildClientStatusViewModel, type ClientStatusClaim } from "@/lib/client-status";
 import { uploadStatusDocumentWithState } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-import { formatDate, formatDateTime, fullName, labelFromEnum, propertyAddress } from "@/lib/format";
-
-type StatusClaim = Claim & {
-  contact: Contact;
-  property: Property;
-  carrier: Carrier | null;
-  assignedUser?: User | null;
-  tasks: Task[];
-  documents: ClaimDocument[];
-  activities: (Activity & { user?: User | null })[];
-};
-
-function statusTone(status: string) {
-  if (status === "SETTLED" || status === "CLOSED") return "green";
-  if (status === "WAITING_ON_CARRIER" || status === "WAITING_ON_CLIENT") return "amber";
-  return "teal";
-}
 
 export function ClientStatusView({
   firm,
@@ -30,79 +14,80 @@ export function ClientStatusView({
   className,
 }: {
   firm: Pick<Firm, "name" | "phone" | "email">;
-  claim: StatusClaim;
+  claim: ClientStatusClaim;
   statusLink?: Pick<ClientStatusLink, "lastViewedAt"> | null;
   statusToken?: string;
   allowClientUpload?: boolean;
   className?: string;
 }) {
-  const latestActivity = claim.activities[0];
-  const recentActivities = claim.activities.slice(0, 3);
-  const requestedDocuments = claim.documents.filter((document) => document.requestedFromClient);
-  const openTasks = claim.tasks.filter((task) => task.status === "OPEN");
-  const nextTask = openTasks[0];
+  const status = buildClientStatusViewModel({ firm, claim, lastViewedAt: statusLink?.lastViewedAt });
+  const openDocumentRequests = status.requestedDocuments.filter((document) => document.statusLabel === "Requested");
 
   return (
     <div className={cn("grid gap-6", className)}>
       <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-medium text-teal-800">{firm.name}</p>
+        <p className="text-sm font-medium text-teal-800">{status.firm.name}</p>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-slate-950">{fullName(claim.contact)} claim status</h1>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{claim.lossType} · {propertyAddress(claim.property)}</p>
+            <h1 className="text-2xl font-semibold tracking-normal text-slate-950">{status.heading}</h1>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{status.lossType} · {status.propertyAddress}</p>
           </div>
-          <Badge tone={statusTone(claim.status)}>{labelFromEnum(claim.status)}</Badge>
+          <Badge tone={status.statusTone}>{status.statusLabel}</Badge>
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="grid gap-6 content-start">
           <Card>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-base font-semibold text-slate-950">Current status</h2>
-                <p className="mt-1 text-sm text-slate-600">Last office update {formatDateTime(latestActivity?.occurredAt ?? claim.updatedAt)}</p>
+                <p className="mt-1 text-sm text-slate-600">Last office update {status.lastUpdatedAt}</p>
               </div>
-              <Badge tone={statusTone(claim.status)}>{labelFromEnum(claim.status)}</Badge>
+              <Badge tone={status.statusTone}>{status.statusLabel}</Badge>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-700">
-              {claim.publicSummary ?? "The office is tracking this claim and will update the next step as work progresses."}
-            </p>
-            {claim.nextStep ? <p className="mt-4 rounded-md bg-teal-50 p-3 text-sm leading-6 text-teal-900">Next step: {claim.nextStep}</p> : null}
+            <p className="mt-4 text-sm leading-6 text-slate-700">{status.lastUpdateText}</p>
+            {status.nextStep ? <p className="mt-4 rounded-md bg-teal-50 p-3 text-sm leading-6 text-teal-900">Next step: {status.nextStep}</p> : null}
           </Card>
 
           <Card>
-            <h2 className="text-base font-semibold text-slate-950">Recent updates</h2>
-            {recentActivities.length === 0 ? (
-              <p className="mt-2 text-sm leading-6 text-slate-600">No updates have been posted yet.</p>
-            ) : (
-              <div className="mt-4 grid gap-4">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="border-l-2 border-teal-700 pl-3">
-                    <p className="font-medium text-slate-950">{activity.subject}</p>
-                    <p className="mt-1 text-sm text-slate-600">{formatDateTime(activity.occurredAt)} · {labelFromEnum(activity.type)}</p>
-                    {activity.body ? <p className="mt-2 text-sm leading-6 text-slate-700">{activity.body}</p> : null}
-                  </div>
-                ))}
+            <h2 className="text-base font-semibold text-slate-950">Claim details</h2>
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Property</dt>
+                <dd className="mt-1 text-sm leading-6 text-slate-950">{status.propertyAddress}</dd>
               </div>
-            )}
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Loss type</dt>
+                <dd className="mt-1 text-sm text-slate-950">{status.lossType}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Date of loss</dt>
+                <dd className="mt-1 text-sm text-slate-950">{status.dateOfLoss}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Claim status</dt>
+                <dd className="mt-1 text-sm text-slate-950">{status.statusLabel}</dd>
+              </div>
+            </dl>
           </Card>
         </div>
 
         <aside className="grid gap-6 content-start">
           <Card>
             <h2 className="text-base font-semibold text-slate-950">Requested documents</h2>
-            {requestedDocuments.length === 0 ? (
+            {status.requestedDocuments.length === 0 ? (
               <EmptyState title="No client document requests are open right now" message="The office is not waiting on any client documents at the moment." />
             ) : (
               <div className="mt-4 grid gap-3">
-                {requestedDocuments.map((document) => (
-                  <div key={document.id} className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                {status.requestedDocuments.map((document) => (
+                  <div key={document.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="font-medium text-amber-950">{document.title}</p>
-                      <Badge tone="amber">{labelFromEnum(document.category)}</Badge>
+                      <p className="font-medium text-slate-950">{document.title}</p>
+                      <Badge tone={document.tone}>{document.statusLabel}</Badge>
                     </div>
-                    {document.notes ? <p className="mt-2 text-sm leading-6 text-amber-900">{document.notes}</p> : null}
+                    <p className="mt-1 text-xs font-medium uppercase tracking-normal text-slate-500">{document.categoryLabel}</p>
+                    {document.note ? <p className="mt-2 text-sm leading-6 text-slate-700">{document.note}</p> : null}
                   </div>
                 ))}
               </div>
@@ -116,11 +101,11 @@ export function ClientStatusView({
                 <p className="mt-1 text-sm leading-6 text-slate-600">Send a file when you are ready. If the office asked for a specific document, choose it from the list below.</p>
               </div>
               <ActionForm action={uploadStatusDocumentWithState.bind(null, statusToken)} className="grid gap-3">
-                {requestedDocuments.length > 0 ? (
+                {openDocumentRequests.length > 0 ? (
                   <Field label="This is for" hint="Optional. Pick the request this file answers so the office can match it faster.">
                     <select name="requestedDocumentId" defaultValue="" className={selectClassName}>
                       <option value="">No specific request</option>
-                      {requestedDocuments.map((document) => (
+                      {openDocumentRequests.map((document) => (
                         <option key={document.id} value={document.id}>{document.title}</option>
                       ))}
                     </select>
@@ -139,60 +124,24 @@ export function ClientStatusView({
           ) : null}
 
           <Card>
-            <h2 className="text-base font-semibold text-slate-950">Claim details</h2>
-            <dl className="mt-4 grid gap-4">
-              <div>
-                <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Property</dt>
-                <dd className="mt-1 text-sm leading-6 text-slate-950">{propertyAddress(claim.property)}</dd>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Carrier</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{claim.carrier?.name ?? "Carrier to confirm"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Claim number</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{claim.claimNumber ?? "Not set"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Date of loss</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{formatDate(claim.dateOfLoss)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Inspection</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{formatDate(claim.inspectionDate)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Deadline</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{formatDate(claim.deadlineDate)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Next follow-up</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{nextTask ? `${nextTask.title} · ${formatDate(nextTask.dueDate)}` : "Not scheduled"}</dd>
-                </div>
-              </div>
-            </dl>
-          </Card>
-
-          <Card>
             <h2 className="text-base font-semibold text-slate-950">Office contact</h2>
             <dl className="mt-4 grid gap-3">
               <div>
                 <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Adjuster</dt>
-                <dd className="mt-1 text-sm text-slate-950">{claim.assignedUser?.name ?? "Office team"}</dd>
+                <dd className="mt-1 text-sm text-slate-950">{status.officeContact.adjuster}</dd>
               </div>
               <div>
                 <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Office</dt>
                 <dd className="mt-1 text-sm leading-6 text-slate-950">
-                  {firm.phone ?? "Phone not set"}
+                  {status.officeContact.phone}
                   <br />
-                  {firm.email ?? "Email not set"}
+                  {status.officeContact.email}
                 </dd>
               </div>
-              {statusLink?.lastViewedAt ? (
+              {status.lastViewedAt ? (
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-normal text-slate-500">Last viewed</dt>
-                  <dd className="mt-1 text-sm text-slate-950">{formatDateTime(statusLink.lastViewedAt)}</dd>
+                  <dd className="mt-1 text-sm text-slate-950">{status.lastViewedAt}</dd>
                 </div>
               ) : null}
             </dl>

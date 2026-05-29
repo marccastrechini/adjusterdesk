@@ -40,7 +40,7 @@ export function CopyLinkField({ path }: { path: string }) {
         )}
       >
         {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-        {copied ? "Copied" : "Copy link"}
+        {copied ? "Copied" : "Copy client status link"}
       </button>
     </div>
   );

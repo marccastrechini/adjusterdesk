@@ -8,7 +8,7 @@ Use this before showing AdjusterDesk to a friendly pilot office and before allow
 - Today worklist for follow-ups, deadlines, missing documents, and receivables.
 - Lead intake and lead-to-claim conversion.
 - Claim workflow tabs: overview, tasks, documents, notes, money, and client status.
-- Public client status links with optional client uploads.
+- Public client status links that show safe claim updates, requested documents, and office contact details without client logins.
 - System admin local console for workspace and user operations.
 - Self-service password change in `/settings/account`.
 - Local backup, restore, and demo reset scripts.
@@ -62,7 +62,7 @@ npm run prod:demo:readiness
 - Does claim overview show enough context without opening every tab?
 - Do task/deadline flows reduce missed follow-ups?
 - Are document categories and request templates clear for staff?
-- Is the client status page clear enough for policyholders?
+- Is the client status page clear enough for policyholders, and does it reduce update calls?
 - Does money/receivables view match how you track fees and checks now?
 - What would block your office from using this daily for a 2-4 week pilot?
 

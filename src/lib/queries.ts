@@ -1,11 +1,9 @@
 import { notFound } from "next/navigation";
 import {
-  type Activity,
   type Carrier,
   ClaimStatus,
   type Claim,
   type Contact,
-  type Document as ClaimDocument,
   type Firm,
   InvoiceStatus,
   LeadStatus,
@@ -19,6 +17,7 @@ import {
   UserRole,
 } from "@/generated/prisma/client";
 import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
+import type { ClientStatusClaim } from "@/lib/client-status";
 import { getEnvStatus } from "@/lib/env";
 import { addDays, todayRange } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -43,15 +42,7 @@ type ClaimListItem = Claim & {
 
 type StatusLinkFirm = Pick<Firm, "name" | "phone" | "email">;
 
-type StatusLinkClaim = Claim & {
-  contact: Contact;
-  property: Property;
-  carrier: Carrier | null;
-  assignedUser: User | null;
-  tasks: Task[];
-  documents: ClaimDocument[];
-  activities: (Activity & { user: User | null })[];
-};
+type StatusLinkClaim = ClientStatusClaim;
 
 type StatusPageBase = {
   id: string;
@@ -559,14 +550,29 @@ export async function getStatusPage(token: string): Promise<StatusPageLink> {
     include: {
       firm: true,
       claim: {
-        include: {
-          contact: true,
-          property: true,
-          carrier: true,
-          assignedUser: true,
-          tasks: { where: { status: TaskStatus.OPEN }, orderBy: { dueDate: "asc" }, take: 3 },
-          documents: { orderBy: { createdAt: "desc" } },
-          activities: { include: { user: true }, orderBy: { occurredAt: "desc" }, take: 3 },
+        select: {
+          id: true,
+          status: true,
+          lossType: true,
+          dateOfLoss: true,
+          publicSummary: true,
+          nextStep: true,
+          updatedAt: true,
+          contact: { select: { firstName: true, lastName: true } },
+          property: { select: { address1: true, address2: true, city: true, state: true, postalCode: true } },
+          assignedUser: { select: { name: true } },
+          documents: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              notes: true,
+              requestedFromClient: true,
+              receivedAt: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+          },
         },
       },
     },

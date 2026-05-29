@@ -56,12 +56,16 @@ export const noticeMessages = {
     message: "The client status link is ready to copy or open for review.",
   },
   "client-link-paused": {
-    title: "Client link paused",
+    title: "Client link disabled",
     message: "Clients who open this link will see that the status page is unavailable right now.",
   },
   "client-link-reactivated": {
-    title: "Client link reactivated",
+    title: "Client link enabled",
     message: "The client status link now opens the current claim status page again.",
+  },
+  "client-link-regenerated": {
+    title: "Client link regenerated",
+    message: "The new client status link is ready to copy. The previous link no longer opens this claim status page.",
   },
   "user-activated": {
     title: "User updated",

@@ -33,8 +33,8 @@ Use this checklist before inviting real pilot firms.
 ## 5) Public Status Links
 
 - Status links are token URLs and should be treated as sensitive.
-- Rotate or pause links quickly if shared to the wrong recipient.
-- Review what claim summary content is shown before pilot release.
+- Disable or regenerate links quickly if shared to the wrong recipient.
+- Review what claim status, next step, requested documents, and office contact details are shown before pilot release.
 
 ## 6) Backups and Restore
 
@@ -67,6 +67,6 @@ The Settings page shows a compact "Environment status" card with plain-language 
 | Real auth: Configured | At least one auth secret env var is present. Does not verify auth is actually wired. |
 | Production database: Local SQLite | `DATABASE_URL` is missing or starts with `file:`. |
 | Production database: External database | `DATABASE_URL` points to a non-file URL (e.g. postgres://). |
-| Public status links: Enabled | Client-facing token URLs are always active in the current build. |
+| Public status links: Enabled | Client-facing token URLs can be enabled, disabled, and regenerated from the claim client-status tab. |
 
 **Important:** Green or "Configured" labels here reflect env var presence only, not actual security. A green-looking local check is not a substitute for real auth, external storage, or production backups.

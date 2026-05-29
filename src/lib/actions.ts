@@ -25,6 +25,7 @@ import {
   resolveUserInvitationTokenMinutes,
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
+import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib/client-status";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
@@ -35,8 +36,6 @@ import { activityInputFromTemplate, documentInputFromTemplate, messageTemplateTy
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
-const clientSummaryMaxLength = 600;
-const clientNextStepMaxLength = 280;
 const pilotFeedbackMaxLength = 1200;
 
 const leadSchema = z.object({
@@ -551,27 +550,16 @@ export async function createClaimWithState(_state: ActionFormState, formData: Fo
 }
 
 export async function updateClaimClientStatusWithState(claimId: string, _state: ActionFormState, formData: FormData): Promise<ActionFormState> {
-  const { firm } = await getDemoContext();
-  const errors: FieldErrors = {};
-  const publicSummary = textValue(formData, "publicSummary");
-  const nextStep = textValue(formData, "nextStep");
-  const status = formData.get("status")?.toString() as ClaimStatus | undefined;
+  const { firm, user } = await getDemoContext();
+  const validation = validateClientStatusUpdateInput({
+    publicSummary: textValue(formData, "publicSummary"),
+    nextStep: textValue(formData, "nextStep"),
+    status: formData.get("status")?.toString(),
+  });
   const returnPath = `/claims/${claimId}/client-status`;
 
-  if (publicSummary.length > clientSummaryMaxLength) {
-    errors.publicSummary = `Keep the client-facing summary under ${clientSummaryMaxLength} characters.`;
-  }
-
-  if (nextStep.length > clientNextStepMaxLength) {
-    errors.nextStep = `Keep the next step under ${clientNextStepMaxLength} characters.`;
-  }
-
-  if (status && !Object.values(ClaimStatus).includes(status)) {
-    errors.status = "Choose a valid claim status.";
-  }
-
-  if (hasErrors(errors)) {
-    return formError("Shorten the client-facing status update before saving.", errors);
+  if (hasErrors(validation.errors)) {
+    return formError("Shorten the client-facing status update before saving.", validation.errors);
   }
 
   const claim = await prisma.claim.findFirst({
@@ -580,13 +568,36 @@ export async function updateClaimClientStatusWithState(claimId: string, _state: 
   });
   if (!claim) throw new Error("Claim not found.");
 
-  await prisma.claim.update({
-    where: { id: claim.id },
-    data: {
-      publicSummary: publicSummary || null,
-      nextStep: nextStep || null,
-      status: status || claim.status,
-    },
+  const nextStatus = validation.data.status || claim.status;
+  const changedFields = [
+    validation.data.publicSummary !== claim.publicSummary ? "last update" : undefined,
+    validation.data.nextStep !== claim.nextStep ? "next step" : undefined,
+    nextStatus !== claim.status ? "status" : undefined,
+  ].filter(Boolean);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.claim.update({
+      where: { id: claim.id },
+      data: {
+        publicSummary: validation.data.publicSummary,
+        nextStep: validation.data.nextStep,
+        status: nextStatus,
+      },
+    });
+
+    if (changedFields.length > 0) {
+      await tx.activity.create({
+        data: {
+          firmId: firm.id,
+          claimId: claim.id,
+          contactId: claim.contactId,
+          userId: user.id,
+          type: ActivityType.NOTE,
+          subject: "Client status updated",
+          body: `Updated client-visible ${changedFields.join(", ")}.`,
+        },
+      });
+    }
   });
 
   revalidatePath(returnPath);
@@ -610,22 +621,39 @@ async function generateUniqueClientStatusToken() {
 }
 
 export async function createClientStatusLink(claimId: string) {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const returnPath = `/claims/${claimId}/client-status`;
   const claim = await prisma.claim.findFirst({
     where: { id: claimId, firmId: firm.id },
-    select: { id: true },
+    select: { id: true, contactId: true },
   });
   if (!claim) throw new Error("Claim not found.");
 
   const token = await generateUniqueClientStatusToken();
-  const statusLink = await prisma.clientStatusLink.create({
-    data: {
-      firmId: firm.id,
-      claimId: claim.id,
-      token,
-      isActive: true,
-    },
+  const statusLink = await prisma.$transaction(async (tx) => {
+    await tx.clientStatusLink.updateMany({ where: { firmId: firm.id, claimId: claim.id, isActive: true }, data: { isActive: false } });
+    const createdLink = await tx.clientStatusLink.create({
+      data: {
+        firmId: firm.id,
+        claimId: claim.id,
+        token,
+        isActive: true,
+      },
+    });
+
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        claimId: claim.id,
+        contactId: claim.contactId,
+        userId: user.id,
+        type: ActivityType.NOTE,
+        subject: "Client status link enabled",
+        body: "Created a shareable client status link for this claim.",
+      },
+    });
+
+    return createdLink;
   });
 
   revalidatePath(returnPath);
@@ -634,19 +662,75 @@ export async function createClientStatusLink(claimId: string) {
 }
 
 async function updateClientStatusLinkActive(claimId: string, linkId: string, isActive: boolean) {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const returnPath = `/claims/${claimId}/client-status`;
   const statusLink = await prisma.clientStatusLink.findFirst({
     where: { id: linkId, claimId, firmId: firm.id },
+    include: { claim: { select: { contactId: true } } },
   });
   if (!statusLink) throw new Error("Client status link not found.");
 
-  await prisma.clientStatusLink.update({ where: { id: statusLink.id }, data: { isActive } });
+  await prisma.$transaction(async (tx) => {
+    if (isActive) {
+      await tx.clientStatusLink.updateMany({ where: { firmId: firm.id, claimId, isActive: true, id: { not: statusLink.id } }, data: { isActive: false } });
+    }
+
+    await tx.clientStatusLink.update({ where: { id: statusLink.id }, data: { isActive } });
+
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        claimId,
+        contactId: statusLink.claim.contactId,
+        userId: user.id,
+        type: ActivityType.NOTE,
+        subject: isActive ? "Client status link enabled" : "Client status link disabled",
+        body: isActive ? "Re-enabled a client status link for this claim." : "Disabled a client status link for this claim.",
+      },
+    });
+  });
 
   revalidatePath(returnPath);
   revalidatePath(`/claims/${claimId}`);
   revalidatePath(`/status/${statusLink.token}`);
   redirect(withNotice(returnPath, isActive ? "client-link-reactivated" : "client-link-paused"));
+}
+
+export async function regenerateClientStatusLink(claimId: string, linkId: string) {
+  const { firm, user } = await getDemoContext();
+  const returnPath = `/claims/${claimId}/client-status`;
+  const statusLink = await prisma.clientStatusLink.findFirst({
+    where: { id: linkId, claimId, firmId: firm.id },
+    include: { claim: { select: { contactId: true } } },
+  });
+  if (!statusLink) throw new Error("Client status link not found.");
+
+  const oldToken = statusLink.token;
+  const token = await generateUniqueClientStatusToken();
+  const regeneratedLink = await prisma.$transaction(async (tx) => {
+    await tx.clientStatusLink.updateMany({ where: { firmId: firm.id, claimId, isActive: true, id: { not: statusLink.id } }, data: { isActive: false } });
+    const updatedLink = await tx.clientStatusLink.update({ where: { id: statusLink.id }, data: { token, isActive: true } });
+
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        claimId,
+        contactId: statusLink.claim.contactId,
+        userId: user.id,
+        type: ActivityType.NOTE,
+        subject: "Client status link regenerated",
+        body: "Regenerated the shareable client status link. The previous link no longer opens this claim status page.",
+      },
+    });
+
+    return updatedLink;
+  });
+
+  revalidatePath(returnPath);
+  revalidatePath(`/claims/${claimId}`);
+  revalidatePath(`/status/${oldToken}`);
+  revalidatePath(`/status/${regeneratedLink.token}`);
+  redirect(withNotice(returnPath, "client-link-regenerated"));
 }
 
 export async function pauseClientStatusLink(claimId: string, linkId: string) {
@@ -1297,7 +1381,7 @@ export async function uploadStatusDocument(token: string, formData: FormData) {
 
   const requestedDocumentId = formData.get("requestedDocumentId")?.toString() || undefined;
   const replacementTitle = formData.get("title")?.toString().trim() || undefined;
-  const uploadedNote = "Uploaded from the client status page.";
+  const uploadedNote = clientStatusUploadMarker;
 
   if (requestedDocumentId) {
     const requestedDocument = statusLink.claim.documents.find(

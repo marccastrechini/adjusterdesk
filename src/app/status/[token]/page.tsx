@@ -15,15 +15,15 @@ export default async function StatusPage({ params, searchParams }: PageProps) {
   const statusLink = await getStatusPage(token);
   const uploaded = Array.isArray(query.uploaded) ? query.uploaded[0] : query.uploaded;
 
-  if (!statusLink.isActive) {
+  if (statusLink.isActive === false) {
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-xl">
           <Card>
             <p className="text-sm font-medium text-teal-800">{statusLink.firm.name}</p>
-            <h1 className="mt-3 text-2xl font-semibold tracking-normal text-slate-950">Status link paused</h1>
+            <h1 className="mt-3 text-2xl font-semibold tracking-normal text-slate-950">Status link disabled</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              This status link is paused. Please contact the adjusting office for the latest update.
+              This status link is disabled. Please contact the adjusting office for the latest update.
             </p>
             <dl className="mt-4 grid gap-3 text-sm leading-6 text-slate-700">
               {statusLink.firm.phone ? (

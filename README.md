@@ -17,7 +17,7 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 - Lightweight pilot feedback capture saved inside the workspace.
 - Forgot-password and reset-password flow with transactional Resend email.
 - Secure user invitation flow for workspace onboarding with one-time accept-invite links.
-- Public client status page by token with requested documents and upload form.
+- Public client status page by token with safe claim updates, requested documents, and office contact details.
 - CSV export for leads, claims, and invoices.
 - Spreadsheet import for leads and claims with templates, row review, and plain validation messages.
 
