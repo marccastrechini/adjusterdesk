@@ -26,6 +26,7 @@ import {
   resolveUserInvitationTokenMinutes,
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
+import { validateManualActivityInput } from "@/lib/activity-log";
 import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib/client-status";
 import { documentRequestResolution, validateClientStatusUploadInput, validateDocumentCreateInput } from "@/lib/document-requests";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
@@ -820,7 +821,7 @@ export async function createTask(formData: FormData) {
       },
     });
 
-    if (activityNote && (claimId || leadId)) {
+    if (claimId || leadId) {
       await tx.activity.create({
         data: {
           firmId: firm.id,
@@ -829,8 +830,8 @@ export async function createTask(formData: FormData) {
           leadId,
           contactId: claimTaskContext?.contactId ?? leadTaskContext?.contactId,
           type: ActivityType.NOTE,
-          subject: activityNote.subject,
-          body: activityNote.body,
+          subject: activityNote?.subject ?? `Task added: ${requiredText.parse(taskInput.title)}`,
+          body: activityNote?.body ?? `Added task \"${requiredText.parse(taskInput.title)}\".${dueDate ? ` Due ${dueDate.toISOString().slice(0, 10)}.` : ""}`,
         },
       });
     }
@@ -914,17 +915,37 @@ export async function updateClaimDeadlineWithState(claimId: string, _state: Acti
 }
 
 export async function toggleTask(taskId: string, returnPath: string) {
-  const { firm } = await getDemoContext();
-  const task = await prisma.task.findFirst({ where: { id: taskId, firmId: firm.id } });
+  const { firm, user } = await getDemoContext();
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, firmId: firm.id },
+    select: { id: true, title: true, status: true, claimId: true, leadId: true, claim: { select: { contactId: true } }, lead: { select: { contactId: true } } },
+  });
   if (!task) throw new Error("Task not found.");
 
   const done = task.status === TaskStatus.DONE;
-  await prisma.task.update({
-    where: { id: task.id },
-    data: {
-      status: done ? TaskStatus.OPEN : TaskStatus.DONE,
-      completedAt: done ? null : new Date(),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.task.update({
+      where: { id: task.id },
+      data: {
+        status: done ? TaskStatus.OPEN : TaskStatus.DONE,
+        completedAt: done ? null : new Date(),
+      },
+    });
+
+    if (task.claimId || task.leadId) {
+      await tx.activity.create({
+        data: {
+          firmId: firm.id,
+          userId: user.id,
+          claimId: task.claimId,
+          leadId: task.leadId,
+          contactId: task.claim?.contactId ?? task.lead?.contactId,
+          type: ActivityType.NOTE,
+          subject: done ? "Task reopened" : "Task marked complete",
+          body: `${done ? "Reopened" : "Completed"} task \"${task.title}\".`,
+        },
+      });
+    }
   });
 
   revalidatePath(returnPath);
@@ -1163,6 +1184,8 @@ export async function createActivity(formData: FormData) {
     subject: formData.get("subject")?.toString(),
     body: formData.get("body")?.toString(),
   });
+  const allowBodyOnly = formData.get("allowBodyOnly") === "on";
+  const generatedSubject = allowBodyOnly ? validateManualActivityInput({ subject: activityInput.subject, body: activityInput.body }) : undefined;
 
   await prisma.activity.create({
     data: {
@@ -1172,7 +1195,7 @@ export async function createActivity(formData: FormData) {
       contactId,
       userId: user.id,
       type: (formData.get("type")?.toString() as ActivityType) || ActivityType.NOTE,
-      subject: requiredText.parse(activityInput.subject),
+      subject: requiredText.parse(activityInput.subject || generatedSubject),
       body: activityInput.body,
       occurredAt: asDateTime(formData.get("occurredAt")?.toString()) ?? new Date(),
     },
@@ -1206,11 +1229,13 @@ export async function createActivityWithState(_state: ActionFormState, formData:
     subject: formData.get("subject")?.toString(),
     body: formData.get("body")?.toString(),
   });
+  const allowBodyOnly = formData.get("allowBodyOnly") === "on";
+  const generatedSubject = allowBodyOnly ? validateManualActivityInput({ subject: activityInput.subject, body: activityInput.body }) : undefined;
 
-  if (!activityInput.subject) errors.subject = "Add a short subject or choose a saved message template.";
+  if (!activityInput.subject && !generatedSubject) errors.subject = "Add a short subject or note text before saving.";
 
   if (hasErrors(errors)) {
-    return formError("Add a subject or choose a saved message template before saving this note.", errors);
+    return formError("Add a subject or note details before saving this timeline entry.", errors);
   }
 
   await createActivity(formData);
@@ -1218,7 +1243,7 @@ export async function createActivityWithState(_state: ActionFormState, formData:
 }
 
 export async function createSettlementRound(formData: FormData) {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
   const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const returnPath = formData.get("returnPath")?.toString() || `/claims/${claimId}/money`;
@@ -1244,6 +1269,19 @@ export async function createSettlementRound(formData: FormData) {
     if (status === SettlementStatus.ACCEPTED) {
       await tx.claim.update({ where: { id: ownedClaimId }, data: { status: ClaimStatus.SETTLED } });
     }
+
+    const claim = await tx.claim.findFirst({ where: { id: ownedClaimId, firmId: firm.id }, select: { contactId: true } });
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        userId: user.id,
+        claimId: ownedClaimId,
+        contactId: claim?.contactId,
+        type: ActivityType.NOTE,
+        subject: "Settlement round saved",
+        body: `Saved settlement round ${existingCount + 1}${acceptedAmountCents ? ` with accepted amount ${acceptedAmountCents / 100}.` : "."}`,
+      },
+    });
   });
 
   revalidatePath(returnPath);
@@ -1278,7 +1316,7 @@ export async function createSettlementRoundWithState(_state: ActionFormState, fo
 }
 
 export async function recordPayment(formData: FormData) {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
   const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const invoiceId = formData.get("invoiceId")?.toString() || undefined;
@@ -1327,6 +1365,19 @@ export async function recordPayment(formData: FormData) {
         });
       }
     }
+
+    const claim = await tx.claim.findFirst({ where: { id: ownedClaimId, firmId: firm.id }, select: { contactId: true } });
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        userId: user.id,
+        claimId: ownedClaimId,
+        contactId: claim?.contactId,
+        type: ActivityType.NOTE,
+        subject: "Payment recorded",
+        body: `Recorded payment ${(amountCents / 100).toFixed(2)}${scopedInvoiceId ? " against an invoice" : ""}.`,
+      },
+    });
   });
 
   revalidatePath(returnPath);
@@ -1348,7 +1399,7 @@ export async function recordPaymentWithState(_state: ActionFormState, formData: 
 }
 
 export async function createInvoice(formData: FormData) {
-  const { firm } = await getDemoContext();
+  const { firm, user } = await getDemoContext();
   const claimId = requiredText.parse(formData.get("claimId")?.toString());
   const ownedClaimId = await requireOwnedClaimId(firm.id, claimId);
   const returnPath = formData.get("returnPath")?.toString() || `/claims/${claimId}/money`;
@@ -1357,20 +1408,36 @@ export async function createInvoice(formData: FormData) {
   const feeAmountCents = Math.round((settlementAmountCents * feePercentageBasisPoints) / 10000);
   const feeRule = await prisma.feeRule.findFirst({ where: { firmId: firm.id, active: true } });
 
-  await prisma.invoice.create({
-    data: {
-      firmId: firm.id,
-      claimId: ownedClaimId,
-      feeRuleId: feeRule?.id,
-      invoiceNumber: requiredText.parse(formData.get("invoiceNumber")?.toString()),
-      status: (formData.get("status")?.toString() as InvoiceStatus) || InvoiceStatus.DRAFT,
-      settlementAmountCents,
-      feePercentageBasisPoints,
-      feeAmountCents,
-      issuedAt: asDate(formData.get("issuedAt")?.toString()) ?? new Date(),
-      dueAt: asDate(formData.get("dueAt")?.toString()),
-      notes: formData.get("notes")?.toString() || undefined,
-    },
+  const invoiceNumber = requiredText.parse(formData.get("invoiceNumber")?.toString());
+  await prisma.$transaction(async (tx) => {
+    await tx.invoice.create({
+      data: {
+        firmId: firm.id,
+        claimId: ownedClaimId,
+        feeRuleId: feeRule?.id,
+        invoiceNumber,
+        status: (formData.get("status")?.toString() as InvoiceStatus) || InvoiceStatus.DRAFT,
+        settlementAmountCents,
+        feePercentageBasisPoints,
+        feeAmountCents,
+        issuedAt: asDate(formData.get("issuedAt")?.toString()) ?? new Date(),
+        dueAt: asDate(formData.get("dueAt")?.toString()),
+        notes: formData.get("notes")?.toString() || undefined,
+      },
+    });
+
+    const claim = await tx.claim.findFirst({ where: { id: ownedClaimId, firmId: firm.id }, select: { contactId: true } });
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        userId: user.id,
+        claimId: ownedClaimId,
+        contactId: claim?.contactId,
+        type: ActivityType.NOTE,
+        subject: "Invoice saved",
+        body: `Saved invoice ${invoiceNumber} for ${(feeAmountCents / 100).toFixed(2)}.`,
+      },
+    });
   });
 
   revalidatePath(returnPath);

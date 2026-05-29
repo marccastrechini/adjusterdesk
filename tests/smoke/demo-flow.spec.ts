@@ -199,7 +199,7 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
   await page.locator('input[name="dueDate"]').fill(dateInput(3));
   await page.getByRole("button", { name: "Add follow-up task" }).click();
   await expect(page.getByText("Task saved", { exact: true })).toBeVisible();
-  await expect(page.getByText(taskTitle)).toBeVisible();
+  await expect(page.getByText(taskTitle, { exact: true })).toBeVisible();
 
   await page.goto(`${leadData.leadUrl}?action=activity`);
   await expect(page.getByRole("button", { name: "Log lead note" })).toBeVisible();

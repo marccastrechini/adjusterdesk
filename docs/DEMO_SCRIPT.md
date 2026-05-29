@@ -77,6 +77,7 @@ What to say:
 - The team can see what to touch first without hunting across tabs.
 - Use suggested next steps to add common follow-ups fast.
 - Request client documents and mark them received.
+- Open the activity timeline to see the claim history in one place.
 
 Do not dwell on:
 
