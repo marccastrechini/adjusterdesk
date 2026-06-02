@@ -3,8 +3,10 @@ import { ActionForm, FieldError } from "@/components/action-form";
 import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import {
   findPublicPlanBySlug,
+  getStripeConfigDiagnostics,
   listPublicPlans,
   publicSelfServiceReady,
+  resolveBillingProvider,
 } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { startSignupWithState } from "@/lib/signup-actions";
@@ -31,6 +33,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
   const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? listPublicPlans()[1];
 
   const selfServiceReady = publicSelfServiceReady();
+  const stripeModeMissingConfig = resolveBillingProvider() === "stripe" && !getStripeConfigDiagnostics().ready;
 
   if (!selfServiceReady) {
     return (
@@ -48,6 +51,11 @@ export default async function SignupPage({ searchParams }: PageProps) {
             <p className="text-sm leading-6 text-slate-700">
               Your selected plan and workspace details will be saved. We will confirm setup before billing begins.
             </p>
+            {stripeModeMissingConfig ? (
+              <p className="text-sm leading-6 text-slate-700">
+                Stripe test setup is still being finalized for this environment, so card checkout stays disabled until configuration is complete.
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/demo"

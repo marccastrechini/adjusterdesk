@@ -5,6 +5,8 @@ import { z } from "zod";
 import { hashPassword } from "@/lib/auth";
 import {
   findPublicPlanBySlug,
+  getStripeConfigDiagnostics,
+  logStripeConfigIssue,
   publicSelfServiceReady,
   resolveBillingProvider,
   stripeConfigured,
@@ -130,8 +132,11 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
 
   if (billingProvider === "stripe") {
     if (!stripeConfigured()) {
+      logStripeConfigIssue("startSignupWithState");
+      const diagnostics = getStripeConfigDiagnostics();
       await markSignupIntentCanceled(intent.id);
-      return formError("Billing setup is still being finalized. Your plan selection was saved and we will confirm setup before billing begins.");
+      const missingSummary = diagnostics.missingVars.length > 0 ? ` Missing setup: ${diagnostics.missingVars.join(", ")}.` : "";
+      return formError(`Billing setup is still being finalized.${missingSummary} Your plan selection was saved and we will confirm setup before billing begins.`);
     }
 
     const checkoutSession = await createStripeCheckoutSessionForIntent(intent.id, values.plan as PublicPlanSlug);

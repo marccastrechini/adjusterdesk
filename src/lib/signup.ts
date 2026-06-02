@@ -3,6 +3,7 @@ import {
   defaultLimitForPlan,
   findPublicPlanBySlug,
   findPublicPlanBySubscriptionPlan,
+  logStripeConfigIssue,
   mapStripeSubscriptionStatus,
   resolveBillingProvider,
   resolveStripePriceId,
@@ -34,6 +35,10 @@ function checkoutLooksPaid(paymentStatus: string | null | undefined) {
   return paymentStatus === "paid" || paymentStatus === "no_payment_required";
 }
 
+export function canReuseOpenCheckoutSession(session: { status?: string | null; url?: string | null } | null | undefined) {
+  return Boolean(session?.url && session.status === "open");
+}
+
 export async function createSignupIntent(input: SignupIntentInput) {
   const plan = findPublicPlanBySlug(input.planSlug);
   if (!plan) {
@@ -57,6 +62,7 @@ export async function createSignupIntent(input: SignupIntentInput) {
 
 export async function createStripeCheckoutSessionForIntent(intentId: string, planSlug: PublicPlanSlug) {
   if (!stripeConfigured()) {
+    logStripeConfigIssue("createStripeCheckoutSessionForIntent");
     throw new Error("Stripe is not configured.");
   }
 
@@ -80,7 +86,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
 
   if (intent.stripeCheckoutSessionId) {
     const existing = await stripe.checkout.sessions.retrieve(intent.stripeCheckoutSessionId);
-    if (existing.url && existing.status === "open") {
+    if (canReuseOpenCheckoutSession(existing)) {
       return existing;
     }
   }
@@ -248,6 +254,7 @@ export async function provisionManualSignup(intentId: string) {
 
 export async function completeStripeSignupFromSessionId(sessionId: string) {
   if (!stripeConfigured()) {
+    logStripeConfigIssue("completeStripeSignupFromSessionId");
     throw new Error("Stripe is not configured.");
   }
 

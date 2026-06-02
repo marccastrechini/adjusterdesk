@@ -1,5 +1,5 @@
 import { openBillingPortalForCurrentWorkspace } from "@/lib/billing-actions";
-import { resolveBillingProvider, stripeConfigured } from "@/lib/billing";
+import { getStripeConfigDiagnostics, resolveBillingProvider, stripeConfigured } from "@/lib/billing";
 import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { planLabel, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
@@ -20,6 +20,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
   const billingProvider = resolveBillingProvider();
   const stripeReady = stripeConfigured();
+  const stripeDiagnostics = getStripeConfigDiagnostics();
   const canUsePortal = billingProvider === "stripe" && stripeReady && Boolean(firm.billingCustomerId);
 
   return (
@@ -70,9 +71,12 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
                   Stripe subscription: {firm.billingSubscriptionId ?? "Not linked yet"}
                 </p>
               ) : (
-                <p className="text-sm leading-6 text-slate-700">
-                  Stripe keys or price IDs are missing in this environment. Billing links remain disabled until configuration is complete.
-                </p>
+                <div className="grid gap-2 text-sm leading-6 text-slate-700">
+                  <p>
+                    Stripe keys or price IDs are missing in this environment. Billing links remain disabled until configuration is complete.
+                  </p>
+                  {stripeDiagnostics.missingVars.length > 0 ? <p>Missing setup: {stripeDiagnostics.missingVars.join(", ")}</p> : null}
+                </div>
               )}
               {canUsePortal ? (
                 <form action={openBillingPortalForCurrentWorkspace}>

@@ -4,6 +4,20 @@ import { defaultIncludedUserLimit } from "@/lib/plans";
 export type PublicPlanSlug = "solo" | "small-office" | "team";
 export type BillingProvider = "manual" | "stripe";
 
+export const STRIPE_REQUIRED_ENV_VARS = [
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "STRIPE_PRICE_SOLO_MONTHLY",
+  "STRIPE_PRICE_SMALL_OFFICE_MONTHLY",
+  "STRIPE_PRICE_TEAM_MONTHLY",
+] as const;
+
+export type StripeConfigDiagnostics = {
+  ready: boolean;
+  missingVars: string[];
+  warnings: string[];
+};
+
 export type PublicPlanDefinition = {
   slug: PublicPlanSlug;
   plan: SubscriptionPlan;
@@ -89,6 +103,44 @@ export function stripePricingConfigured() {
 
 export function stripeConfigured() {
   return stripeCoreConfigured() && stripePricingConfigured();
+}
+
+export function getStripeConfigDiagnostics(): StripeConfigDiagnostics {
+  const missingVars = STRIPE_REQUIRED_ENV_VARS.filter((name) => !process.env[name]?.trim());
+  const warnings: string[] = [];
+
+  if (!process.env.APP_BASE_URL?.trim()) {
+    warnings.push("APP_BASE_URL is not set. Stripe redirects will use the environment fallback base URL.");
+  }
+
+  return {
+    ready: missingVars.length === 0,
+    missingVars,
+    warnings,
+  };
+}
+
+const loggedStripeConfigContexts = new Set<string>();
+
+export function logStripeConfigIssue(context: string) {
+  if (resolveBillingProvider() !== "stripe") {
+    return;
+  }
+
+  const diagnostics = getStripeConfigDiagnostics();
+  if (diagnostics.ready) {
+    return;
+  }
+
+  const dedupeKey = `${context}:${diagnostics.missingVars.join(",")}:${diagnostics.warnings.join(",")}`;
+  if (loggedStripeConfigContexts.has(dedupeKey)) {
+    return;
+  }
+
+  loggedStripeConfigContexts.add(dedupeKey);
+  console.warn(
+    `[billing] Stripe mode is enabled but configuration is incomplete in ${context}. Missing vars: ${diagnostics.missingVars.join(", ") || "none"}. Warnings: ${diagnostics.warnings.join(" | ") || "none"}.`,
+  );
 }
 
 export function publicSelfServiceReady() {

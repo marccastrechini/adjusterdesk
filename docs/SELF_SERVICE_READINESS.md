@@ -2,6 +2,8 @@
 
 This document covers the staged self-service launch path for AdjusterDesk.
 
+For Stripe local setup steps, see docs/STRIPE_TEST_MODE_RUNBOOK.md.
+
 ## Launch Gate
 
 - `SELF_SERVICE_SIGNUP_ENABLED=false` keeps public self-service signup off.
@@ -15,6 +17,7 @@ This document covers the staged self-service launch path for AdjusterDesk.
   - Workspace is created with `subscriptionStatus=MANUAL`.
 - `BILLING_PROVIDER=stripe`:
   - Requires full Stripe configuration.
+  - Current setup work should use Stripe test mode only.
   - Signup creates a pending intent and routes to Stripe Checkout.
   - Workspace owner is created only after successful checkout completion.
 

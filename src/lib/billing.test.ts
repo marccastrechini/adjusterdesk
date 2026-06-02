@@ -3,10 +3,12 @@ import { afterEach, test } from "node:test";
 import { SubscriptionStatus } from "@/generated/prisma/client";
 import {
   findPublicPlanBySlug,
+  getStripeConfigDiagnostics,
   mapStripeSubscriptionStatus,
   publicSelfServiceReady,
   resolvePublicStartHref,
   resolvePublicStartLabel,
+  resolveStripePriceId,
   stripeConfigured,
 } from "@/lib/billing";
 
@@ -49,6 +51,15 @@ test("stripe provider requires complete stripe config", () => {
   assert.equal(stripeConfigured(), false);
   assert.equal(publicSelfServiceReady(), false);
   assert.equal(resolvePublicStartHref("team"), "/signup?plan=team");
+
+   const diagnostics = getStripeConfigDiagnostics();
+   assert.equal(diagnostics.ready, false);
+   assert.deepEqual(diagnostics.missingVars, [
+     "STRIPE_WEBHOOK_SECRET",
+     "STRIPE_PRICE_SOLO_MONTHLY",
+     "STRIPE_PRICE_SMALL_OFFICE_MONTHLY",
+     "STRIPE_PRICE_TEAM_MONTHLY",
+   ]);
 });
 
 test("stripe provider becomes ready when all stripe vars are set", () => {
@@ -64,6 +75,26 @@ test("stripe provider becomes ready when all stripe vars are set", () => {
   assert.equal(publicSelfServiceReady(), true);
   assert.equal(resolvePublicStartHref("small-office"), "/signup?plan=small-office");
   assert.equal(resolvePublicStartLabel("small-office"), "Start Small Office");
+
+  const diagnostics = getStripeConfigDiagnostics();
+  assert.equal(diagnostics.ready, true);
+  assert.deepEqual(diagnostics.missingVars, []);
+});
+
+test("stripe price IDs map to solo, small office, and team", () => {
+  process.env.STRIPE_PRICE_SOLO_MONTHLY = "price_solo";
+  process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_small";
+  process.env.STRIPE_PRICE_TEAM_MONTHLY = "price_team";
+
+  assert.equal(resolveStripePriceId("solo"), "price_solo");
+  assert.equal(resolveStripePriceId("small-office"), "price_small");
+  assert.equal(resolveStripePriceId("team"), "price_team");
+});
+
+test("stripe price mapping falls back to empty string when missing", () => {
+  assert.equal(resolveStripePriceId("solo"), "");
+  assert.equal(resolveStripePriceId("small-office"), "");
+  assert.equal(resolveStripePriceId("team"), "");
 });
 
 test("stripe subscription status maps to internal status", () => {

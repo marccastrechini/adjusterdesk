@@ -1,5 +1,7 @@
 # Billing Setup
 
+For a step-by-step local setup, use docs/STRIPE_TEST_MODE_RUNBOOK.md.
+
 AdjusterDesk supports two billing modes:
 
 - `manual`
@@ -26,6 +28,8 @@ Behavior:
 - Billing changes are handled by support.
 
 ## 2) Stripe Mode
+
+This document covers Stripe configuration shape. For current implementation work, use Stripe test mode only.
 
 Environment:
 
@@ -54,9 +58,16 @@ Create one recurring monthly Stripe Price for each public plan:
 
 Copy each Stripe `price_...` ID into the matching environment variable.
 
+Recommended Stripe test-mode product names:
+
+- AdjusterDesk Solo
+- AdjusterDesk Small Office
+- AdjusterDesk Team
+
 ## Webhook Endpoint
 
 - Endpoint: `/api/stripe/webhook`
+- Local testing endpoint via Stripe CLI forwarding: `http://localhost:3000/api/stripe/webhook`
 - Required events:
   - `checkout.session.completed`
   - `customer.subscription.created`

@@ -42,6 +42,8 @@ yarn-error.log*
 !.env.example
 !.env.development.example
 !.env.production.example
+!.env.development.local.example
+!.env.production.local.example
 
 # local data
 /prisma/dev.db

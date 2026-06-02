@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { stripeConfigured } from "@/lib/billing";
+import { logStripeConfigIssue, stripeConfigured } from "@/lib/billing";
 import { processStripeWebhookEvent } from "@/lib/billing-webhooks";
 import { requireStripeClient, requireStripeWebhookSecret } from "@/lib/stripe";
 
 export async function POST(request: Request) {
   if (!stripeConfigured()) {
+    logStripeConfigIssue("POST /api/stripe/webhook");
     return NextResponse.json({ error: "Stripe is not configured." }, { status: 503 });
   }
 

@@ -12,6 +12,21 @@ function asDateFromUnix(value: number | null | undefined) {
   return new Date(value * 1000);
 }
 
+const ignorableSignupCompletionErrors = [
+  "Signup request is already being processed.",
+  "Checkout is not complete yet.",
+  "Checkout payment is not complete yet.",
+  "Subscription was not created.",
+];
+
+export function isIgnorableSignupCompletionError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return ignorableSignupCompletionErrors.includes(error.message);
+}
+
 async function updateFirmBySubscriptionOrCustomer(params: {
   subscriptionId?: string | null;
   customerId?: string | null;
@@ -63,8 +78,14 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       // Complete workspace provisioning from webhook as a fallback when users do not return to /signup/success.
       try {
         await completeStripeSignupFromSessionId(session.id);
-      } catch {
-        // Intentionally ignore errors here; /signup/success can retry completion idempotently.
+      } catch (error) {
+        // Ignore expected race/incomplete states; /signup/success can retry completion idempotently.
+        if (!isIgnorableSignupCompletionError(error)) {
+          console.warn("[billing] Unexpected checkout completion issue from webhook.", {
+            eventType: event.type,
+            checkoutSessionId: session.id,
+          });
+        }
       }
 
       return;
