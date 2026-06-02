@@ -14,7 +14,8 @@ const footerLinks = [
   { name: "Cookies", href: "/cookies" },
   { name: "Accessibility", href: "/accessibility" },
   { name: "Security", href: "/security" },
-  { name: "Contact / Request Demo", href: "/demo" },
+  { name: "Request access", href: "/demo" },
+  { name: "Talk to us", href: "/demo" },
 ];
 
 test("public trust pages render and footer links are available", async ({ page }) => {
@@ -22,8 +23,8 @@ test("public trust pages render and footer links are available", async ({ page }
     await page.goto(trustPage.path);
     await expect(page.getByRole("heading", { name: trustPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(trustPage.copy, { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Start Free Trial", exact: true }).first()).toHaveAttribute("href", "/demo");
-    await expect(page.getByRole("link", { name: "Request Demo", exact: true }).first()).toHaveAttribute("href", "/demo");
+    await expect(page.getByRole("link", { name: "Request access", exact: true }).first()).toHaveAttribute("href", "/demo");
+    await expect(page.getByRole("link", { name: "Talk to us", exact: true }).first()).toHaveAttribute("href", "/demo");
     await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
 
     for (const footerLink of footerLinks) {
