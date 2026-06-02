@@ -96,19 +96,20 @@ test("public marketing pages render and workspace routes stay protected", async 
   }
 
   await page.goto("/pricing");
-  await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Solo", exact: true })).toBeVisible();
   await expect(page.getByText("$49/month", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Small Office", exact: true })).toBeVisible();
-  await expect(page.getByText("$129/month", { exact: true })).toBeVisible();
+  await expect(page.getByText("$99/month", { exact: true })).toBeVisible();
   await expect(page.getByText("Recommended", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Professional", exact: true })).toBeVisible();
-  await expect(page.getByText("Custom pricing", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Team", exact: true })).toBeVisible();
+  await expect(page.getByText("$199/month", { exact: true })).toBeVisible();
   await expect(page.getByText("Can I try AdjusterDesk before paying?", { exact: true })).toBeVisible();
   await expect(page.getByText("Do I need a credit card?", { exact: true })).toBeVisible();
   await expect(page.getByText("Can I change plans later?", { exact: true })).toBeVisible();
-  await expect(page.getByText("What if I have more than 3 users?", { exact: true })).toBeVisible();
-  await expect(page.getByText("Do you help import spreadsheets?", { exact: true })).toBeVisible();
-  await expect(page.getByText("What is the Professional plan for?", { exact: true })).toBeVisible();
+  await expect(page.getByText("How are users counted?", { exact: true })).toBeVisible();
+  await expect(page.getByText("What if I need more users?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Do you help import spreadsheets or older data?", { exact: true })).toBeVisible();
+  await expect(page.getByText("Is billing automated in-app right now?", { exact: true })).toBeVisible();
   await expect(page.getByText("Enterprise", { exact: true })).toHaveCount(0);
 
   await page.goto("/today");

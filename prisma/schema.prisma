@@ -100,11 +100,33 @@ enum TemplateType {
   CHECKLIST
 }
 
+enum SubscriptionPlan {
+  SOLO
+  SMALL_OFFICE
+  TEAM
+  PROFESSIONAL
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  MANUAL
+}
+
 model Firm {
   id        String   @id @default(cuid())
   name      String
   phone     String?
   email     String?
+  subscriptionPlan   SubscriptionPlan   @default(SMALL_OFFICE)
+  subscriptionStatus SubscriptionStatus @default(MANUAL)
+  includedUserLimit  Int                @default(3)
+  trialEndsAt        DateTime?
+  billingStartedAt   DateTime?
+  billingCustomerId  String?
+  billingSubscriptionId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

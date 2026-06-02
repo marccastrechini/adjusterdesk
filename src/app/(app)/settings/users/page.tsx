@@ -2,6 +2,7 @@ import { createUser, resendUserInvite, setUserActive } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { userRoleOptions } from "@/lib/options";
+import { planLabel, planLimitMessage, resolveIncludedUserLimit } from "@/lib/plans";
 import { getUsers } from "@/lib/queries";
 import { Badge, Card, Field, Notice, StatCard, inputClassName, PageHeader, Section, selectClassName, SubmitButton } from "@/components/ui";
 
@@ -17,10 +18,13 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const notice = getNoticeMessage(query);
   const error = firstValue(query.error);
-  const { users, user: currentUser } = await getUsers();
+  const { firm, users, user: currentUser } = await getUsers();
   const activeUsers = users.filter((entry) => entry.active);
   const inactiveUsers = users.filter((entry) => !entry.active);
   const ownerUsers = users.filter((entry) => entry.role === "OWNER");
+  const includedUserLimit = resolveIncludedUserLimit(firm);
+  const atLimit = includedUserLimit > 0 && activeUsers.length >= includedUserLimit;
+  const overLimit = includedUserLimit > 0 && activeUsers.length > includedUserLimit;
 
   const errorMessage =
     error === "current-user"
@@ -33,6 +37,8 @@ export default async function UsersPage({ searchParams }: PageProps) {
             ? "That email address is already used by another account."
             : error === "invite-send"
               ? "Invite email could not be sent. Check system email setup and try again."
+              : error === "user-limit"
+                ? "This office is at its included active-user limit. Deactivate a user or ask support to adjust the plan before adding another active user."
           : undefined;
 
   return (
@@ -41,6 +47,16 @@ export default async function UsersPage({ searchParams }: PageProps) {
       <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
         <p className="font-semibold">Office sign-in users</p>
         <p className="mt-1 leading-6">Add users by email invite so they set their own password securely. System-admin password reset remains available for support.</p>
+      </Card>
+
+      <Card className={overLimit ? "border-rose-200 bg-rose-50" : atLimit ? "border-amber-200 bg-amber-50" : "border-teal-200 bg-teal-50"}>
+        <div className="grid gap-2">
+          <p className="text-sm font-semibold text-slate-950">Plan: {planLabel(firm.subscriptionPlan)}</p>
+          <p className="text-sm leading-6 text-slate-700">Active users: {activeUsers.length} of {includedUserLimit > 0 ? includedUserLimit : "custom"} included</p>
+          <p className="text-sm leading-6 text-slate-700">Inactive users do not count toward your plan.</p>
+          <p className="text-sm leading-6 text-slate-700">Pending invited users count when they are active.</p>
+          <p className="text-sm leading-6 text-slate-700">{planLimitMessage({ activeUserCount: activeUsers.length, includedUserLimit })}</p>
+        </div>
       </Card>
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}

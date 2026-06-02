@@ -1,4 +1,5 @@
 import { labelFromEnum } from "@/lib/format";
+import { planLabel, resolveIncludedUserLimit } from "@/lib/plans";
 import { getDemoReadinessData } from "@/lib/queries";
 import { getEnvStatus } from "@/lib/env";
 import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/components/ui";
@@ -56,6 +57,7 @@ export default async function SettingsPage() {
   const activeUsers = users.filter((entry) => entry.active);
   const inactiveUsers = users.filter((entry) => !entry.active);
   const roleLabels = Array.from(new Set(users.map((entry) => labelFromEnum(entry.role))));
+  const includedUserLimit = resolveIncludedUserLimit(firm);
 
   const readyForDemo = [
     "Credentials sign-in and session auth",
@@ -98,6 +100,9 @@ export default async function SettingsPage() {
         <h2 className="text-base font-semibold text-slate-950">What to do here</h2>
         <p className="text-sm leading-6 text-slate-600">
           Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review demo readiness before sharing with real clients.
+        </p>
+        <p className="text-sm leading-6 text-slate-600">
+          Current plan: {planLabel(firm.subscriptionPlan)} ({activeUsers.length} active of {includedUserLimit > 0 ? includedUserLimit : "custom"} included users)
         </p>
         <div className="flex flex-wrap gap-2">
           <ButtonLink href="/settings/users" variant="secondary">Review office users</ButtonLink>

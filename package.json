@@ -19,7 +19,7 @@
     "prod:task:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-local-production-task.ps1",
     "prod:task:status": "powershell -ExecutionPolicy Bypass -File scripts/status-local-production-task.ps1",
     "lint": "eslint",
-    "test": "tsx --test src/lib/format.test.ts src/lib/templates.test.ts src/lib/status-links.test.ts src/lib/client-status.test.ts src/lib/document-requests.test.ts src/lib/activity-log.test.ts src/lib/reports.test.ts src/lib/csv.test.ts src/lib/import-utils.test.ts src/lib/storage.test.ts src/lib/env.test.ts src/lib/auth.test.ts src/lib/email-template.test.ts src/lib/activation.test.ts src/lib/demo-safety.test.ts",
+    "test": "tsx --test src/lib/format.test.ts src/lib/templates.test.ts src/lib/status-links.test.ts src/lib/client-status.test.ts src/lib/document-requests.test.ts src/lib/activity-log.test.ts src/lib/reports.test.ts src/lib/csv.test.ts src/lib/import-utils.test.ts src/lib/storage.test.ts src/lib/env.test.ts src/lib/auth.test.ts src/lib/email-template.test.ts src/lib/activation.test.ts src/lib/plans.test.ts src/lib/demo-safety.test.ts",
     "test:smoke": "playwright install chromium && playwright test",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",

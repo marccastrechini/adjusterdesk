@@ -99,6 +99,10 @@ export const noticeMessages = {
     title: "User updated",
     message: "The user is now inactive.",
   },
+  "system-workspace-subscription-updated": {
+    title: "Workspace subscription updated",
+    message: "Plan, subscription status, and included active-user limit were saved.",
+  },
   "user-invite-sent": {
     title: "Invitation sent",
     message: "The user will receive an email link to set their password.",

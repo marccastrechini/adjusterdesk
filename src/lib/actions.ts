@@ -12,6 +12,8 @@ import {
   InvoiceStatus,
   LeadStatus,
   SettlementStatus,
+  SubscriptionPlan,
+  SubscriptionStatus,
   TaskPriority,
   TaskStatus,
   TemplateType,
@@ -31,6 +33,7 @@ import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib
 import { documentRequestResolution, validateClientStatusUploadInput, validateDocumentCreateInput } from "@/lib/document-requests";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
+import { canAddActiveUser, defaultIncludedUserLimit, resolveIncludedUserLimit } from "@/lib/plans";
 import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
@@ -299,6 +302,37 @@ async function requireOwnedUserId(firmId: string, userId: string) {
   }
 
   return user.id;
+}
+
+async function getFirmSeatAvailability(firmId: string) {
+  const firm = await prisma.firm.findUnique({
+    where: { id: firmId },
+    select: {
+      id: true,
+      subscriptionPlan: true,
+      includedUserLimit: true,
+    },
+  });
+
+  if (!firm) {
+    throw new Error("Firm not found.");
+  }
+
+  const activeUserCount = await prisma.user.count({
+    where: {
+      firmId,
+      active: true,
+    },
+  });
+
+  const includedUserLimit = resolveIncludedUserLimit(firm);
+  const canAdd = canAddActiveUser({ activeUserCount, includedUserLimit });
+
+  return {
+    activeUserCount,
+    includedUserLimit,
+    canAdd,
+  };
 }
 
 export async function createLead(formData: FormData) {
@@ -1531,6 +1565,13 @@ export async function createUser(formData: FormData) {
   const role = (formData.get("role")?.toString() as UserRole) || UserRole.ADJUSTER;
   const active = formData.get("active") === "on";
 
+  if (active) {
+    const availability = await getFirmSeatAvailability(firm.id);
+    if (!availability.canAdd) {
+      redirect("/settings/users?error=user-limit");
+    }
+  }
+
   const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existingUser) {
     redirect("/settings/users?error=email-duplicate");
@@ -1611,6 +1652,13 @@ export async function setUserActive(userId: string, nextActive: boolean) {
     });
     if (activeOwnerCount <= 1) {
       redirect("/settings/users?error=last-owner");
+    }
+  }
+
+  if (nextActive && !targetUser.active) {
+    const availability = await getFirmSeatAvailability(firm.id);
+    if (!availability.canAdd) {
+      redirect("/settings/users?error=user-limit");
     }
   }
 
@@ -1909,6 +1957,13 @@ export async function setSystemUserActive(userId: string, workspaceId: string, n
     }
   }
 
+  if (nextActive && !targetUser.active) {
+    const availability = await getFirmSeatAvailability(workspaceId);
+    if (!availability.canAdd) {
+      redirect(`/system/workspaces/${workspaceId}?error=user-limit`);
+    }
+  }
+
   if (targetUser.active !== nextActive) {
     await prisma.user.update({
       where: { id: targetUser.id },
@@ -1919,6 +1974,56 @@ export async function setSystemUserActive(userId: string, workspaceId: string, n
   revalidatePath("/system/workspaces");
   revalidatePath(`/system/workspaces/${workspaceId}`);
   redirect(withNotice(`/system/workspaces/${workspaceId}`, nextActive ? "system-user-activated" : "system-user-deactivated"));
+}
+
+export async function updateSystemWorkspaceSubscription(formData: FormData) {
+  await requireSystemAdminContext();
+
+  const workspaceId = requiredText.parse(formData.get("workspaceId")?.toString());
+  const subscriptionPlan = z.nativeEnum(SubscriptionPlan).parse(formData.get("subscriptionPlan")?.toString());
+  const subscriptionStatus = z.nativeEnum(SubscriptionStatus).parse(formData.get("subscriptionStatus")?.toString());
+  const rawIncludedUserLimit = textValue(formData, "includedUserLimit");
+
+  const workspace = await prisma.firm.findUnique({
+    where: { id: workspaceId },
+    select: {
+      id: true,
+      includedUserLimit: true,
+    },
+  });
+
+  if (!workspace) {
+    redirect("/system/workspaces");
+  }
+
+  let explicitIncludedUserLimit: number | undefined;
+  if (rawIncludedUserLimit) {
+    const parsed = Number(rawIncludedUserLimit);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      redirect(`/system/workspaces/${workspaceId}?error=invalid-limit`);
+    }
+    explicitIncludedUserLimit = parsed;
+  }
+
+  const planDefaultLimit = defaultIncludedUserLimit(subscriptionPlan);
+  const includedUserLimit = explicitIncludedUserLimit ?? planDefaultLimit ?? workspace.includedUserLimit;
+
+  if (!Number.isInteger(includedUserLimit) || includedUserLimit < 1) {
+    redirect(`/system/workspaces/${workspaceId}?error=invalid-limit`);
+  }
+
+  await prisma.firm.update({
+    where: { id: workspaceId },
+    data: {
+      subscriptionPlan,
+      subscriptionStatus,
+      includedUserLimit,
+    },
+  });
+
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+  redirect(withNotice(`/system/workspaces/${workspaceId}`, "system-workspace-subscription-updated"));
 }
 
 export type ResetSystemUserPasswordState = {

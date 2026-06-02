@@ -3,54 +3,59 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
   title: "Pricing | AdjusterDesk",
-  description: "Simple AdjusterDesk pricing for solo and small public adjusting offices.",
+  description: "Simple flat pricing for solo and small public adjusting offices.",
   path: "/pricing",
 });
 
 const plans = [
   {
-    name: "Starter",
+    name: "Solo",
     price: "$49/month",
-    description: "For solo public adjusters getting organized.",
+    description: "For independent public adjusters who want one simple place to manage claims, follow-ups, documents, client updates, and money.",
     features: [
-      "1 user",
-      "Claims, clients, notes, documents, follow-ups, and deadlines",
-      "Settlement and fee tracking",
-      "Basic reports",
-      "Templates",
+      "1 active user",
+      "Unlimited claims",
+      "Today dashboard",
+      "Leads and claims",
+      "Documents",
+      "Client status links",
+      "Settlement, fee, and invoice tracking",
+      "Templates & Checklists",
       "Email support",
-      "14-day free trial",
     ],
     cta: "Start Free Trial",
     recommended: false,
   },
   {
     name: "Small Office",
-    price: "$129/month",
-    description: "For small public adjusting offices that need one shared workspace.",
+    price: "$99/month",
+    description: "For small public adjusting offices with an owner, admin, spouse, partner, or part-time helper.",
     features: [
-      "Up to 3 users",
-      "Everything in Starter",
-      "Team follow-up and deadline visibility",
+      "Up to 3 active users",
+      "Unlimited claims",
+      "Everything in Solo",
+      "Shared office workspace",
+      "Team task ownership",
+      "Office templates",
       "CSV import/export",
-      "Shared templates",
-      "Priority email support",
-      "Additional users: $29/user/month",
+      "Priority email support during the early customer phase",
     ],
     cta: "Start Free Trial",
     recommended: true,
   },
   {
-    name: "Professional",
-    price: "Custom pricing",
-    description: "For larger teams, migration help, or firms that need extra setup support.",
+    name: "Team",
+    price: "$199/month",
+    description: "For growing offices with more adjusters or admin help.",
     features: [
+      "Up to 7 active users",
+      "Unlimited claims",
       "Everything in Small Office",
-      "Custom onboarding",
-      "Spreadsheet/data migration assistance",
-      "Advanced reporting or workflow configuration",
-      "Custom templates",
-      "Dedicated setup support",
+      "Team reporting",
+      "Role permissions as they mature",
+      "Workflow templates",
+      "Export/accounting support as it matures",
+      "Additional setup support",
     ],
     cta: "Request Demo",
     recommended: false,
@@ -60,7 +65,7 @@ const plans = [
 const faqs = [
   {
     question: "Can I try AdjusterDesk before paying?",
-    answer: "Yes. Starter and Small Office include a 14-day free trial so you can see how AdjusterDesk fits your current claim workflow.",
+    answer: "Yes. Solo, Small Office, and Team include a 14-day free trial so you can see how AdjusterDesk fits your current claim workflow.",
   },
   {
     question: "Do I need a credit card?",
@@ -71,16 +76,20 @@ const faqs = [
     answer: "Yes. You can start with the plan that fits your office now and move as your user count or setup needs change.",
   },
   {
-    question: "What if I have more than 3 users?",
-    answer: "Small Office includes up to 3 users, with additional users at $29/user/month. Larger teams can use Professional when they need extra setup, migration, or workflow support.",
+    question: "How are users counted?",
+    answer: "Plans use active-user limits. Inactive users stay in your office history and do not count. Pending invited users count when they are active because they are provisioned seats.",
   },
   {
-    question: "Do you help import spreadsheets?",
-    answer: "Small Office includes CSV import/export. Professional can include spreadsheet or data migration assistance for firms that want more help moving older files.",
+    question: "What if I need more users?",
+    answer: "Small Office includes up to 3 active users and Team includes up to 7 active users. Larger teams or custom limits can contact support for Professional/custom setup.",
   },
   {
-    question: "What is the Professional plan for?",
-    answer: "Professional is for larger teams, migration help, custom templates, advanced reporting or workflow configuration, and dedicated setup support.",
+    question: "Do you help import spreadsheets or older data?",
+    answer: "Small Office and Team include CSV import/export. Professional/custom setup can include migration help for offices moving older data.",
+  },
+  {
+    question: "Is billing automated in-app right now?",
+    answer: "Not yet. Billing is managed manually in this phase while we keep onboarding high-touch for early customer offices.",
   },
 ];
 
@@ -92,7 +101,7 @@ export default function PricingPage() {
         title="Simple plans for small public adjusting offices."
         description="Choose the package that matches how your office works today. Start with a 14-day free trial. No credit card required."
       />
-      <PublicSection title="Packages" description="Starter and Small Office are built for self-serve, low-overhead setup. Professional is for firms that need more hands-on help.">
+      <PublicSection title="Packages" description="Solo, Small Office, and Team are flat monthly plans. Professional/custom setup remains available by request.">
         <div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
           {plans.map((plan) => (
             <div
@@ -150,7 +159,7 @@ export default function PricingPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Start simple, then add help when your office needs it." description="Request trial access or a short demo to see which package fits your current claims, clients, documents, follow-ups, payments, fees, and invoices." />
+      <CtaBand title="Start simple, then grow with your office." description="Request trial access or a short demo to see which plan fits your current claims, clients, documents, follow-ups, payments, fees, and invoices." />
     </>
   );
 }
