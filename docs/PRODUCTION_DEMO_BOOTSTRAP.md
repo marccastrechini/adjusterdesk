@@ -2,7 +2,7 @@
 
 Use this guide to create or refresh the fixed demo workspace in the local production profile for the public demo site at [https://adjusterdesk.xyz](https://adjusterdesk.xyz).
 
-This bootstrap is for fake demo data only. Do not point it at real pilot claims, real customers, or real uploaded documents.
+This bootstrap is for fake demo data only. Do not point it at real customer claims, real customers, or real uploaded documents.
 
 ## What The Demo Workspace Is
 
@@ -48,7 +48,7 @@ npm run prod:demo:bootstrap -- -ConfirmProductionDemo --password "Use-A-Strong-L
 
 The script never prints the full password.
 
-If a future production database contains real pilot/customer workspaces, the bootstrap refuses to run by default. The only override is:
+If a future production database contains real customer workspaces, the bootstrap refuses to run by default. The only override is:
 
 ```powershell
 $env:ALLOW_PRODUCTION_DEMO_BOOTSTRAP_WITH_OTHER_FIRMS = "I_UNDERSTAND_THIS_DATABASE_HAS_NON_DEMO_WORKSPACES"
@@ -138,4 +138,4 @@ If the owner is already signed in, you can also change the password from [Settin
 
 Fake data only.
 
-Never point this bootstrap at a live pilot office database, real policyholder data, real uploads, or production secrets that should stay private.
+Never point this bootstrap at a live customer office database, real policyholder data, real uploads, or production secrets that should stay private.

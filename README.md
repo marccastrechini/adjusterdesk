@@ -7,14 +7,14 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 ## What Works
 
 - Today dashboard for overdue tasks, due today, upcoming deadlines, carrier follow-ups, unpaid receivables, and recent claims.
-- Guided Start checklist for first-run setup, spreadsheet import, demo reset guidance, and pilot feedback.
+- Guided Start checklist for first-run setup, spreadsheet import, demo reset guidance, and feedback.
 - Lead intake, lead list/search/filter, lead detail, follow-up tasks, communication notes, and conversion to claim.
 - Claim list/search/filter, claim creation, claim overview, task editing/completion, documents/photos upload metadata, communication log, and money tab.
 - Settlement rounds, payments/checks, fee percentage calculation, invoices, and office-wide receivables.
 - Reports for claim status, overdue tasks, upcoming deadlines, leads by source, and outstanding receivables.
 - Templates and demo user management.
 - Authenticated Resources area with office starters, task defaults, document request starters, and CSV cleanup guidance.
-- Lightweight pilot feedback capture saved inside the workspace.
+- Lightweight feedback capture saved inside the workspace.
 - Forgot-password and reset-password flow with transactional Resend email.
 - Secure user invitation flow for workspace onboarding with one-time accept-invite links.
 - Public client status page by token with safe claim updates, requested documents, and office contact details.
@@ -26,9 +26,9 @@ The app is intentionally local-first for this MVP: Next.js App Router, TypeScrip
 For a Windows local demo/staging host with backup and restore steps, see `docs/LOCAL_HOSTING.md`.
 For a persistent local production runtime on the main demo machine, see `docs/LOCAL_PRODUCTION.md`.
 For the fixed production demo workspace bootstrap, see `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.
-For a guided pilot walkthrough, see `docs/DEMO_SCRIPT.md`.
-For a concise pilot safety/readiness checklist, see `docs/PILOT_READINESS.md`.
-For local pilot workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
+For a guided demo walkthrough, see `docs/DEMO_RUNBOOK.md`.
+For a concise demo readiness checklist, see `docs/DEMO_READINESS.md`.
+For local workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
 For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
 
@@ -70,7 +70,7 @@ npm run dev:local
 
 Open `http://localhost:3000`.
 
-`AUTH_SECRET` should be set before any shared or pilot deployment. If it is missing in local development, AdjusterDesk falls back to an insecure built-in signing secret so the seeded credentials flow still works locally.
+`AUTH_SECRET` should be set before any shared deployment. If it is missing in local development, AdjusterDesk falls back to an insecure built-in signing secret so the seeded credentials flow still works locally.
 
 ## Demo URLs
 
@@ -83,7 +83,7 @@ Open `http://localhost:3000`.
 - Money: `http://localhost:3000/money`
 - Reports: `http://localhost:3000/reports`
 - Office resources: `http://localhost:3000/office-resources`
-- Pilot feedback: `http://localhost:3000/feedback`
+- Feedback: `http://localhost:3000/feedback`
 - Client status: `http://localhost:3000/status/sarah-water-demo`
 
 ## Scripts
@@ -133,10 +133,10 @@ AdjusterDesk does not provide legal advice, automated coverage determinations, c
 
 Production authentication, billing, carrier integrations, QuickBooks sync, email/SMS sending, and advanced permissions are intentionally outside this local MVP pass.
 
-## Pilot Deployment Readiness
+## Demo and Deployment Readiness
 
-Before inviting real pilot users, review the practical checklist in `docs/pilot-deployment-checklist.md`.
-For operator-facing demo and pilot guardrails, also review `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md`.
+Before inviting real customer users, review the practical checklist in `docs/DEPLOYMENT_CHECKLIST.md`.
+For operator-facing demo and readiness guardrails, also review `docs/DEMO_RUNBOOK.md` and `docs/DEMO_READINESS.md`.
 For the production run/update/task workflow on the local machine, review `docs/LOCAL_PRODUCTION.md`.
 
 Minimum production/demo update flow:

@@ -1,10 +1,10 @@
 # Workspace Admin
 
-This guide explains how to create a real pilot workspace and owner user locally, without editing SQLite files by hand.
+This guide explains how to create a real customer workspace and owner user locally, without editing SQLite files by hand.
 
 For local global admin console usage across all workspaces, see `docs/SYSTEM_ADMIN.md`.
 
-Use this for new pilot companies, for example:
+Use this for new customer offices, for example:
 
 - Workspace: Stark Loss
 - Owner user: Steve Reardon
@@ -132,7 +132,7 @@ After reset, share the new password with the user and ask them to rotate it from
 
 ## Demo Reset Warning
 
-Do not run demo reset after real pilot data exists in this database.
+Do not run demo reset after real office data exists in this database.
 
 `npm run demo:reset:local -- -ConfirmReset` deletes all current data and reseeds demo-only data.
 

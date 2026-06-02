@@ -184,13 +184,13 @@ async function verifySeededWorkspace(prisma: PrismaClient, profile: Profile) {
   return `Workspace ${firm.name} and ${expected.users.length} active demo users found.`;
 }
 
-async function verifyPilotFeedback(prisma: PrismaClient, profile: Profile) {
+async function verifyFeedbackEntry(prisma: PrismaClient, profile: Profile) {
   const expected = profileConfig[profile];
   const firm = await prisma.firm.findFirstOrThrow({ where: { name: expected.workspaceName }, select: { id: true } });
   const user = await prisma.user.findFirst({ where: { firmId: firm.id, email: expected.users[0].email }, select: { id: true } });
   const message = `Readiness check ${new Date().toISOString()}`;
 
-  const feedback = await prisma.pilotFeedback.create({
+  const feedback = await prisma.feedbackEntry.create({
     data: {
       firmId: firm.id,
       userId: user?.id,
@@ -201,8 +201,8 @@ async function verifyPilotFeedback(prisma: PrismaClient, profile: Profile) {
     select: { id: true },
   });
 
-  await prisma.pilotFeedback.delete({ where: { id: feedback.id } });
-  return "Pilot feedback table accepted a create/delete readiness probe.";
+  await prisma.feedbackEntry.delete({ where: { id: feedback.id } });
+  return "Feedback table accepted a create/delete readiness probe.";
 }
 
 function verifyRouteFiles() {
@@ -251,7 +251,7 @@ async function main() {
   try {
     results.push(await runCheck("database connectivity", () => verifyDatabaseConnectivity(prisma)));
     results.push(await runCheck("seeded demo workspace/users", () => verifySeededWorkspace(prisma, options.profile)));
-    results.push(await runCheck("pilot feedback model", () => verifyPilotFeedback(prisma, options.profile)));
+    results.push(await runCheck("feedback model", () => verifyFeedbackEntry(prisma, options.profile)));
     results.push(await runCheck("demo app routes", verifyRouteFiles));
     results.push(await runCheck("public marketing routes", () => verifyPublicRoutes(baseUrl)));
   } finally {

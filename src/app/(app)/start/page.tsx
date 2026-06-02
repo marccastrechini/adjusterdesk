@@ -43,7 +43,7 @@ export default async function StartPage() {
         <StatCard label="Documents" value={counts.documents} detail="Uploads and client requests" />
       </div>
 
-      <Section title="First-run checklist" description="Work through these in order for the first pilot session, or use the demo reset command to practice with sample data.">
+      <Section title="First-run checklist" description="Work through these in order for the first demo session, or use the demo reset command to practice with sample data.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {checklist.map((item, index) => (
             <Card key={item.title} className="grid content-start gap-3">
@@ -84,17 +84,17 @@ export default async function StartPage() {
               Local demo data can be reset for a clean walkthrough. The reset script creates a backup first unless you explicitly skip it.
             </p>
             <code className="block rounded-md bg-slate-950 px-3 py-2 text-sm text-white">{demoResetCommand}</code>
-            <p className="text-xs leading-5 text-slate-500">Use only for demo or training data, never real pilot office data.</p>
+            <p className="text-xs leading-5 text-slate-500">Use only for demo or training data, never real office data.</p>
           </Card>
         </Section>
 
-        <Section title="During a pilot">
+        <Section title="During demos">
           <Card className="grid content-start gap-3">
             <p className="text-sm leading-6 text-slate-600">
               Capture anything confusing while it is fresh: missing fields, unclear wording, slow steps, or places where the office still reaches for a spreadsheet.
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <ButtonLink href="/feedback" variant="secondary">Send pilot feedback</ButtonLink>
+              <ButtonLink href="/feedback" variant="secondary">Send feedback</ButtonLink>
               <Badge tone="blue">{counts.feedback} saved</Badge>
             </div>
           </Card>

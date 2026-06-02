@@ -1,9 +1,9 @@
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
-import { createPilotFeedbackWithState } from "@/lib/actions";
+import { createFeedbackWithState } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
-import { getPilotFeedbackPageData } from "@/lib/queries";
+import { getFeedbackPageData } from "@/lib/queries";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,17 +18,17 @@ const ratingOptions = [
   ["1", "1 - Blocks the office"],
 ] as const;
 
-// TODO: Add owner review/export and notification routing once the pilot feedback process is defined.
+// TODO: Add owner review/export and notification routing once the feedback process is defined.
 export default async function FeedbackPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const notice = getNoticeMessage(params);
-  const { firm, recentFeedback } = await getPilotFeedbackPageData();
+  const { firm, recentFeedback } = await getFeedbackPageData();
 
   return (
     <>
       <PageHeader
-        title="Pilot feedback"
-        description="Capture notes from real demo and pilot sessions while the workflow is fresh."
+        title="Feedback"
+        description="Capture notes from real demo and customer sessions while the workflow is fresh."
       />
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
@@ -40,12 +40,12 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
               Use plain notes from the office: what was confusing, what took too long, what was missing, or what helped.
             </p>
           </div>
-          <ActionForm action={createPilotFeedbackWithState} className="grid gap-3">
+          <ActionForm action={createFeedbackWithState} className="grid gap-3">
             <Field label="Page or workflow" hint="Examples: lead intake, claim documents, CSV import, money.">
               <input name="page" className={inputClassName} />
               <FieldError name="page" />
             </Field>
-            <Field label="Rating" hint="Optional quick signal for pilot review.">
+            <Field label="Rating" hint="Optional quick signal for review.">
               <select name="rating" defaultValue="" className={selectClassName}>
                 {ratingOptions.map(([value, label]) => <option key={value || "none"} value={value}>{label}</option>)}
               </select>
@@ -59,9 +59,9 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
           </ActionForm>
         </Card>
 
-        <Section title="Recent feedback" description="Latest pilot notes saved in this workspace.">
+        <Section title="Recent feedback" description="Latest notes saved in this workspace.">
           {recentFeedback.length === 0 ? (
-            <EmptyState title="No feedback yet" message="Pilot notes will appear here after someone sends the first note." />
+            <EmptyState title="No feedback yet" message="Feedback notes will appear here after someone sends the first note." />
           ) : (
             <div className="grid gap-3">
               {recentFeedback.map((entry) => (

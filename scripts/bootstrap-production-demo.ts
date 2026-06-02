@@ -244,7 +244,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
     await tx.payment.deleteMany({ where: { firmId: firm.id } });
     await tx.invoice.deleteMany({ where: { firmId: firm.id } });
     await tx.settlementRound.deleteMany({ where: { firmId: firm.id } });
-    await tx.pilotFeedback.deleteMany({ where: { firmId: firm.id } });
+    await tx.feedbackEntry.deleteMany({ where: { firmId: firm.id } });
     await tx.clientStatusLink.deleteMany({ where: { firmId: firm.id } });
     await tx.document.deleteMany({ where: { firmId: firm.id } });
     await tx.activity.deleteMany({ where: { firmId: firm.id } });

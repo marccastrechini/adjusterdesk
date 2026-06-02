@@ -36,9 +36,9 @@ const sections: TrustSection[] = [
     ],
   },
   {
-    title: "Trials, pilots, payments, and plan terms",
+    title: "Trials, demos, payments, and plan terms",
     paragraphs: [
-      "Trial and pilot access may be limited while AdjusterDesk is being prepared for broader self-serve use. Public pricing is shown for planning purposes, and paid access is subject to the plan terms agreed for the customer office. AdjusterDesk does not claim automated billing, checkout, or instant workspace provisioning unless those features are specifically made available.",
+      "Trial access may be limited while AdjusterDesk is being prepared for broader self-serve use. Public pricing is shown for planning purposes, and paid access is subject to the plan terms agreed for the customer office. AdjusterDesk does not claim automated billing, checkout, or instant workspace provisioning unless those features are specifically made available.",
     ],
   },
   {

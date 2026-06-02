@@ -38,7 +38,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
     <>
       <PageHeader
         title={workspace.name}
-        description="System admin workspace detail for local pilot operations."
+        description="System admin workspace detail for local workspace operations."
         actions={
           <>
             <form action={enterSystemWorkspaceView.bind(null, workspace.id)}>

@@ -123,9 +123,9 @@ export const noticeMessages = {
     title: "Account setup complete",
     message: "Your password is set. Sign in with your email and new password.",
   },
-  "pilot-feedback-sent": {
+  "feedback-sent": {
     title: "Feedback saved",
-    message: "Thanks. The note is saved with this workspace for pilot review.",
+    message: "Thanks. The note is saved with this workspace for review.",
   },
 } as const;
 

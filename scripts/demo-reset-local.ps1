@@ -39,7 +39,7 @@ if ($config.Profile -eq "production") {
   Write-Warning "Production demo reset confirmed. Use only when you explicitly intend to reseed the production demo profile."
 }
 else {
-  Write-Warning "Do not run this script against real pilot office data."
+  Write-Warning "Do not run this script against real office data."
 }
 
 Push-Location $repoRoot.Path

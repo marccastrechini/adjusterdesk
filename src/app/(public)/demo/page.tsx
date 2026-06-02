@@ -52,7 +52,7 @@ export default function DemoPage() {
             </div>
             <div className="mt-5">
               <a
-                href="mailto:hello@adjusterdesk.xyz?subject=AdjusterDesk%20pilot%20demo%20request"
+                href="mailto:hello@adjusterdesk.xyz?subject=AdjusterDesk%20demo%20request"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
               >
                 <Mail className="h-4 w-4" aria-hidden />

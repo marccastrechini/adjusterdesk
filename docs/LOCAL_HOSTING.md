@@ -107,7 +107,7 @@ This wrapper:
 
 Direct `npm run db:seed` is still available, but it should be treated as a destructive command.
 
-Important: Do not run demo reset on real pilot office data.
+Important: Do not run demo reset on real office data.
 
 That recreates:
 

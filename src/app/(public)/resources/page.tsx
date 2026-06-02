@@ -36,7 +36,7 @@ export default function ResourcesPage() {
       <PublicPageHeader
         eyebrow="Resources"
         title="Practical resources for small public adjusting offices."
-        description="These sections will hold first-use guides, spreadsheet help, walkthrough material, checklists, and templates as the pilot site grows."
+        description="These sections will hold first-use guides, spreadsheet help, walkthrough material, checklists, and templates as the site grows."
       />
       <PublicSection title="Resource library">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

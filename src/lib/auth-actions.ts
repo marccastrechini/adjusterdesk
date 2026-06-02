@@ -51,7 +51,7 @@ export async function loginWithPassword(_state: ActionFormState, formData: FormD
 
   const sessionCreated = await createSessionForUser(user.id);
   if (!sessionCreated) {
-    return formError("Sign-in is not configured on this environment yet. Add AUTH_SECRET before pilot deployment.");
+    return formError("Sign-in is not configured on this environment yet. Add AUTH_SECRET before deployment.");
   }
 
   redirect("/today");

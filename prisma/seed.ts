@@ -46,7 +46,7 @@ async function main() {
     await tx.payment.deleteMany();
     await tx.invoice.deleteMany();
     await tx.settlementRound.deleteMany();
-    await tx.pilotFeedback.deleteMany();
+    await tx.feedbackEntry.deleteMany();
     await tx.clientStatusLink.deleteMany();
     await tx.document.deleteMany();
     await tx.activity.deleteMany();

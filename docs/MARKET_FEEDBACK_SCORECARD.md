@@ -1,6 +1,6 @@
-# Pilot Feedback Scorecard
+# Market Feedback Scorecard
 
-Use this form during or immediately after each pilot demo.
+Use this form during or immediately after each demo or customer feedback session.
 
 Scoring scale:
 - 1 = Not useful / unclear
@@ -63,7 +63,7 @@ Scoring scale:
 ---
 
 ## Summary
-- Overall readiness sentiment: Not ready / Needs work / Close / Ready to pilot
+- Overall readiness sentiment: Not ready / Needs work / Close / Ready for demo
 - Most requested improvement:
 - Most valued workflow shown in demo:
 - Follow-up owner:

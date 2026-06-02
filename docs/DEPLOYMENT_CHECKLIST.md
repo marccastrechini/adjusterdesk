@@ -1,6 +1,6 @@
-# Pilot Deployment Checklist
+# Deployment Checklist
 
-Use this checklist before inviting real pilot firms.
+Use this checklist before inviting real customer firms.
 
 ## 1) Environment Variables and Secrets
 
@@ -13,9 +13,9 @@ Use this checklist before inviting real pilot firms.
 - Run `npm run db:generate` before build/release.
 - Apply schema changes before startup with `npm run prod:schema:apply -- -ConfirmProductionSchema` for the local production profile.
 - This SQLite MVP currently uses guarded `prisma db push`; do not use `prisma migrate deploy` until migration files are introduced.
-- Decide if seed/demo data should be loaded for pilot:
+- Decide if seed/demo data should be loaded for demo:
   - For internal walkthroughs: seed data can be helpful.
-  - For real pilot data: do not load demo seed records.
+  - For real customer data: do not load demo seed records.
 
 ## 3) File Storage and Uploads
 
@@ -27,19 +27,19 @@ Use this checklist before inviting real pilot firms.
 ## 4) Auth and Session Guardrails
 
 - Seeded email/password sign-in and firm-scoped sessions are active for the MVP.
-- Keep `AUTH_SECRET` stable and private before any shared pilot use.
+- Keep `AUTH_SECRET` stable and private before any shared demo use.
 - Keep system admin access limited to trusted operators.
 
 ## 5) Public Status Links
 
 - Status links are token URLs and should be treated as sensitive.
 - Disable or regenerate links quickly if shared to the wrong recipient.
-- Review what claim status, next step, requested documents, and office contact details are shown before pilot release.
+- Review what claim status, next step, requested documents, and office contact details are shown before release.
 
 ## 6) Backups and Restore
 
 - Configure automatic database backups.
-- Test restore steps before pilot onboarding.
+- Test restore steps before customer onboarding.
 - Define who can run restores and where backup artifacts are stored.
 
 ## 7) Build and Test Gates

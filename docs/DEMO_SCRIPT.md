@@ -116,7 +116,7 @@ Do not dwell on:
 
 ## 12-Minute Path (Full Office Story)
 
-Use this as the standard pilot walkthrough.
+Use this as the standard demo walkthrough.
 
 1. Today: work order and first actions
 - Open Today.

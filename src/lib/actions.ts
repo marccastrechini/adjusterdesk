@@ -48,7 +48,7 @@ import {
 
 const optionalText = z.string().trim().optional().transform((value) => value || undefined);
 const requiredText = z.string().trim().min(1, "Required");
-const pilotFeedbackMaxLength = 1200;
+const feedbackMaxLength = 1200;
 
 const leadSchema = z.object({
   firstName: requiredText,
@@ -1482,7 +1482,7 @@ export async function deleteTemplate(templateId: string) {
   revalidatePath("/settings/templates");
 }
 
-export async function createPilotFeedbackWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
+export async function createFeedbackWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   const { firm, user } = await getDemoContext();
   const errors: FieldErrors = {};
   const page = textValue(formData, "page");
@@ -1494,8 +1494,8 @@ export async function createPilotFeedbackWithState(_state: ActionFormState, form
     errors.message = "Add a little detail about what felt confusing, missing, or useful.";
   }
 
-  if (message.length > pilotFeedbackMaxLength) {
-    errors.message = `Keep feedback under ${pilotFeedbackMaxLength} characters.`;
+  if (message.length > feedbackMaxLength) {
+    errors.message = `Keep feedback under ${feedbackMaxLength} characters.`;
   }
 
   if (page.length > 140) {
@@ -1507,10 +1507,10 @@ export async function createPilotFeedbackWithState(_state: ActionFormState, form
   }
 
   if (hasErrors(errors)) {
-    return formError("Add a short note before sending pilot feedback.", errors);
+    return formError("Add a short note before sending feedback.", errors);
   }
 
-  await prisma.pilotFeedback.create({
+  await prisma.feedbackEntry.create({
     data: {
       firmId: firm.id,
       userId: user.id,
@@ -1521,7 +1521,7 @@ export async function createPilotFeedbackWithState(_state: ActionFormState, form
   });
 
   revalidatePath("/feedback");
-  redirect(withNotice("/feedback", "pilot-feedback-sent"));
+  redirect(withNotice("/feedback", "feedback-sent"));
 }
 
 export async function createUser(formData: FormData) {

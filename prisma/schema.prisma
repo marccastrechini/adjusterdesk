@@ -124,7 +124,7 @@ model Firm {
   invoices          Invoice[]
   clientStatusLinks ClientStatusLink[]
   templates         Template[]
-  pilotFeedbackEntries PilotFeedback[]
+  feedbackEntries   FeedbackEntry[]
 }
 
 model User {
@@ -147,7 +147,7 @@ model User {
   activities        Activity[]
   passwordResetTokens PasswordResetToken[]
   userInvitationTokens UserInvitationToken[]
-  pilotFeedbackEntries PilotFeedback[]
+  feedbackEntries   FeedbackEntry[]
 
   @@index([firmId])
 }
@@ -535,7 +535,7 @@ model Template {
   @@index([type])
 }
 
-model PilotFeedback {
+model FeedbackEntry {
   id        String   @id @default(cuid())
   firmId    String
   userId    String?
@@ -551,4 +551,5 @@ model PilotFeedback {
   @@index([firmId])
   @@index([userId])
   @@index([createdAt])
+  @@map("feedback_entries")
 }

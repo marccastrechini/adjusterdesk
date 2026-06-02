@@ -1,6 +1,6 @@
-# Pilot Readiness Checklist
+# Demo Readiness Checklist
 
-Use this before showing AdjusterDesk to a friendly pilot office and before allowing real office work in the local install.
+Use this before showing AdjusterDesk to a friendly public adjuster office and before allowing real office work in the local install.
 
 ## Safe To Demo Now
 
@@ -39,7 +39,7 @@ See `docs/LOCAL_HOSTING.md` for exact setup and recovery steps.
 - Verify restore flow at least once on a safe non-live copy path.
 - Use `npm run demo:reset:local -- -ConfirmReset` only for development/demo datasets.
 - Full production demo reset is blocked. Use `npm run prod:demo:bootstrap -- -ConfirmProductionDemo` only for the firm-scoped fake production demo workspace.
-- Do not run demo reset once real pilot office data exists in that local database.
+- Do not run demo reset once real office data exists in that local database.
 
 ## Production Demo Readiness Commands
 
@@ -49,13 +49,13 @@ Apply schema changes to the local production profile with a backup first:
 npm run prod:schema:apply -- -ConfirmProductionSchema
 ```
 
-Verify the demo database, seeded users, pilot feedback table, key route files, and public marketing pages:
+Verify the demo database, seeded users, feedback table, key route files, and public marketing pages:
 
 ```powershell
 npm run prod:demo:readiness
 ```
 
-## Suggested Pilot Questions
+## Suggested Feedback Questions
 
 - Does Today match your real daily claim-follow-up order?
 - Which fields are missing from lead intake for your office?
@@ -64,7 +64,7 @@ npm run prod:demo:readiness
 - Are document categories and request templates clear for staff?
 - Is the client status page clear enough for policyholders, and does it reduce update calls?
 - Does money/receivables view match how you track fees and checks now?
-- What would block your office from using this daily for a 2-4 week pilot?
+- What would block your office from using this daily for a 2-4 week demo?
 
 ## Known Warnings And Limitations
 
@@ -73,9 +73,9 @@ npm run prod:demo:readiness
 - Local file-missing records can occur after manual file moves/deletes or incomplete restores; documents page flags these and requires re-upload.
 - This MVP is an office workflow tracker and does not provide legal advice, coverage determinations, or claim valuation advice.
 
-## Practical Pilot Guardrails
+## Practical Demo Guardrails
 
-- Keep pilot scope small: one office, a few users, a defined claim subset.
+- Keep demo scope small: one office, a few users, a defined claim subset.
 - Schedule backup checkpoints and ownership for restore operations.
 - Use system admin access only on trusted local office machines.
 - Require users to rotate temporary passwords at first sign-in via `/settings/account`.

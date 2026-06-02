@@ -142,7 +142,7 @@ export default async function TemplatesPage() {
 
           <Card className="grid gap-4 content-start">
             <h2 className="text-base font-semibold text-slate-950">Add template</h2>
-            <p className="text-sm leading-6 text-slate-600">Email, text, and letter templates can start claim communication notes. Checklist templates remain Settings-only for this pilot pass.</p>
+            <p className="text-sm leading-6 text-slate-600">Email, text, and letter templates can start claim communication notes. Checklist templates remain Settings-only for this setup pass.</p>
             <form action={createTemplate} className="grid gap-3">
               <Field label="Name"><input name="name" required className={inputClassName} /></Field>
               <Field label="Type">

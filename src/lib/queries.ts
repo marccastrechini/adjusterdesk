@@ -517,7 +517,7 @@ export async function getUsers() {
   return { firm, user, users };
 }
 
-export async function getPilotReadinessData() {
+export async function getDemoReadinessData() {
   const { firm, user } = await getDemoContext();
 
   const [users, leadCount, claimCount, documentCount, invoiceCount] = await Promise.all([
@@ -551,7 +551,7 @@ export async function getActivationData() {
     prisma.document.count({ where: { firmId: firm.id } }),
     prisma.template.count({ where: { firmId: firm.id } }),
     prisma.user.count({ where: { firmId: firm.id, active: true } }),
-    prisma.pilotFeedback.count({ where: { firmId: firm.id } }),
+    prisma.feedbackEntry.count({ where: { firmId: firm.id } }),
   ]);
 
   return {
@@ -569,9 +569,9 @@ export async function getActivationData() {
   };
 }
 
-export async function getPilotFeedbackPageData() {
+export async function getFeedbackPageData() {
   const { firm, user } = await getDemoContext();
-  const recentFeedback = await prisma.pilotFeedback.findMany({
+  const recentFeedback = await prisma.feedbackEntry.findMany({
     where: { firmId: firm.id },
     include: { user: { select: { name: true, email: true } } },
     orderBy: { createdAt: "desc" },

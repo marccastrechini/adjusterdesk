@@ -38,11 +38,11 @@
 - Added local file guardrails for claim documents so records pointing to missing files are clearly flagged and do not expose a broken download action.
 - Updated document creation behavior so "requested from client" records are no longer marked as received immediately.
 - Updated local hosting docs with a note about handling "Local file missing" document records after restore or cleanup.
-- Added `docs/DEMO_SCRIPT.md` with a plain-English 10-15 minute pilot walkthrough from sign-in through lead intake, lead conversion, claim tasks/deadlines, documents, client status, money, and Today coherence.
-- Updated `README.md` setup guidance to link the new pilot walkthrough script.
+- Added `docs/DEMO_SCRIPT.md` with a plain-English 10-15 minute demo walkthrough from sign-in through lead intake, lead conversion, claim tasks/deadlines, documents, client status, money, and Today coherence.
+- Updated `README.md` setup guidance to link the new demo walkthrough script.
 - Added a local admin provisioning script at `scripts/create-workspace-owner.ts` to create a new workspace and owner user without manual SQLite edits.
 - Added `npm run admin:create-workspace` for transactional workspace and owner provisioning from the command line.
-- Added `docs/WORKSPACE_ADMIN.md` with backup-first workspace provisioning steps, owner login verification flow, and demo-reset safety guidance for real pilot data.
+- Added `docs/WORKSPACE_ADMIN.md` with backup-first workspace provisioning steps, owner login verification flow, and demo-reset safety guidance for real office data.
 - Updated `README.md` setup guidance to link the new workspace admin guide.
 - Added a local admin password reset script at `scripts/reset-user-password.ts` to reset any user's password by email without manual SQLite edits.
 - Added `npm run admin:reset-password` alias.
@@ -54,7 +54,7 @@
 - Added system workspace detail with workspace info, owner user, user list, lead/claim totals, and global user admin actions.
 - Added system admin web actions for creating a workspace with owner user, updating owner/user email, generated temporary password reset (shown once), and deactivate/reactivate user.
 - Added `docs/SYSTEM_ADMIN.md` and linked it from `README.md` and `docs/WORKSPACE_ADMIN.md`.
-- Audited workspace isolation across auth/session context, workspace routes, server queries/actions, document download API, and system-admin gating before pilot hardening.
+- Audited workspace isolation across auth/session context, workspace routes, server queries/actions, document download API, and system-admin gating before demo hardening.
 - Hardened server actions to reject cross-workspace foreign IDs submitted via tampered forms (claim, lead, contact, assigned user, and invoice ownership checks).
 - Hardened claim/lead document, task, activity, settlement, payment, and invoice write paths so records must belong to the current authenticated workspace.
 - Hardened task update assignment path so assigned user IDs are validated inside the current workspace before update.
@@ -65,8 +65,8 @@
 - Added success notice handling for password change completion and linked Account security from Settings.
 - Updated workspace/system admin docs to direct users to Settings > Account security for password rotation after admin resets.
 - Refreshed `docs/DEMO_SCRIPT.md` into a concise operator walkthrough covering pre-demo backup, local app start, system admin overview, workspace flow, core claim workflow tabs, account password change, and post-demo backup/reset guidance.
-- Added `docs/PILOT_READINESS.md` with safe-to-demo scope, non-production-ready gaps, local-hosting limits, backup expectations, pilot question prompts, known warnings, and pilot guardrails.
-- Linked `docs/DEMO_SCRIPT.md` and `docs/PILOT_READINESS.md` from `README.md` setup and readiness sections.
+- Added `docs/DEMO_READINESS.md` with safe-to-demo scope, non-production-ready gaps, local-hosting limits, backup expectations, feedback questions, known warnings, and demo guardrails.
+- Linked `docs/DEMO_SCRIPT.md` and `docs/DEMO_READINESS.md` from `README.md` setup and readiness sections.
 - Updated env/documentation configuration for email and password-reset readiness only: expanded `.env.example`, added safe non-secret placeholders to local `.env`, created `docs/EMAIL_SETUP.md`, linked the new doc from `README.md`, `docs/LOCAL_HOSTING.md`, and `docs/SYSTEM_ADMIN.md`, and kept this slice free of feature code changes.
 - Implemented transactional password-reset infrastructure: added Resend email helper, forgot/reset password pages, generic non-enumerating reset request behavior, one-time expiring password reset tokens in Prisma, login notice support for reset completion, and docs updates for email/reset validation.
 - Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent AdjusterDesk branding and plain-language tone.
@@ -75,7 +75,7 @@
 - Added a production-only demo bootstrap slice for the public demo instance, including a guarded `prod:demo:bootstrap` npm alias, a repeatable production demo workspace seeding script, and `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.
 - Split local runtime configuration into guarded development and production profiles with `.env.development.example`, `.env.production.example`, ignored `.env.development.local`/`.env.production.local` files, and profile-aware helpers for `DATABASE_URL`, `APP_BASE_URL`, and uploads storage paths.
 - Added shared PowerShell runtime helpers plus guarded `dev:local`, `dev:debug:local`, `prod:run:local`, and `prod:backup:local` flows so development and production backups/runs cannot silently cross-use the wrong SQLite database or uploads folder.
-- Updated local hosting, local production, email setup, system admin, pilot readiness, and README docs to point at the correct profile files and backup/reset commands.
+- Updated local hosting, local production, email setup, system admin, demo readiness, and README docs to point at the correct profile files and backup/reset commands.
 - Hardened local production task operations scripts so task stop now requires explicit `-ConfirmStop` before stopping node listeners on port 3000, and status now reports scheduler state, listener PID/path details, and local/public URL probe results.
 - Corrected environment/profile defaults and storage path handling so development defaults to `storage/uploads-development`, production defaults to `storage/uploads-production`, and saved upload records follow the active uploads directory.
 - Expanded local ignore rules for local-production safety by ignoring `prisma/production.db` sidecars and profile-specific uploads directories.
@@ -139,8 +139,8 @@
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the self-service password change slice.
 - Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the self-service password change slice.
 - Manual smoke-tested on `npm run dev` port 3001: signed in as Steve, changed password from `/settings/account`, signed out, confirmed old password failed at sign-in, confirmed new password succeeded, then signed in as Dana and confirmed normal Harbor workspace behavior and `/system` system-admin access still worked.
-- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the pilot/demo readiness documentation slice.
-- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the pilot/demo readiness documentation slice.
+- Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the demo/readiness documentation slice.
+- Ran `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` after the demo/readiness documentation slice.
 - Manual smoke-tested demo route path on active local app (`http://localhost:3001`): opened `/system`, `/today`, `/leads`, one claim overview (`/claims/cmpo6mguk000mawdqyiqlccoc`), that claim's `/documents`, `/tasks`, and `/money` tabs, and `/settings/account`; confirmed the updated demo script route sequence matches the live app flow.
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before the email env/docs cleanup slice.
 - Ran `node -v`, `npm install`, `npm run prisma:generate`, `npm run typecheck`, `npm run test`, `npm run lint`, `npm run build`, and `npm run backup:local` before implementing transactional password reset email flow.

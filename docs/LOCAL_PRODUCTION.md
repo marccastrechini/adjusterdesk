@@ -183,7 +183,7 @@ Confirm the public tunnel URL is serving the app:
 Invoke-WebRequest https://adjusterdesk.xyz/system -UseBasicParsing
 ```
 
-Confirm database, demo users, pilot feedback, route files, and public pages:
+Confirm database, demo users, feedback, route files, and public pages:
 
 ```powershell
 npm run prod:demo:readiness

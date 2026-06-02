@@ -163,11 +163,11 @@ test("critical demo flow works from Today through Lead, Claim, Documents, and Mo
 
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Pilot readiness", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Demo readiness", exact: true })).toBeVisible();
   await expect(page.getByText("Office sign-in is active.", { exact: true })).toBeVisible();
   await expect(page.getByText("Current firm:")).toBeVisible();
   await expect(page.getByText("Current user:")).toBeVisible();
-  await expect(page.getByText("Ready for pilot demo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Ready for demo", { exact: true })).toBeVisible();
   await expect(page.getByText("Credentials sign-in and session auth", { exact: true })).toBeVisible();
   await expect(page.getByText("Lead intake", { exact: true })).toBeVisible();
   await expect(page.getByText("User invites and password reset", { exact: true })).toBeVisible();

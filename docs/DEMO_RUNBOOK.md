@@ -1,4 +1,4 @@
-# Pilot Demo Runbook
+# Demo Runbook
 
 ## Demo Purpose
 Provide a practical, plain-language walkthrough of AdjusterDesk for small public adjusting offices and collect concrete usability and workflow feedback.
@@ -11,7 +11,7 @@ Solo to 5-person public adjusting offices currently managing work with spreadshe
 - Verified baseline:
   - HEAD and origin/main at e6fbb09
   - Latest production build active
-  - Pilot rehearsal completed with no production blockers
+  - Demo rehearsal completed with no production blockers
 - Presenter account: Demo Owner (production demo user)
 - Keep the walkthrough focused on current workflows, not roadmap features.
 

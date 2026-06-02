@@ -1,5 +1,5 @@
 import { labelFromEnum } from "@/lib/format";
-import { getPilotReadinessData } from "@/lib/queries";
+import { getDemoReadinessData } from "@/lib/queries";
 import { getEnvStatus } from "@/lib/env";
 import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/components/ui";
 
@@ -41,8 +41,8 @@ const settingsCards = [
     action: "Open Office Playbook",
   },
   {
-    title: "Pilot feedback",
-    description: "Capture demo and pilot notes from the office while the workflow is fresh.",
+    title: "Feedback",
+    description: "Capture demo and customer notes from the office while the workflow is fresh.",
     href: "/feedback",
     action: "Open feedback",
   },
@@ -51,13 +51,13 @@ const settingsCards = [
 const demoResetCommand = "npm run demo:reset:local -- -ConfirmReset";
 
 export default async function SettingsPage() {
-  const { firm, user, users, counts } = await getPilotReadinessData();
+  const { firm, user, users, counts } = await getDemoReadinessData();
   const envStatus = getEnvStatus({ authActive: true });
   const activeUsers = users.filter((entry) => entry.active);
   const inactiveUsers = users.filter((entry) => !entry.active);
   const roleLabels = Array.from(new Set(users.map((entry) => labelFromEnum(entry.role))));
 
-  const readyForPilotDemo = [
+  const readyForDemo = [
     "Credentials sign-in and session auth",
     "Lead intake",
     "Claim files",
@@ -70,7 +70,7 @@ export default async function SettingsPage() {
     "Guided start checklist",
     "User invites and password reset",
     "Client status links and client uploads",
-    "Pilot feedback capture",
+    "Feedback capture",
   ] as const;
 
   const demoOnlyGaps = [
@@ -97,7 +97,7 @@ export default async function SettingsPage() {
       <Card className="grid gap-3 border-slate-200 bg-white">
         <h2 className="text-base font-semibold text-slate-950">What to do here</h2>
         <p className="text-sm leading-6 text-slate-600">
-          Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review pilot readiness before sharing with real clients.
+          Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review demo readiness before sharing with real clients.
         </p>
         <div className="flex flex-wrap gap-2">
           <ButtonLink href="/settings/users" variant="secondary">Review office users</ButtonLink>
@@ -106,7 +106,7 @@ export default async function SettingsPage() {
         </div>
       </Card>
 
-      <Section title="Pilot readiness">
+      <Section title="Demo readiness">
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
           <p className="text-sm font-semibold text-teal-900">Office sign-in is active.</p>
           <div className="grid gap-1 text-sm leading-6 text-teal-900">
@@ -123,7 +123,7 @@ export default async function SettingsPage() {
             This app now uses first-party email and password sign-in with firm-scoped sessions.
           </p>
           <p className="text-sm leading-6 text-teal-900">
-            Some advanced setup items are still outside this pilot pass, including external storage, email/calendar integrations, and production backup operations.
+            Some advanced setup items are still outside this demo pass, including external storage, email/calendar integrations, and production backup operations.
           </p>
         </Card>
 
@@ -138,9 +138,9 @@ export default async function SettingsPage() {
 
         <div className="grid gap-4 xl:grid-cols-3">
           <Card>
-            <h3 className="text-base font-semibold text-slate-950">Ready for pilot demo</h3>
+            <h3 className="text-base font-semibold text-slate-950">Ready for demo</h3>
             <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">
-              {readyForPilotDemo.map((item) => (
+              {readyForDemo.map((item) => (
                 <li key={item} className="flex items-start gap-2"><Badge tone="green">Ready</Badge><span>{item}</span></li>
               ))}
             </ul>
@@ -167,7 +167,7 @@ export default async function SettingsPage() {
 
         <Card className="grid gap-3 border-sky-200 bg-sky-50">
           <h3 className="text-base font-semibold text-slate-950">Before real deployment</h3>
-          <p className="text-sm leading-6 text-slate-700">Top checklist items for pilot deployment readiness:</p>
+          <p className="text-sm leading-6 text-slate-700">Top checklist items for demo deployment readiness:</p>
           <ul className="grid gap-2 text-sm leading-6 text-slate-700">
             <li className="flex items-start gap-2"><Badge tone="blue">1</Badge><span>Set AUTH_SECRET and verify office sign-in in deployment</span></li>
             <li className="flex items-start gap-2"><Badge tone="blue">2</Badge><span>Production database and backup/restore plan</span></li>
@@ -175,16 +175,16 @@ export default async function SettingsPage() {
             <li className="flex items-start gap-2"><Badge tone="blue">4</Badge><span>Decide how user invites, account recovery, and inactive accounts will be handled</span></li>
             <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
           </ul>
-          <p className="text-xs leading-5 text-slate-600">See docs/pilot-deployment-checklist.md for the full practical deployment checklist.</p>
+          <p className="text-xs leading-5 text-slate-600">See docs/DEPLOYMENT_CHECKLIST.md for the full practical deployment checklist.</p>
         </Card>
       </Section>
 
-      <Section title="Demo data and reset" description="Use this only for demo or training workspaces, not real pilot office data.">
+      <Section title="Demo data and reset" description="Use this only for demo or training workspaces, not real office data.">
         <Card className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <p className="text-sm font-semibold text-slate-950">Local demo reset is available.</p>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              The reset script backs up the local profile, reseeds sample leads, claims, documents, money records, templates, users, and clears pilot feedback.
+              The reset script backs up the local profile, reseeds sample leads, claims, documents, money records, templates, users, and clears feedback.
             </p>
             <code className="mt-3 block rounded-md bg-slate-950 px-3 py-2 text-sm text-white">{demoResetCommand}</code>
           </div>

@@ -65,7 +65,7 @@ The seeded demo owner Dana (`dana@harboradjusting.example`) is flagged as a syst
 
 1. Sign in as system admin.
 2. Open `/system/workspaces`.
-3. Create new workspace and owner for a pilot office.
+3. Create new workspace and owner for a customer office.
 4. Open that workspace detail and verify users.
 5. Resend invite if a user did not receive the first onboarding email.
 6. Use reset password only when invite onboarding is blocked or for break-glass support.
