@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
 import type { ReactNode } from "react";
-import { toggleTask } from "@/lib/today-actions";
+import { toggleTaskFromToday } from "@/lib/today-actions";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getTodayData } from "@/lib/queries";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
@@ -85,7 +85,8 @@ function TaskList({ tasks, empty }: { tasks: TodayData["overdueTasks"]; empty: s
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <ButtonLink href={taskHref(task)} variant="secondary">Open</ButtonLink>
-            <form action={toggleTask.bind(null, task.id, "/today")}>
+            <form action={toggleTaskFromToday}>
+              <input type="hidden" name="taskId" value={task.id} />
               <SubmitButton variant="secondary">Complete</SubmitButton>
             </form>
           </div>

@@ -1,4 +1,4 @@
-import { createUser, resendUserInvite, setUserActive } from "@/lib/user-actions";
+import { createUser, resendUserInviteFromForm, setUserActiveFromForm } from "@/lib/user-actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { userRoleOptions } from "@/lib/options";
@@ -93,16 +93,21 @@ export default async function UsersPage({ searchParams }: PageProps) {
                     {user.id === currentUser.id ? (
                       <Badge tone="teal">Current user</Badge>
                     ) : user.active ? (
-                      <form action={resendUserInvite.bind(null, user.id)}>
+                      <form action={resendUserInviteFromForm}>
+                        <input type="hidden" name="userId" value={user.id} />
                         <SubmitButton variant="secondary">Resend invite</SubmitButton>
                       </form>
                     ) : null}
                     {user.id === currentUser.id ? null : user.active ? (
-                      <form action={setUserActive.bind(null, user.id, false)}>
+                      <form action={setUserActiveFromForm}>
+                        <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="nextActive" value="false" />
                         <SubmitButton variant="secondary">Deactivate</SubmitButton>
                       </form>
                     ) : (
-                      <form action={setUserActive.bind(null, user.id, true)}>
+                      <form action={setUserActiveFromForm}>
+                        <input type="hidden" name="userId" value={user.id} />
+                        <input type="hidden" name="nextActive" value="true" />
                         <SubmitButton>Activate</SubmitButton>
                       </form>
                     )}
