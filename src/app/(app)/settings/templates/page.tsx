@@ -19,7 +19,7 @@ export default async function TemplatesPage() {
 
   return (
     <>
-      <PageHeader title="Templates" description="Save common follow-ups, document requests, and message starters so staff do not rewrite the same notes each day." />
+      <PageHeader title="Templates & Checklists" description="Save common follow-ups, document requests, and message starters so staff do not rewrite the same notes each day." />
 
       <div className="grid gap-6">
         <Section title="Where templates are used" description="Use this quick map to see what is already active in daily workflows and what is still setup-only.">
@@ -113,7 +113,7 @@ export default async function TemplatesPage() {
               )}
             </Section>
 
-            <Section title="Checklist templates" description="Checklists stay in Settings for now. Use them for office prep while claim-level checklist workflow is still pending.">
+            <Section title="Checklist templates" description="Checklist templates are settings-only for now. They help define repeatable office checklists, but they are not yet attached directly to individual claims.">
               {checklistTemplates.length === 0 ? (
                 <EmptyState title="No checklist templates" message="Add one if your office wants a simple prep checklist." />
               ) : (
