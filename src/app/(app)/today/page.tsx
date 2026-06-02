@@ -6,6 +6,8 @@ import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStat
 import { getTodayData } from "@/lib/queries";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
 
+export const dynamic = "force-dynamic";
+
 type TodayData = Awaited<ReturnType<typeof getTodayData>>;
 
 function taskHref(task: { claim?: { id: string } | null; lead?: { id: string } | null }) {

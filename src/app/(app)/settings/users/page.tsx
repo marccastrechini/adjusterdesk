@@ -6,6 +6,8 @@ import { planLabel, planLimitMessage, resolveIncludedUserLimit } from "@/lib/pla
 import { getUsers } from "@/lib/queries";
 import { Badge, Card, Field, Notice, StatCard, inputClassName, PageHeader, Section, selectClassName, SubmitButton } from "@/components/ui";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
