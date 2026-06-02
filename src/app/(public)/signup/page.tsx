@@ -5,8 +5,6 @@ import {
   findPublicPlanBySlug,
   listPublicPlans,
   publicSelfServiceReady,
-  resolveBillingProvider,
-  stripeConfigured,
 } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { startSignupWithState } from "@/lib/signup-actions";
@@ -15,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = publicPageMetadata({
   title: "Sign Up | AdjusterDesk",
-  description: "Choose a plan and set up your AdjusterDesk workspace owner account.",
+  description: "Create your workspace and choose the plan that fits your office.",
   path: "/signup",
 });
 
@@ -33,8 +31,6 @@ export default async function SignupPage({ searchParams }: PageProps) {
   const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? listPublicPlans()[1];
 
   const selfServiceReady = publicSelfServiceReady();
-  const billingProvider = resolveBillingProvider();
-  const stripeReady = stripeConfigured();
 
   if (!selfServiceReady) {
     return (
@@ -42,24 +38,22 @@ export default async function SignupPage({ searchParams }: PageProps) {
         <div className="mx-auto grid max-w-2xl gap-6">
           <div className="text-center">
             <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Self-service signup is not open yet</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Request access and we will help set up the right workspace plan for your office.
+              Choose a plan and set up your office. You can start using AdjusterDesk before billing begins. We will not bill you until after your first full calendar month of usage.
             </p>
           </div>
 
           <Card className="grid gap-3">
             <p className="text-sm leading-6 text-slate-700">
-              {billingProvider === "stripe" && !stripeReady
-                ? "Online checkout is not configured yet in this environment."
-                : "Self-service signup is currently disabled by launch gate."}
+              Your selected plan and workspace details will be saved. We will confirm setup before billing begins.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/demo"
                 className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
               >
-                Request access
+                Talk to us
               </Link>
               <Link
                 href="/pricing"
@@ -79,9 +73,9 @@ export default async function SignupPage({ searchParams }: PageProps) {
       <div className="mx-auto grid max-w-3xl gap-6">
         <div className="text-center">
           <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Choose plan and create your workspace</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Set up the owner account for your office workspace. You can invite team members after setup.
+            Choose a plan and set up your office. You can start using AdjusterDesk before billing begins. We will not bill you until after your first full calendar month of usage.
           </p>
         </div>
 
@@ -96,9 +90,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               </li>
             ))}
           </ul>
-          <p className="text-xs leading-5 text-slate-600">
-            Billing mode: {billingProvider === "stripe" ? "Stripe checkout" : "Manual setup"}.
-          </p>
+          <p className="text-xs leading-5 text-slate-600">Billing begins after your first full calendar month of usage.</p>
         </Card>
 
         <Card className="grid gap-4">
@@ -154,9 +146,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
             </label>
             <FieldError name="agreedToTerms" />
 
-            <SubmitButton>
-              {billingProvider === "stripe" ? "Continue to billing" : "Create workspace"}
-            </SubmitButton>
+            <SubmitButton>Create your workspace</SubmitButton>
           </ActionForm>
         </Card>
       </div>

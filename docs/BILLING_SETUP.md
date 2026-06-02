@@ -5,6 +5,13 @@ AdjusterDesk supports two billing modes:
 - `manual`
 - `stripe`
 
+Current rollout posture:
+
+- Customers can start using AdjusterDesk now.
+- Billing begins only after the first full calendar month of usage.
+- Example: activation on June 18 means July is the first full month, so billing begins no earlier than August 1.
+- Live Stripe card collection is not active in this pass.
+
 ## 1) Manual Mode
 
 Environment:
@@ -68,5 +75,5 @@ Copy each Stripe `price_...` ID into the matching environment variable.
 ## Safety Notes
 
 - Keep `SELF_SERVICE_SIGNUP_ENABLED=false` in production until verified.
-- If Stripe config is incomplete, public routes should fall back to request access.
+- If Stripe config is incomplete, keep billing setup on manual terms and avoid enabling card collection.
 - Do not run production demo reset/bootstrap/seed operations on real production data.

@@ -19,7 +19,7 @@ const sections: TrustSection[] = [
     title: "Current public-site practices",
     items: [
       "Semantic headings and page landmarks on public pages.",
-      "Meaningful link text for navigation, trial access, demo requests, and login.",
+      "Meaningful link text for navigation, plan selection, demo requests, and login.",
       "Visible focus states on links and buttons.",
       "Responsive layouts that avoid horizontal overflow on small screens.",
       "Buttons and calls to action implemented as real links or buttons, not inaccessible divs.",

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const trustPages = [
-  { path: "/privacy", heading: "How AdjusterDesk handles information.", copy: "Information from demo, trial, and contact requests" },
+  { path: "/privacy", heading: "How AdjusterDesk handles information.", copy: "Information from workspace setup, demo, and contact requests" },
   { path: "/terms", heading: "Plain terms for using AdjusterDesk.", copy: "Professional judgment and advice" },
   { path: "/cookies", heading: "How AdjusterDesk uses cookies.", copy: "Strictly necessary cookies" },
   { path: "/accessibility", heading: "A practical commitment to accessible public pages.", copy: "Accessibility commitment" },
@@ -14,7 +14,7 @@ const footerLinks = [
   { name: "Cookies", href: "/cookies" },
   { name: "Accessibility", href: "/accessibility" },
   { name: "Security", href: "/security" },
-  { name: "Request access", href: "/demo" },
+  { name: "Start using AdjusterDesk", href: "/signup" },
   { name: "Talk to us", href: "/demo" },
 ];
 
@@ -23,7 +23,7 @@ test("public trust pages render and footer links are available", async ({ page }
     await page.goto(trustPage.path);
     await expect(page.getByRole("heading", { name: trustPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(trustPage.copy, { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Request access", exact: true }).first()).toHaveAttribute("href", "/demo");
+    await expect(page.getByRole("link", { name: "Start using AdjusterDesk", exact: true }).first()).toHaveAttribute("href", "/signup");
     await expect(page.getByRole("link", { name: "Talk to us", exact: true }).first()).toHaveAttribute("href", "/demo");
     await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
 

@@ -129,7 +129,7 @@ export const noticeMessages = {
   },
   "self-service-signup-complete": {
     title: "Workspace created",
-    message: "Your owner account is active and the workspace is ready for first-run setup.",
+    message: "Your owner account is active. Billing has not started and begins only after your first full calendar month of usage.",
   },
   "billing-portal-unavailable": {
     title: "Billing portal unavailable",

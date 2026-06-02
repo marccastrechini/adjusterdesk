@@ -6,7 +6,7 @@ This document covers the staged self-service launch path for AdjusterDesk.
 
 - `SELF_SERVICE_SIGNUP_ENABLED=false` keeps public self-service signup off.
 - In production, keep the flag off until signup and billing checks are validated.
-- Public CTAs automatically fall back to request access when self-service is off.
+- Public CTAs can still point to workspace creation while setup remains on manual billing terms.
 
 ## Billing Mode
 
@@ -35,14 +35,14 @@ For Stripe mode, also configure:
 
 ## Safe Fallback Behavior
 
-- If self-service is disabled, CTAs route to `/demo` (request access).
-- If Stripe mode is selected but Stripe config is incomplete, CTAs route to `/demo`.
-- `/signup` renders a safe request-access fallback when self-service is unavailable.
+- If self-service is disabled, `/signup` should still explain that plan/workspace details are saved and setup is confirmed before billing begins.
+- If Stripe mode is selected but Stripe config is incomplete, keep setup on manual billing terms and do not collect cards.
+- `/signup` should avoid "not open yet" language and keep a self-serve posture.
 
 ## Local Test Checklist
 
-1. Set `SELF_SERVICE_SIGNUP_ENABLED=false` and verify public CTAs route to request access.
-2. Set `SELF_SERVICE_SIGNUP_ENABLED=true`, `BILLING_PROVIDER=stripe`, leave Stripe vars empty, verify fallback remains safe.
+1. Set `SELF_SERVICE_SIGNUP_ENABLED=false` and verify public CTAs still route to `/signup` with clear setup-before-billing language.
+2. Set `SELF_SERVICE_SIGNUP_ENABLED=true`, `BILLING_PROVIDER=stripe`, leave Stripe vars empty, verify setup messaging remains safe and does not claim card collection.
 3. Set `SELF_SERVICE_SIGNUP_ENABLED=true`, `BILLING_PROVIDER=manual`, verify workspace owner signup works and routes to `/start`.
 4. Configure Stripe vars, verify checkout starts and `/signup/success` provisions owner workspace.
 5. Verify `/settings/billing` renders safely in each mode.

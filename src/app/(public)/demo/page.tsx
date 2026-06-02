@@ -3,15 +3,15 @@ import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
-  title: "Request Access or Demo | AdjusterDesk",
-  description: "Request AdjusterDesk access for a solo or small public adjusting office.",
+  title: "Talk to Us | AdjusterDesk",
+  description: "Talk with the AdjusterDesk team about setup for your office.",
   path: "/demo",
 });
 
 const demoFit = [
   "You track claims in spreadsheets, inboxes, paper files, folders, or accounting notes.",
   "You want one place for clients, claims, documents, follow-ups, payments, fees, and invoices.",
-  "You run a solo practice or small public adjusting office and want a practical demo or trial walkthrough.",
+  "You run a solo practice or small public adjusting office and want a practical walkthrough.",
 ];
 
 const requestDetails = ["Name", "Office name", "Email", "Current setup", "Rough number of open claims"];
@@ -20,11 +20,11 @@ export default function DemoPage() {
   return (
     <>
       <PublicPageHeader
-        eyebrow="Request access or demo"
+        eyebrow="Talk to us"
         title="See AdjusterDesk with a small-office workflow."
-        description="Use a demo or request access to compare AdjusterDesk against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices."
+        description="Use a walkthrough to compare AdjusterDesk against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices."
       />
-      <PublicSection title="Request access">
+      <PublicSection title="Talk to us">
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold text-slate-950">A good fit for the first demo</h2>
@@ -39,8 +39,8 @@ export default function DemoPage() {
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-950">Demo request details</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Send a short email with the basics so request access or a demo can focus on the way your office tracks claims today.</p>
+            <h2 className="text-base font-semibold text-slate-950">Office setup details</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Send a short email with the basics so we can confirm the right setup for your office.</p>
             {/* TODO: Wire this placeholder to a server action or route handler when public demo-request submissions are ready. */}
             <div className="mt-5 grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4">
               {requestDetails.map((detail) => (

@@ -10,9 +10,9 @@ export const metadata = publicPageMetadata({
 
 const sections: TrustSection[] = [
   {
-    title: "Information from demo, trial, and contact requests",
+    title: "Information from workspace setup, demo, and contact requests",
     paragraphs: [
-      "When someone asks for a demo, trial access, or help, AdjusterDesk may collect basic contact details such as name, office name, email address, current setup, and the general number of open claims. We use that information to respond, schedule a walkthrough, and decide whether AdjusterDesk is a practical fit.",
+      "When someone creates a workspace setup request, asks for a demo, or asks for help, AdjusterDesk may collect basic contact details such as name, office name, email address, current setup, and the general number of open claims. We use that information to respond, schedule a walkthrough, and confirm practical setup details.",
     ],
   },
   {
@@ -31,7 +31,7 @@ const sections: TrustSection[] = [
     title: "How information is used",
     items: [
       "Provide and maintain the AdjusterDesk workspace.",
-      "Respond to demo, trial, support, and account requests.",
+      "Respond to workspace setup, demo, support, and account requests.",
       "Help troubleshoot issues and improve the product for small public adjusting offices.",
       "Protect the service, prevent misuse, and keep demo and production work separated.",
     ],

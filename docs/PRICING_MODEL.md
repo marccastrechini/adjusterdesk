@@ -30,8 +30,11 @@ AdjusterDesk uses flat office pricing with active-user limits.
 
 - Self-service signup is controlled by `SELF_SERVICE_SIGNUP_ENABLED`.
 - `BILLING_PROVIDER` supports `manual` or `stripe`.
-- When `BILLING_PROVIDER=stripe`, checkout requires all Stripe env vars and price IDs.
-- If self-service is disabled or Stripe config is incomplete, public CTAs fall back to request access.
+- Core public billing language: "Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage."
+- Example: if a workspace is activated on June 18, July is the first full calendar month, and billing begins no earlier than August 1.
+- Billing is not collected until after that first full calendar month.
+- Live Stripe activation remains a later implementation step.
+- AdjusterDesk SaaS billing is separate from any future adjuster-to-policyholder payment collection workflows.
 - `subscriptionStatus` remains available for both manual and Stripe-managed workspaces.
 
 ## Internal Plan Fields

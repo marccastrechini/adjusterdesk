@@ -1,5 +1,5 @@
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
-import { publicSelfServiceReady, resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
+import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -33,7 +33,7 @@ const plans: Array<{
       "Templates & Checklists",
       "Email support",
     ],
-    cta: "Start with Solo",
+    cta: "Start Solo",
     recommended: false,
   },
   {
@@ -77,11 +77,11 @@ const plans: Array<{
 const faqs = [
   {
     question: "How do I start?",
-    answer: "When self-service is enabled, you can choose Solo, Small Office, or Team and create your workspace owner account. If self-service is not enabled, use Request access and we will help with setup.",
+    answer: "Choose Solo, Small Office, or Team, then create your workspace. Your selected plan and workspace details are saved first.",
   },
   {
-    question: "Is billing in-app?",
-    answer: "Billing can run through Stripe checkout when configured. If billing is not configured in the environment, pricing buttons safely route to Request access.",
+    question: "When does billing begin?",
+    answer: "Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage.",
   },
   {
     question: "Can I change plans later?",
@@ -101,12 +101,11 @@ const faqs = [
   },
   {
     question: "Is billing automated in-app right now?",
-    answer: "Not yet. Billing is managed manually in this phase while we keep onboarding high-touch for early customer offices.",
+    answer: "No. Live subscription charging and card collection are not active in this phase.",
   },
 ];
 
 export default function PricingPage() {
-  const selfServiceReady = publicSelfServiceReady();
   const defaultCtaHref = resolvePublicStartHref();
   const defaultCtaLabel = resolvePublicStartLabel();
 
@@ -142,20 +141,19 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <div className="self-end">
-                  <PublicButtonLink href={resolvePublicStartHref(plan.slug)} variant={plan.recommended ? "primary" : "secondary"}>
-                    {selfServiceReady ? plan.cta : "Request access"}
-                  </PublicButtonLink>
+                  <PublicButtonLink href={resolvePublicStartHref(plan.slug)} variant={plan.recommended ? "primary" : "secondary"}>{plan.cta}</PublicButtonLink>
                 </div>
               </div>
             </div>
           ))}
         </div>
         <div className="mt-8 rounded-lg border border-teal-200 bg-teal-50 p-5">
-          <h2 className="text-base font-semibold text-slate-950">Start options</h2>
+          <h2 className="text-base font-semibold text-slate-950">Billing timing</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            {selfServiceReady
-              ? "Choose a plan to create your workspace owner account. If Stripe billing is configured, signup continues through secure Stripe checkout."
-              : "Self-service signup is currently gated or billing setup is incomplete for this environment. Use Request access and we will help you get started."}
+            Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage.
+          </p>
+          <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
+            For example, if your workspace is activated on June 18, July is your first full calendar month, and billing would begin no earlier than August 1.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PublicButtonLink href={defaultCtaHref} variant="primary">
@@ -177,7 +175,7 @@ export default function PricingPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Start simple, then grow with your office." description="Choose Solo, Small Office, or Team when self-service is enabled. If not, request access and we will help you launch safely." />
+      <CtaBand title="Start simple, then grow with your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. Billing begins after your first full calendar month." />
     </>
   );
 }

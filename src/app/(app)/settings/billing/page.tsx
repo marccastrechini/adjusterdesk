@@ -1,5 +1,6 @@
 import { openBillingPortalForCurrentWorkspace } from "@/lib/billing-actions";
 import { resolveBillingProvider, stripeConfigured } from "@/lib/billing";
+import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { planLabel, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
 import { getUsers } from "@/lib/queries";
@@ -25,7 +26,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
     <>
       <PageHeader
         title="Billing"
-        description="Current plan, subscription status, active users included, and billing mode for this workspace."
+        description="Current plan, active users included, billing status, and billing timing for this workspace."
       />
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
@@ -38,7 +39,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
         </Card>
 
         <Card className="grid gap-2">
-          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Subscription status</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Billing status</p>
           <p className="text-xl font-semibold text-slate-950">{subscriptionStatusLabel(firm.subscriptionStatus)}</p>
           <div className="flex flex-wrap gap-2">
             <Badge tone={firm.subscriptionStatus === "ACTIVE" ? "green" : firm.subscriptionStatus === "PAST_DUE" ? "amber" : "slate"}>
@@ -51,10 +52,17 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
       <Section title="Billing mode">
         <Card className="grid gap-3">
+          <p className="text-sm leading-6 text-slate-700">Billing begins after your first full calendar month of usage.</p>
+          <p className="text-sm leading-6 text-slate-700">
+            Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
+          </p>
+          <p className="text-sm leading-6 text-slate-700">Billing started date: {firm.billingStartedAt ? formatDate(firm.billingStartedAt) : "Not set"}</p>
+          <p className="text-sm leading-6 text-slate-700">Current period end: {firm.billingCurrentPeriodEnd ? formatDate(firm.billingCurrentPeriodEnd) : "Not set"}</p>
+
           {billingProvider === "stripe" ? (
             <>
               <p className="text-sm leading-6 text-slate-700">
-                Stripe billing mode is configured for this environment.
+                Billing provider is set to Stripe for this environment.
               </p>
               {stripeReady ? (
                 <p className="text-sm leading-6 text-slate-700">
@@ -63,7 +71,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
                 </p>
               ) : (
                 <p className="text-sm leading-6 text-slate-700">
-                  Stripe keys or price IDs are missing in this environment. Billing checkout and portal links are disabled until configuration is complete.
+                  Stripe keys or price IDs are missing in this environment. Billing links remain disabled until configuration is complete.
                 </p>
               )}
               {canUsePortal ? (

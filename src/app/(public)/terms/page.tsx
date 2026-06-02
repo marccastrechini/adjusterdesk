@@ -36,9 +36,9 @@ const sections: TrustSection[] = [
     ],
   },
   {
-    title: "Trials, demos, payments, and plan terms",
+    title: "Plans, billing timing, and plan terms",
     paragraphs: [
-      "Trial access may be limited while AdjusterDesk is being prepared for broader self-serve use. Public pricing is shown for planning purposes, and paid access is subject to the plan terms agreed for the customer office. AdjusterDesk does not claim automated billing, checkout, or instant workspace provisioning unless those features are specifically made available.",
+      "Public pricing is shown for Solo, Small Office, and Team plans. Start using AdjusterDesk now, and billing begins only after your first full calendar month of usage. Paid access remains subject to the plan terms agreed for the customer office.",
     ],
   },
   {
@@ -66,7 +66,7 @@ export default function TermsPage() {
       <PublicSection title="Service terms">
         <TrustPageContent sections={sections} />
       </PublicSection>
-      <CtaBand title="Questions about access or plan terms?" description="Request a demo or trial access so the details can be confirmed before your office starts using AdjusterDesk." />
+      <CtaBand title="Questions about plans or terms?" description="Talk to us so setup details can be confirmed before paid billing begins." />
     </>
   );
 }

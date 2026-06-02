@@ -33,12 +33,12 @@ test("public plan slugs map to plan and user limits", () => {
   assert.equal(team.includedUserLimit, 7);
 });
 
-test("self-service falls back to request access when feature flag is off", () => {
+test("public start link remains signup when feature flag is off", () => {
   process.env.SELF_SERVICE_SIGNUP_ENABLED = "false";
 
   assert.equal(publicSelfServiceReady(), false);
-  assert.equal(resolvePublicStartHref("solo"), "/demo");
-  assert.equal(resolvePublicStartLabel(), "Request access");
+  assert.equal(resolvePublicStartHref("solo"), "/signup?plan=solo");
+  assert.equal(resolvePublicStartLabel(), "Start using AdjusterDesk");
 });
 
 test("stripe provider requires complete stripe config", () => {
@@ -48,7 +48,7 @@ test("stripe provider requires complete stripe config", () => {
 
   assert.equal(stripeConfigured(), false);
   assert.equal(publicSelfServiceReady(), false);
-  assert.equal(resolvePublicStartHref("team"), "/demo");
+  assert.equal(resolvePublicStartHref("team"), "/signup?plan=team");
 });
 
 test("stripe provider becomes ready when all stripe vars are set", () => {
@@ -63,7 +63,7 @@ test("stripe provider becomes ready when all stripe vars are set", () => {
   assert.equal(stripeConfigured(), true);
   assert.equal(publicSelfServiceReady(), true);
   assert.equal(resolvePublicStartHref("small-office"), "/signup?plan=small-office");
-  assert.equal(resolvePublicStartLabel("small-office"), "Start with Small Office");
+  assert.equal(resolvePublicStartLabel("small-office"), "Start Small Office");
 });
 
 test("stripe subscription status maps to internal status", () => {

@@ -63,7 +63,7 @@ function zodToFieldErrors(error: z.ZodError): FieldErrors {
 
 export async function startSignupWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   if (!publicSelfServiceReady()) {
-    return formError("Self-service signup is not available right now. Request access and we will help you get started.");
+    return formError("Your selected plan and workspace details are saved first. We will confirm setup before billing begins.");
   }
 
   const parsed = signupSchema.safeParse({
@@ -131,12 +131,12 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
   if (billingProvider === "stripe") {
     if (!stripeConfigured()) {
       await markSignupIntentCanceled(intent.id);
-      return formError("Online checkout is not configured yet. Request access and we will set up your office manually.");
+      return formError("Billing setup is still being finalized. Your plan selection was saved and we will confirm setup before billing begins.");
     }
 
     const checkoutSession = await createStripeCheckoutSessionForIntent(intent.id, values.plan as PublicPlanSlug);
     if (!checkoutSession.url) {
-      return formError("Checkout could not be started. Please try again.");
+      return formError("Workspace setup could not continue right now. Please try again.");
     }
 
     redirect(checkoutSession.url);

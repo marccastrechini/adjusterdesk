@@ -104,26 +104,18 @@ export function publicSelfServiceReady() {
 }
 
 export function resolvePublicStartHref(planSlug?: PublicPlanSlug) {
-  if (publicSelfServiceReady()) {
-    return planSlug ? `/signup?plan=${planSlug}` : "/signup";
-  }
-
-  return "/demo";
+  return planSlug ? `/signup?plan=${planSlug}` : "/signup";
 }
 
 export function resolvePublicStartLabel(planSlug?: PublicPlanSlug) {
-  if (publicSelfServiceReady()) {
-    if (planSlug) {
-      const plan = findPublicPlanBySlug(planSlug);
-      if (plan) {
-        return `Start with ${plan.label}`;
-      }
+  if (planSlug) {
+    const plan = findPublicPlanBySlug(planSlug);
+    if (plan) {
+      return `Start ${plan.label}`;
     }
-
-    return "Choose plan";
   }
 
-  return "Request access";
+  return "Start using AdjusterDesk";
 }
 
 export function resolveStripePriceId(planSlug: PublicPlanSlug) {

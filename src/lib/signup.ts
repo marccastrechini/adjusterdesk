@@ -89,7 +89,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
   const appBaseUrl = resolveAppBaseUrl();
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    success_url: `${appBaseUrl}/signup/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${appBaseUrl}/signup/success?plan=${planSlug}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appBaseUrl}/signup/cancel?intent=${encodeURIComponent(intent.id)}`,
     line_items: [{ price: priceId, quantity: 1 }],
     customer_email: intent.ownerEmail,
