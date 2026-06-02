@@ -28,6 +28,8 @@ For a persistent local production runtime on the main demo machine, see `docs/LO
 For the fixed production demo workspace bootstrap, see `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.
 For a guided demo walkthrough, see `docs/DEMO_RUNBOOK.md`.
 For a concise demo readiness checklist, see `docs/DEMO_READINESS.md`.
+For staged self-service launch guidance, see `docs/SELF_SERVICE_READINESS.md`.
+For billing mode and Stripe setup, see `docs/BILLING_SETUP.md`.
 For local workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
 For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.

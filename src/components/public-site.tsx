@@ -15,6 +15,7 @@ import {
   Upload,
   WalletCards,
 } from "lucide-react";
+import { publicSelfServiceReady, resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
 export const publicNavItems = [
@@ -26,7 +27,9 @@ export const publicNavItems = [
   { href: "/demo", label: "Demo" },
 ];
 
-const trialAccessHref = "/demo";
+const trialAccessHref = resolvePublicStartHref();
+const trialAccessLabel = resolvePublicStartLabel();
+const selfServiceReady = publicSelfServiceReady();
 
 const trustNavItems = [
   { href: "/privacy", label: "Privacy" },
@@ -100,10 +103,10 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
 
           <div className="flex flex-wrap items-center gap-2">
             <PublicButtonLink href={trialAccessHref} variant="primary">
-              Start Free Trial
+              {trialAccessLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
-              Request Demo
+              Talk to us
             </PublicButtonLink>
             <Link
               href="/login"
@@ -135,8 +138,8 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <FooterLinks title="Product" items={publicNavItems.slice(0, 3)} />
-            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: trialAccessHref, label: "Start Free Trial" }]} />
-            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Contact / Request Demo" }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: trialAccessHref, label: trialAccessLabel }]} />
+            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Talk to us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>
         </div>
@@ -185,14 +188,16 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
           <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <PublicButtonLink href={trialAccessHref} variant="primary">
-              Start Free Trial
+              {trialAccessLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
-              Request Demo
+              Talk to us
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            14-day free trial. No credit card required. Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+            {selfServiceReady
+              ? "Choose your plan and set up the workspace owner account online."
+              : "Self-service signup is not open yet. Request access and we will help you get started."} Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
           </p>
         </div>
         {children ? <div className="mt-10">{children}</div> : null}
@@ -278,10 +283,10 @@ export function CtaBand({ title, description }: { title: string; description: st
           </div>
           <div className="mt-5 flex flex-wrap gap-3 sm:mt-0">
             <PublicButtonLink href={trialAccessHref} variant="primary">
-              Start Free Trial
+              {trialAccessLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
-              Request Demo
+              Talk to us
             </PublicButtonLink>
           </div>
         </div>

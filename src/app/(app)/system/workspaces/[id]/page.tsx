@@ -106,6 +106,9 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
             <p><span className="font-semibold text-slate-950">Current plan:</span> {planLabel(workspace.subscriptionPlan)}</p>
             <p><span className="font-semibold text-slate-950">Subscription status:</span> {subscriptionStatusLabel(workspace.subscriptionStatus)}</p>
             <p><span className="font-semibold text-slate-950">Active users:</span> {activeUserCount} of {includedUserLimit > 0 ? includedUserLimit : "custom"} included</p>
+            <p><span className="font-semibold text-slate-950">Billing customer ID:</span> {workspace.billingCustomerId ?? "Not linked"}</p>
+            <p><span className="font-semibold text-slate-950">Billing subscription ID:</span> {workspace.billingSubscriptionId ?? "Not linked"}</p>
+            <p><span className="font-semibold text-slate-950">Billing price ID:</span> {workspace.billingPriceId ?? "Not linked"}</p>
             <p>{planLimitMessage({ activeUserCount, includedUserLimit })}</p>
           </div>
 

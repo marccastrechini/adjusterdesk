@@ -43,7 +43,7 @@ export default async function StartPage() {
         <StatCard label="Documents" value={counts.documents} detail="Uploads and client requests" />
       </div>
 
-      <Section title="First-run checklist" description="Work through these in order for the first demo session, or use the demo reset command to practice with sample data.">
+      <Section title="First-run checklist" description="Work through these steps to make the workspace useful for day-to-day claim work.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {checklist.map((item, index) => (
             <Card key={item.title} className="grid content-start gap-3">
@@ -100,6 +100,18 @@ export default async function StartPage() {
           </Card>
         </Section>
       </div>
+
+      <Section title="Account setup">
+        <Card className="grid gap-3">
+          <p className="text-sm leading-6 text-slate-600">
+            Review plan details and active-user limits before inviting additional users.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/settings/billing" variant="secondary">Review plan and billing</ButtonLink>
+            <ButtonLink href="/settings/users" variant="secondary">Review users</ButtonLink>
+          </div>
+        </Card>
+      </Section>
     </>
   );
 }

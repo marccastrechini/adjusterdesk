@@ -30,6 +30,12 @@ const settingsCards = [
     action: "Open users",
   },
   {
+    title: "Billing",
+    description: "Current plan, subscription status, user limits, and billing mode.",
+    href: "/settings/billing",
+    action: "Open billing",
+  },
+  {
     title: "CSV import",
     description: "Bring a simple lead or claim spreadsheet into the office workspace.",
     href: "/settings/import",

@@ -1,4 +1,5 @@
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { publicSelfServiceReady, resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -7,9 +8,18 @@ export const metadata = publicPageMetadata({
   path: "/pricing",
 });
 
-const plans = [
+const plans: Array<{
+  name: string;
+  slug: PublicPlanSlug;
+  price: string;
+  description: string;
+  features: string[];
+  cta: string;
+  recommended: boolean;
+}> = [
   {
     name: "Solo",
+    slug: "solo",
     price: "$49/month",
     description: "For independent public adjusters who want one simple place to manage claims, follow-ups, documents, client updates, and money.",
     features: [
@@ -23,11 +33,12 @@ const plans = [
       "Templates & Checklists",
       "Email support",
     ],
-    cta: "Start Free Trial",
+    cta: "Start with Solo",
     recommended: false,
   },
   {
     name: "Small Office",
+    slug: "small-office",
     price: "$99/month",
     description: "For small public adjusting offices with an owner, admin, spouse, partner, or part-time helper.",
     features: [
@@ -40,11 +51,12 @@ const plans = [
       "CSV import/export",
       "Priority email support during the early customer phase",
     ],
-    cta: "Start Free Trial",
+    cta: "Start Small Office",
     recommended: true,
   },
   {
     name: "Team",
+    slug: "team",
     price: "$199/month",
     description: "For growing offices with more adjusters or admin help.",
     features: [
@@ -57,19 +69,19 @@ const plans = [
       "Export/accounting support as it matures",
       "Additional setup support",
     ],
-    cta: "Request Demo",
+    cta: "Start Team",
     recommended: false,
   },
 ];
 
 const faqs = [
   {
-    question: "Can I try AdjusterDesk before paying?",
-    answer: "Yes. Solo, Small Office, and Team include a 14-day free trial so you can see how AdjusterDesk fits your current claim workflow.",
+    question: "How do I start?",
+    answer: "When self-service is enabled, you can choose Solo, Small Office, or Team and create your workspace owner account. If self-service is not enabled, use Request access and we will help with setup.",
   },
   {
-    question: "Do I need a credit card?",
-    answer: "No. The 14-day free trial does not require a credit card. Start Free Trial sends you to request trial access so setup can be confirmed before a workspace is opened.",
+    question: "Is billing in-app?",
+    answer: "Billing can run through Stripe checkout when configured. If billing is not configured in the environment, pricing buttons safely route to Request access.",
   },
   {
     question: "Can I change plans later?",
@@ -94,12 +106,16 @@ const faqs = [
 ];
 
 export default function PricingPage() {
+  const selfServiceReady = publicSelfServiceReady();
+  const defaultCtaHref = resolvePublicStartHref();
+  const defaultCtaLabel = resolvePublicStartLabel();
+
   return (
     <>
       <PublicPageHeader
         eyebrow="Pricing"
         title="Simple plans for small public adjusting offices."
-        description="Choose the package that matches how your office works today. Start with a 14-day free trial. No credit card required."
+        description="Choose the package that matches how your office works today."
       />
       <PublicSection title="Packages" description="Solo, Small Office, and Team are flat monthly plans. Professional/custom setup remains available by request.">
         <div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
@@ -126,8 +142,8 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <div className="self-end">
-                  <PublicButtonLink href="/demo" variant={plan.recommended ? "primary" : "secondary"}>
-                    {plan.cta}
+                  <PublicButtonLink href={resolvePublicStartHref(plan.slug)} variant={plan.recommended ? "primary" : "secondary"}>
+                    {selfServiceReady ? plan.cta : "Request access"}
                   </PublicButtonLink>
                 </div>
               </div>
@@ -135,16 +151,18 @@ export default function PricingPage() {
           ))}
         </div>
         <div className="mt-8 rounded-lg border border-teal-200 bg-teal-50 p-5">
-          <h2 className="text-base font-semibold text-slate-950">14-day free trial. No credit card required.</h2>
+          <h2 className="text-base font-semibold text-slate-950">Start options</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            Start Free Trial routes to the request access flow so setup can be confirmed before a workspace is opened. It does not create an account automatically or start paid billing.
+            {selfServiceReady
+              ? "Choose a plan to create your workspace owner account. If Stripe billing is configured, signup continues through secure Stripe checkout."
+              : "Self-service signup is currently gated or billing setup is incomplete for this environment. Use Request access and we will help you get started."}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <PublicButtonLink href="/demo" variant="primary">
-              Start Free Trial
+            <PublicButtonLink href={defaultCtaHref} variant="primary">
+              {defaultCtaLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
-              Request Demo
+              Talk to us
             </PublicButtonLink>
           </div>
         </div>
@@ -159,7 +177,7 @@ export default function PricingPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Start simple, then grow with your office." description="Request trial access or a short demo to see which plan fits your current claims, clients, documents, follow-ups, payments, fees, and invoices." />
+      <CtaBand title="Start simple, then grow with your office." description="Choose Solo, Small Office, or Team when self-service is enabled. If not, request access and we will help you launch safely." />
     </>
   );
 }

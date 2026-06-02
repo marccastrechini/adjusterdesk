@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   BookOpen,
   ChartNoAxesColumn,
+  CreditCard,
   CircleDollarSign,
   FileText,
   Inbox,
@@ -42,6 +43,7 @@ const navItems: { label: string; items: NavItem[] }[] = [
     label: "Settings",
     items: [
       { href: "/settings", label: "Settings", icon: Settings, exact: true },
+      { href: "/settings/billing", label: "Billing", icon: CreditCard },
       { href: "/settings/templates", label: "Templates", icon: CalendarCheck },
       { href: "/settings/users", label: "Users", icon: Users },
       { href: "/settings/import", label: "CSV import", icon: Settings },

@@ -115,6 +115,13 @@ enum SubscriptionStatus {
   MANUAL
 }
 
+enum SignupIntentStatus {
+  PENDING
+  CHECKOUT_COMPLETED
+  COMPLETED
+  CANCELED
+}
+
 model Firm {
   id        String   @id @default(cuid())
   name      String
@@ -127,6 +134,9 @@ model Firm {
   billingStartedAt   DateTime?
   billingCustomerId  String?
   billingSubscriptionId String?
+  billingPriceId     String?
+  billingCurrentPeriodEnd DateTime?
+  signupSource       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -147,6 +157,34 @@ model Firm {
   clientStatusLinks ClientStatusLink[]
   templates         Template[]
   feedbackEntries   FeedbackEntry[]
+  signupIntents     SignupIntent[]
+}
+
+model SignupIntent {
+  id                      String            @id @default(cuid())
+  plan                    SubscriptionPlan
+  status                  SignupIntentStatus @default(PENDING)
+  billingProvider         String
+  firmName                String
+  ownerName               String
+  ownerEmail              String
+  ownerPhone              String?
+  passwordHash            String
+  termsAcceptedAt         DateTime
+  stripeCheckoutSessionId String?           @unique
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?
+  stripePriceId           String?
+  completedFirmId         String?
+  completedOwnerUserId    String?
+  source                  String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  completedFirm Firm? @relation(fields: [completedFirmId], references: [id], onDelete: SetNull)
+
+  @@index([ownerEmail])
+  @@index([status])
 }
 
 model User {

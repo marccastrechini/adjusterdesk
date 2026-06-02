@@ -28,9 +28,11 @@ AdjusterDesk uses flat office pricing with active-user limits.
 
 ## Billing Scope
 
-- Billing is manual for now.
-- Stripe or in-app payment processing is intentionally out of scope for this pass.
-- `subscriptionStatus` defaults to `MANUAL` until billing integrations are introduced.
+- Self-service signup is controlled by `SELF_SERVICE_SIGNUP_ENABLED`.
+- `BILLING_PROVIDER` supports `manual` or `stripe`.
+- When `BILLING_PROVIDER=stripe`, checkout requires all Stripe env vars and price IDs.
+- If self-service is disabled or Stripe config is incomplete, public CTAs fall back to request access.
+- `subscriptionStatus` remains available for both manual and Stripe-managed workspaces.
 
 ## Internal Plan Fields
 
@@ -43,6 +45,9 @@ Each firm/workspace stores:
 - `billingStartedAt`
 - `billingCustomerId`
 - `billingSubscriptionId`
+- `billingPriceId`
+- `billingCurrentPeriodEnd`
+- `signupSource`
 
 `includedUserLimit` supports override scenarios and future custom agreements.
 

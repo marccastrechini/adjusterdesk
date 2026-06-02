@@ -82,7 +82,7 @@ export default function HomePage() {
         <StepList steps={howItWorksSteps} />
       </PublicSection>
 
-      <CtaBand title="Start with a 14-day trial or request a demo." description="Request trial access to see whether AdjusterDesk fits the way your office tracks claims, clients, documents, payments, fees, and invoices today." />
+      <CtaBand title="Start with the plan that fits your office." description="Choose Solo, Small Office, or Team when self-service is enabled, or request access and we will help you get started." />
     </>
   );
 }

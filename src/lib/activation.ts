@@ -60,6 +60,20 @@ export function buildActivationChecklist(counts: ActivationCounts): ActivationCh
       action: counts.users > 1 ? "Review users" : "Open users",
       completed: counts.users > 1,
     },
+    {
+      title: "Review client status links",
+      description: "Confirm how clients can view claim updates and requested documents from a shared status link.",
+      href: "/claims",
+      action: counts.claims > 0 ? "Open claim links" : "Open claims",
+      completed: counts.claims > 0,
+    },
+    {
+      title: "Review plan and active-user limit",
+      description: "Check current plan, subscription status, and active-user seats included for this workspace.",
+      href: "/settings/billing",
+      action: "Open billing",
+      completed: counts.users > 0,
+    },
   ];
 }
 

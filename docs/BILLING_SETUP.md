@@ -1,0 +1,72 @@
+# Billing Setup
+
+AdjusterDesk supports two billing modes:
+
+- `manual`
+- `stripe`
+
+## 1) Manual Mode
+
+Environment:
+
+- `BILLING_PROVIDER=manual`
+- `SELF_SERVICE_SIGNUP_ENABLED=true` (optional, for public self-service)
+
+Behavior:
+
+- Public signup can create workspace owner directly.
+- Workspace is saved with `subscriptionStatus=MANUAL`.
+- Billing changes are handled by support.
+
+## 2) Stripe Mode
+
+Environment:
+
+- `BILLING_PROVIDER=stripe`
+- `SELF_SERVICE_SIGNUP_ENABLED=true`
+- `APP_BASE_URL` (must be public HTTPS URL in production)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_SOLO_MONTHLY`
+- `STRIPE_PRICE_SMALL_OFFICE_MONTHLY`
+- `STRIPE_PRICE_TEAM_MONTHLY`
+
+Behavior:
+
+- `/signup` creates pending signup intent and redirects to Stripe Checkout.
+- `/signup/success` completes workspace owner provisioning after successful checkout.
+- `/api/stripe/webhook` updates internal subscription status and can complete provisioning idempotently.
+
+## Stripe Product/Price Requirements
+
+Create one recurring monthly Stripe Price for each public plan:
+
+- Solo ($49/month)
+- Small Office ($99/month)
+- Team ($199/month)
+
+Copy each Stripe `price_...` ID into the matching environment variable.
+
+## Webhook Endpoint
+
+- Endpoint: `/api/stripe/webhook`
+- Required events:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_failed`
+
+## Internal Subscription Status Mapping
+
+- Stripe `trialing` -> `TRIAL`
+- Stripe `active` -> `ACTIVE`
+- Stripe `past_due`, `unpaid`, `incomplete`, `incomplete_expired` -> `PAST_DUE`
+- Stripe `canceled` -> `CANCELED`
+- Unknown -> `MANUAL`
+
+## Safety Notes
+
+- Keep `SELF_SERVICE_SIGNUP_ENABLED=false` in production until verified.
+- If Stripe config is incomplete, public routes should fall back to request access.
+- Do not run production demo reset/bootstrap/seed operations on real production data.

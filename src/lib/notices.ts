@@ -127,6 +127,14 @@ export const noticeMessages = {
     title: "Account setup complete",
     message: "Your password is set. Sign in with your email and new password.",
   },
+  "self-service-signup-complete": {
+    title: "Workspace created",
+    message: "Your owner account is active and the workspace is ready for first-run setup.",
+  },
+  "billing-portal-unavailable": {
+    title: "Billing portal unavailable",
+    message: "This workspace does not have a customer billing portal link yet. Contact support for billing changes.",
+  },
   "feedback-sent": {
     title: "Feedback saved",
     message: "Thanks. The note is saved with this workspace for review.",

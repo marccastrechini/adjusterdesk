@@ -1,0 +1,165 @@
+import Link from "next/link";
+import { ActionForm, FieldError } from "@/components/action-form";
+import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
+import {
+  findPublicPlanBySlug,
+  listPublicPlans,
+  publicSelfServiceReady,
+  resolveBillingProvider,
+  stripeConfigured,
+} from "@/lib/billing";
+import { publicPageMetadata } from "@/lib/public-metadata";
+import { startSignupWithState } from "@/lib/signup-actions";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = publicPageMetadata({
+  title: "Sign Up | AdjusterDesk",
+  description: "Choose a plan and set up your AdjusterDesk workspace owner account.",
+  path: "/signup",
+});
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SignupPage({ searchParams }: PageProps) {
+  const query = await searchParams;
+  const requestedPlan = firstValue(query.plan);
+  const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? listPublicPlans()[1];
+
+  const selfServiceReady = publicSelfServiceReady();
+  const billingProvider = resolveBillingProvider();
+  const stripeReady = stripeConfigured();
+
+  if (!selfServiceReady) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-2xl gap-6">
+          <div className="text-center">
+            <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Self-service signup is not open yet</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Request access and we will help set up the right workspace plan for your office.
+            </p>
+          </div>
+
+          <Card className="grid gap-3">
+            <p className="text-sm leading-6 text-slate-700">
+              {billingProvider === "stripe" && !stripeReady
+                ? "Online checkout is not configured yet in this environment."
+                : "Self-service signup is currently disabled by launch gate."}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/demo"
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
+              >
+                Request access
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Back to pricing
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-3xl gap-6">
+        <div className="text-center">
+          <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Choose plan and create your workspace</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Set up the owner account for your office workspace. You can invite team members after setup.
+          </p>
+        </div>
+
+        <Card className="grid gap-3 border-teal-200 bg-teal-50">
+          <p className="text-sm font-semibold text-slate-950">Plan options</p>
+          <ul className="grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
+            {listPublicPlans().map((plan) => (
+              <li key={plan.slug} className="rounded-md border border-teal-200 bg-white px-3 py-2">
+                <p className="font-semibold text-slate-950">{plan.label}</p>
+                <p>{plan.priceLabel}</p>
+                <p>{plan.includedUserLimit} active user{plan.includedUserLimit === 1 ? "" : "s"} included</p>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs leading-5 text-slate-600">
+            Billing mode: {billingProvider === "stripe" ? "Stripe checkout" : "Manual setup"}.
+          </p>
+        </Card>
+
+        <Card className="grid gap-4">
+          <ActionForm action={startSignupWithState} className="grid gap-4">
+            <Field label="Plan" required>
+              <select name="plan" defaultValue={defaultPlan.slug} className={selectClassName}>
+                {listPublicPlans().map((plan) => (
+                  <option key={plan.slug} value={plan.slug}>
+                    {plan.label} ({plan.priceLabel}, {plan.includedUserLimit} active user{plan.includedUserLimit === 1 ? "" : "s"})
+                  </option>
+                ))}
+              </select>
+              <FieldError name="plan" />
+            </Field>
+
+            <Field label="Workspace name" required>
+              <input name="firmName" autoComplete="organization" required className={inputClassName} />
+              <FieldError name="firmName" />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Owner name" required>
+                <input name="ownerName" autoComplete="name" required className={inputClassName} />
+                <FieldError name="ownerName" />
+              </Field>
+              <Field label="Owner phone (optional)">
+                <input name="ownerPhone" autoComplete="tel" className={inputClassName} />
+                <FieldError name="ownerPhone" />
+              </Field>
+            </div>
+
+            <Field label="Owner email" required>
+              <input name="ownerEmail" type="email" autoComplete="email" required className={inputClassName} />
+              <FieldError name="ownerEmail" />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Password" required>
+                <input name="password" type="password" autoComplete="new-password" required className={inputClassName} />
+                <FieldError name="password" />
+              </Field>
+              <Field label="Confirm password" required>
+                <input name="confirmPassword" type="password" autoComplete="new-password" required className={inputClassName} />
+                <FieldError name="confirmPassword" />
+              </Field>
+            </div>
+
+            <label className="flex items-start gap-3 text-sm text-slate-700">
+              <input type="checkbox" name="agreedToTerms" className="mt-1 h-4 w-4 rounded border-slate-300" />
+              <span>
+                I agree to the <Link href="/terms" className="font-medium text-teal-800 hover:underline">Terms</Link> and <Link href="/privacy" className="font-medium text-teal-800 hover:underline">Privacy Policy</Link>.
+              </span>
+            </label>
+            <FieldError name="agreedToTerms" />
+
+            <SubmitButton>
+              {billingProvider === "stripe" ? "Continue to billing" : "Create workspace"}
+            </SubmitButton>
+          </ActionForm>
+        </Card>
+      </div>
+    </main>
+  );
+}

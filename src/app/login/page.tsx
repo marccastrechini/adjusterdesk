@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { Card, Field, Notice, SubmitButton, inputClassName } from "@/components/ui";
+import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { loginWithPassword } from "@/lib/auth-actions";
 import { getNoticeMessage } from "@/lib/notices";
 import { getCurrentSessionUser } from "@/lib/session";
@@ -20,6 +21,8 @@ export default async function LoginPage({ searchParams }: PageProps) {
 
   const query = await searchParams;
   const notice = getNoticeMessage(query);
+  const startHref = resolvePublicStartHref();
+  const startLabel = resolvePublicStartLabel();
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
@@ -50,6 +53,9 @@ export default async function LoginPage({ searchParams }: PageProps) {
             </Link>
           </div>
           <p className="text-xs leading-5 text-slate-500">Public client status links stay available without sign-in. Use your office email and password to open the internal workspace.</p>
+          <p className="text-xs leading-5 text-slate-500">
+            New to AdjusterDesk? <Link href={startHref} className="font-medium text-teal-800 hover:underline">{startLabel}</Link>.
+          </p>
         </Card>
       </div>
     </main>
