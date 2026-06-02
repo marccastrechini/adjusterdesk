@@ -1,4 +1,4 @@
-import { createUser, resendUserInvite, setUserActive } from "@/lib/actions";
+import { createUser, resendUserInvite, setUserActive } from "@/lib/user-actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { userRoleOptions } from "@/lib/options";

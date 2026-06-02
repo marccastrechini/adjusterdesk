@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, Clock } from "lucide-react";
 import type { ReactNode } from "react";
-import { toggleTask } from "@/lib/actions";
+import { toggleTask } from "@/lib/today-actions";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getTodayData } from "@/lib/queries";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, SubmitButton } from "@/components/ui";
