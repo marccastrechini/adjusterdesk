@@ -194,7 +194,7 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage. Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+            Start your free trial now. No credit card required. Subscribe from Billing when you are ready. Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
           </p>
         </div>
         {children ? <div className="mt-10">{children}</div> : null}

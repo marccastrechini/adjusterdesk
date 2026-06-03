@@ -5,11 +5,7 @@ import { z } from "zod";
 import { hashPassword } from "@/lib/auth";
 import {
   findPublicPlanBySlug,
-  getStripeConfigDiagnostics,
-  logStripeConfigIssue,
-  publicSelfServiceReady,
-  resolveBillingProvider,
-  stripeConfigured,
+  selfServiceSignupEnabled,
   type PublicPlanSlug,
 } from "@/lib/billing";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
@@ -17,15 +13,12 @@ import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
 import {
-  createSignupIntent,
-  createStripeCheckoutSessionForIntent,
-  markSignupIntentCanceled,
-  provisionManualSignup,
+  provisionTrialSignup,
 } from "@/lib/signup";
 
 const signupSchema = z
   .object({
-    plan: z.enum(["solo", "small-office", "team"]),
+    plan: z.enum(["solo", "small-office", "team"]).optional().default("small-office"),
     firmName: z.string().trim().min(2, "Enter your workspace name."),
     ownerName: z.string().trim().min(2, "Enter your full name."),
     ownerEmail: z.email("Enter a valid email address.").transform((value) => value.toLowerCase()),
@@ -64,12 +57,12 @@ function zodToFieldErrors(error: z.ZodError): FieldErrors {
 }
 
 export async function startSignupWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
-  if (!publicSelfServiceReady()) {
+  if (!selfServiceSignupEnabled()) {
     return formError("Your selected plan and workspace details are saved first. We will confirm setup before billing begins.");
   }
 
   const parsed = signupSchema.safeParse({
-    plan: formData.get("plan")?.toString(),
+    plan: formData.get("plan")?.toString() || "small-office",
     firmName: formData.get("firmName")?.toString() ?? "",
     ownerName: formData.get("ownerName")?.toString() ?? "",
     ownerEmail: formData.get("ownerEmail")?.toString() ?? "",
@@ -100,56 +93,27 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     });
   }
 
-  const pendingIntent = await prisma.signupIntent.findFirst({
-    where: {
+  let result: { firmId: string; ownerUserId: string };
+  try {
+    result = await provisionTrialSignup({
+      planSlug: values.plan as PublicPlanSlug,
+      firmName: values.firmName,
+      ownerName: values.ownerName,
       ownerEmail: values.ownerEmail,
-      status: {
-        in: ["PENDING", "CHECKOUT_COMPLETED"],
-      },
-    },
-    select: {
-      id: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  if (pendingIntent) {
-    await markSignupIntentCanceled(pendingIntent.id);
+      ownerPhone: values.ownerPhone,
+      passwordHash: hashPassword(values.password),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Workspace setup failed.";
+    if (message.includes("already exists")) {
+      return formError("That owner email is already in use. Sign in or use a different email.", {
+        ownerEmail: "That email is already used by an existing account.",
+      });
+    }
+    return formError("Workspace setup could not be completed right now. Please try again.");
   }
 
-  const intent = await createSignupIntent({
-    planSlug: values.plan as PublicPlanSlug,
-    firmName: values.firmName,
-    ownerName: values.ownerName,
-    ownerEmail: values.ownerEmail,
-    ownerPhone: values.ownerPhone,
-    passwordHash: hashPassword(values.password),
-  });
-
-  const billingProvider = resolveBillingProvider();
-
-  if (billingProvider === "stripe") {
-    if (!stripeConfigured()) {
-      logStripeConfigIssue("startSignupWithState");
-      const diagnostics = getStripeConfigDiagnostics();
-      await markSignupIntentCanceled(intent.id);
-      const missingSummary = diagnostics.missingVars.length > 0 ? ` Missing setup: ${diagnostics.missingVars.join(", ")}.` : "";
-      return formError(`Billing setup is still being finalized.${missingSummary} Your plan selection was saved and we will confirm setup before billing begins.`);
-    }
-
-    const checkoutSession = await createStripeCheckoutSessionForIntent(intent.id, values.plan as PublicPlanSlug);
-    if (!checkoutSession.url) {
-      return formError("Workspace setup could not continue right now. Please try again.");
-    }
-
-    redirect(checkoutSession.url);
-  }
-
-  const result = await provisionManualSignup(intent.id);
   const sessionCreated = await createSessionForUser(result.ownerUserId);
-
   if (!sessionCreated) {
     return formError("Sign-in is not configured on this environment yet. Add AUTH_SECRET before using self-service signup.");
   }

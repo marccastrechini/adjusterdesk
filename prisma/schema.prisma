@@ -130,6 +130,7 @@ model Firm {
   subscriptionPlan   SubscriptionPlan   @default(SMALL_OFFICE)
   subscriptionStatus SubscriptionStatus @default(MANUAL)
   includedUserLimit  Int                @default(3)
+  trialStartedAt     DateTime?
   trialEndsAt        DateTime?
   billingStartedAt   DateTime?
   billingCustomerId  String?

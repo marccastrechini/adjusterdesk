@@ -128,12 +128,36 @@ export const noticeMessages = {
     message: "Your password is set. Sign in with your email and new password.",
   },
   "self-service-signup-complete": {
-    title: "Workspace created",
-    message: "Your owner account is active. Billing has not started and begins only after your first full calendar month of usage.",
+    title: "Welcome to AdjusterDesk",
+    message: "Your workspace is ready and your 14-day free trial has started. No credit card is required during your trial.",
   },
   "billing-portal-unavailable": {
     title: "Billing portal unavailable",
     message: "This workspace does not have a customer billing portal link yet. Contact support for billing changes.",
+  },
+  "subscription-activated": {
+    title: "Subscription started",
+    message: "Your subscription is now active. Thank you for subscribing to AdjusterDesk.",
+  },
+  "subscription-canceled": {
+    title: "Subscription not started",
+    message: "You returned to billing without completing checkout. You can try again when you are ready.",
+  },
+  "billing-setup-incomplete": {
+    title: "Billing not available",
+    message: "Subscription checkout is not configured in this environment. Contact support for help.",
+  },
+  "billing-invalid-plan": {
+    title: "Plan selection not valid",
+    message: "Select Solo, Small Office, or Team to start a subscription.",
+  },
+  "billing-conversion-not-allowed": {
+    title: "Subscription cannot be started",
+    message: "This workspace is not currently eligible to start a new subscription from Billing.",
+  },
+  "billing-permission-denied": {
+    title: "Billing permission required",
+    message: "Only workspace owners can start subscriptions from Billing.",
   },
   "feedback-sent": {
     title: "Feedback saved",

@@ -3,10 +3,8 @@ import { ActionForm, FieldError } from "@/components/action-form";
 import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import {
   findPublicPlanBySlug,
-  getStripeConfigDiagnostics,
   listPublicPlans,
-  publicSelfServiceReady,
-  resolveBillingProvider,
+  selfServiceSignupEnabled,
 } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { startSignupWithState } from "@/lib/signup-actions";
@@ -32,10 +30,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
   const requestedPlan = firstValue(query.plan);
   const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? listPublicPlans()[1];
 
-  const selfServiceReady = publicSelfServiceReady();
-  const stripeModeMissingConfig = resolveBillingProvider() === "stripe" && !getStripeConfigDiagnostics().ready;
-
-  if (!selfServiceReady) {
+  if (!selfServiceSignupEnabled()) {
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl gap-6">
@@ -43,19 +38,14 @@ export default async function SignupPage({ searchParams }: PageProps) {
             <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Choose a plan and set up your office. You can start using AdjusterDesk before billing begins. We will not bill you until after your first full calendar month of usage.
+              Self-service signup is not available right now. Contact us to get started.
             </p>
           </div>
 
           <Card className="grid gap-3">
             <p className="text-sm leading-6 text-slate-700">
-              Your selected plan and workspace details will be saved. We will confirm setup before billing begins.
+              Contact us and we will get your office set up.
             </p>
-            {stripeModeMissingConfig ? (
-              <p className="text-sm leading-6 text-slate-700">
-                Stripe test setup is still being finalized for this environment, so card checkout stays disabled until configuration is complete.
-              </p>
-            ) : null}
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/demo"
@@ -83,12 +73,12 @@ export default async function SignupPage({ searchParams }: PageProps) {
           <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Choose a plan and set up your office. You can start using AdjusterDesk before billing begins. We will not bill you until after your first full calendar month of usage.
+            Start your 14-day free trial. No credit card required. Choose a plan now and start using AdjusterDesk right away.
           </p>
         </div>
 
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
-          <p className="text-sm font-semibold text-slate-950">Plan options</p>
+          <p className="text-sm font-semibold text-slate-950">Plan options — 14-day free trial, no credit card required</p>
           <ul className="grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
             {listPublicPlans().map((plan) => (
               <li key={plan.slug} className="rounded-md border border-teal-200 bg-white px-3 py-2">
@@ -98,7 +88,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               </li>
             ))}
           </ul>
-          <p className="text-xs leading-5 text-slate-600">Billing begins after your first full calendar month of usage.</p>
+          <p className="text-xs leading-5 text-slate-600">Your trial starts immediately. Billing starts only when you choose to subscribe from Settings/Billing after your trial.</p>
         </Card>
 
         <Card className="grid gap-4">
@@ -154,7 +144,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
             </label>
             <FieldError name="agreedToTerms" />
 
-            <SubmitButton>Create your workspace</SubmitButton>
+            <p className="text-xs leading-5 text-slate-500">By starting your trial you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No credit card required.</p>
+            <SubmitButton>Start your free trial</SubmitButton>
           </ActionForm>
         </Card>
       </div>

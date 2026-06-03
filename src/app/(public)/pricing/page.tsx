@@ -33,7 +33,7 @@ const plans: Array<{
       "Templates & Checklists",
       "Email support",
     ],
-    cta: "Start Solo",
+    cta: "Start Solo free trial",
     recommended: false,
   },
   {
@@ -51,7 +51,7 @@ const plans: Array<{
       "CSV import/export",
       "Priority email support during the early customer phase",
     ],
-    cta: "Start Small Office",
+    cta: "Start Small Office free trial",
     recommended: true,
   },
   {
@@ -69,7 +69,7 @@ const plans: Array<{
       "Export/accounting support as it matures",
       "Additional setup support",
     ],
-    cta: "Start Team",
+    cta: "Start Team free trial",
     recommended: false,
   },
 ];
@@ -77,11 +77,11 @@ const plans: Array<{
 const faqs = [
   {
     question: "How do I start?",
-    answer: "Choose Solo, Small Office, or Team, then create your workspace. Your selected plan and workspace details are saved first.",
+    answer: "Choose Solo, Small Office, or Team, then create your workspace. Your 14-day free trial starts immediately. No credit card required.",
   },
   {
     question: "When does billing begin?",
-    answer: "Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage.",
+    answer: "Billing starts only when you choose a plan in Settings/Billing. Your free trial lasts 14 days. No credit card is required to start.",
   },
   {
     question: "Can I change plans later?",
@@ -101,7 +101,7 @@ const faqs = [
   },
   {
     question: "Is billing automated in-app right now?",
-    answer: "No. Live subscription charging and card collection are not active in this phase.",
+    answer: "Card collection happens in Settings/Billing when you choose to subscribe after your free trial. No card is required to start.",
   },
 ];
 
@@ -148,12 +148,12 @@ export default function PricingPage() {
           ))}
         </div>
         <div className="mt-8 rounded-lg border border-teal-200 bg-teal-50 p-5">
-          <h2 className="text-base font-semibold text-slate-950">Billing timing</h2>
+          <h2 className="text-base font-semibold text-slate-950">14-day free trial — no credit card required</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            Start using AdjusterDesk now. We will not bill you until after your first full calendar month of usage.
+            Start your free trial now. Your workspace is set up immediately and your 14-day trial begins. No credit card is needed to start.
           </p>
           <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
-            For example, if your workspace is activated on June 18, July is your first full calendar month, and billing would begin no earlier than August 1.
+            When your trial ends, choose a plan in Settings/Billing to continue. Your data is preserved whether you subscribe or not.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PublicButtonLink href={defaultCtaHref} variant="primary">
@@ -175,7 +175,7 @@ export default function PricingPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Start simple, then grow with your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. Billing begins after your first full calendar month." />
+      <CtaBand title="Start simple, then grow with your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. No credit card required. Subscribe from Billing when you are ready." />
     </>
   );
 }

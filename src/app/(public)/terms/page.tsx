@@ -38,7 +38,7 @@ const sections: TrustSection[] = [
   {
     title: "Plans, billing timing, and plan terms",
     paragraphs: [
-      "Public pricing is shown for Solo, Small Office, and Team plans. Start using AdjusterDesk now, and billing begins only after your first full calendar month of usage. Paid access remains subject to the plan terms agreed for the customer office.",
+      "Public pricing is shown for Solo, Small Office, and Team plans. No credit card is required to start a trial. Billing starts only when a customer chooses a paid plan in Billing. Paid access remains subject to the plan terms agreed for the customer office.",
     ],
   },
   {
@@ -66,7 +66,7 @@ export default function TermsPage() {
       <PublicSection title="Service terms">
         <TrustPageContent sections={sections} />
       </PublicSection>
-      <CtaBand title="Questions about plans or terms?" description="Talk to us so setup details can be confirmed before paid billing begins." />
+      <CtaBand title="Questions about plans or terms?" description="Talk to us so setup details can be confirmed before paid billing starts." />
     </>
   );
 }

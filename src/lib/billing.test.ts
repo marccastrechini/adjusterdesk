@@ -4,13 +4,16 @@ import { SubscriptionStatus } from "@/generated/prisma/client";
 import {
   findPublicPlanBySlug,
   getStripeConfigDiagnostics,
+  isPlanSlug,
   mapStripeSubscriptionStatus,
+  parsePlanSlug,
   publicSelfServiceReady,
   resolvePublicStartHref,
   resolvePublicStartLabel,
   resolveStripePriceId,
   stripeConfigured,
 } from "@/lib/billing";
+import { requireStripeWebhookSecret } from "@/lib/stripe";
 
 afterEach(() => {
   delete process.env.SELF_SERVICE_SIGNUP_ENABLED;
@@ -40,7 +43,7 @@ test("public start link remains signup when feature flag is off", () => {
 
   assert.equal(publicSelfServiceReady(), false);
   assert.equal(resolvePublicStartHref("solo"), "/signup?plan=solo");
-  assert.equal(resolvePublicStartLabel(), "Start using AdjusterDesk");
+  assert.equal(resolvePublicStartLabel(), "Start free trial");
 });
 
 test("stripe provider requires complete stripe config", () => {
@@ -49,17 +52,17 @@ test("stripe provider requires complete stripe config", () => {
   process.env.STRIPE_SECRET_KEY = "sk_test_123";
 
   assert.equal(stripeConfigured(), false);
-  assert.equal(publicSelfServiceReady(), false);
+  assert.equal(publicSelfServiceReady(), true);
   assert.equal(resolvePublicStartHref("team"), "/signup?plan=team");
 
-   const diagnostics = getStripeConfigDiagnostics();
-   assert.equal(diagnostics.ready, false);
-   assert.deepEqual(diagnostics.missingVars, [
-     "STRIPE_WEBHOOK_SECRET",
-     "STRIPE_PRICE_SOLO_MONTHLY",
-     "STRIPE_PRICE_SMALL_OFFICE_MONTHLY",
-     "STRIPE_PRICE_TEAM_MONTHLY",
-   ]);
+  const diagnostics = getStripeConfigDiagnostics();
+  assert.equal(diagnostics.ready, false);
+  assert.deepEqual(diagnostics.missingVars, [
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_PRICE_SOLO_MONTHLY",
+    "STRIPE_PRICE_SMALL_OFFICE_MONTHLY",
+    "STRIPE_PRICE_TEAM_MONTHLY",
+  ]);
 });
 
 test("stripe provider becomes ready when all stripe vars are set", () => {
@@ -74,7 +77,7 @@ test("stripe provider becomes ready when all stripe vars are set", () => {
   assert.equal(stripeConfigured(), true);
   assert.equal(publicSelfServiceReady(), true);
   assert.equal(resolvePublicStartHref("small-office"), "/signup?plan=small-office");
-  assert.equal(resolvePublicStartLabel("small-office"), "Start Small Office");
+  assert.equal(resolvePublicStartLabel("small-office"), "Start Small Office free trial");
 
   const diagnostics = getStripeConfigDiagnostics();
   assert.equal(diagnostics.ready, true);
@@ -92,9 +95,24 @@ test("stripe price IDs map to solo, small office, and team", () => {
 });
 
 test("stripe price mapping falls back to empty string when missing", () => {
-  assert.equal(resolveStripePriceId("solo"), "");
-  assert.equal(resolveStripePriceId("small-office"), "");
-  assert.equal(resolveStripePriceId("team"), "");
+  assert.equal(resolveStripePriceId("solo"), null);
+  assert.equal(resolveStripePriceId("small-office"), null);
+  assert.equal(resolveStripePriceId("team"), null);
+});
+
+test("plan slug helpers validate and parse only allowed values", () => {
+  assert.equal(isPlanSlug("solo"), true);
+  assert.equal(isPlanSlug("small-office"), true);
+  assert.equal(isPlanSlug("team"), true);
+  assert.equal(isPlanSlug("enterprise"), false);
+  assert.equal(isPlanSlug(undefined), false);
+
+  assert.equal(parsePlanSlug("solo"), "solo");
+  assert.equal(parsePlanSlug("small-office"), "small-office");
+  assert.equal(parsePlanSlug("team"), "team");
+  assert.equal(parsePlanSlug("TEAM"), "team");
+  assert.equal(parsePlanSlug("invalid"), null);
+  assert.equal(parsePlanSlug(""), null);
 });
 
 test("stripe subscription status maps to internal status", () => {
@@ -103,4 +121,12 @@ test("stripe subscription status maps to internal status", () => {
   assert.equal(mapStripeSubscriptionStatus("past_due"), SubscriptionStatus.PAST_DUE);
   assert.equal(mapStripeSubscriptionStatus("canceled"), SubscriptionStatus.CANCELED);
   assert.equal(mapStripeSubscriptionStatus("unknown"), SubscriptionStatus.MANUAL);
+});
+
+test("webhook secret helper requires STRIPE_WEBHOOK_SECRET", () => {
+  delete process.env.STRIPE_WEBHOOK_SECRET;
+  assert.throws(() => requireStripeWebhookSecret(), /webhook secret is not configured/i);
+
+  process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_value";
+  assert.equal(requireStripeWebhookSecret(), "whsec_test_value");
 });

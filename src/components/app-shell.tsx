@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { BriefcaseBusiness } from "lucide-react";
+import { SubscriptionStatus } from "@/generated/prisma/client";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { SubmitButton } from "@/components/ui";
+import { TrialBanner } from "@/components/trial-banner";
 import { exitSystemWorkspaceView } from "@/lib/actions";
 import { logout } from "@/lib/auth-actions";
 import { labelFromEnum } from "@/lib/format";
@@ -12,6 +14,8 @@ export function AppShell({
   userName,
   userRole,
   workspaceOverride,
+  subscriptionStatus,
+  trialEndsAt,
 }: {
   children: ReactNode;
   firmName: string;
@@ -19,6 +23,8 @@ export function AppShell({
   userRole: string;
   isSystemAdmin: boolean;
   workspaceOverride: { firmId: string; firmName: string } | null;
+  subscriptionStatus: SubscriptionStatus;
+  trialEndsAt: Date | null;
 }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -64,6 +70,7 @@ export function AppShell({
                   </form>
                 </div>
               ) : null}
+              <TrialBanner firm={{ subscriptionStatus, trialEndsAt }} />
               {children}
             </div>
           </main>

@@ -82,7 +82,7 @@ export default function HomePage() {
         <StepList steps={howItWorksSteps} />
       </PublicSection>
 
-      <CtaBand title="Start with the plan that fits your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. Billing begins after your first full calendar month of usage." />
+      <CtaBand title="Start with the plan that fits your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. No credit card required. Subscribe from Billing when you are ready." />
     </>
   );
 }

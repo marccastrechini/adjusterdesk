@@ -4,6 +4,8 @@ import { defaultIncludedUserLimit } from "@/lib/plans";
 export type PublicPlanSlug = "solo" | "small-office" | "team";
 export type BillingProvider = "manual" | "stripe";
 
+export const PUBLIC_PLAN_SLUGS = ["solo", "small-office", "team"] as const;
+
 export const STRIPE_REQUIRED_ENV_VARS = [
   "STRIPE_SECRET_KEY",
   "STRIPE_WEBHOOK_SECRET",
@@ -64,11 +66,25 @@ export function listPublicPlans() {
 }
 
 export function findPublicPlanBySlug(slug: string | undefined | null) {
-  if (!slug) {
+  const normalized = parsePlanSlug(slug);
+  if (!normalized) {
     return null;
   }
 
-  return publicPlans.find((plan) => plan.slug === slug) ?? null;
+  return publicPlans.find((plan) => plan.slug === normalized) ?? null;
+}
+
+export function isPlanSlug(value: string | undefined | null): value is PublicPlanSlug {
+  return PUBLIC_PLAN_SLUGS.includes((value ?? "") as PublicPlanSlug);
+}
+
+export function parsePlanSlug(value: string | undefined | null): PublicPlanSlug | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  return isPlanSlug(normalized) ? normalized : null;
 }
 
 export function findPublicPlanBySubscriptionPlan(plan: SubscriptionPlan) {
@@ -144,15 +160,7 @@ export function logStripeConfigIssue(context: string) {
 }
 
 export function publicSelfServiceReady() {
-  if (!selfServiceSignupEnabled()) {
-    return false;
-  }
-
-  if (resolveBillingProvider() === "manual") {
-    return true;
-  }
-
-  return stripeConfigured();
+  return selfServiceSignupEnabled();
 }
 
 export function resolvePublicStartHref(planSlug?: PublicPlanSlug) {
@@ -163,23 +171,23 @@ export function resolvePublicStartLabel(planSlug?: PublicPlanSlug) {
   if (planSlug) {
     const plan = findPublicPlanBySlug(planSlug);
     if (plan) {
-      return `Start ${plan.label}`;
+      return `Start ${plan.label} free trial`;
     }
   }
 
-  return "Start using AdjusterDesk";
+  return "Start free trial";
 }
 
-export function resolveStripePriceId(planSlug: PublicPlanSlug) {
+export function resolveStripePriceId(planSlug: PublicPlanSlug): string | null {
   if (planSlug === "solo") {
-    return process.env.STRIPE_PRICE_SOLO_MONTHLY?.trim() ?? "";
+    return process.env.STRIPE_PRICE_SOLO_MONTHLY?.trim() || null;
   }
 
   if (planSlug === "small-office") {
-    return process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY?.trim() ?? "";
+    return process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY?.trim() || null;
   }
 
-  return process.env.STRIPE_PRICE_TEAM_MONTHLY?.trim() ?? "";
+  return process.env.STRIPE_PRICE_TEAM_MONTHLY?.trim() || null;
 }
 
 export function mapStripeSubscriptionStatus(status: string | null | undefined): SubscriptionStatus {

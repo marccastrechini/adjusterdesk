@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { SubscriptionStatus } from "@/generated/prisma/client";
-import { mapStripeSubscriptionStatus } from "@/lib/billing";
+import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
 
@@ -32,6 +32,7 @@ async function updateFirmBySubscriptionOrCustomer(params: {
   customerId?: string | null;
   data: {
     subscriptionStatus?: SubscriptionStatus;
+    billingStartedAt?: Date;
     billingSubscriptionId?: string;
     billingCustomerId?: string;
     billingPriceId?: string | null;
@@ -54,6 +55,10 @@ async function updateFirmBySubscriptionOrCustomer(params: {
   });
 }
 
+function checkoutPaymentSettled(paymentStatus: string | null | undefined) {
+  return paymentStatus === "paid" || paymentStatus === "no_payment_required";
+}
+
 export async function processStripeWebhookEvent(event: Stripe.Event) {
   switch (event.type) {
     case "checkout.session.completed": {
@@ -62,18 +67,56 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
       const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
 
-      if (intentId) {
-        await prisma.signupIntent.updateMany({
-          where: { id: intentId },
+      // Conversion path: trial firm is subscribing via Settings/Billing.
+      const firmId = session.metadata?.firmId;
+      if (firmId) {
+        const firm = await prisma.firm.findUnique({
+          where: { id: firmId },
+          select: { id: true },
+        });
+
+        if (!firm) {
+          return;
+        }
+
+        const conversionPlan = parsePlanSlug(session.metadata?.planSlug);
+        const conversionPlanDefinition = conversionPlan ? findPublicPlanBySlug(conversionPlan) : null;
+        const selectedPriceId = conversionPlan ? resolveStripePriceId(conversionPlan) : null;
+
+        await prisma.firm.updateMany({
+          where: { id: firmId },
           data: {
-            status: "CHECKOUT_COMPLETED",
-            stripeCheckoutSessionId: session.id,
-            stripeCustomerId: customerId ?? undefined,
-            stripeSubscriptionId: subscriptionId ?? undefined,
-            stripePriceId: session.metadata?.priceId ?? undefined,
+            ...(checkoutPaymentSettled(session.payment_status) ? { billingStartedAt: new Date() } : {}),
+            ...(customerId ? { billingCustomerId: customerId } : {}),
+            ...(subscriptionId ? { billingSubscriptionId: subscriptionId } : {}),
+            ...(selectedPriceId ? { billingPriceId: selectedPriceId } : {}),
+            ...(conversionPlanDefinition
+              ? {
+                  subscriptionPlan: conversionPlanDefinition.plan,
+                  includedUserLimit: defaultLimitForPlan(conversionPlanDefinition.plan),
+                }
+              : {}),
           },
         });
+
+        return;
       }
+
+      // Legacy signup path: SignupIntent-based workspace provisioning.
+      if (!intentId) {
+        return;
+      }
+
+      await prisma.signupIntent.updateMany({
+        where: { id: intentId },
+        data: {
+          status: "CHECKOUT_COMPLETED",
+          stripeCheckoutSessionId: session.id,
+          stripeCustomerId: customerId ?? undefined,
+          stripeSubscriptionId: subscriptionId ?? undefined,
+          stripePriceId: session.metadata?.priceId ?? undefined,
+        },
+      });
 
       // Complete workspace provisioning from webhook as a fallback when users do not return to /signup/success.
       try {
@@ -104,6 +147,7 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
         subscriptionId,
         customerId,
         data: {
+          ...((subscription.status === "active" || subscription.status === "trialing") ? { billingStartedAt: new Date() } : {}),
           billingSubscriptionId: subscriptionId,
           billingCustomerId: customerId ?? undefined,
           billingPriceId: priceId,

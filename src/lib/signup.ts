@@ -1,3 +1,4 @@
+import type Stripe from "stripe";
 import { SubscriptionStatus, UserRole, type Prisma } from "@/generated/prisma/client";
 import {
   defaultLimitForPlan,
@@ -13,6 +14,7 @@ import {
 import { resolveAppBaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireStripeClient, requireStripePriceId } from "@/lib/stripe";
+import { trialEndDate } from "@/lib/trial";
 
 export type SignupIntentInput = {
   planSlug: PublicPlanSlug;
@@ -37,6 +39,42 @@ function checkoutLooksPaid(paymentStatus: string | null | undefined) {
 
 export function canReuseOpenCheckoutSession(session: { status?: string | null; url?: string | null } | null | undefined) {
   return Boolean(session?.url && session.status === "open");
+}
+
+export function buildStripeCheckoutSessionParams(params: {
+  intent: {
+    id: string;
+    ownerEmail: string;
+    ownerName: string;
+    firmName: string;
+    ownerPhone?: string | null;
+  };
+  planSlug: PublicPlanSlug;
+  appBaseUrl: string;
+  priceId: string;
+}): Stripe.Checkout.SessionCreateParams {
+  return {
+    mode: "subscription",
+    success_url: `${params.appBaseUrl}/signup/success?plan=${params.planSlug}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${params.appBaseUrl}/signup/cancel?intent=${encodeURIComponent(params.intent.id)}`,
+    line_items: [{ price: params.priceId, quantity: 1 }],
+    customer_email: params.intent.ownerEmail,
+    client_reference_id: params.intent.id,
+    metadata: {
+      signupIntentId: params.intent.id,
+      planSlug: params.planSlug,
+      workspaceName: params.intent.firmName,
+      ownerName: params.intent.ownerName,
+      ownerPhone: params.intent.ownerPhone ?? "",
+    },
+    subscription_data: {
+      metadata: {
+        signupIntentId: params.intent.id,
+        planSlug: params.planSlug,
+      },
+    },
+    allow_promotion_codes: true,
+  };
 }
 
 export async function createSignupIntent(input: SignupIntentInput) {
@@ -93,28 +131,14 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
 
   const priceId = requireStripePriceId(planSlug);
   const appBaseUrl = resolveAppBaseUrl();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    success_url: `${appBaseUrl}/signup/success?plan=${planSlug}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appBaseUrl}/signup/cancel?intent=${encodeURIComponent(intent.id)}`,
-    line_items: [{ price: priceId, quantity: 1 }],
-    customer_email: intent.ownerEmail,
-    client_reference_id: intent.id,
-    metadata: {
-      signupIntentId: intent.id,
+  const session = await stripe.checkout.sessions.create(
+    buildStripeCheckoutSessionParams({
+      intent,
       planSlug,
-      workspaceName: intent.firmName,
-      ownerName: intent.ownerName,
-      ownerPhone: intent.ownerPhone ?? "",
-    },
-    subscription_data: {
-      metadata: {
-        signupIntentId: intent.id,
-        planSlug,
-      },
-    },
-    allow_promotion_codes: true,
-  });
+      appBaseUrl,
+      priceId,
+    }),
+  );
 
   await prisma.signupIntent.update({
     where: { id: intent.id },
@@ -250,6 +274,67 @@ export async function provisionManualSignup(intentId: string) {
       subscriptionStatus: SubscriptionStatus.MANUAL,
     }),
   );
+}
+
+export type TrialSignupInput = {
+  planSlug: PublicPlanSlug;
+  firmName: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPhone?: string;
+  passwordHash: string;
+};
+
+/**
+ * Creates a workspace and owner user on a free trial.
+ * No Stripe Checkout is triggered. Workspace is created immediately.
+ */
+export async function provisionTrialSignup(input: TrialSignupInput) {
+  const plan = findPublicPlanBySlug(input.planSlug);
+  if (!plan) {
+    throw new Error("Invalid plan selection.");
+  }
+
+  const now = new Date();
+  const trialEnds = trialEndDate(now);
+
+  return prisma.$transaction(async (tx) => {
+    const duplicateUser = await tx.user.findUnique({
+      where: { email: input.ownerEmail },
+      select: { id: true },
+    });
+
+    if (duplicateUser) {
+      throw new Error("A user with this email already exists.");
+    }
+
+    const firm = await tx.firm.create({
+      data: {
+        name: input.firmName,
+        email: input.ownerEmail,
+        phone: input.ownerPhone,
+        subscriptionPlan: plan.plan,
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        includedUserLimit: defaultLimitForPlan(plan.plan),
+        trialStartedAt: now,
+        trialEndsAt: trialEnds,
+        signupSource: "public-signup",
+      },
+    });
+
+    const owner = await tx.user.create({
+      data: {
+        firmId: firm.id,
+        name: input.ownerName,
+        email: input.ownerEmail,
+        passwordHash: input.passwordHash,
+        role: UserRole.OWNER,
+        active: true,
+      },
+    });
+
+    return { firmId: firm.id, ownerUserId: owner.id, planSlug: input.planSlug };
+  });
 }
 
 export async function completeStripeSignupFromSessionId(sessionId: string) {

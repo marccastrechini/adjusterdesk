@@ -29,6 +29,8 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
         userRole={sessionUser.role}
         isSystemAdmin={sessionUser.isSystemAdmin}
         workspaceOverride={workspaceOverride}
+        subscriptionStatus={firm.subscriptionStatus}
+        trialEndsAt={firm.trialEndsAt}
       >
         {children}
       </AppShell>
