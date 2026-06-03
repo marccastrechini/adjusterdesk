@@ -16,6 +16,13 @@ type UserInvitationEmailInput = {
   expiresInMinutes: number;
 };
 
+type TrialSignupAlertEmailInput = {
+  workspaceName: string;
+  ownerName: string;
+  ownerEmail: string;
+  planLabel: string;
+};
+
 type EmailSendResult = {
   ok: boolean;
   error?: string;
@@ -144,6 +151,37 @@ export async function sendUserInvitationEmail(input: UserInvitationEmailInput): 
   return sendSystemEmail({
     toEmail: input.toEmail,
     subject: "AdjusterDesk account invitation",
+    html: emailContent.html,
+    text: emailContent.text,
+  });
+}
+
+export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInput): Promise<EmailSendResult> {
+  const toEmail = process.env.SYSTEM_ADMIN_EMAIL?.trim();
+  if (!toEmail) {
+    return {
+      ok: false,
+      error: "SYSTEM_ADMIN_EMAIL is not configured.",
+    };
+  }
+
+  const emailContent = renderSystemEmailTemplate({
+    preheader: "A new AdjusterDesk trial workspace was created.",
+    title: "New trial signup",
+    intro: "A new workspace was created from the public signup form.",
+    bodyLines: [
+      `Workspace: ${input.workspaceName}`,
+      `Owner: ${input.ownerName}`,
+      `Owner email: ${input.ownerEmail}`,
+      `Plan selected: ${input.planLabel}`,
+    ],
+    secondaryText: "Sign in to system workspaces to review the new office and follow up.",
+    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+  });
+
+  return sendSystemEmail({
+    toEmail,
+    subject: "AdjusterDesk new trial signup",
     html: emailContent.html,
     text: emailContent.text,
   });

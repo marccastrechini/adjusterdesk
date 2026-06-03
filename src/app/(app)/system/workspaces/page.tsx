@@ -12,6 +12,18 @@ function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function classifyWorkspaceName(name: string) {
+  if (/smoke|test/i.test(name)) {
+    return "Smoke/Test";
+  }
+
+  if (/demo/i.test(name)) {
+    return "Demo";
+  }
+
+  return null;
+}
+
 export default async function SystemWorkspacesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const notice = getNoticeMessage(params);
@@ -75,6 +87,14 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <p className="font-semibold text-slate-950">{workspace.name}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                      {classifyWorkspaceName(workspace.name) ? (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">{classifyWorkspaceName(workspace.name)}</span>
+                      ) : null}
+                      {workspace.signupSource ? (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">Source: {workspace.signupSource}</span>
+                      ) : null}
+                    </div>
                     <p className="mt-1 text-sm text-slate-600">Created {formatDate(workspace.createdAt)}</p>
                     <p className="mt-1 text-sm text-slate-600">
                       Owner: {owner ? `${owner.name} (${owner.email})` : "No owner user"}

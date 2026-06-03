@@ -85,6 +85,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Workspace created</p>
           <p className="mt-2 text-sm font-semibold text-slate-950">{formatDate(workspace.createdAt)}</p>
+          {workspace.signupSource ? <p className="mt-1 text-xs text-slate-600">Source: {workspace.signupSource}</p> : null}
         </Card>
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Owner</p>

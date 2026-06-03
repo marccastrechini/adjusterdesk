@@ -12,6 +12,7 @@ import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-st
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
+import { canSendSystemEmail, sendTrialSignupAlertEmail } from "@/lib/email";
 import {
   provisionTrialSignup,
 } from "@/lib/signup";
@@ -87,6 +88,17 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     select: { id: true },
   });
 
+  const existingWorkspace = await prisma.firm.findFirst({
+    where: { name: values.firmName },
+    select: { id: true },
+  });
+
+  if (existingWorkspace) {
+    return formError("That workspace name is already in use. Choose a different name.", {
+      firmName: "That workspace name is already used.",
+    });
+  }
+
   if (existingUser) {
     return formError("That owner email is already in use. Sign in or use a different email.", {
       ownerEmail: "That email is already used by an existing account.",
@@ -116,6 +128,20 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
   const sessionCreated = await createSessionForUser(result.ownerUserId);
   if (!sessionCreated) {
     return formError("Sign-in is not configured on this environment yet. Add AUTH_SECRET before using self-service signup.");
+  }
+
+  // Do not block signup if operator notification email fails.
+  if (canSendSystemEmail()) {
+    const notificationResult = await sendTrialSignupAlertEmail({
+      workspaceName: values.firmName,
+      ownerName: values.ownerName,
+      ownerEmail: values.ownerEmail,
+      planLabel: selectedPlan.label,
+    });
+
+    if (!notificationResult.ok) {
+      console.warn(`[signup] Trial signup alert email not sent: ${notificationResult.error}`);
+    }
   }
 
   redirect(withNotice("/start", "self-service-signup-complete"));

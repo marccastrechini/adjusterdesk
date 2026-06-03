@@ -31,3 +31,33 @@ test("active subscription renders no trial banner", () => {
 
   assert.equal(html, "");
 });
+
+test("imminent trial state renders urgent message with billing call to action", () => {
+  const html = renderToStaticMarkup(
+    <TrialBanner
+      firm={{
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        trialEndsAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      }}
+    />,
+  );
+
+  assert.match(html, /ends in 1 day/i);
+  assert.match(html, /Choose a plan/i);
+  assert.match(html, /\/settings\/billing/);
+});
+
+test("expired trial state renders billing call to action", () => {
+  const html = renderToStaticMarkup(
+    <TrialBanner
+      firm={{
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        trialEndsAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      }}
+    />,
+  );
+
+  assert.match(html, /free trial has ended/i);
+  assert.match(html, /Choose a plan/i);
+  assert.match(html, /\/settings\/billing/);
+});
