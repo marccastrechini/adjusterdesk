@@ -16,9 +16,6 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description: "A simple workspace for small public adjusting offices.",
-  icons: {
-    icon: "/favicon.ico",
-  },
   openGraph: {
     title: "AdjusterDesk",
     description: "A simple workspace for small public adjusting offices.",
