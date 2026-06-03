@@ -43,6 +43,8 @@ Copy-Item .env.production.example .env.production.local
 
 Use `.env.development.local` for debugger/dev work and `.env.production.local` for the public local demo runtime. Both are ignored by Git.
 
+Production standard: self-service signup is enabled by default. Keep `SELF_SERVICE_SIGNUP_ENABLED=true` for normal operation. Set `SELF_SERVICE_SIGNUP_ENABLED=false` only when you need to temporarily close public signup.
+
 2. Install dependencies:
 
 ```bash

@@ -22,6 +22,7 @@ Copy-Item .env.production.example .env.production.local
 ```dotenv
 APP_ENV=production
 APP_BASE_URL=https://adjusterdesk.xyz
+SELF_SERVICE_SIGNUP_ENABLED=true
 DATABASE_URL=file:./prisma/production.db
 UPLOADS_DIR=storage/uploads-production
 AUTH_SECRET=replace-with-a-long-random-secret
@@ -34,6 +35,9 @@ USER_INVITATION_TOKEN_MINUTES=4320
 SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
 NEXT_PUBLIC_APP_NAME="AdjusterDesk"
 ```
+
+Production standard: keep `SELF_SERVICE_SIGNUP_ENABLED=true`.
+Use `SELF_SERVICE_SIGNUP_ENABLED=false` only as a temporary public-signup close switch.
 
 Keep existing secure values for `.env.production.local` only. Do not commit `.env`, `.env.production.local`, or any secret values.
 

@@ -6,9 +6,9 @@ For Stripe local setup steps, see docs/STRIPE_TEST_MODE_RUNBOOK.md.
 
 ## Launch Gate
 
-- `SELF_SERVICE_SIGNUP_ENABLED=false` keeps public self-service signup off.
-- In production, keep the flag off until signup and billing checks are validated.
-- Public CTAs can still point to workspace creation while setup remains on manual billing terms.
+- Production standard keeps `SELF_SERVICE_SIGNUP_ENABLED=true`.
+- Set `SELF_SERVICE_SIGNUP_ENABLED=false` only when you need to temporarily close public signup.
+- Public CTAs should continue routing to `/signup` in normal operation.
 
 ## Billing Mode
 
@@ -53,10 +53,10 @@ For Stripe mode, also configure:
 ## Production Rollout Checklist
 
 1. Create production backup.
-2. Deploy code and schema updates without enabling self-service.
-3. Confirm public pricing and signup fallback behavior.
+2. Deploy code and schema updates with self-service signup enabled.
+3. Confirm public pricing and signup behavior.
 4. Confirm login, users, and billing settings pages still function.
-5. Enable `SELF_SERVICE_SIGNUP_ENABLED=true` only when Stripe/manual billing path is validated.
+5. Keep `SELF_SERVICE_SIGNUP_ENABLED=true` as the production default.
 6. Re-run smoke checks after enablement.
 
 ## Remaining Manual Operations

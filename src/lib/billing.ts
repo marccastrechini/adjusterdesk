@@ -102,7 +102,7 @@ export function resolveBillingProvider(): BillingProvider {
 }
 
 export function selfServiceSignupEnabled() {
-  return envBool("SELF_SERVICE_SIGNUP_ENABLED", false);
+  return envBool("SELF_SERVICE_SIGNUP_ENABLED", true);
 }
 
 export function stripeCoreConfigured() {

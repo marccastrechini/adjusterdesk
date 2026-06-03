@@ -85,6 +85,7 @@ Recommended Stripe test-mode product names:
 
 ## Safety Notes
 
-- Keep `SELF_SERVICE_SIGNUP_ENABLED=false` in production until verified.
+- Production standard keeps `SELF_SERVICE_SIGNUP_ENABLED=true`.
+- Set `SELF_SERVICE_SIGNUP_ENABLED=false` only when you need to temporarily close public signup.
 - If Stripe config is incomplete, keep billing setup on manual terms and avoid enabling card collection.
 - Do not run production demo reset/bootstrap/seed operations on real production data.
