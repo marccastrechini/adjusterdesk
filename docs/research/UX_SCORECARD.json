@@ -1,0 +1,70 @@
+{
+  "studyDate": "2026-06-11",
+  "baseUrl": "https://adjusterdesk.xyz",
+  "artifactDir": "artifacts/ux-study/2026-06-11-1612",
+  "overallScore": 3.85,
+  "taskAverage": 3.92,
+  "dimensionScores": {
+    "First-glance clarity": 4,
+    "Next-step clarity": 4,
+    "Match with public-adjusting office language": 5,
+    "Navigation confidence": 4,
+    "Cognitive load": 3,
+    "Error prevention": 4,
+    "Error recovery": 4,
+    "Recognition over recall": 4,
+    "Empty-state usefulness": 4,
+    "Accessibility/keyboard basics": 3,
+    "Mobile/responsive basics": 3,
+    "MVP alignment": 4,
+    "Trust/professional confidence": 4
+  },
+  "taskScores": [
+    { "task": "A. First login / orientation", "route": "/today", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/09-a-first-login-today.png" },
+    { "task": "B. Start the day", "route": "/today", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/09-a-first-login-today.png" },
+    { "task": "C. New lead intake", "route": "/leads/new", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/11-lead-validation.png" },
+    { "task": "D. New claim intake", "route": "/claims/new", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/13-claim-validation.png" },
+    { "task": "E. Claim work", "route": "/claims/[id]", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/14-claim-overview.png" },
+    { "task": "F. Client status/share flow", "route": "/claims/[id]/client-status", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/19-client-status-configured.png" },
+    { "task": "G. Tasks/follow-up", "route": "/claims/[id]/tasks", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/21-task-created.png" },
+    { "task": "H. Documents", "route": "/claims/[id]/documents", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/23-document-uploaded.png" },
+    { "task": "I. Money/reports", "route": "/money and /reports", "score": 3, "evidence": "artifacts/ux-study/2026-06-11-1612/24-money-receivables.png" },
+    { "task": "J. Settings", "route": "/settings", "score": 4, "evidence": "artifacts/ux-study/2026-06-11-1612/26-settings.png" },
+    { "task": "K. Permission check", "route": "/system", "score": 5, "evidence": "artifacts/ux-study/2026-06-11-1612/27-normal-user-system-blocked.png" },
+    { "task": "Admin UX check", "route": "/system", "score": 3, "evidence": "artifacts/ux-study/2026-06-11-1612/28-admin-system-dashboard.png" }
+  ],
+  "routeScores": [
+    { "route": "/", "score": 4 },
+    { "route": "/pricing", "score": 4 },
+    { "route": "/login", "score": 4 },
+    { "route": "/forgot-password", "score": 4 },
+    { "route": "/privacy", "score": 4 },
+    { "route": "/terms", "score": 4 },
+    { "route": "/security", "score": 4 },
+    { "route": "/today", "score": 4 },
+    { "route": "/start", "score": 4 },
+    { "route": "/leads/new", "score": 4 },
+    { "route": "/claims/new", "score": 4 },
+    { "route": "/claims/[id]", "score": 4 },
+    { "route": "/claims/[id]/documents", "score": 4 },
+    { "route": "/claims/[id]/tasks", "score": 4 },
+    { "route": "/claims/[id]/communications", "score": 4 },
+    { "route": "/claims/[id]/money", "score": 4 },
+    { "route": "/money", "score": 3 },
+    { "route": "/reports", "score": 4 },
+    { "route": "/settings", "score": 4 },
+    { "route": "/system/workspaces", "score": 3 }
+  ],
+  "accessibility": {
+    "axeCoreUsed": true,
+    "checks": [
+      { "label": "public security", "result": "0 violations" },
+      { "label": "today dashboard", "result": "1 serious color-contrast violation type affecting 2 nodes" },
+      { "label": "new lead form", "result": "1 serious color-contrast violation type affecting 2 nodes" },
+      { "label": "claim overview", "result": "2 violation types: color-contrast serious; landmark-unique moderate" },
+      { "label": "admin workspaces", "result": "1 serious color-contrast violation type affecting 2 nodes" },
+      { "label": "keyboard tab sequence", "result": "Sidebar navigation order was reachable and predictable" },
+      { "label": "mobile public homepage", "result": "390px screenshot captured" }
+    ]
+  }
+}
