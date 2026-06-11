@@ -48,7 +48,7 @@ const sections: TrustSection[] = [
     ],
   },
   {
-    title: "Availability and liability placeholder",
+    title: "Availability and liability",
     paragraphs: [
       "AdjusterDesk aims to provide a reliable workspace, but no software service is perfect or always available. Liability, warranty, and dispute terms should be covered in the applicable customer agreement. Questions can be sent to hello@adjusterdesk.xyz.",
     ],

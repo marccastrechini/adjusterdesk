@@ -22,11 +22,11 @@ const sections: TrustSection[] = [
     ],
   },
   {
-    title: "Session and demo safety practices",
+    title: "Session and administrative safety practices",
     items: [
       "Signed session cookies are HTTP-only and same-site lax, with secure cookies in production.",
       "System-admin workspace switching uses a separate workspace override cookie.",
-      "Production and demo readiness hardening includes safeguards around demo reset and seed operations.",
+      "Production hardening includes administrative maintenance and data-management safeguards.",
       "Uploaded-file handling includes filename cleanup, size checks, path checks, and blocked executable-like extensions.",
     ],
   },
