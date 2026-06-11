@@ -2,8 +2,6 @@ import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/compon
 import { activationProgress, buildActivationChecklist } from "@/lib/activation";
 import { getActivationData } from "@/lib/queries";
 
-const demoResetCommand = "npm run demo:reset:local -- -ConfirmReset";
-
 export default async function StartPage() {
   const { firm, user, counts } = await getActivationData();
   const checklist = buildActivationChecklist(counts);
@@ -78,17 +76,7 @@ export default async function StartPage() {
           </Card>
         </Section>
 
-        <Section title="Demo reset">
-          <Card className="grid content-start gap-3">
-            <p className="text-sm leading-6 text-slate-600">
-              Local demo data can be reset for a clean walkthrough. The reset script creates a backup first unless you explicitly skip it.
-            </p>
-            <code className="block rounded-md bg-slate-950 px-3 py-2 text-sm text-white">{demoResetCommand}</code>
-            <p className="text-xs leading-5 text-slate-500">Use only for demo or training data, never real office data.</p>
-          </Card>
-        </Section>
-
-        <Section title="During demos">
+        <Section title="Office notes">
           <Card className="grid content-start gap-3">
             <p className="text-sm leading-6 text-slate-600">
               Capture anything confusing while it is fresh: missing fields, unclear wording, slow steps, or places where the office still reaches for a spreadsheet.

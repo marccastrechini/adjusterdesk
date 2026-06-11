@@ -28,7 +28,7 @@ export default async function FeedbackPage({ searchParams }: PageProps) {
     <>
       <PageHeader
         title="Feedback"
-        description="Capture notes from real demo and customer sessions while the workflow is fresh."
+        description="Share notes on what worked, what was confusing, or what the office still needs."
       />
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 

@@ -7,7 +7,7 @@ import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/compon
 const settingsCards = [
   {
     title: "Start checklist",
-    description: "Guided first-run setup for leads, claims, tasks, documents, templates, users, and demo reset.",
+    description: "Guided first-run setup for leads, claims, tasks, documents, templates, and users.",
     href: "/start",
     action: "Open start checklist",
   },
@@ -49,13 +49,11 @@ const settingsCards = [
   },
   {
     title: "Feedback",
-    description: "Capture demo and customer notes from the office while the workflow is fresh.",
+    description: "Share notes on what's working and what needs improvement in the daily office workflow.",
     href: "/feedback",
     action: "Open feedback",
   },
 ] as const;
-
-const demoResetCommand = "npm run demo:reset:local -- -ConfirmReset";
 
 export default async function SettingsPage() {
   const { firm, user, users, counts } = await getDemoReadinessData();
@@ -65,39 +63,6 @@ export default async function SettingsPage() {
   const roleLabels = Array.from(new Set(users.map((entry) => labelFromEnum(entry.role))));
   const includedUserLimit = resolveIncludedUserLimit(firm);
 
-  const readyForDemo = [
-    "Credentials sign-in and session auth",
-    "Lead intake",
-    "Claim files",
-    "Tasks and follow-ups",
-    "Documents, uploads, and downloads",
-    "Communications log",
-    "Money tracking",
-    "Reports",
-    "CSV import and export",
-    "Guided start checklist",
-    "User invites and password reset",
-    "Client status links and client uploads",
-    "Feedback capture",
-  ] as const;
-
-  const demoOnlyGaps = [
-    "OAuth or SSO sign-in",
-    "Firm switching across offices",
-    "External object storage",
-    "Backups and deployment configuration",
-    "Email and calendar integrations",
-    "Permissions beyond basic office scoping",
-  ] as const;
-
-  const recommendedBeforeRealFirms = [
-    "Set AUTH_SECRET on the deployment environment",
-    "Set up production deployment and repeatable backups",
-    "Move uploads to managed object storage",
-    "Define role-based permissions for office workflows",
-    "Add operations runbooks for data restore and incident response",
-  ] as const;
-
   return (
     <>
       <PageHeader title="Settings" description="Simple office defaults that reduce repeated setup work across leads and claims." />
@@ -105,7 +70,7 @@ export default async function SettingsPage() {
       <Card className="grid gap-3 border-slate-200 bg-white">
         <h2 className="text-base font-semibold text-slate-950">What to do here</h2>
         <p className="text-sm leading-6 text-slate-600">
-          Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review demo readiness before sharing with real clients.
+          Use Settings to keep your office setup steady: confirm who can sign in, keep templates current, and review office users before working with clients.
         </p>
         <p className="text-sm leading-6 text-slate-600">
           Current plan: {planLabel(firm.subscriptionPlan)} ({activeUsers.length} active of {includedUserLimit > 0 ? includedUserLimit : "custom"} included users)
@@ -117,7 +82,7 @@ export default async function SettingsPage() {
         </div>
       </Card>
 
-      <Section title="Demo readiness">
+      <Section title="Office overview">
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
           <p className="text-sm font-semibold text-teal-900">Office sign-in is active.</p>
           <div className="grid gap-1 text-sm leading-6 text-teal-900">
@@ -130,12 +95,6 @@ export default async function SettingsPage() {
               <Badge key={role} tone="teal">{role}</Badge>
             ))}
           </div>
-          <p className="text-sm leading-6 text-teal-900">
-            This app now uses first-party email and password sign-in with firm-scoped sessions.
-          </p>
-          <p className="text-sm leading-6 text-teal-900">
-            Some advanced setup items are still outside this demo pass, including external storage, email/calendar integrations, and production backup operations.
-          </p>
         </Card>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
@@ -146,64 +105,6 @@ export default async function SettingsPage() {
           <StatCard label="Users" value={users.length} detail={`${activeUsers.length} active`} />
           <StatCard label="Current role" value={labelFromEnum(user.role)} detail={user.name} />
         </div>
-
-        <div className="grid gap-4 xl:grid-cols-3">
-          <Card>
-            <h3 className="text-base font-semibold text-slate-950">Ready for demo</h3>
-            <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">
-              {readyForDemo.map((item) => (
-                <li key={item} className="flex items-start gap-2"><Badge tone="green">Ready</Badge><span>{item}</span></li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card>
-            <h3 className="text-base font-semibold text-slate-950">Demo-only and needs production work</h3>
-            <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">
-              {demoOnlyGaps.map((item) => (
-                <li key={item} className="flex items-start gap-2"><Badge tone="amber">Gap</Badge><span>{item}</span></li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card>
-            <h3 className="text-base font-semibold text-slate-950">Recommended before real firms</h3>
-            <ul className="mt-3 grid gap-2 text-sm leading-6 text-slate-700">
-              {recommendedBeforeRealFirms.map((item) => (
-                <li key={item} className="flex items-start gap-2"><Badge tone="blue">Next</Badge><span>{item}</span></li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-
-        <Card className="grid gap-3 border-sky-200 bg-sky-50">
-          <h3 className="text-base font-semibold text-slate-950">Before real deployment</h3>
-          <p className="text-sm leading-6 text-slate-700">Top checklist items for demo deployment readiness:</p>
-          <ul className="grid gap-2 text-sm leading-6 text-slate-700">
-            <li className="flex items-start gap-2"><Badge tone="blue">1</Badge><span>Set AUTH_SECRET and verify office sign-in in deployment</span></li>
-            <li className="flex items-start gap-2"><Badge tone="blue">2</Badge><span>Production database and backup/restore plan</span></li>
-            <li className="flex items-start gap-2"><Badge tone="blue">3</Badge><span>External file storage instead of local disk uploads</span></li>
-            <li className="flex items-start gap-2"><Badge tone="blue">4</Badge><span>Decide how user invites, account recovery, and inactive accounts will be handled</span></li>
-            <li className="flex items-start gap-2"><Badge tone="blue">5</Badge><span>Run build and smoke tests before release</span></li>
-          </ul>
-          <p className="text-xs leading-5 text-slate-600">See docs/DEPLOYMENT_CHECKLIST.md for the full practical deployment checklist.</p>
-        </Card>
-      </Section>
-
-      <Section title="Demo data and reset" description="Use this only for demo or training workspaces, not real office data.">
-        <Card className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <p className="text-sm font-semibold text-slate-950">Local demo reset is available.</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              The reset script backs up the local profile, reseeds sample leads, claims, documents, money records, templates, users, and clears feedback.
-            </p>
-            <code className="mt-3 block rounded-md bg-slate-950 px-3 py-2 text-sm text-white">{demoResetCommand}</code>
-          </div>
-          <div className="flex flex-wrap gap-2 md:justify-end">
-            <ButtonLink href="/start" variant="secondary">Open start checklist</ButtonLink>
-            <ButtonLink href="/settings/import" variant="secondary">Open CSV import</ButtonLink>
-          </div>
-        </Card>
       </Section>
 
       <Section title="Environment status">
@@ -213,7 +114,7 @@ export default async function SettingsPage() {
           </p>
           <dl className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             <div className="flex items-center gap-2">
-              <dt className="text-sm text-slate-600">Demo workspace mode</dt>
+              <dt className="text-sm text-slate-600">Workspace mode</dt>
               <dd><Badge tone={envStatus.demoWorkspaceMode === "Off" ? "green" : "amber"}>{envStatus.demoWorkspaceMode}</Badge></dd>
             </div>
             <div className="flex items-center gap-2">
