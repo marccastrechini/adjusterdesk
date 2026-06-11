@@ -112,7 +112,22 @@ export default async function MoneyPage({ searchParams }: PageProps) {
         description="Track settlement checks, fee invoices, and receivables across the office."
       />
 
+      <Card className="bg-slate-50">
+        <p className="text-sm font-semibold text-slate-950">How to use Money</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+          <li>Record the settlement amount or expected recovery from the claim money page.</li>
+          <li>Track the fee invoice amount once settlement and fee terms are known.</li>
+          <li>Record payment when the office receives the check or fee payment.</li>
+          <li>Use reports to monitor open balances and total collected amounts.</li>
+        </ol>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>
+          <ButtonLink href="/reports" variant="secondary">Open reports</ButtonLink>
+        </div>
+      </Card>
+
       <Card>
+        <p className="text-xs text-slate-500">Tip: most offices filter for unpaid or overdue invoices first, then record checks from each claim money page.</p>
         <form method="get" action="/money" className="grid gap-3 md:grid-cols-[1fr_220px_220px_auto]">
           <input name="q" defaultValue={q} className={inputClassName} placeholder="Search client, claim number, property, invoice, payee, check, or carrier" />
           <select name="status" defaultValue={status} className={selectClassName}>
@@ -150,7 +165,7 @@ export default async function MoneyPage({ searchParams }: PageProps) {
         {noMoneyRecords ? (
           <EmptyState
             title="No money records yet"
-            message="Record a settlement, create a fee invoice, or add a payment from a claim money page."
+            message="Start on a claim money page: record settlement or expected recovery, create the fee invoice, then record payment when the office is paid."
             actions={
               <>
                 <ButtonLink href="/claims" variant="secondary">Open claims</ButtonLink>

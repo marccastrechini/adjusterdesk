@@ -250,3 +250,24 @@ The UX harness changed only QA workspace data:
 - Verified admin QA user can access `/system` and `/system/workspaces`.
 
 No product behavior was changed during the study run.
+
+## 9. Follow-up Cleanup Applied
+
+Follow-up date: 2026-06-11  
+Follow-up evidence: `artifacts/ux-study/2026-06-11-1624/`
+
+What changed:
+
+- Added sparse-workspace first-use guidance on `/today` with direct actions to add a lead, add a claim, review tasks, and open templates/checklist.
+- Added plain-language Money workflow guidance on `/money` and `/claims/[id]/money` with a practical sequence: settlement/recovery -> invoice -> payment -> reports.
+- Added helper text around Money filters and no-records states to reduce first-use hesitation.
+
+P1 findings addressed:
+
+- UX-001 (Money workflow density): **Reduced**.
+- UX-002 (Today first-use clarity): **Reduced**.
+
+Resolution status:
+
+- Both P1 issues are reduced and are no longer blocking first outreach conversations.
+- Keep monitoring with moderated sessions to confirm long-term wording and sequence clarity.

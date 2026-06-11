@@ -179,6 +179,14 @@ export default async function TodayPage() {
   const waitingOnCarrierCount = data.waitingOnCarrierClaims.length;
   const overdueInvoiceCount = data.unpaidInvoices.filter((invoice) => invoice.status === "OVERDUE").length;
   const upcomingDeadlineCount = data.upcomingDeadlines.length;
+  const firstUseWorkspace =
+    data.activeClaimCount === 0 &&
+    data.leadFollowUpCount === 0 &&
+    data.overdueTaskCount === 0 &&
+    data.dueTodayTaskCount === 0 &&
+    data.upcomingTasks.length === 0 &&
+    data.requestedDocumentCount === 0 &&
+    data.unpaidInvoices.length === 0;
   const startActions: Array<{ href: string; label: string; detail: string; variant: "primary" | "secondary" }> = [];
 
   if (data.leadFollowUpCount > 0) {
@@ -224,6 +232,46 @@ export default async function TodayPage() {
         description="A plain-language office worklist for leads, claims, deadlines, missing documents, carrier follow-ups, and receivables."
         actions={<ButtonLink href="/start" variant="secondary">Start checklist</ButtonLink>}
       />
+
+      {firstUseWorkspace ? (
+        <Card className="bg-teal-50">
+          <p className="text-sm font-semibold text-slate-950">Set up your first day</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">
+            This page fills up as your office starts entering work. Begin with one lead and one claim, then use tasks and templates to keep every next step in view.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-md border border-teal-200 bg-white p-3">
+              <p className="text-sm font-medium text-slate-950">Add a lead</p>
+              <p className="mt-1 text-xs text-slate-600">Capture the first call, referral, or web lead.</p>
+              <div className="mt-3">
+                <ButtonLink href="/leads/new" variant="secondary">New lead</ButtonLink>
+              </div>
+            </div>
+            <div className="rounded-md border border-teal-200 bg-white p-3">
+              <p className="text-sm font-medium text-slate-950">Add a claim</p>
+              <p className="mt-1 text-xs text-slate-600">Open the claim file as soon as core details are known.</p>
+              <div className="mt-3">
+                <ButtonLink href="/claims/new" variant="secondary">New claim</ButtonLink>
+              </div>
+            </div>
+            <div className="rounded-md border border-teal-200 bg-white p-3">
+              <p className="text-sm font-medium text-slate-950">Review tasks</p>
+              <p className="mt-1 text-xs text-slate-600">Use tasks to schedule follow-ups and keep work moving.</p>
+              <div className="mt-3">
+                <ButtonLink href="/today#due-today" variant="secondary">Open tasks</ButtonLink>
+              </div>
+            </div>
+            <div className="rounded-md border border-teal-200 bg-white p-3">
+              <p className="text-sm font-medium text-slate-950">Open templates and checklists</p>
+              <p className="mt-1 text-xs text-slate-600">Use office checklists and templates to standardize next steps.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ButtonLink href="/start" variant="secondary">Checklist</ButtonLink>
+                <ButtonLink href="/settings/templates" variant="secondary">Templates</ButtonLink>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="bg-slate-50">
         <p className="text-sm font-semibold text-slate-950">Work the office in this order</p>
