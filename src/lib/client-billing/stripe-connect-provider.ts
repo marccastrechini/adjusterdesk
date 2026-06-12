@@ -197,12 +197,28 @@ const stripeConnectProvider: ClientBillingProvider = {
       throw new Error("Stripe customer could not be created.");
     }
 
+    const createdInvoice = await stripe.invoices.create(
+      {
+        customer: customerId,
+        collection_method: "send_invoice",
+        auto_advance: false,
+        days_until_due: invoice.dueAt ? Math.max(Math.ceil((new Date(invoice.dueAt).getTime() - Date.now()) / 86400000), 1) : 14,
+        metadata: {
+          firmId: firm.id,
+          invoiceId: invoice.id,
+          claimId: invoice.claimId,
+        },
+      },
+      account,
+    );
+
     const invoiceItems: Array<Promise<Stripe.Response<Stripe.InvoiceItem>>> = [];
 
     invoiceItems.push(
       stripe.invoiceItems.create(
         {
           customer: customerId,
+          invoice: createdInvoice.id,
           amount: invoice.feeAmountCents,
           currency: "usd",
           description: buildInvoiceLineDescription(invoice),
@@ -218,6 +234,7 @@ const stripeConnectProvider: ClientBillingProvider = {
         stripe.invoiceItems.create(
           {
             customer: customerId,
+            invoice: createdInvoice.id,
             amount: feeRecoveryCents,
             currency: "usd",
             description: firm.clientPaymentFeeLabel ?? "Payment processing fee recovery",
@@ -228,21 +245,6 @@ const stripeConnectProvider: ClientBillingProvider = {
     }
 
     await Promise.all(invoiceItems);
-
-    const createdInvoice = await stripe.invoices.create(
-      {
-        customer: customerId,
-        collection_method: "send_invoice",
-        auto_advance: false,
-        days_until_due: invoice.dueAt ? Math.max(Math.ceil((new Date(invoice.dueAt).getTime() - Date.now()) / 86400000), 1) : 14,
-        metadata: {
-          firmId: firm.id,
-          invoiceId: invoice.id,
-          claimId: invoice.claimId,
-        },
-      },
-      account,
-    );
 
     const finalized = await stripe.invoices.finalizeInvoice(createdInvoice.id, {}, account);
     const sent = await stripe.invoices.sendInvoice(finalized.id, {}, account);
