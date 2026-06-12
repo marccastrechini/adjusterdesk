@@ -74,13 +74,26 @@ Use Stripe test mode before production.
 1. Set the Stripe test secret key and Connect test webhook secret.
 2. Connect a test Stripe account from Settings -> Client Payments.
 3. Confirm the account reaches active/readable status before enabling client billing.
-4. Create a claim invoice and send a hosted payment request.
-5. Confirm the invoice link and PDF are stored on the internal invoice record.
-6. Pay the hosted invoice in Stripe test mode and confirm the internal invoice becomes paid.
-7. Verify the payment row is created or updated from the Stripe webhook.
-8. Verify manual payment entry still works for the same claim.
-9. If fee recovery is enabled, confirm it appears as a separate hosted invoice line item.
-10. Confirm webhook retries do not duplicate the internal paid invoice state.
+4. Confirm the Stripe Connect webhook endpoint is configured separately from SaaS billing at `/api/stripe/connect-webhook`.
+5. Create a claim invoice and send a hosted payment request.
+6. Confirm the invoice link and PDF are stored on the internal invoice record.
+7. Pay the hosted invoice in Stripe test mode and confirm the internal invoice becomes paid.
+8. Verify the payment row is created or updated from the Stripe Connect webhook.
+9. Verify manual payment entry still works for the same claim.
+10. If fee recovery is enabled, confirm it appears as a separate hosted invoice line item.
+11. Confirm webhook retries do not duplicate the internal paid invoice state.
+
+## Production Setup
+
+Before production use:
+
+1. Run `npm run db:generate`.
+2. Apply the schema with `npm run prod:schema:apply -- -ConfirmProductionSchema` for the local production profile, or use the deployment checklist's guarded `prisma db push` path for the real production database.
+3. Set `STRIPE_WEBHOOK_SECRET` for SaaS subscription billing.
+4. Set `STRIPE_CONNECT_WEBHOOK_SECRET` for the separate Stripe Connect client-billing endpoint.
+5. Configure the Connect webhook endpoint at `/api/stripe/connect-webhook`.
+6. Keep client billing disabled until the connected account is fully ready.
+7. Re-run the sandbox checklist against Stripe test mode before switching the firm to live keys.
 
 ## Notes
 

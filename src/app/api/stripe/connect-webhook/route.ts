@@ -1,12 +1,10 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { logStripeConfigIssue, stripeConfigured } from "@/lib/billing";
-import { processStripeSaasWebhookEvent } from "@/lib/billing-webhooks";
-import { requireStripeClient, requireStripeWebhookSecret } from "@/lib/stripe";
+import { processStripeConnectWebhookEvent } from "@/lib/billing-webhooks";
+import { hasStripeSecretKey, requireStripeClient, requireStripeConnectWebhookSecret } from "@/lib/stripe";
 
 export async function POST(request: Request) {
-  if (!stripeConfigured()) {
-    logStripeConfigIssue("POST /api/stripe/webhook");
+  if (!hasStripeSecretKey()) {
     return NextResponse.json({ error: "Stripe is not configured." }, { status: 503 });
   }
 
@@ -19,9 +17,9 @@ export async function POST(request: Request) {
 
   try {
     const stripe = requireStripeClient();
-    const webhookSecret = requireStripeWebhookSecret();
+    const webhookSecret = requireStripeConnectWebhookSecret();
     const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-    await processStripeSaasWebhookEvent(event);
+    await processStripeConnectWebhookEvent(event);
     return NextResponse.json({ received: true });
   } catch {
     return NextResponse.json({ error: "Invalid webhook payload." }, { status: 400 });

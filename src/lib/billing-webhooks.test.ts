@@ -302,14 +302,14 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
     } as never;
   }) as unknown) as typeof prisma.invoice.findFirst;
 
-  prisma.claim.findUnique = (async () => ({
+  prisma.claim.findUnique = ((async () => ({
     contactId: "contact_123",
     contact: {
       firstName: "Pat",
       lastName: "Client",
       company: null,
     },
-  })) as typeof prisma.claim.findUnique;
+  })) as unknown) as typeof prisma.claim.findUnique;
 
   prisma.$transaction = ((async (callback: (tx: unknown) => Promise<unknown>) => {
     const fakeTx = {

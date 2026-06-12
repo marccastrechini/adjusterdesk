@@ -481,3 +481,39 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       return;
   }
 }
+
+const saasWebhookEventTypes = new Set([
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "invoice.payment_failed",
+]);
+
+const clientBillingWebhookEventTypes = new Set([
+  "account.updated",
+  "invoice.finalized",
+  "invoice.sent",
+  "invoice.paid",
+  "invoice.voided",
+  "payment_intent.succeeded",
+  "payment_intent.payment_failed",
+  "charge.refunded",
+  "charge.dispute.created",
+]);
+
+export async function processStripeSaasWebhookEvent(event: Stripe.Event) {
+  if (!saasWebhookEventTypes.has(event.type)) {
+    return;
+  }
+
+  await processStripeWebhookEvent(event);
+}
+
+export async function processStripeConnectWebhookEvent(event: Stripe.Event) {
+  if (!clientBillingWebhookEventTypes.has(event.type)) {
+    return;
+  }
+
+  await processStripeWebhookEvent(event);
+}
