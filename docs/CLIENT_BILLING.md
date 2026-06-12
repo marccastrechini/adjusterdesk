@@ -95,6 +95,13 @@ Before production use:
 6. Keep client billing disabled until the connected account is fully ready.
 7. Re-run the sandbox checklist against Stripe test mode before switching the firm to live keys.
 
+## Environment Matrix
+
+- `.env.development.local` = local dev.
+- `.env.production.local` = local production / public `adjusterdesk.xyz` runner.
+- `.env.qa.local` = QA runner if used.
+- `*.example` = templates only, no secrets.
+
 ## Notes
 
 - Keep SaaS subscription billing unchanged.
