@@ -139,6 +139,16 @@ const stripeConnectProvider: ClientBillingProvider = {
           stripeConnectAccountId: account.id,
           clientBillingProvider: "STRIPE_CONNECT",
           clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
+          clientBillingEnabled: false,
+        },
+      });
+    } else {
+      await prisma.firm.update({
+        where: { id: firm.id },
+        data: {
+          clientBillingProvider: "STRIPE_CONNECT",
+          clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
+          clientBillingEnabled: false,
         },
       });
     }

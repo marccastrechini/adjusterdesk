@@ -6,7 +6,7 @@ import { ClientBillingConnectionStatus, ClientBillingProvider, InvoiceStatus } f
 import { getDemoContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
-import { createOrResumeClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
+import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
 
 function isCheckboxEnabled(value: FormDataEntryValue | null) {
   return value === "on" || value === "true" || value === "1";
@@ -24,7 +24,14 @@ function centsFromInput(value: FormDataEntryValue | null) {
 
 export async function startOrResumeClientBillingConnection() {
   const { firm } = await getDemoContext();
-  const result = await createOrResumeClientBillingConnection(firm);
+  let result: { url?: string | null } | null = null;
+
+  try {
+    result = await createOrResumeStripeConnectClientBillingConnection(firm);
+  } catch {
+    result = null;
+  }
+
   if (!result?.url) {
     redirect(withNotice("/settings/client-payments", "client-payment-request-unavailable"));
   }

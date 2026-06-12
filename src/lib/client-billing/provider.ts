@@ -13,6 +13,30 @@ function normalizeProvider(value: string | null | undefined): ClientBillingProvi
   return normalized === "stripe_connect" ? "stripe_connect" : "manual";
 }
 
+function envBool(value: string | undefined) {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+function parseEnabledProviders(raw: string | undefined) {
+  return new Set(
+    (raw ?? "")
+      .split(",")
+      .map((provider) => provider.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function stripeConnectClientPaymentsEnabled(env: NodeJS.ProcessEnv = process.env) {
+  const providersEnabled = parseEnabledProviders(env.CLIENT_BILLING_PROVIDERS_ENABLED);
+  const stripeConnectAllowed = providersEnabled.has("stripe_connect");
+  const connectToggleEnabled = envBool(env.STRIPE_CONNECT_CLIENT_PAYMENTS_ENABLED);
+  const stripeSecretKey = env.STRIPE_SECRET_KEY?.trim() ?? "";
+  const hasSupportedStripeSecret = /^sk_(test|live)_/.test(stripeSecretKey);
+
+  return stripeConnectAllowed && connectToggleEnabled && hasSupportedStripeSecret;
+}
+
 export function getClientBillingProviderName(firm: Firm): ClientBillingProviderName {
   return normalizeProvider(firm.clientBillingProvider);
 }
@@ -31,6 +55,18 @@ export function isClientBillingReady(firm: Firm) {
 
 export async function createOrResumeClientBillingConnection(firm: Firm) {
   return getClientBillingProvider(firm).createOrResumeConnection(firm);
+}
+
+export async function createOrResumeStripeConnectClientBillingConnection(
+  firm: Firm,
+  options?: { provider?: ClientBillingProvider; env?: NodeJS.ProcessEnv },
+) {
+  if (!stripeConnectClientPaymentsEnabled(options?.env)) {
+    return null;
+  }
+
+  const provider = options?.provider ?? providers.stripe_connect;
+  return provider.createOrResumeConnection(firm);
 }
 
 export async function refreshClientBillingConnectionStatus(firm: Firm) {
