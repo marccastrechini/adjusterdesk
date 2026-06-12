@@ -241,3 +241,131 @@ test("checkout.session.completed with invalid plan slug does not overwrite plan"
   assert.equal(payload.data.subscriptionPlan, undefined);
   assert.equal(payload.data.includedUserLimit, undefined);
 });
+
+test("account.updated refreshes client billing readiness", async () => {
+  let captured: unknown;
+  const originalUpdateMany = prisma.firm.updateMany;
+
+  prisma.firm.updateMany = (async (args: unknown) => {
+    captured = args;
+    return { count: 1 };
+  }) as typeof prisma.firm.updateMany;
+
+  try {
+    await processStripeWebhookEvent({
+      type: "account.updated",
+      data: {
+        object: {
+          id: "acct_123",
+          charges_enabled: true,
+          payouts_enabled: true,
+          details_submitted: true,
+        },
+      },
+    } as never);
+  } finally {
+    prisma.firm.updateMany = originalUpdateMany;
+  }
+
+  const payload = captured as { data: { stripeChargesEnabled: boolean; stripePayoutsEnabled: boolean; stripeDetailsSubmitted: boolean; clientBillingEnabled: boolean } };
+  assert.equal(payload.data.stripeChargesEnabled, true);
+  assert.equal(payload.data.stripePayoutsEnabled, true);
+  assert.equal(payload.data.stripeDetailsSubmitted, true);
+  assert.equal(payload.data.clientBillingEnabled, true);
+});
+
+test("invoice.paid marks invoice paid and creates a stripe payment", async () => {
+  let invoiceUpdateCalled = false;
+  let paymentCreateCalled = false;
+  let activityCreateCalled = false;
+  const originalInvoiceFindFirst = prisma.invoice.findFirst;
+  const originalClaimFindUnique = prisma.claim.findUnique;
+  const originalTransaction = prisma.$transaction;
+
+  prisma.invoice.findFirst = ((async (args: unknown) => {
+    const payload = args as { where: { OR: Array<Record<string, string>> } };
+    assert.equal(payload.where.OR.length > 0, true);
+    return {
+      id: "invoice_123",
+      firmId: "firm_123",
+      claimId: "claim_123",
+      invoiceNumber: "AD-1001",
+      feeAmountCents: 12500,
+      claim: {
+        contactId: "contact_123",
+        contact: {
+          firstName: "Pat",
+          lastName: "Client",
+          company: null,
+        },
+      },
+    } as never;
+  }) as unknown) as typeof prisma.invoice.findFirst;
+
+  prisma.claim.findUnique = (async () => ({
+    contactId: "contact_123",
+    contact: {
+      firstName: "Pat",
+      lastName: "Client",
+      company: null,
+    },
+  })) as typeof prisma.claim.findUnique;
+
+  prisma.$transaction = ((async (callback: (tx: unknown) => Promise<unknown>) => {
+    const fakeTx = {
+      invoice: {
+        update: async () => {
+          invoiceUpdateCalled = true;
+          return null;
+        },
+      },
+      payment: {
+        findFirst: async () => null,
+        update: async () => null,
+        create: async (args: unknown) => {
+          paymentCreateCalled = true;
+          const payload = args as { data: { source: string; amountCents: number; externalProvider: string } };
+          assert.equal(payload.data.source, "STRIPE");
+          assert.equal(payload.data.externalProvider, "stripe_connect");
+          assert.equal(payload.data.amountCents, 12500);
+          return null;
+        },
+      },
+      activity: {
+        create: async (args: unknown) => {
+          activityCreateCalled = true;
+          const payload = args as { data: { subject: string } };
+          assert.equal(payload.data.subject, "Invoice paid");
+          return null;
+        },
+      },
+    };
+
+    return callback(fakeTx as never);
+  }) as unknown) as typeof prisma.$transaction;
+
+  try {
+    await processStripeWebhookEvent({
+      type: "invoice.paid",
+      data: {
+        object: {
+          id: "in_123",
+          status: "paid",
+          amount_due: 12500,
+          amount_paid: 12500,
+          payment_intent: "pi_123",
+          charge: "ch_123",
+          customer: "cus_123",
+        },
+      },
+    } as never);
+  } finally {
+    prisma.invoice.findFirst = originalInvoiceFindFirst;
+    prisma.claim.findUnique = originalClaimFindUnique;
+    prisma.$transaction = originalTransaction;
+  }
+
+  assert.equal(invoiceUpdateCalled, true);
+  assert.equal(paymentCreateCalled, true);
+  assert.equal(activityCreateCalled, true);
+});

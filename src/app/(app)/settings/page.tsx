@@ -36,6 +36,12 @@ const settingsCards = [
     action: "Open billing",
   },
   {
+    title: "Client Payments",
+    description: "Connect Stripe for hosted client invoices and manage fee recovery settings.",
+    href: "/settings/client-payments",
+    action: "Open client payments",
+  },
+  {
     title: "CSV import",
     description: "Bring a simple lead or claim spreadsheet into the office workspace.",
     href: "/settings/import",

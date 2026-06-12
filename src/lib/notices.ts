@@ -55,6 +55,34 @@ export const noticeMessages = {
     title: "Invoice saved",
     message: "The fee invoice is now tracked here and on the office money page.",
   },
+  "client-billing-connection-started": {
+    title: "Stripe Connect onboarding started",
+    message: "The Stripe onboarding link is ready. Finish setup so client billing can be enabled.",
+  },
+  "client-billing-status-refreshed": {
+    title: "Client billing status refreshed",
+    message: "The workspace billing connection status was updated.",
+  },
+  "client-billing-fee-updated": {
+    title: "Fee recovery settings saved",
+    message: "The client payment fee recovery settings were updated.",
+  },
+  "client-payment-request-sent": {
+    title: "Payment request sent",
+    message: "The hosted invoice link was created and can now be shared with the client.",
+  },
+  "client-payment-request-unavailable": {
+    title: "Client billing not available",
+    message: "Connect Stripe before sending hosted payment requests.",
+  },
+  "client-payment-request-already-sent": {
+    title: "Payment request already sent",
+    message: "This invoice already has an external payment request and its link is available below.",
+  },
+  "client-payment-fee-ack-required": {
+    title: "Fee recovery acknowledgment required",
+    message: "Review the fee recovery notice and acknowledge the responsibility before enabling it.",
+  },
   "client-status-updated": {
     title: "Client status updated",
     message: "The client-facing summary and next step are now reflected in the preview.",

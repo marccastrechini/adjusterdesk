@@ -1,8 +1,10 @@
 import { ClaimTabs } from "@/components/claim-tabs";
 import { ActionForm, FieldError } from "@/components/action-form";
+import { CopyTextButton } from "@/components/copy-text-button";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createInvoiceWithState, createSettlementRoundWithState, recordPaymentWithState } from "@/lib/actions";
 import { formatDate, formatMoney, formatPercentFromBasisPoints, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
+import { sendClientPaymentRequest } from "@/lib/client-billing/actions";
 import { getNoticeMessage } from "@/lib/notices";
 import { invoiceStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
@@ -26,7 +28,7 @@ function firstValue(value: string | string[] | undefined) {
 export default async function ClaimMoneyPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const query = await searchParams;
-  const { claim } = await getClaim(id);
+  const { firm, claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
   const returnPath = `/claims/${claim.id}/money`;
   const action = firstValue(query.action);
@@ -113,6 +115,34 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                         <p>Payment received {invoice.amountPaidCents > 0 ? formatMoney(invoice.amountPaidCents) : "No payment yet"}</p>
                         <p>Open balance {formatMoney(invoiceAmountDue(invoice))}</p>
                       </div>
+                    </div>
+                    <div className="mt-4 grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-slate-950">Provider</p>
+                        <Badge tone={invoice.clientBillingProvider === "STRIPE_CONNECT" ? "blue" : "slate"}>{invoice.clientBillingProvider ?? firm.clientBillingProvider}</Badge>
+                        {invoice.externalInvoiceStatus ? <Badge tone="amber">{labelFromEnum(invoice.externalInvoiceStatus)}</Badge> : <Badge tone="slate">Not sent</Badge>}
+                      </div>
+                      <p>External status: {invoice.externalInvoiceStatus ?? "Not sent"}</p>
+                      <p>Last synced: {invoice.externalSyncedAt ? formatDate(invoice.externalSyncedAt) : "Not synced"}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {invoice.externalHostedInvoiceUrl ? (
+                          <a href={invoice.externalHostedInvoiceUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            Open payment link
+                          </a>
+                        ) : null}
+                        {invoice.externalHostedInvoiceUrl ? <CopyTextButton text={invoice.externalHostedInvoiceUrl} label="Copy payment link" /> : null}
+                        {invoice.externalInvoicePdfUrl ? (
+                          <a href={invoice.externalInvoicePdfUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            Open PDF
+                          </a>
+                        ) : null}
+                      </div>
+                      {firm.clientBillingProvider === "STRIPE_CONNECT" && firm.clientBillingEnabled && !invoice.externalInvoiceId ? (
+                        <form action={sendClientPaymentRequest} className="pt-1">
+                          <input type="hidden" name="invoiceId" value={invoice.id} />
+                          <SubmitButton>Send payment request</SubmitButton>
+                        </form>
+                      ) : null}
                     </div>
                   </Card>
                 ))}

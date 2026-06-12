@@ -115,6 +115,25 @@ enum SubscriptionStatus {
   MANUAL
 }
 
+enum ClientBillingProvider {
+  MANUAL
+  STRIPE_CONNECT
+}
+
+enum ClientPaymentSource {
+  MANUAL
+  STRIPE
+  FUTURE_EXTERNAL
+}
+
+enum ClientBillingConnectionStatus {
+  NOT_STARTED
+  ONBOARDING
+  ACTIVE
+  RESTRICTED
+  DISABLED
+}
+
 enum SignupIntentStatus {
   PENDING
   CHECKOUT_COMPLETED
@@ -137,6 +156,18 @@ model Firm {
   billingSubscriptionId String?
   billingPriceId     String?
   billingCurrentPeriodEnd DateTime?
+  clientBillingProvider ClientBillingProvider @default(MANUAL)
+  clientBillingConnectionStatus ClientBillingConnectionStatus @default(NOT_STARTED)
+  clientBillingEnabled Boolean @default(false)
+  stripeConnectAccountId String?
+  stripeChargesEnabled Boolean @default(false)
+  stripePayoutsEnabled Boolean @default(false)
+  stripeDetailsSubmitted Boolean @default(false)
+  clientPaymentFeeEnabled Boolean @default(false)
+  clientPaymentFeeLabel String?
+  clientPaymentFeeBasisPoints Int?
+  clientPaymentFeeFixedCents Int?
+  clientPaymentFeeAcknowledgedAt DateTime?
   signupSource       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -253,6 +284,9 @@ model Contact {
   phone     String?
   company   String?
   notes     String?
+  stripeCustomerId String?
+  externalBillingCustomerId String?
+  externalBillingProvider String?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -502,11 +536,16 @@ model Payment {
   firmId      String
   claimId     String
   invoiceId   String?
+  source      ClientPaymentSource @default(MANUAL)
   amountCents Int
   paidAt      DateTime?
   checkNumber String?
   payee       String
   notes       String?
+  externalPaymentId String?
+  externalChargeId String?
+  externalBalanceTransactionId String?
+  externalProvider String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -539,6 +578,7 @@ model Invoice {
   firmId                   String
   claimId                  String
   feeRuleId                String?
+  clientBillingProvider    ClientBillingProvider?
   invoiceNumber            String
   status                   InvoiceStatus @default(DRAFT)
   settlementAmountCents    Int
@@ -549,6 +589,15 @@ model Invoice {
   dueAt                    DateTime?
   paidAt                   DateTime?
   notes                    String?
+  externalInvoiceId        String?
+  externalInvoiceStatus    String?
+  externalHostedInvoiceUrl String?
+  externalInvoicePdfUrl    String?
+  externalPaymentIntentId  String?
+  externalAmountDueCents   Int?
+  externalAmountPaidCents  Int?
+  externalSyncedAt         DateTime?
+  sentToClientAt           DateTime?
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
 

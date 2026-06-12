@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { SubscriptionStatus } from "@/generated/prisma/client";
+import { ActivityType, ClientBillingConnectionStatus, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
@@ -57,6 +57,169 @@ async function updateFirmBySubscriptionOrCustomer(params: {
 
 function checkoutPaymentSettled(paymentStatus: string | null | undefined) {
   return paymentStatus === "paid" || paymentStatus === "no_payment_required";
+}
+
+async function findClientInvoiceByStripeRefs(params: {
+  invoiceId?: string | null;
+  paymentIntentId?: string | null;
+}) {
+  if (!params.invoiceId && !params.paymentIntentId) {
+    return null;
+  }
+
+  return prisma.invoice.findFirst({
+    where: {
+      OR: [
+        ...(params.invoiceId ? [{ externalInvoiceId: params.invoiceId }] : []),
+        ...(params.paymentIntentId ? [{ externalPaymentIntentId: params.paymentIntentId }] : []),
+      ],
+    },
+    include: { claim: { include: { contact: true } } },
+  });
+}
+
+async function recordClientBillingActivity(invoice: Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>, subject: string, body: string) {
+  if (!invoice) {
+    return;
+  }
+
+  const claim = await prisma.claim.findUnique({
+    where: { id: invoice.claimId },
+    select: { contactId: true },
+  });
+
+  if (!claim) {
+    return;
+  }
+
+  await prisma.activity.create({
+    data: {
+      firmId: invoice.firmId,
+      claimId: invoice.claimId,
+      contactId: claim.contactId,
+      type: ActivityType.EMAIL,
+      subject,
+      body,
+    },
+  });
+}
+
+async function syncInvoicePaid(invoice: Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>, stripeInvoice: Stripe.Invoice) {
+  if (!invoice) {
+    return;
+  }
+
+  const invoiceRecord = stripeInvoice as Stripe.Invoice & {
+    payment_intent?: string | Stripe.PaymentIntent | null;
+    charge?: string | Stripe.Charge | null;
+  };
+  const paymentIntentId = typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null;
+  const chargeId = typeof invoiceRecord.charge === "string" ? invoiceRecord.charge : invoiceRecord.charge?.id ?? null;
+  const amountPaidCents = stripeInvoice.amount_paid ?? stripeInvoice.amount_due ?? invoice.feeAmountCents;
+
+  const claim = await prisma.claim.findUnique({
+    where: { id: invoice.claimId },
+    include: { contact: true },
+  });
+
+  if (!claim) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: InvoiceStatus.PAID,
+        paidAt: new Date(),
+        amountPaidCents,
+        externalInvoiceStatus: stripeInvoice.status ?? undefined,
+        externalHostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? undefined,
+        externalInvoicePdfUrl: stripeInvoice.invoice_pdf ?? undefined,
+        externalPaymentIntentId: paymentIntentId ?? undefined,
+        externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
+        externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
+        externalSyncedAt: new Date(),
+      },
+    });
+
+    const existingPayment = paymentIntentId
+      ? await tx.payment.findFirst({
+          where: {
+            firmId: invoice.firmId,
+            claimId: invoice.claimId,
+            invoiceId: invoice.id,
+            externalPaymentId: paymentIntentId,
+          },
+        })
+      : null;
+
+    if (existingPayment) {
+      await tx.payment.update({
+        where: { id: existingPayment.id },
+        data: {
+          source: ClientPaymentSource.STRIPE,
+          amountCents: amountPaidCents,
+          paidAt: new Date(),
+          externalPaymentId: paymentIntentId ?? undefined,
+          externalChargeId: chargeId ?? undefined,
+          externalProvider: "stripe_connect",
+        },
+      });
+    } else {
+      await tx.payment.create({
+        data: {
+          firmId: invoice.firmId,
+          claimId: invoice.claimId,
+          invoiceId: invoice.id,
+          source: ClientPaymentSource.STRIPE,
+          amountCents: amountPaidCents,
+          paidAt: new Date(),
+          payee: claim.contact.company ?? `${claim.contact.firstName} ${claim.contact.lastName}`,
+          notes: `Recorded from Stripe invoice ${stripeInvoice.id}.`,
+          externalPaymentId: paymentIntentId ?? undefined,
+          externalChargeId: chargeId ?? undefined,
+          externalBalanceTransactionId: undefined,
+          externalProvider: "stripe_connect",
+        },
+      });
+    }
+
+    await tx.activity.create({
+      data: {
+        firmId: invoice.firmId,
+        claimId: invoice.claimId,
+        contactId: claim.contactId,
+        type: ActivityType.EMAIL,
+        subject: "Invoice paid",
+        body: `Invoice ${invoice.invoiceNumber} was marked paid by Stripe.`,
+      },
+    });
+  });
+}
+
+async function syncInvoiceSent(invoice: Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>, stripeInvoice: Stripe.Invoice) {
+  if (!invoice) {
+    return;
+  }
+
+  const invoiceRecord = stripeInvoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      status: InvoiceStatus.SENT,
+      sentToClientAt: invoice.sentToClientAt ?? new Date(),
+      externalInvoiceStatus: stripeInvoice.status ?? undefined,
+      externalHostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? undefined,
+      externalInvoicePdfUrl: stripeInvoice.invoice_pdf ?? undefined,
+      externalPaymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? undefined,
+      externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
+      externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
+      externalSyncedAt: new Date(),
+    },
+  });
+
 }
 
 export async function processStripeWebhookEvent(event: Stripe.Event) {
@@ -174,6 +337,142 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
           subscriptionStatus: SubscriptionStatus.PAST_DUE,
         },
       });
+
+      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        invoiceId: invoice.id,
+        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+      });
+
+      await recordClientBillingActivity(clientInvoice, "Invoice payment failed", `Stripe reported a payment failure for invoice ${clientInvoice?.invoiceNumber ?? invoice.id}.`);
+
+      return;
+    }
+
+    case "account.updated": {
+      const account = event.data.object as Stripe.Account;
+      const chargesEnabled = Boolean(account.charges_enabled);
+      const payoutsEnabled = Boolean(account.payouts_enabled);
+      const detailsSubmitted = Boolean(account.details_submitted);
+      const active = chargesEnabled && payoutsEnabled && detailsSubmitted;
+
+      await prisma.firm.updateMany({
+        where: { stripeConnectAccountId: account.id },
+        data: {
+          stripeChargesEnabled: chargesEnabled,
+          stripePayoutsEnabled: payoutsEnabled,
+          stripeDetailsSubmitted: detailsSubmitted,
+          clientBillingConnectionStatus: active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
+          clientBillingEnabled: active,
+        },
+      });
+
+      return;
+    }
+
+    case "invoice.finalized":
+    case "invoice.sent": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        invoiceId: invoice.id,
+        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+      });
+
+      await syncInvoiceSent(clientInvoice, invoice);
+
+      if (event.type === "invoice.sent") {
+        await recordClientBillingActivity(clientInvoice, "Invoice sent to client", `Hosted invoice ${clientInvoice?.invoiceNumber ?? invoice.id} was sent through Stripe.`);
+      }
+      return;
+    }
+
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        invoiceId: invoice.id,
+        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+      });
+
+      await syncInvoicePaid(clientInvoice, invoice);
+      return;
+    }
+
+    case "invoice.voided": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        invoiceId: invoice.id,
+        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+      });
+
+      if (clientInvoice) {
+        await prisma.invoice.update({
+          where: { id: clientInvoice.id },
+          data: {
+            status: InvoiceStatus.WRITTEN_OFF,
+            externalInvoiceStatus: invoice.status ?? undefined,
+            externalSyncedAt: new Date(),
+          },
+        });
+
+        await recordClientBillingActivity(clientInvoice, "Invoice voided", `Stripe voided invoice ${clientInvoice.invoiceNumber}.`);
+      }
+
+      return;
+    }
+
+    case "payment_intent.succeeded":
+    case "payment_intent.payment_failed": {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string | Stripe.Invoice | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        paymentIntentId: paymentIntent.id,
+        invoiceId: typeof paymentIntent.invoice === "string" ? paymentIntent.invoice : paymentIntent.invoice?.id ?? null,
+      });
+
+      if (clientInvoice) {
+        await prisma.invoice.update({
+          where: { id: clientInvoice.id },
+          data: {
+            externalPaymentIntentId: paymentIntent.id,
+            externalSyncedAt: new Date(),
+          },
+        });
+
+        if (event.type === "payment_intent.succeeded") {
+          await recordClientBillingActivity(clientInvoice, "Payment received", `Stripe payment intent ${paymentIntent.id} succeeded.`);
+        } else {
+          await recordClientBillingActivity(clientInvoice, "Payment failed", `Stripe payment intent ${paymentIntent.id} failed.`);
+        }
+      }
+
+      return;
+    }
+
+    case "charge.refunded":
+    case "charge.dispute.created": {
+      const charge = event.data.object as Stripe.Charge & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const clientInvoice = await findClientInvoiceByStripeRefs({
+        paymentIntentId: typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id ?? null,
+      });
+
+      if (clientInvoice) {
+        await prisma.invoice.update({
+          where: { id: clientInvoice.id },
+          data: {
+            externalSyncedAt: new Date(),
+          },
+        });
+
+        await recordClientBillingActivity(
+          clientInvoice,
+          event.type === "charge.refunded" ? "Charge refunded" : "Charge dispute created",
+          event.type === "charge.refunded"
+            ? `Stripe reported a refund for charge ${charge.id}.`
+            : `Stripe reported a dispute for charge ${charge.id}.`,
+        );
+      }
 
       return;
     }
