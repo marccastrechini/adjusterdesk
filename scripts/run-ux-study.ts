@@ -440,6 +440,7 @@ async function main() {
     await fill(page.locator('input[name="phone"]'), "(813) 555-0110", summary.counters);
     await fill(page.locator('input[name="address1"]'), "240 Palm Claim Avenue", summary.counters);
     await fill(page.locator('input[name="city"]'), "Tampa", summary.counters);
+    await page.locator('select[name="state"]').selectOption("FL");
     await fill(page.locator('input[name="postalCode"]'), "33602", summary.counters);
     await fill(page.locator('input[name="lossType"]'), "Kitchen water damage", summary.counters);
     await fill(page.locator('input[name="dateOfLoss"]'), dateInput(-3), summary.counters);

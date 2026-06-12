@@ -36,6 +36,7 @@ async function createLead(page: Page, suffix: string) {
   await page.locator('input[name="phone"]').fill("(813) 555-0400");
   await page.locator('input[name="address1"]').fill(`${suffix.slice(-4)} Cypress Smoke Lane`);
   await page.locator('input[name="city"]').fill("Tampa");
+  await page.locator('select[name="state"]').selectOption("FL");
   await page.locator('input[name="postalCode"]').fill("33602");
   await page.locator('input[name="lossType"]').fill("Kitchen water damage");
   await page.locator('input[name="dateOfLoss"]').fill(dateInput(-4));
