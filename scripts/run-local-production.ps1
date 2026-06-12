@@ -9,6 +9,21 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $helperPath = Join-Path $PSScriptRoot "local-runtime.ps1"
 . $helperPath
 
+$logDirectory = Join-Path $repoRoot "logs"
+if (-not (Test-Path $logDirectory -PathType Container)) {
+  New-Item -ItemType Directory -Path $logDirectory | Out-Null
+}
+
+$logFilePath = Join-Path $logDirectory "local-production-live.log"
+$transcriptStarted = $false
+try {
+  Start-Transcript -Path $logFilePath -Append | Out-Null
+  $transcriptStarted = $true
+}
+catch {
+  Write-Warning "Could not start transcript logging at $logFilePath"
+}
+
 $config = Get-LocalRuntimeConfig -Profile "production" -RepoRoot $repoRoot
 Set-LocalRuntimeEnvironment -Config $config | Out-Null
 Assert-LocalRuntimeSafety -Config $config
@@ -23,9 +38,9 @@ Write-LocalRuntimeSummary -Config $config -Heading "Starting AdjusterDesk local 
 Write-Output "Repo: $repoRoot"
 Write-Output "Binding: http://${BindHost}:$Port"
 Write-Output "NODE_ENV=$($env:NODE_ENV)"
+Write-Output "Runtime log: $logFilePath"
 Write-Output ""
-Write-Output "Tip: run this script through Tee-Object if you want a rolling log file."
-Write-Output "Example: powershell -ExecutionPolicy Bypass -File scripts/run-local-production.ps1 *>&1 | Tee-Object logs/local-production.log"
+Write-Output "Transcript logging is enabled and appends to the runtime log file."
 Write-Output ""
 
 Push-Location $repoRoot
@@ -40,4 +55,8 @@ try {
 }
 finally {
   Pop-Location
+
+  if ($transcriptStarted) {
+    Stop-Transcript | Out-Null
+  }
 }

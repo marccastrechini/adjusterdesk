@@ -49,6 +49,10 @@ If you want to start the built app without Task Scheduler, run:
 npm run prod:run:local
 ```
 
+The runtime now always writes an appended transcript log to:
+
+- `logs/local-production-live.log`
+
 ## Deploy Or Update Local Production
 
 From `C:\Projects\adjusterdesk`:
@@ -88,6 +92,7 @@ Task details:
 - Trigger: user logon
 - Action: run [scripts/run-local-production.ps1](../scripts/run-local-production.ps1)
 - Runtime bind: `127.0.0.1:3000`
+- Always-on runtime log: `logs/local-production-live.log`
 
 ## Start, Stop, And Check Status
 

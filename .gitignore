@@ -61,6 +61,7 @@ yarn-error.log*
 /storage/uploads-production/
 /backups/
 /artifacts/ux-study/
+/logs/*.log
 
 # vercel
 .vercel
