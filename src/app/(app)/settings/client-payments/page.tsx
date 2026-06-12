@@ -2,12 +2,13 @@ import { Badge, ButtonLink, Card, Field, PageHeader, Section, SubmitButton, inpu
 import { getDemoContext } from "@/lib/app-context";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { startOrResumeClientBillingConnection, refreshClientBillingStatus, saveClientPaymentFeeSettings } from "@/lib/client-billing/actions";
+import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 
 export default async function ClientPaymentsSettingsPage() {
   const { firm } = await getDemoContext();
   const providerLabel = labelFromEnum(firm.clientBillingProvider);
   const connectionStatusLabel = labelFromEnum(firm.clientBillingConnectionStatus);
-  const connectActionLabel = firm.clientBillingProvider === "STRIPE_CONNECT" && firm.stripeConnectAccountId ? "Resume onboarding" : "Connect Stripe";
+  const connectActionLabel = getClientPaymentsPrimaryActionLabel(firm);
 
   return (
     <>
@@ -37,9 +38,11 @@ export default async function ClientPaymentsSettingsPage() {
           <p className="text-sm text-slate-700">Payouts enabled: {firm.stripePayoutsEnabled ? "Yes" : "No"}</p>
           <p className="text-sm text-slate-700">Details submitted: {firm.stripeDetailsSubmitted ? "Yes" : "No"}</p>
           <div className="flex flex-wrap gap-2 pt-2">
-            <form action={startOrResumeClientBillingConnection}>
-              <SubmitButton>{connectActionLabel}</SubmitButton>
-            </form>
+            {connectActionLabel ? (
+              <form action={startOrResumeClientBillingConnection}>
+                <SubmitButton>{connectActionLabel}</SubmitButton>
+              </form>
+            ) : null}
             <form action={refreshClientBillingStatus}>
               <SubmitButton variant="secondary">Refresh status</SubmitButton>
             </form>

@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { createManualClientBillingProvider } from "@/lib/client-billing/manual-provider";
 import { calculateClientPaymentFeeRecoveryCents } from "@/lib/client-billing/fee-recovery";
 import { createOrResumeStripeConnectClientBillingConnection, getClientBillingProviderName, stripeConnectClientPaymentsEnabled } from "@/lib/client-billing/provider";
+import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 
 test("client billing defaults to manual provider", () => {
   const providerName = getClientBillingProviderName({ clientBillingProvider: "MANUAL" } as never);
@@ -226,4 +227,37 @@ test("manual provider keeps external invoice fields unchanged and does not gener
   assert.equal(result.pdfUrl, null);
   assert.equal(result.status, "manual");
   assert.equal(result.syncedAt, null);
+});
+
+test("client payments hides resume onboarding when Stripe Connect is fully active", () => {
+  const activeFirm = {
+    clientBillingProvider: "STRIPE_CONNECT",
+    stripeConnectAccountId: "acct_123active",
+    clientBillingEnabled: true,
+    stripeChargesEnabled: true,
+    stripePayoutsEnabled: true,
+    stripeDetailsSubmitted: true,
+  } as never;
+
+  const restrictedFirm = {
+    clientBillingProvider: "STRIPE_CONNECT",
+    stripeConnectAccountId: "acct_123resume",
+    clientBillingEnabled: false,
+    stripeChargesEnabled: false,
+    stripePayoutsEnabled: false,
+    stripeDetailsSubmitted: false,
+  } as never;
+
+  const manualFirm = {
+    clientBillingProvider: "MANUAL",
+    stripeConnectAccountId: null,
+    clientBillingEnabled: false,
+    stripeChargesEnabled: false,
+    stripePayoutsEnabled: false,
+    stripeDetailsSubmitted: false,
+  } as never;
+
+  assert.equal(getClientPaymentsPrimaryActionLabel(activeFirm), null);
+  assert.equal(getClientPaymentsPrimaryActionLabel(restrictedFirm), "Resume onboarding");
+  assert.equal(getClientPaymentsPrimaryActionLabel(manualFirm), "Connect Stripe");
 });
