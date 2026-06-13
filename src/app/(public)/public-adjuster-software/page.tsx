@@ -133,7 +133,7 @@ export default function PublicAdjusterSoftwarePage() {
                 <h3 className="text-base font-semibold text-slate-950">Start your free trial</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">Create a workspace and explore AdjusterDesk with demo data. No credit card required for 14 days.</p>
                 <div className="mt-4">
-                  <PublicButtonLink href="/signup" variant="primary">
+                  <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
                     Start Free Trial
                   </PublicButtonLink>
                 </div>

@@ -1,5 +1,6 @@
 import { Download, Zap } from "lucide-react";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { TrackedDownloadLink } from "@/components/tracked-download-link";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -75,14 +76,14 @@ export default function FreeClaimTrackerPage() {
               ))}
             </ul>
             <div className="mt-6">
-              <a
+              <TrackedDownloadLink
                 href="/downloads/public-adjuster-claim-tracker.csv"
                 download="public-adjuster-claim-tracker.csv"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
               >
                 <Download className="h-4 w-4" aria-hidden />
                 Download Tracker (CSV)
-              </a>
+              </TrackedDownloadLink>
             </div>
           </div>
 
@@ -119,7 +120,7 @@ export default function FreeClaimTrackerPage() {
             <h3 className="text-base font-semibold text-slate-950">Start a free trial</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">Move your tracker into AdjusterDesk and explore how it handles follow-ups, client updates, payments, and fees. 14-day free trial, no credit card required.</p>
             <div className="mt-4">
-              <PublicButtonLink href="/signup" variant="primary">
+              <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
                 Start Free Trial
               </PublicButtonLink>
             </div>

@@ -15,6 +15,8 @@ import {
   Upload,
   WalletCards,
 } from "lucide-react";
+import { TrackedLink } from "@/components/tracked-link";
+import type { CTAEventName } from "@/lib/analytics";
 import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 
@@ -94,25 +96,32 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
 
           <nav aria-label="Public pages" className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-slate-600">
             {publicNavItems.map((item) => (
-              <Link key={item.href} href={item.href} className="hover:text-teal-800">
-                {item.label}
-              </Link>
+              item.href === "/pricing" ? (
+                <TrackedLink key={item.href} href={item.href} eventName="pricing_click" className="hover:text-teal-800">
+                  {item.label}
+                </TrackedLink>
+              ) : (
+                <Link key={item.href} href={item.href} className="hover:text-teal-800">
+                  {item.label}
+                </Link>
+              )
             ))}
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
-            <PublicButtonLink href={startHref} variant="primary">
+            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
               Talk to us
             </PublicButtonLink>
-            <Link
+            <TrackedLink
               href="/login"
+              eventName="login_click"
               className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-700 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition hover:bg-teal-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
             >
               Log in
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </header>
@@ -132,7 +141,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
               A simple workspace for small public adjusting offices to keep claims, clients, documents, follow-ups, payments, fees, and invoices together.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+              Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -153,16 +162,52 @@ function FooterLinks({ title, items }: { title: string; items: Array<{ href: str
       <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
       <div className="mt-3 grid gap-2 text-sm text-slate-600">
         {items.map((item) => (
-          <Link key={item.href} href={item.href} className="hover:text-teal-800">
-            {item.label}
-          </Link>
+          item.href === "/pricing" ? (
+            <TrackedLink key={item.href} href={item.href} eventName="pricing_click" className="hover:text-teal-800">
+              {item.label}
+            </TrackedLink>
+          ) : item.href === "/login" ? (
+            <TrackedLink key={item.href} href={item.href} eventName="login_click" className="hover:text-teal-800">
+              {item.label}
+            </TrackedLink>
+          ) : (
+            <Link key={item.href} href={item.href} className="hover:text-teal-800">
+              {item.label}
+            </Link>
+          )
         ))}
       </div>
     </div>
   );
 }
 
-export function PublicButtonLink({ href, children, variant = "primary" }: { href: string; children: ReactNode; variant?: "primary" | "secondary" }) {
+export function PublicButtonLink({
+  href,
+  children,
+  variant = "primary",
+  eventName,
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: "primary" | "secondary";
+  eventName?: CTAEventName;
+}) {
+  if (eventName) {
+    return (
+      <TrackedLink
+        href={href}
+        eventName={eventName}
+        className={cn(
+          "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2",
+          variant === "primary" ? "bg-teal-700 text-white hover:bg-teal-800" : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+        )}
+      >
+        {children}
+        {variant === "primary" ? <ArrowRight className="h-4 w-4" aria-hidden /> : null}
+      </TrackedLink>
+    );
+  }
+
   return (
     <Link
       href={href}
@@ -186,7 +231,7 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
           <h1 className="mt-3 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <PublicButtonLink href={startHref} variant="primary">
+            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
@@ -194,7 +239,7 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Start your free trial now. No credit card required. Subscribe from Billing when you are ready. Already using AdjusterDesk? <Link href="/login" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</Link>
+            Start your free trial now. No credit card required. Subscribe from Billing when you are ready. Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
           </p>
         </div>
         {children ? <div className="mt-10">{children}</div> : null}
@@ -279,7 +324,7 @@ export function CtaBand({ title, description }: { title: string; description: st
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">{description}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3 sm:mt-0">
-            <PublicButtonLink href={startHref} variant="primary">
+            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
