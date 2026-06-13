@@ -1,4 +1,4 @@
-import { CtaBand, FeatureGrid, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
+import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -34,10 +34,33 @@ export default function HomePage() {
       <PublicHero
         eyebrow="Simple public adjusting office workspace"
         title="AdjusterDesk"
-        description="Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices in one practical place for a solo or small public adjusting office."
+        description="Stop running your adjusting business out of spreadsheets, email, and memory. Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices in one practical place for a solo or small public adjusting office."
       >
         <WorkspacePreview />
       </PublicHero>
+
+      <PublicSection title="Start with the path that fits your office" tone="white">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">Need software for active claims?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">See how AdjusterDesk helps small offices run the first 10-50 active claims without spreadsheet chaos.</p>
+            <div className="mt-4">
+              <PublicButtonLink href="/public-adjuster-software" variant="secondary">
+                View Public Adjuster Software
+              </PublicButtonLink>
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">Still in spreadsheets?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Start with a clean free claim tracker and move to AdjusterDesk when your workflow gets messy.</p>
+            <div className="mt-4">
+              <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
+                Get Free Claim Tracker
+              </PublicButtonLink>
+            </div>
+          </div>
+        </div>
+      </PublicSection>
 
       <PublicSection title="When the office is spread across too many places" tone="slate">
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">

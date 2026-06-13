@@ -145,7 +145,14 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <FooterLinks title="Product" items={publicNavItems.slice(0, 3)} />
+            <FooterLinks
+              title="Product"
+              items={[
+                ...publicNavItems.slice(0, 3),
+                { href: "/public-adjuster-software", label: "Public Adjuster Software" },
+                { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
+              ]}
+            />
             <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: startHref, label: startLabel }]} />
             <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Talk to us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />

@@ -124,6 +124,36 @@ export default function PublicAdjusterSoftwarePage() {
         </div>
       </PublicSection>
 
+      <PublicSection
+        title="Start simple with your first 10-50 active claims"
+        description="AdjusterDesk is built so a small office can get organized without a long setup project."
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            ["Step 1", "Add current leads and open claims with basic details."],
+            ["Step 2", "Track follow-ups, documents, and client updates from one workspace."],
+            ["Step 3", "Close the loop with settlements, fees, and invoices."],
+          ].map(([title, description]) => (
+            <div key={title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-950">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+            </div>
+          ))}
+        </div>
+      </PublicSection>
+
+      <PublicSection title="Founding Office Offer" tone="slate">
+        <div className="rounded-lg border border-teal-200 bg-teal-50 p-6">
+          <h3 className="text-base font-semibold text-slate-950">Keep it practical while you grow</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Try AdjusterDesk with your first 10 active claims. Founding offices can receive early pricing during the feedback period.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">
+            Offer availability can change as we learn from early offices.
+          </p>
+        </div>
+      </PublicSection>
+
       <PublicSection title="Get started today" description="Choose Solo, Small Office, or Team, then create your workspace. Your 14-day free trial starts immediately. No credit card required." tone="white">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
