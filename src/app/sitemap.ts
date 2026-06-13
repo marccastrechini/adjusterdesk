@@ -14,13 +14,16 @@ const publicRoutes = [
   "/cookies",
   "/accessibility",
   "/security",
+  "/public-adjuster-software",
+  "/free-public-adjuster-claim-tracker",
+  "/claimwizard-alternative",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return publicRoutes.map((route) => ({
     url: new URL(route, publicSiteUrl).toString(),
-    lastModified: new Date("2026-05-29"),
+    lastModified: new Date("2026-06-12"),
     changeFrequency: route === "/" ? "weekly" : "monthly",
-    priority: route === "/" ? 1 : 0.7,
+    priority: route === "/" ? 1 : route.startsWith("/public-adjuster") || route.startsWith("/free-") ? 0.8 : 0.7,
   }));
 }

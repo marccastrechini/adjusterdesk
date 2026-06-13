@@ -1,0 +1,3 @@
+Claim/Lead Name,Client Name,Phone,Email,Property Address,Carrier,Claim Number,Loss Type,Date of Loss,Claim Status,Next Follow-Up Date,Documents Needed,Settlement Amount,PA Fee %,PA Fee Amount,Invoice Status,Notes
+Example: Water Damage - Smith,John Smith,555-0101,john@email.com,123 Oak Street,State Farm,SF-2024-567890,Water,2024-03-15,Open,2024-03-22,"Photos, Proof of Loss, Receipts",,10%,,Pending,First inspection scheduled
+Example: Fire Claim - Johnson,Sarah Johnson,555-0102,sarah@email.com,456 Elm Avenue,Allstate,AL-2024-234567,Fire,2024-02-01,Settled,2024-03-20,"All docs received",8500,15%,1275,Sent,Settlement agreed 3/20
