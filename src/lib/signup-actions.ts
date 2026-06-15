@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { hashPassword } from "@/lib/auth";
+import { hashPassword, resolveAppBaseUrl } from "@/lib/auth";
 import {
   findPublicPlanBySlug,
   selfServiceSignupEnabled,
@@ -12,7 +12,7 @@ import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-st
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
-import { canSendSystemEmail, sendTrialSignupAlertEmail } from "@/lib/email";
+import { canSendSystemEmail, sendTrialSignupAlertEmail, sendWelcomeSignupEmail } from "@/lib/email";
 import {
   provisionTrialSignup,
 } from "@/lib/signup";
@@ -132,6 +132,18 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
 
   // Do not block signup if operator notification email fails.
   if (canSendSystemEmail()) {
+    const baseUrl = resolveAppBaseUrl();
+    const welcomeResult = await sendWelcomeSignupEmail({
+      toEmail: values.ownerEmail,
+      userName: values.ownerName,
+      startUrl: `${baseUrl}/start`,
+      helpUrl: `${baseUrl}/help`,
+    });
+
+    if (!welcomeResult.ok) {
+      console.warn(`[signup] Welcome email not sent: ${welcomeResult.error}`);
+    }
+
     const notificationResult = await sendTrialSignupAlertEmail({
       workspaceName: values.firmName,
       ownerName: values.ownerName,

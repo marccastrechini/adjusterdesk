@@ -23,6 +23,13 @@ type TrialSignupAlertEmailInput = {
   planLabel: string;
 };
 
+type WelcomeSignupEmailInput = {
+  toEmail: string;
+  userName: string;
+  startUrl: string;
+  helpUrl: string;
+};
+
 type EmailSendResult = {
   ok: boolean;
   error?: string;
@@ -38,6 +45,10 @@ function resolveSystemEmailFrom() {
 
 function resolveSystemEmailReplyTo() {
   return process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz";
+}
+
+function resolveSystemEmailFooter() {
+  return `AdjusterDesk system email from ${resolveSystemEmailReplyTo()}`;
 }
 
 function getEmailProviderError() {
@@ -122,7 +133,7 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
     ctaLabel: "Reset password",
     ctaUrl: input.resetUrl,
     secondaryText: "If you did not request this, you can ignore this email.",
-    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+    footer: resolveSystemEmailFooter(),
   });
 
   return sendSystemEmail({
@@ -145,7 +156,7 @@ export async function sendUserInvitationEmail(input: UserInvitationEmailInput): 
     ctaLabel: "Accept invite",
     ctaUrl: input.acceptInviteUrl,
     secondaryText: "If you were not expecting this invite, you can ignore this email.",
-    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+    footer: resolveSystemEmailFooter(),
   });
 
   return sendSystemEmail({
@@ -176,12 +187,39 @@ export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInpu
       `Plan selected: ${input.planLabel}`,
     ],
     secondaryText: "Sign in to system workspaces to review the new office and follow up.",
-    footer: "AdjusterDesk system email from hello@adjusterdesk.xyz",
+    footer: resolveSystemEmailFooter(),
   });
 
   return sendSystemEmail({
     toEmail,
     subject: "AdjusterDesk new trial signup",
+    html: emailContent.html,
+    text: emailContent.text,
+  });
+}
+
+export async function sendWelcomeSignupEmail(input: WelcomeSignupEmailInput): Promise<EmailSendResult> {
+  const emailContent = renderSystemEmailTemplate({
+    preheader: "Welcome to AdjusterDesk. Start with your first claim in the first five minutes.",
+    title: "Welcome to AdjusterDesk",
+    intro: `Hello ${input.userName},`,
+    bodyLines: [
+      "Welcome to AdjusterDesk. It is built for solo and small public adjusting offices.",
+      "Start with these three steps:",
+      "1. Add your first lead or claim.",
+      "2. Add the next follow-up.",
+      "3. Open Today to see what needs attention.",
+      "Use Start for a quick walkthrough, and Help for practical how-to guidance.",
+    ],
+    ctaLabel: "Open Start",
+    ctaUrl: input.startUrl,
+    secondaryText: `Need guidance? Open ${input.helpUrl}`,
+    footer: resolveSystemEmailFooter(),
+  });
+
+  return sendSystemEmail({
+    toEmail: input.toEmail,
+    subject: "Welcome to AdjusterDesk - start with your first claim",
     html: emailContent.html,
     text: emailContent.text,
   });
