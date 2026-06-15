@@ -9,7 +9,12 @@ export default async function SystemDashboardPage() {
       <PageHeader
         title="System admin"
         description="Local-only global admin tools for workspace and user management across this AdjusterDesk install."
-        actions={<ButtonLink href="/system/workspaces">Open workspaces</ButtonLink>}
+        actions={
+          <>
+            <ButtonLink href="/system/emails" variant="secondary">System emails</ButtonLink>
+            <ButtonLink href="/system/workspaces">Open workspaces</ButtonLink>
+          </>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
