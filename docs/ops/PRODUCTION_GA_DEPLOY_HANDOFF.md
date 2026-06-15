@@ -47,3 +47,27 @@ From the public site, click these and confirm events in GA DebugView/Realtime if
 - Pricing link -> pricing_click
 - Login link -> login_click
 - Claim tracker download -> claim_tracker_download_click
+
+## 7. Search Console Crawler Verification
+Run these commands from PowerShell after deploy/restart:
+
+```powershell
+curl.exe -I https://adjusterdesk.xyz/sitemap.xml
+curl.exe -A "Googlebot" -I https://adjusterdesk.xyz/sitemap.xml
+curl.exe https://adjusterdesk.xyz/sitemap.xml
+curl.exe -I https://adjusterdesk.xyz/robots.txt
+curl.exe https://adjusterdesk.xyz/robots.txt
+```
+
+Expected results:
+- `/sitemap.xml` returns `200 OK`
+- `Content-Type` for `/sitemap.xml` is `application/xml`
+- Sitemap XML includes required public URLs:
+	- `https://adjusterdesk.xyz/`
+	- `https://adjusterdesk.xyz/public-adjuster-software`
+	- `https://adjusterdesk.xyz/free-public-adjuster-claim-tracker`
+	- `https://adjusterdesk.xyz/pricing`
+	- `https://adjusterdesk.xyz/signup`
+- `/robots.txt` returns `200 OK`
+- `/robots.txt` includes `Sitemap: https://adjusterdesk.xyz/sitemap.xml`
+- Googlebot user-agent request to `/sitemap.xml` is not challenged or blocked
