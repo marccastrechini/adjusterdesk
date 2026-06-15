@@ -43,7 +43,7 @@ export default function FreeClaimTrackerPage() {
       <PublicPageHeader
         eyebrow="Free template"
         title="Free Public Adjuster Claim Tracker"
-        description="Still tracking claims in a spreadsheet? Download a clean, organized claim tracker template to get started. When the spreadsheet gets messy, move to AdjusterDesk."
+        description="Still tracking claims in a spreadsheet? Download a clean claim tracker template built for solo adjusters and small public adjusting offices. When the spreadsheet gets messy, move to AdjusterDesk."
       />
 
       <PublicSection title="Start in two practical steps" tone="white">
@@ -54,7 +54,7 @@ export default function FreeClaimTrackerPage() {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-950">Step 2: Move to AdjusterDesk</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">When tracking gets harder across active claims, start your free trial and run everything from one workspace.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">When tracking gets harder across active claims, start your free trial and run claim work from one workspace.</p>
           </div>
         </div>
       </PublicSection>
@@ -70,7 +70,7 @@ export default function FreeClaimTrackerPage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="Use the free tracker to get organized" description="Download the template, add your current leads and open claims, and track follow-ups and settlements. It's a good starting point.">
+      <PublicSection title="Use the free tracker to get organized" description="Download the template, add your current leads and open claims, and track follow-ups and settlements. Then use the software page to see when to move beyond the sheet.">
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-base font-semibold text-slate-950">What you get</h3>
@@ -95,8 +95,14 @@ export default function FreeClaimTrackerPage() {
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
               >
                 <Download className="h-4 w-4" aria-hidden />
-                Download Tracker (CSV)
+                Download Free Tracker (CSV)
               </TrackedDownloadLink>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">After download: add your current active claims, set next follow-up dates, and mark missing documents so nothing slips.</p>
+            <div className="mt-4">
+              <PublicButtonLink href="/public-adjuster-software" variant="secondary">
+                See when to move to software
+              </PublicButtonLink>
             </div>
           </div>
 

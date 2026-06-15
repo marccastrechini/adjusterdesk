@@ -87,8 +87,29 @@ export default function PublicAdjusterSoftwarePage() {
       <PublicPageHeader
         eyebrow="Office management software"
         title="Public Adjuster Software for Small Offices"
-        description="Run your public adjusting office without spreadsheets, scattered files, or missed follow-ups. AdjusterDesk keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices in one simple workspace."
+        description="Built for solo adjusters and 2-5 person public adjusting offices. AdjusterDesk keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices in one simple workspace instead of spreadsheets, inboxes, and memory."
       />
+
+      <PublicSection title="Who this is for and what to do first" tone="white">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">Who it&apos;s for</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Solo public adjusters and small 2-5 person offices handling active claim files.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">What problem it solves</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Stops claim work from being scattered across spreadsheets, email folders, text threads, and reminders.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">What to do first</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Start your trial and add your first 10 active claims with follow-up dates and next steps.</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-950">Why it stays simple</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Uses plain public-adjuster language your office already uses. No enterprise setup project required.</p>
+          </div>
+        </div>
+      </PublicSection>
 
       <PublicSection
         title="What AdjusterDesk organizes for you"
@@ -161,7 +182,7 @@ export default function PublicAdjusterSoftwarePage() {
               <BriefcaseBusiness className="mt-1 h-6 w-6 flex-none text-teal-700" aria-hidden />
               <div>
                 <h3 className="text-base font-semibold text-slate-950">Start your free trial</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Create a workspace and explore AdjusterDesk with demo data. No credit card required for 14 days.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">Create a workspace, add a few active claims, and run your next follow-ups from one place. No credit card required for 14 days.</p>
                 <div className="mt-4">
                   <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
                     Start Free Trial

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
@@ -141,7 +142,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <div className="self-end">
-                  <PublicButtonLink href={resolvePublicStartHref(plan.slug)} variant={plan.recommended ? "primary" : "secondary"}>{plan.cta}</PublicButtonLink>
+                  <PublicButtonLink href={resolvePublicStartHref(plan.slug)} variant={plan.recommended ? "primary" : "secondary"} eventName="trial_start_click">{plan.cta}</PublicButtonLink>
                 </div>
               </div>
             </div>
@@ -155,14 +156,28 @@ export default function PricingPage() {
           <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
             When your trial ends, choose a plan in Settings/Billing to continue. Your data is preserved whether you subscribe or not.
           </p>
+          <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
+            Still in spreadsheets? Start with the <Link href="/free-public-adjuster-claim-tracker" className="font-semibold text-teal-800 hover:text-teal-900">free claim tracker</Link> and move over when your active claims grow.
+          </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <PublicButtonLink href={defaultCtaHref} variant="primary">
+            <PublicButtonLink href={defaultCtaHref} variant="primary" eventName="trial_start_click">
               {defaultCtaLabel}
             </PublicButtonLink>
             <PublicButtonLink href="/demo" variant="secondary">
               Talk to us
             </PublicButtonLink>
           </div>
+        </div>
+      </PublicSection>
+      <PublicSection title="Founding Office Offer" tone="slate">
+        <div className="rounded-lg border border-teal-200 bg-teal-50 p-6">
+          <h2 className="text-base font-semibold text-slate-950">Keep it practical while you grow</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Try AdjusterDesk with your first 10 active claims. Founding offices can receive early pricing during the feedback period.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">
+            Offer availability can change as we learn from early offices.
+          </p>
         </div>
       </PublicSection>
       <PublicSection title="Pricing FAQ" tone="slate">
