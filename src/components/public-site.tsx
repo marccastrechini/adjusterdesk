@@ -153,7 +153,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
                 { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
               ]}
             />
-            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: startHref, label: startLabel }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
             <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Talk to us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>

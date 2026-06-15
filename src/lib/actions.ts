@@ -516,6 +516,7 @@ export async function createClaim(formData: FormData) {
   const { firm } = await getDemoContext();
   const input = claimSchema.parse(formObject(formData));
   const assignedUserId = input.assignedUserId ? await requireOwnedUserId(firm.id, input.assignedUserId) : undefined;
+  const existingClaimCount = await prisma.claim.count({ where: { firmId: firm.id } });
 
   const claim = await prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({
@@ -574,7 +575,8 @@ export async function createClaim(formData: FormData) {
   });
 
   revalidatePath("/claims");
-  redirect(withNotice(`/claims/${claim.id}`, "claim-created"));
+  const claimPath = existingClaimCount === 0 ? `/claims/${claim.id}?firstClaim=1` : `/claims/${claim.id}`;
+  redirect(withNotice(claimPath, "claim-created"));
 }
 
 export async function createClaimWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {

@@ -12,6 +12,15 @@ export type CTAEventName =
   | "signup_click"
   | "product_feature_view";
 
+export type ConversionEventName =
+  | "sign_up"
+  | "trial_created"
+  | "workspace_created"
+  | "first_claim_created"
+  | "claim_tracker_download";
+
+export type AnalyticsEventName = CTAEventName | ConversionEventName;
+
 declare global {
   interface Window {
     gtag?: (command: string, event: string, config?: Record<string, unknown>) => void;
@@ -27,15 +36,37 @@ export function trackCTAEvent(
   eventName: CTAEventName,
   additionalData?: Record<string, unknown>
 ): void {
+  trackAnalyticsEvent(eventName, {
+    event_category: "cta",
+    event_label: eventName,
+    ...additionalData,
+  });
+}
+
+/**
+ * Send a GA4 event for conversion and activation milestones.
+ */
+export function trackConversionEvent(
+  eventName: ConversionEventName,
+  additionalData?: Record<string, unknown>
+): void {
+  trackAnalyticsEvent(eventName, {
+    event_category: "conversion",
+    event_label: eventName,
+    ...additionalData,
+  });
+}
+
+/**
+ * Low-level GA4 event sender.
+ */
+export function trackAnalyticsEvent(
+  eventName: AnalyticsEventName,
+  additionalData?: Record<string, unknown>
+): void {
   // Only send if gtag is available
   if (typeof window !== "undefined" && window.gtag) {
-    const eventData: Record<string, unknown> = {
-      event_category: "cta",
-      event_label: eventName,
-      ...additionalData,
-    };
-
-    window.gtag("event", eventName, eventData);
+    window.gtag("event", eventName, additionalData);
   }
 }
 

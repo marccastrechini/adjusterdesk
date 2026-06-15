@@ -9,6 +9,7 @@ const publicRoutes = [
   "/pricing",
   "/signup",
   "/resources",
+  "/help",
   "/demo",
   "/privacy",
   "/terms",

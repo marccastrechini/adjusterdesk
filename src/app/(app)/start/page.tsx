@@ -1,14 +1,36 @@
-import { Badge, ButtonLink, Card, PageHeader, Section, StatCard } from "@/components/ui";
+import { AnalyticsOnLoad } from "@/components/analytics-on-load";
+import { Badge, ButtonLink, Card, Notice, PageHeader, Section, StatCard } from "@/components/ui";
 import { activationProgress, buildActivationChecklist } from "@/lib/activation";
+import { getNoticeMessage } from "@/lib/notices";
 import { getActivationData } from "@/lib/queries";
 
-export default async function StartPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function StartPage({ searchParams }: PageProps) {
+  const query = await searchParams;
   const { firm, user, counts } = await getActivationData();
   const checklist = buildActivationChecklist(counts);
   const progress = activationProgress(checklist);
+  const notice = getNoticeMessage(query);
+  const noticeKey = firstValue(query.notice);
+  const isSignupComplete = noticeKey === "self-service-signup-complete";
 
   return (
     <>
+      {isSignupComplete ? (
+        <>
+          <AnalyticsOnLoad eventName="sign_up" dedupeKey="start:self-service-signup-complete:sign_up" eventData={{ source: "public-signup" }} />
+          <AnalyticsOnLoad eventName="trial_created" dedupeKey="start:self-service-signup-complete:trial_created" eventData={{ source: "public-signup" }} />
+          <AnalyticsOnLoad eventName="workspace_created" dedupeKey="start:self-service-signup-complete:workspace_created" eventData={{ source: "public-signup" }} />
+        </>
+      ) : null}
+
       <PageHeader
         title="Start here"
         description="A short setup path for a small public adjusting office moving from spreadsheets, email folders, texts, and paper checklists."
@@ -19,6 +41,8 @@ export default async function StartPage() {
           </>
         }
       />
+
+      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
       <Card className="grid gap-4 border-teal-200 bg-teal-50">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

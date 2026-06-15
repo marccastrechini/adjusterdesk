@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DocumentRequestStatus } from "@/generated/prisma/client";
+import { AnalyticsOnLoad } from "@/components/analytics-on-load";
 import { ClaimTabs } from "@/components/claim-tabs";
 import { Badge, ButtonLink, Card, DetailItem, EmptyState, PageHeader, Section } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, labelFromEnum, propertyAddress } from "@/lib/format";
@@ -16,6 +17,9 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
   const query = await searchParams;
   const { claim } = await getClaim(id);
   const notice = getNoticeMessage(query);
+  const noticeKey = Array.isArray(query.notice) ? query.notice[0] : query.notice;
+  const firstClaimFlag = Array.isArray(query.firstClaim) ? query.firstClaim[0] : query.firstClaim;
+  const isFirstClaimCreated = noticeKey === "claim-created" && firstClaimFlag === "1";
   const openTasks = claim.tasks.filter((task) => task.status === "OPEN");
   const nextTask = openTasks[0];
   const requestedDocuments = claim.documents.filter((document) =>
@@ -28,6 +32,14 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
 
   return (
     <>
+      {isFirstClaimCreated ? (
+        <AnalyticsOnLoad
+          eventName="first_claim_created"
+          dedupeKey={`claim:${claim.id}:first-claim-created`}
+          eventData={{ claimId: claim.id }}
+        />
+      ) : null}
+
       <PageHeader
         title={`${fullName(claim.contact)} claim`}
         description={`${claim.lossType} · ${propertyAddress(claim.property)}`}

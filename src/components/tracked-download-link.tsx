@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { trackCTAEvent } from "@/lib/analytics";
+import { trackCTAEvent, trackConversionEvent } from "@/lib/analytics";
 
 export function TrackedDownloadLink({
   href,
@@ -14,12 +14,17 @@ export function TrackedDownloadLink({
   className?: string;
   children: ReactNode;
 }) {
+  function handleDownloadTrack() {
+    trackCTAEvent("claim_tracker_download_click", { href });
+    trackConversionEvent("claim_tracker_download", { href });
+  }
+
   return (
     <a
       href={href}
       download={download}
       className={className}
-      onClick={() => trackCTAEvent("claim_tracker_download_click", { href })}
+      onClick={handleDownloadTrack}
     >
       {children}
     </a>
