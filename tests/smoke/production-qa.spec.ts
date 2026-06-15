@@ -137,6 +137,10 @@ test("normal QA user can access office pages and cannot access system admin tool
   }
 
   await page.goto("/start");
+  await expect(page.getByRole("heading", { name: "First 5 minutes", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Add first claim|Review claims/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Today", exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open Money/ }).first()).toBeVisible();
   const startText = await page.evaluate(() => document.body.innerText || "");
   expect(startText).not.toMatch(/demo reset|reset demo|npm run demo:reset:local|seed\s*\/\s*reset/i);
 

@@ -10,6 +10,10 @@ export type CTAEventName =
   | "pricing_click"
   | "login_click"
   | "signup_click"
+  | "onboarding_add_first_claim_click"
+  | "onboarding_open_today_click"
+  | "onboarding_open_documents_click"
+  | "onboarding_open_money_click"
   | "product_feature_view";
 
 export type ConversionEventName =

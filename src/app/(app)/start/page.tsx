@@ -1,6 +1,7 @@
 import { AnalyticsOnLoad } from "@/components/analytics-on-load";
+import { TrackedButtonLink } from "@/components/tracked-link";
 import { Badge, ButtonLink, Card, Notice, PageHeader, Section, StatCard } from "@/components/ui";
-import { activationProgress, buildActivationChecklist } from "@/lib/activation";
+import { activationProgress, buildActivationChecklist, buildOnboardingQuickActions } from "@/lib/activation";
 import { getNoticeMessage } from "@/lib/notices";
 import { getActivationData } from "@/lib/queries";
 
@@ -15,8 +16,10 @@ function firstValue(value: string | string[] | undefined) {
 export default async function StartPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const { firm, user, counts } = await getActivationData();
+  const onboardingActions = buildOnboardingQuickActions(counts);
   const checklist = buildActivationChecklist(counts);
   const progress = activationProgress(checklist);
+  const onboardingProgress = activationProgress(onboardingActions);
   const notice = getNoticeMessage(query);
   const noticeKey = firstValue(query.notice);
   const isSignupComplete = noticeKey === "self-service-signup-complete";
@@ -58,6 +61,41 @@ export default async function StartPage({ searchParams }: PageProps) {
         </div>
       </Card>
 
+      <Section
+        title="First 5 minutes"
+        description="This is a quick orientation panel. Nothing here blocks normal use; it just points the new office to the shortest path from signup to live claim work."
+        actions={<Badge tone={onboardingProgress.completed === onboardingProgress.total ? "green" : "amber"}>{onboardingProgress.completed} of {onboardingProgress.total} started</Badge>}
+      >
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          {onboardingActions.map((item, index) => {
+            return (
+              <Card key={item.title} className="grid content-start gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Step {index + 1}</p>
+                    <h2 className="mt-1 text-base font-semibold text-slate-950">{item.title}</h2>
+                  </div>
+                  <Badge tone={item.completed ? "green" : "amber"}>{item.completed ? "Done" : "Next"}</Badge>
+                </div>
+                <p className="text-sm leading-6 text-slate-600">{item.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {item.eventName ? (
+                    <TrackedButtonLink href={item.href} eventName={item.eventName} variant={item.completed ? "secondary" : "primary"}>
+                      {item.action}
+                    </TrackedButtonLink>
+                  ) : (
+                    <ButtonLink href={item.href} variant={item.completed ? "secondary" : "primary"}>{item.action}</ButtonLink>
+                  )}
+                  {item.secondaryHref && item.secondaryAction ? (
+                    <ButtonLink href={item.secondaryHref} variant="secondary">{item.secondaryAction}</ButtonLink>
+                  ) : null}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </Section>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Leads" value={counts.leads} detail="Intake records in this workspace" />
         <StatCard label="Claims" value={counts.claims} detail="Claim files started" />
@@ -65,7 +103,7 @@ export default async function StartPage({ searchParams }: PageProps) {
         <StatCard label="Documents" value={counts.documents} detail="Uploads and client requests" />
       </div>
 
-      <Section title="First-run checklist" description="Work through these steps to make the workspace useful for day-to-day claim work.">
+      <Section title="Office setup checklist" description="Use the fuller checklist below as the workspace fills in with live office work.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {checklist.map((item, index) => (
             <Card key={item.title} className="grid content-start gap-3">
