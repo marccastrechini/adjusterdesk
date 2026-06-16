@@ -33,7 +33,14 @@ export function ActionForm({ action, children, className }: { action: FormAction
         element.value = String(value ?? "");
       }
     }
-  }, [state.fieldValues]);
+
+    // Never retain password values after a server-side validation failure.
+    if (state.message) {
+      for (const passwordInput of form.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
+        passwordInput.value = "";
+      }
+    }
+  }, [state.fieldValues, state.message]);
 
   return (
     <ActionFormContext.Provider value={state}>
