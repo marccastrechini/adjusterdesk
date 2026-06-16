@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildStripeCheckoutSessionParams, canReuseOpenCheckoutSession, provisionTrialSignup } from "@/lib/signup";
+import { startSignupWithState } from "@/lib/signup-actions";
 import { TRIAL_DAYS } from "@/lib/trial";
 
 test("checkout session reuse helper only accepts open sessions with URL", () => {
@@ -42,4 +43,29 @@ test("TRIAL_DAYS constant is used by trial signup path", () => {
   // Trial end date should be TRIAL_DAYS ahead; verify the constant matches expectations.
   assert.ok(TRIAL_DAYS > 0, "TRIAL_DAYS should be positive");
   assert.ok(TRIAL_DAYS <= 90, "TRIAL_DAYS should be a reasonable trial length");
+});
+
+test("signup validation keeps non-sensitive fields when password is too weak", async () => {
+  const formData = new FormData();
+  formData.set("plan", "small-office");
+  formData.set("firmName", "Harbor Public Adjusting");
+  formData.set("ownerName", "Pat Owner");
+  formData.set("ownerEmail", "pat@example.com");
+  formData.set("ownerPhone", "555-0101");
+  formData.set("password", "123");
+  formData.set("confirmPassword", "123");
+  formData.set("agreedToTerms", "on");
+
+  const result = await startSignupWithState({}, formData);
+
+  assert.equal(result.message, "Fix the highlighted fields and try again.");
+  assert.equal(result.fieldErrors?.password, "Use at least 8 characters for your password.");
+  assert.equal(result.fieldValues?.plan, "small-office");
+  assert.equal(result.fieldValues?.firmName, "Harbor Public Adjusting");
+  assert.equal(result.fieldValues?.ownerName, "Pat Owner");
+  assert.equal(result.fieldValues?.ownerEmail, "pat@example.com");
+  assert.equal(result.fieldValues?.ownerPhone, "555-0101");
+  assert.equal(result.fieldValues?.agreedToTerms, true);
+  assert.equal("password" in (result.fieldValues ?? {}), false);
+  assert.equal("confirmPassword" in (result.fieldValues ?? {}), false);
 });

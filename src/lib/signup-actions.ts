@@ -8,7 +8,7 @@ import {
   selfServiceSignupEnabled,
   type PublicPlanSlug,
 } from "@/lib/billing";
-import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
+import { formError, type ActionFormState, type FieldErrors, type FieldValues } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
@@ -57,12 +57,30 @@ function zodToFieldErrors(error: z.ZodError): FieldErrors {
   return errors;
 }
 
+function safeSignupFieldValues(values: {
+  plan: string;
+  firmName: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPhone?: string;
+  agreedToTerms: boolean;
+}): FieldValues {
+  return {
+    plan: values.plan,
+    firmName: values.firmName,
+    ownerName: values.ownerName,
+    ownerEmail: values.ownerEmail,
+    ownerPhone: values.ownerPhone ?? "",
+    agreedToTerms: values.agreedToTerms,
+  };
+}
+
 export async function startSignupWithState(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
   if (!selfServiceSignupEnabled()) {
     return formError("Your selected plan and workspace details are saved first. We will confirm setup before billing begins.");
   }
 
-  const parsed = signupSchema.safeParse({
+  const submittedValues = {
     plan: formData.get("plan")?.toString() || "small-office",
     firmName: formData.get("firmName")?.toString() ?? "",
     ownerName: formData.get("ownerName")?.toString() ?? "",
@@ -71,16 +89,23 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     password: formData.get("password")?.toString() ?? "",
     confirmPassword: formData.get("confirmPassword")?.toString() ?? "",
     agreedToTerms: parseAgreement(formData),
-  });
+  };
+
+  const parsed = signupSchema.safeParse(submittedValues);
 
   if (!parsed.success) {
-    return formError("Fix the highlighted fields and try again.", zodToFieldErrors(parsed.error));
+    return formError(
+      "Fix the highlighted fields and try again.",
+      zodToFieldErrors(parsed.error),
+      safeSignupFieldValues(submittedValues),
+    );
   }
 
   const values = parsed.data;
   const selectedPlan = findPublicPlanBySlug(values.plan);
+  const fieldValues = safeSignupFieldValues(values);
   if (!selectedPlan) {
-    return formError("Select a valid plan to continue.", { plan: "Choose Solo, Small Office, or Team." });
+    return formError("Select a valid plan to continue.", { plan: "Choose Solo, Small Office, or Team." }, fieldValues);
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -96,13 +121,13 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
   if (existingWorkspace) {
     return formError("That workspace name is already in use. Choose a different name.", {
       firmName: "That workspace name is already used.",
-    });
+    }, fieldValues);
   }
 
   if (existingUser) {
     return formError("That owner email is already in use. Sign in or use a different email.", {
       ownerEmail: "That email is already used by an existing account.",
-    });
+    }, fieldValues);
   }
 
   let result: { firmId: string; ownerUserId: string };
@@ -120,9 +145,9 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     if (message.includes("already exists")) {
       return formError("That owner email is already in use. Sign in or use a different email.", {
         ownerEmail: "That email is already used by an existing account.",
-      });
+      }, fieldValues);
     }
-    return formError("Workspace setup could not be completed right now. Please try again.");
+    return formError("Workspace setup could not be completed right now. Please try again.", {}, fieldValues);
   }
 
   const sessionCreated = await createSessionForUser(result.ownerUserId);

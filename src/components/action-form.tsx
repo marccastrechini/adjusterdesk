@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useActionState, useContext } from "react";
+import { createContext, type ReactNode, useActionState, useContext, useEffect, useRef } from "react";
 import { emptyActionFormState, type ActionFormState } from "@/lib/form-state";
 
 type FormAction = (state: ActionFormState, formData: FormData) => ActionFormState | Promise<ActionFormState>;
@@ -9,10 +9,35 @@ const ActionFormContext = createContext<ActionFormState>(emptyActionFormState);
 
 export function ActionForm({ action, children, className }: { action: FormAction; children: ReactNode; className?: string }) {
   const [state, formAction] = useActionState(action, emptyActionFormState);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const form = formRef.current;
+    const values = state.fieldValues;
+    if (!form || !values) return;
+
+    for (const [name, value] of Object.entries(values)) {
+      const element = form.elements.namedItem(name);
+      if (!element || element instanceof RadioNodeList) continue;
+
+      if (element instanceof HTMLInputElement) {
+        if (element.type === "checkbox") {
+          element.checked = value === true || value === "true";
+        } else {
+          element.value = String(value ?? "");
+        }
+        continue;
+      }
+
+      if (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) {
+        element.value = String(value ?? "");
+      }
+    }
+  }, [state.fieldValues]);
 
   return (
     <ActionFormContext.Provider value={state}>
-      <form action={formAction} noValidate className={className}>
+      <form ref={formRef} action={formAction} noValidate className={className}>
         {state.message ? (
           <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
             <p className="font-semibold">Please fix this before saving</p>
