@@ -693,6 +693,134 @@ export async function getSystemWorkspaces() {
   });
 }
 
+export async function getSystemActivationRows(limit = 25) {
+  await requireSystemAdminContext();
+
+  const workspaces = await prisma.firm.findMany({
+    include: {
+      users: {
+        where: { role: UserRole.OWNER },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      _count: {
+        select: {
+          leads: true,
+          claims: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: Math.max(1, Math.min(limit, 100)),
+  });
+
+  const workspaceIds = workspaces.map((workspace) => workspace.id);
+  const signupIntents = workspaceIds.length
+    ? await prisma.signupIntent.findMany({
+        where: {
+          completedFirmId: {
+            in: workspaceIds,
+          },
+        },
+        select: {
+          completedFirmId: true,
+          source: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const signupIntentByWorkspaceId = new Map<string, (typeof signupIntents)[number]>();
+  for (const intent of signupIntents) {
+    if (!intent.completedFirmId) {
+      continue;
+    }
+
+    if (!signupIntentByWorkspaceId.has(intent.completedFirmId)) {
+      signupIntentByWorkspaceId.set(intent.completedFirmId, intent);
+    }
+  }
+
+  const activityByWorkspaceId = new Map<
+    string,
+    {
+      lastLeadAt: Date | null;
+      lastClaimAt: Date | null;
+      lastActivityAt: Date | null;
+    }
+  >();
+
+  await Promise.all(
+    workspaces.map(async (workspace) => {
+      const [lastLead, lastClaim, lastActivity] = await Promise.all([
+        prisma.lead.findFirst({
+          where: { firmId: workspace.id },
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.claim.findFirst({
+          where: { firmId: workspace.id },
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.activity.findFirst({
+          where: { firmId: workspace.id },
+          select: { occurredAt: true },
+          orderBy: { occurredAt: "desc" },
+        }),
+      ]);
+
+      activityByWorkspaceId.set(workspace.id, {
+        lastLeadAt: lastLead?.createdAt ?? null,
+        lastClaimAt: lastClaim?.createdAt ?? null,
+        lastActivityAt: lastActivity?.occurredAt ?? null,
+      });
+    }),
+  );
+
+  return workspaces.map((workspace) => {
+    const owner = workspace.users[0] ?? null;
+    const signupIntent = signupIntentByWorkspaceId.get(workspace.id);
+    const activity = activityByWorkspaceId.get(workspace.id);
+
+    const activityCandidates = [
+      workspace.updatedAt,
+      owner?.updatedAt ?? null,
+      activity?.lastLeadAt ?? null,
+      activity?.lastClaimAt ?? null,
+      activity?.lastActivityAt ?? null,
+    ].filter((value): value is Date => value instanceof Date);
+
+    const lastActivityAt = activityCandidates.length
+      ? new Date(Math.max(...activityCandidates.map((value) => value.getTime())))
+      : null;
+
+    return {
+      id: workspace.id,
+      workspaceName: workspace.name,
+      primaryUserName: owner?.name ?? null,
+      primaryUserEmail: owner?.email ?? null,
+      signupOrCreatedAt: signupIntent?.createdAt ?? owner?.createdAt ?? workspace.createdAt,
+      lastActivityAt,
+      firstLeadExists: workspace._count.leads > 0,
+      firstClaimExists: workspace._count.claims > 0,
+      leadCount: workspace._count.leads,
+      claimCount: workspace._count.claims,
+      welcomeEmailStatus: signupIntent ? "Not tracked (welcome email send result is not persisted)." : "Not tracked",
+      source: workspace.signupSource ?? null,
+      referrerOrUtm: signupIntent?.source ?? null,
+    };
+  });
+}
+
 export async function getSystemWorkspaceDetail(workspaceId: string) {
   await requireSystemAdminContext();
 

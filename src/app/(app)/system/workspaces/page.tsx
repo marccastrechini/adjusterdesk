@@ -1,7 +1,7 @@
 import { createSystemWorkspaceWithOwner, enterSystemWorkspaceView } from "@/lib/actions";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
-import { getSystemWorkspaces } from "@/lib/queries";
+import { getSystemActivationRows, getSystemWorkspaces } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
 
 type PageProps = {
@@ -28,7 +28,7 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
   const params = await searchParams;
   const notice = getNoticeMessage(params);
   const error = firstValue(params.error);
-  const workspaces = await getSystemWorkspaces();
+  const [workspaces, activationRows] = await Promise.all([getSystemWorkspaces(), getSystemActivationRows()]);
 
   const errorMessage =
     error === "workspace-owner-email"
@@ -118,6 +118,61 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
             );
           })}
         </div>
+      </Section>
+
+      <Section
+        title="Activation visibility"
+        description="Recent workspace signups with practical activation signals for daily operator review."
+      >
+        <Card className="space-y-4">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-xs uppercase tracking-normal text-slate-500">
+                  <th scope="col" className="px-2 py-2 font-semibold">Workspace</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Primary user</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Signup/created</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Last activity</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">First lead</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">First claim</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Leads</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Claims</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Welcome email</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Source/referrer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activationRows.map((row) => (
+                  <tr key={row.id} className="border-b border-slate-100 align-top text-slate-700 last:border-b-0">
+                    <td className="px-2 py-2">
+                      <p className="font-medium text-slate-950">{row.workspaceName}</p>
+                    </td>
+                    <td className="px-2 py-2">
+                      <p>{row.primaryUserName ?? "No owner user"}</p>
+                      <p className="text-xs text-slate-500">{row.primaryUserEmail ?? "No email"}</p>
+                    </td>
+                    <td className="px-2 py-2">{formatDateTime(row.signupOrCreatedAt)}</td>
+                    <td className="px-2 py-2">{row.lastActivityAt ? formatDateTime(row.lastActivityAt) : "Not tracked"}</td>
+                    <td className="px-2 py-2">{row.firstLeadExists ? "Yes" : "No"}</td>
+                    <td className="px-2 py-2">{row.firstClaimExists ? "Yes" : "No"}</td>
+                    <td className="px-2 py-2">{row.leadCount}</td>
+                    <td className="px-2 py-2">{row.claimCount}</td>
+                    <td className="px-2 py-2">{row.welcomeEmailStatus}</td>
+                    <td className="px-2 py-2">
+                      <p>{row.source ?? "Not tracked"}</p>
+                      <p className="text-xs text-slate-500">{row.referrerOrUtm ?? "No referrer/UTM captured"}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+            <p className="font-semibold text-slate-700">Tracking notes</p>
+            <p>Welcome email delivery status is not currently persisted. Last login timestamp is not currently stored.</p>
+            <p>Source/referrer depends on existing fields: workspace signup source and signup intent source when present.</p>
+          </div>
+        </Card>
       </Section>
     </>
   );

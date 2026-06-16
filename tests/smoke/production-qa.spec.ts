@@ -162,6 +162,8 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.goto("/system/workspaces");
   await expect(page).toHaveURL(/\/system\/workspaces(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System workspaces", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Activation visibility", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Workspace", exact: true })).toBeVisible();
 
   await page.goto("/system/emails");
   await expect(page).toHaveURL(/\/system\/emails(?:\?|$)/);
