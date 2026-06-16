@@ -56,7 +56,7 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="grid gap-5">
+    <nav suppressHydrationWarning className="grid gap-5">
       {navItems.map((group) => (
         <div key={group.label} className="grid gap-1">
           <p className="px-3 text-xs font-semibold uppercase tracking-normal text-slate-400">{group.label}</p>
