@@ -673,7 +673,7 @@ export async function getSystemWorkspaces() {
     include: {
       users: {
         where: { role: UserRole.OWNER },
-        orderBy: { createdAt: "asc" },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         take: 1,
         select: {
           id: true,
@@ -689,7 +689,7 @@ export async function getSystemWorkspaces() {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
 }
 
@@ -700,7 +700,7 @@ export async function getSystemActivationRows(limit = 25) {
     include: {
       users: {
         where: { role: UserRole.OWNER },
-        orderBy: { createdAt: "asc" },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         take: 1,
         select: {
           id: true,
@@ -717,7 +717,7 @@ export async function getSystemActivationRows(limit = 25) {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: Math.max(1, Math.min(limit, 100)),
   });
 
@@ -734,7 +734,7 @@ export async function getSystemActivationRows(limit = 25) {
           source: true,
           createdAt: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       })
     : [];
 
