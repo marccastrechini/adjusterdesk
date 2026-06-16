@@ -59,9 +59,21 @@ const outreachOperatorNavItems: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-export function SidebarNav({ outreachOperatorOnly = false }: { outreachOperatorOnly?: boolean }) {
+const systemAdminNavItems: { label: string; items: NavItem[] }[] = [
+  {
+    label: "System",
+    items: [
+      { href: "/system", label: "System admin", icon: LayoutDashboard, exact: true },
+      { href: "/system/workspaces", label: "System workspaces", icon: Users },
+      { href: "/system/outreach", label: "System outreach", icon: ListChecks },
+      { href: "/system/emails", label: "System emails", icon: MessageSquare },
+    ],
+  },
+];
+
+export function SidebarNav({ outreachOperatorOnly = false, isSystemAdmin = false }: { outreachOperatorOnly?: boolean; isSystemAdmin?: boolean }) {
   const pathname = usePathname();
-  const groups = outreachOperatorOnly ? outreachOperatorNavItems : navItems;
+  const groups = outreachOperatorOnly ? outreachOperatorNavItems : isSystemAdmin ? [...navItems, ...systemAdminNavItems] : navItems;
 
   return (
     <nav suppressHydrationWarning className="grid gap-5">

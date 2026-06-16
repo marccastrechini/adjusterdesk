@@ -5,8 +5,8 @@ import { SidebarNav } from "@/components/sidebar-nav";
 import { SubmitButton } from "@/components/ui";
 import { TrialBanner } from "@/components/trial-banner";
 import { exitSystemWorkspaceView } from "@/lib/actions";
-import { logout } from "@/lib/auth-actions";
 import { labelFromEnum } from "@/lib/format";
+import { UserMenu } from "@/components/user-menu";
 
 export function AppShell({
   children,
@@ -30,6 +30,21 @@ export function AppShell({
   trialEndsAt: Date | null;
 }) {
   const outreachOperatorOnly = isOutreachOperator && !isSystemAdmin;
+  const roleLabel = isSystemAdmin ? "System Admin" : isOutreachOperator ? "Outreach Operator" : labelFromEnum(userRole);
+  const menuLinks = isSystemAdmin
+    ? [
+        { href: "/system", label: "System admin" },
+        { href: "/system/workspaces", label: "System workspaces" },
+        { href: "/system/outreach", label: "Outreach tracker" },
+        { href: "/system/emails", label: "System emails" },
+        { href: "/settings/account", label: "Account settings" },
+      ]
+    : isOutreachOperator
+      ? [
+          { href: "/system/outreach", label: "Outreach tracker" },
+          { href: "/settings/account", label: "Account settings" },
+        ]
+      : [{ href: "/settings/account", label: "Account settings" }];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -45,7 +60,7 @@ export function AppShell({
             </div>
           </div>
           <div className="px-3 py-4">
-            <SidebarNav outreachOperatorOnly={outreachOperatorOnly} />
+            <SidebarNav outreachOperatorOnly={outreachOperatorOnly} isSystemAdmin={isSystemAdmin} />
           </div>
         </aside>
 
@@ -56,13 +71,7 @@ export function AppShell({
               <p className="text-sm font-semibold text-slate-950">{outreachOperatorOnly ? "Outreach operator" : firmName}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
-                <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current user</p>
-                <p className="text-sm font-semibold text-slate-950">{userName} · {labelFromEnum(userRole)}</p>
-              </div>
-              <form action={logout}>
-                <SubmitButton variant="secondary">Log out</SubmitButton>
-              </form>
+              <UserMenu userName={userName} roleLabel={roleLabel} links={menuLinks} />
             </div>
           </header>
           <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">

@@ -80,6 +80,10 @@ async function login(page: Page, email: string, password: string) {
   await expect(page).toHaveURL(/\/(today|start|claims|leads|settings|system\/outreach)(?:\?|$)/);
 }
 
+async function openAccountMenu(page: Page, menuLabel: string) {
+  await page.getByRole("button", { name: new RegExp(menuLabel, "i") }).click();
+}
+
 async function getFirstClaimPath(page: Page) {
   return page.evaluate(() => {
     const links = Array.from(document.querySelectorAll("a[href]"))
@@ -116,6 +120,10 @@ test("normal QA user can access office pages and cannot access system admin tool
   test.skip(!qaUserEmail || !qaUserPassword, "Missing AD_QA_USER_EMAIL or AD_QA_USER_PASSWORD in .env.qa.local");
 
   await login(page, qaUserEmail, qaUserPassword);
+  await openAccountMenu(page, "QA User");
+  await expect(page.getByRole("link", { name: "System admin", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "System workspaces", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "System emails", exact: true })).toHaveCount(0);
 
   const standardRoutes = ["/today", "/start", "/leads", "/claims", "/office-resources", "/settings", "/settings/templates", "/money", "/reports"];
   for (const route of standardRoutes) {
@@ -159,6 +167,14 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   test.skip(!qaAdminEmail || !qaAdminPassword, "Missing AD_QA_ADMIN_EMAIL or AD_QA_ADMIN_PASSWORD in .env.qa.local");
 
   await login(page, qaAdminEmail, qaAdminPassword);
+  await openAccountMenu(page, "QA Admin");
+  await expect(page.getByRole("link", { name: "System admin", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "System workspaces", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Outreach tracker", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "System emails", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Account settings", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "System admin", exact: true }).click();
+  await expect(page).toHaveURL(/\/system(?:\?|$)/);
 
   await page.goto("/system");
   await expect(page).toHaveURL(/\/system(?:\?|$)/);
@@ -198,6 +214,12 @@ test("outreach operator can access outreach but not broader system admin", async
   test.skip(!qaOutreachEmail || !qaOutreachPassword, "Missing AD_QA_OUTREACH_EMAIL or AD_QA_OUTREACH_PASSWORD in .env.qa.local");
 
   await login(page, qaOutreachEmail, qaOutreachPassword);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+  await openAccountMenu(page, "QA Outreach Operator");
+  await expect(page.getByRole("link", { name: "Outreach tracker", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Account settings", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "System workspaces", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "System emails", exact: true })).toHaveCount(0);
 
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
