@@ -131,6 +131,14 @@ export const noticeMessages = {
     title: "Workspace subscription updated",
     message: "Plan, subscription status, and included active-user limit were saved.",
   },
+  "system-outreach-created": {
+    title: "Outreach prospect added",
+    message: "The outreach prospect is now tracked in the system outreach table.",
+  },
+  "system-outreach-updated": {
+    title: "Outreach prospect updated",
+    message: "Status, follow-up, objection, trial flag, and notes were saved.",
+  },
   "user-invite-sent": {
     title: "Invitation sent",
     message: "The user will receive an email link to set their password.",

@@ -12,6 +12,7 @@ export default async function SystemDashboardPage() {
         actions={
           <>
             <ButtonLink href="/system/emails" variant="secondary">System emails</ButtonLink>
+            <ButtonLink href="/system/outreach" variant="secondary">System outreach</ButtonLink>
             <ButtonLink href="/system/workspaces">Open workspaces</ButtonLink>
           </>
         }

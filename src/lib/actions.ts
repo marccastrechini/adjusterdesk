@@ -11,6 +11,7 @@ import {
   DocumentRequestStatus,
   InvoiceStatus,
   LeadStatus,
+  OutreachProspectStatus,
   SettlementStatus,
   SubscriptionPlan,
   SubscriptionStatus,
@@ -106,8 +107,44 @@ const claimSchema = z.object({
   notes: optionalText,
 });
 
+const outreachCreateSchema = z.object({
+  firmName: z.string().trim().min(2, "Enter a firm name.").max(120, "Firm name is too long."),
+  website: z.string().trim().max(255, "Website is too long.").optional().transform((value) => value || undefined),
+  state: z.string().trim().max(40, "State is too long.").optional().transform((value) => value || undefined),
+  contactName: z.string().trim().max(120, "Contact name is too long.").optional().transform((value) => value || undefined),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .refine((value) => !value || z.email().safeParse(value).success, "Enter a valid email address.")
+    .transform((value) => value?.toLowerCase()),
+  source: z.string().trim().max(120, "Source is too long.").optional().transform((value) => value || undefined),
+  smallOfficeSignal: z.string().trim().max(240, "Small-office signal is too long.").optional().transform((value) => value || undefined),
+  status: z.nativeEnum(OutreachProspectStatus).default(OutreachProspectStatus.NOT_CONTACTED),
+  dateContacted: z.string().trim().optional().transform((value) => value || undefined),
+  followUpDate: z.string().trim().optional().transform((value) => value || undefined),
+  replyObjection: z.string().trim().max(500, "Reply/objection is too long.").optional().transform((value) => value || undefined),
+  trialCreated: z.boolean().default(false),
+  notes: z.string().trim().max(1200, "Notes are too long.").optional().transform((value) => value || undefined),
+});
+
+const outreachUpdateSchema = z.object({
+  outreachId: z.string().trim().min(1, "Missing outreach prospect."),
+  status: z.nativeEnum(OutreachProspectStatus),
+  followUpDate: z.string().trim().optional().transform((value) => value || undefined),
+  replyObjection: z.string().trim().max(500, "Reply/objection is too long.").optional().transform((value) => value || undefined),
+  trialCreated: z.boolean().default(false),
+  notes: z.string().trim().max(1200, "Notes are too long.").optional().transform((value) => value || undefined),
+});
+
 function formObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
+}
+
+function checkboxValue(formData: FormData, name: string) {
+  const value = formData.get(name)?.toString();
+  return value === "on" || value === "true";
 }
 
 function textValue(formData: FormData, name: string) {
@@ -2037,6 +2074,95 @@ export async function updateSystemWorkspaceSubscription(formData: FormData) {
   revalidatePath("/system/workspaces");
   revalidatePath(`/system/workspaces/${workspaceId}`);
   redirect(withNotice(`/system/workspaces/${workspaceId}`, "system-workspace-subscription-updated"));
+}
+
+export async function createSystemOutreachProspect(formData: FormData) {
+  await requireSystemAdminContext();
+
+  const parsed = outreachCreateSchema.safeParse({
+    firmName: textValue(formData, "firmName"),
+    website: textValue(formData, "website"),
+    state: textValue(formData, "state"),
+    contactName: textValue(formData, "contactName"),
+    email: textValue(formData, "email"),
+    source: textValue(formData, "source"),
+    smallOfficeSignal: textValue(formData, "smallOfficeSignal"),
+    status: textValue(formData, "status") || OutreachProspectStatus.NOT_CONTACTED,
+    dateContacted: textValue(formData, "dateContacted"),
+    followUpDate: textValue(formData, "followUpDate"),
+    replyObjection: textValue(formData, "replyObjection"),
+    trialCreated: checkboxValue(formData, "trialCreated"),
+    notes: textValue(formData, "notes"),
+  });
+
+  if (!parsed.success) {
+    redirect("/system/outreach?error=create-validation");
+  }
+
+  const values = parsed.data;
+
+  await prisma.outreachProspect.create({
+    data: {
+      firmName: values.firmName,
+      website: values.website,
+      state: values.state,
+      contactName: values.contactName,
+      email: values.email,
+      source: values.source,
+      smallOfficeSignal: values.smallOfficeSignal,
+      status: values.status,
+      dateContacted: asDate(values.dateContacted),
+      followUpDate: asDate(values.followUpDate),
+      replyObjection: values.replyObjection,
+      trialCreated: values.trialCreated,
+      notes: values.notes,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  redirect(withNotice("/system/outreach", "system-outreach-created"));
+}
+
+export async function updateSystemOutreachProspect(formData: FormData) {
+  await requireSystemAdminContext();
+
+  const parsed = outreachUpdateSchema.safeParse({
+    outreachId: textValue(formData, "outreachId"),
+    status: textValue(formData, "status"),
+    followUpDate: textValue(formData, "followUpDate"),
+    replyObjection: textValue(formData, "replyObjection"),
+    trialCreated: checkboxValue(formData, "trialCreated"),
+    notes: textValue(formData, "notes"),
+  });
+
+  if (!parsed.success) {
+    redirect("/system/outreach?error=update-validation");
+  }
+
+  const values = parsed.data;
+
+  const existing = await prisma.outreachProspect.findUnique({
+    where: { id: values.outreachId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    redirect("/system/outreach?error=missing");
+  }
+
+  await prisma.outreachProspect.update({
+    where: { id: values.outreachId },
+    data: {
+      status: values.status,
+      followUpDate: asDate(values.followUpDate),
+      replyObjection: values.replyObjection,
+      trialCreated: values.trialCreated,
+      notes: values.notes,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  redirect(withNotice("/system/outreach", "system-outreach-updated"));
 }
 
 export type ResetSystemUserPasswordState = {

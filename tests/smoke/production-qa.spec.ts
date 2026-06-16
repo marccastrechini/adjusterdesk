@@ -147,6 +147,9 @@ test("normal QA user can access office pages and cannot access system admin tool
   await page.goto("/system");
   await expect(page).not.toHaveURL(/\/system(?:\?|$)/);
   await expect(page.locator('a[href^="/system"]')).toHaveCount(0);
+
+  await page.goto("/system/outreach");
+  await expect(page).not.toHaveURL(/\/system\/outreach(?:\?|$)/);
 });
 
 test("admin QA user can access system admin pages", async ({ page }) => {
@@ -169,4 +172,10 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page).toHaveURL(/\/system\/emails(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System emails", exact: true })).toBeVisible();
   await scanPageText(page, "admin /system/emails");
+
+  await page.goto("/system/outreach");
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Add outreach prospect", exact: true })).toBeVisible();
+  await scanPageText(page, "admin /system/outreach");
 });

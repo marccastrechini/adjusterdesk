@@ -8,6 +8,7 @@ import {
   type Firm,
   InvoiceStatus,
   LeadStatus,
+  OutreachProspectStatus,
   type Invoice,
   type Lead,
   type Property,
@@ -862,5 +863,33 @@ export async function getSystemWorkspaceDetail(workspaceId: string) {
     owner,
     leadCount,
     claimCount,
+  };
+}
+
+export async function getSystemOutreachProspects() {
+  await requireSystemAdminContext();
+
+  const prospects = await prisma.outreachProspect.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 100,
+  });
+
+  const statusCounts = await prisma.outreachProspect.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+
+  const statusCountMap = Object.fromEntries(
+    Object.values(OutreachProspectStatus).map((status) => [status, 0]),
+  ) as Record<OutreachProspectStatus, number>;
+
+  for (const row of statusCounts) {
+    statusCountMap[row.status] = row._count._all;
+  }
+
+  return {
+    prospects,
+    statusCountMap,
+    total: prospects.length,
   };
 }
