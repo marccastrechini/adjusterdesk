@@ -1,5 +1,5 @@
 import { createSystemWorkspaceWithOwner, enterSystemWorkspaceView } from "@/lib/actions";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemActivationRows, getSystemWorkspaces } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
@@ -22,6 +22,18 @@ function classifyWorkspaceName(name: string) {
   }
 
   return null;
+}
+
+function twoDigits(value: number) {
+  return value.toString().padStart(2, "0");
+}
+
+function formatDateTimeUtc(date?: Date | string | null) {
+  if (!date) return "Not tracked";
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "Not tracked";
+
+  return `${value.getUTCFullYear()}-${twoDigits(value.getUTCMonth() + 1)}-${twoDigits(value.getUTCDate())} ${twoDigits(value.getUTCHours())}:${twoDigits(value.getUTCMinutes())} UTC`;
 }
 
 export default async function SystemWorkspacesPage({ searchParams }: PageProps) {
@@ -151,8 +163,8 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                       <p>{row.primaryUserName ?? "No owner user"}</p>
                       <p className="text-xs text-slate-500">{row.primaryUserEmail ?? "No email"}</p>
                     </td>
-                    <td className="px-2 py-2">{formatDateTime(row.signupOrCreatedAt)}</td>
-                    <td className="px-2 py-2">{row.lastActivityAt ? formatDateTime(row.lastActivityAt) : "Not tracked"}</td>
+                    <td className="px-2 py-2">{formatDateTimeUtc(row.signupOrCreatedAt)}</td>
+                    <td className="px-2 py-2">{formatDateTimeUtc(row.lastActivityAt)}</td>
                     <td className="px-2 py-2">{row.firstLeadExists ? "Yes" : "No"}</td>
                     <td className="px-2 py-2">{row.firstClaimExists ? "Yes" : "No"}</td>
                     <td className="px-2 py-2">{row.leadCount}</td>
