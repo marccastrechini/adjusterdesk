@@ -14,7 +14,6 @@ const footerLinks = [
   { name: "Cookies", href: "/cookies" },
   { name: "Accessibility", href: "/accessibility" },
   { name: "Security", href: "/security" },
-  { name: "Start using AdjusterDesk", href: "/signup" },
   { name: "Talk to us", href: "/demo" },
 ];
 
@@ -23,7 +22,7 @@ test("public trust pages render and footer links are available", async ({ page }
     await page.goto(trustPage.path);
     await expect(page.getByRole("heading", { name: trustPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(trustPage.copy, { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Start using AdjusterDesk", exact: true }).first()).toHaveAttribute("href", "/signup");
+    await expect(page.getByRole("link", { name: /Start (using AdjusterDesk|free trial)/i }).first()).toHaveAttribute("href", "/signup");
     await expect(page.getByRole("link", { name: "Talk to us", exact: true }).first()).toHaveAttribute("href", "/demo");
     await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
 
@@ -53,5 +52,23 @@ test("public SEO routes and security headers are present", async ({ request }) =
   expect(sitemapText).toContain("/pricing");
   expect(sitemapText).toContain("/privacy");
   expect(sitemapText).toContain("/security");
+  expect(sitemapText).toContain("/free-public-adjuster-claim-tracker");
   expect(sitemapText).not.toContain("/claims");
+});
+
+test("free claim tracker page and download asset are reachable", async ({ page, request }) => {
+  await page.goto("/free-public-adjuster-claim-tracker");
+  await expect(page.getByRole("heading", { name: "Free Public Adjuster Claim Tracker", exact: true })).toBeVisible();
+
+  const downloadCta = page.getByRole("link", { name: "Download Free Tracker (CSV)", exact: true });
+  await expect(downloadCta).toBeVisible();
+  await expect(downloadCta).toHaveAttribute("href", "/downloads/public-adjuster-claim-tracker.csv");
+
+  await expect(page.getByRole("link", { name: /Start free trial/i }).first()).toHaveAttribute("href", "/signup");
+
+  const trackerCsvResponse = await request.get("/downloads/public-adjuster-claim-tracker.csv");
+  expect(trackerCsvResponse.ok()).toBeTruthy();
+  const trackerCsvText = await trackerCsvResponse.text();
+  expect(trackerCsvText).toMatch(/Claim(\/Lead)? Name/);
+  expect(trackerCsvText).toContain("Client Name");
 });

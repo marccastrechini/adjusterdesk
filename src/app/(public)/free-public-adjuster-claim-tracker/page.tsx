@@ -137,10 +137,10 @@ export default function FreeClaimTrackerPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-base font-semibold text-slate-950">Start a free trial</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Move your tracker into AdjusterDesk and explore how it handles follow-ups, client updates, payments, and fees. Start with the first 10-50 active claims. 14-day free trial, no credit card required.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Move your tracker into AdjusterDesk and explore how it handles follow-ups, client updates, payments, and fees. Try AdjusterDesk with your first 10 claims. 14-day free trial, no credit card required.</p>
             <div className="mt-4">
               <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
-                Start Free Trial
+                Start free trial with your first 10 claims
               </PublicButtonLink>
             </div>
           </div>
