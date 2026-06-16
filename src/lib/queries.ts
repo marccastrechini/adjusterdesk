@@ -866,6 +866,41 @@ export async function getSystemWorkspaceDetail(workspaceId: string) {
   };
 }
 
+export async function getSystemUsers() {
+  await requireSystemAdminContext();
+
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      isSystemAdmin: true,
+      isOutreachOperator: true,
+      createdAt: true,
+      updatedAt: true,
+      firm: {
+        select: { id: true, name: true },
+      },
+      userInvitationTokens: {
+        where: {
+          acceptedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
+    orderBy: [
+      { isSystemAdmin: "desc" },
+      { isOutreachOperator: "desc" },
+      { active: "desc" },
+      { createdAt: "desc" },
+    ],
+  });
+}
+
 export async function getSystemOutreachProspects() {
   await requireSystemOutreachContext();
 

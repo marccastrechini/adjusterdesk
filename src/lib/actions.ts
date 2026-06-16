@@ -2371,3 +2371,102 @@ export async function resetSystemUserPasswordWithState(
     temporaryPassword,
   };
 }
+
+export async function setSystemUserActiveFromUsersPage(userId: string, active: boolean) {
+  const sessionUser = await requireSystemAdminContext();
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, active: true, isSystemAdmin: true },
+  });
+
+  if (!targetUser) {
+    redirect("/system/users?error=user-missing");
+  }
+
+  if (!active && targetUser.id === sessionUser.id) {
+    redirect("/system/users?error=self-disable");
+  }
+
+  if (!active && targetUser.isSystemAdmin) {
+    const activeAdminCount = await prisma.user.count({
+      where: { isSystemAdmin: true, active: true },
+    });
+    if (activeAdminCount <= 1) {
+      redirect("/system/users?error=last-admin");
+    }
+  }
+
+  if (targetUser.active !== active) {
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { active },
+    });
+  }
+
+  revalidatePath("/system/users");
+  revalidatePath("/system/workspaces");
+  redirect(withNotice("/system/users", active ? "system-user-activated" : "system-user-deactivated"));
+}
+
+export async function setSystemUserOutreachOperatorFromUsersPage(userId: string, enable: boolean) {
+  await requireSystemAdminContext();
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, isSystemAdmin: true, isOutreachOperator: true },
+  });
+
+  if (!targetUser) {
+    redirect("/system/users?error=user-missing");
+  }
+
+  if (targetUser.isSystemAdmin) {
+    redirect("/system/users?error=system-admin-flag");
+  }
+
+  if (targetUser.isOutreachOperator !== enable) {
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { isOutreachOperator: enable },
+    });
+  }
+
+  revalidatePath("/system/users");
+  revalidatePath("/system/outreach");
+  revalidatePath("/system/workspaces");
+  redirect(withNotice("/system/users", enable ? "system-outreach-operator-enabled" : "system-outreach-operator-disabled"));
+}
+
+export async function resendSystemUserInviteFromUsersPage(userId: string) {
+  await requireSystemAdminContext();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      active: true,
+      firm: { select: { name: true } },
+    },
+  });
+
+  if (!user || !user.active) {
+    redirect("/system/users?error=user-missing");
+  }
+
+  const inviteResult = await issueUserInvitation({
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    workspaceName: user.firm.name,
+  });
+
+  if (!inviteResult.ok) {
+    redirect("/system/users?error=invite-send");
+  }
+
+  revalidatePath("/system/users");
+  redirect(withNotice("/system/users", "user-invite-resent"));
+}

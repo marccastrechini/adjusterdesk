@@ -241,4 +241,44 @@ test("outreach operator can access outreach but not broader system admin", async
   await page.goto("/system");
   await expect(page).not.toHaveURL(/\/system(?:\?|$)/);
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+
+  await page.goto("/system/users");
+  await expect(page).not.toHaveURL(/\/system\/users(?:\?|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+});
+
+test("system admin can access /system/users and see user management actions", async ({ page }) => {
+  test.skip(!qaAdminEmail || !qaAdminPassword, "Missing AD_QA_ADMIN_EMAIL or AD_QA_ADMIN_PASSWORD in .env.qa.local");
+
+  await login(page, qaAdminEmail, qaAdminPassword);
+  await page.goto("/system/users");
+  await expect(page).toHaveURL(/\/system\/users(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "System users", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All users", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Name", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "System Admin", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Outreach Op", exact: true })).toBeVisible();
+  await scanPageText(page, "admin /system/users");
+
+  await openAccountMenu(page, "QA Admin");
+  await expect(accountMenu(page).getByRole("link", { name: "System users", exact: true })).toBeVisible();
+});
+
+test("outreach operator cannot access /system/users", async ({ page }) => {
+  test.skip(!qaOutreachEmail || !qaOutreachPassword, "Missing AD_QA_OUTREACH_EMAIL or AD_QA_OUTREACH_PASSWORD in .env.qa.local");
+
+  await login(page, qaOutreachEmail, qaOutreachPassword);
+  await page.goto("/system/users");
+  await expect(page).not.toHaveURL(/\/system\/users(?:\?|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+});
+
+test("normal QA user cannot access /system/users", async ({ page }) => {
+  test.skip(!qaUserEmail || !qaUserPassword, "Missing AD_QA_USER_EMAIL or AD_QA_USER_PASSWORD in .env.qa.local");
+
+  await login(page, qaUserEmail, qaUserPassword);
+  await page.goto("/system/users");
+  await expect(page).not.toHaveURL(/\/system\/users(?:\?|$)/);
+  await expect(page).not.toHaveURL(/\/system/);
 });
