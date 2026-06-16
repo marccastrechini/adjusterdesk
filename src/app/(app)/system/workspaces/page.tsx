@@ -59,7 +59,7 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
           : undefined;
 
   return (
-    <>
+    <div suppressHydrationWarning>
       <PageHeader
         title="System workspaces"
         description="Global local-admin view for workspace provisioning and ownership details."
@@ -193,6 +193,6 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
           </div>
         </Card>
       </Section>
-    </>
+    </div>
   );
 }
