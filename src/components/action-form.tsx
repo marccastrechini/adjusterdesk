@@ -16,6 +16,9 @@ export function ActionForm({ action, children, className }: { action: FormAction
     const values = state.fieldValues;
     if (!form || !values) return;
 
+    // Reset first so sensitive inputs like passwords are always cleared.
+    form.reset();
+
     for (const [name, value] of Object.entries(values)) {
       const element = form.elements.namedItem(name);
       if (!element || element instanceof RadioNodeList) continue;
@@ -34,12 +37,6 @@ export function ActionForm({ action, children, className }: { action: FormAction
       }
     }
 
-    // Never retain password values after a server-side validation failure.
-    if (state.message) {
-      for (const passwordInput of form.querySelectorAll<HTMLInputElement>('input[type="password"]')) {
-        passwordInput.value = "";
-      }
-    }
   }, [state.fieldValues, state.message]);
 
   return (
