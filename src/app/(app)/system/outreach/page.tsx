@@ -1,10 +1,9 @@
+import Link from "next/link";
 import { OutreachProspectStatus } from "@/generated/prisma/client";
-import { createSystemOutreachProspect, inviteSystemOutreachOperator, resendSystemOutreachOperatorInvite, updateSystemOutreachProspect } from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
-import { prisma } from "@/lib/prisma";
-import { getSystemOutreachProspects } from "@/lib/queries";
-import { Badge, ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
+import { getSortedSystemOutreachProspects, getSystemOutreachProspects, type SystemOutreachSort } from "@/lib/queries";
+import { Badge, ButtonLink, Card, Notice, PageHeader, Section } from "@/components/ui";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,14 +23,19 @@ function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function dateInputValue(date?: Date | string | null) {
-  if (!date) return "";
-  const value = new Date(date);
-  if (Number.isNaN(value.getTime())) return "";
-  const yyyy = value.getUTCFullYear();
-  const mm = `${value.getUTCMonth() + 1}`.padStart(2, "0");
-  const dd = `${value.getUTCDate()}`.padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+const sortOptions: Array<{ value: SystemOutreachSort; label: string }> = [
+  { value: "default", label: "Recommended queue" },
+  { value: "firmName", label: "Firm name A-Z" },
+  { value: "lastContactedDesc", label: "Last contacted, newest first" },
+  { value: "lastContactedAsc", label: "Last contacted, oldest first" },
+  { value: "updatedDesc", label: "Last updated, newest first" },
+  { value: "createdDesc", label: "Created, newest first" },
+  { value: "followUpDue", label: "Follow-up due first" },
+];
+
+function sortFromQuery(value: string | undefined): SystemOutreachSort {
+  if (!value) return "default";
+  return sortOptions.some((option) => option.value === value) ? (value as SystemOutreachSort) : "default";
 }
 
 function dateText(value?: Date | string | null) {
@@ -45,38 +49,23 @@ function statusLabel(status: OutreachProspectStatus) {
   return outreachStatusOptions.find((option) => option.value === status)?.label ?? status;
 }
 
+function previewText(replyObjection?: string | null, notes?: string | null) {
+  const text = replyObjection || notes;
+  if (!text) return "-";
+  return text.length > 90 ? `${text.slice(0, 90)}...` : text;
+}
+
 export default async function SystemOutreachPage({ searchParams }: PageProps) {
   const sessionUser = await requireSystemOutreachContext();
   const outreachOperatorOnly = sessionUser.isOutreachOperator && !sessionUser.isSystemAdmin;
   const query = await searchParams;
   const notice = getNoticeMessage(query);
   const error = firstValue(query.error);
-  const { prospects, statusCountMap, total } = await getSystemOutreachProspects();
-  const outreachOperators = !outreachOperatorOnly
-    ? await prisma.user.findMany({
-        where: {
-          isOutreachOperator: true,
-          isSystemAdmin: false,
-        },
-        include: {
-          firm: { select: { name: true } },
-          userInvitationTokens: {
-            where: {
-              acceptedAt: null,
-              expiresAt: {
-                gt: new Date(),
-              },
-            },
-            orderBy: {
-              createdAt: "desc",
-            },
-            take: 1,
-          },
-        },
-        orderBy: [{ active: "desc" }, { createdAt: "desc" }],
-        take: 30,
-      })
-    : [];
+  const sort = sortFromQuery(firstValue(query.sort));
+  const [{ statusCountMap, total }, sortedProspects] = await Promise.all([
+    getSystemOutreachProspects(),
+    getSortedSystemOutreachProspects(sort),
+  ]);
 
   const errorMessage =
     error === "create-validation"
@@ -85,22 +74,19 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         ? "Prospect was not updated. Check the entered values."
         : error === "missing"
           ? "That outreach prospect was not found."
-          : error === "invite-send"
-            ? "Invite could not be sent. Check system email setup and try again."
-            : error === "invite-system-admin"
-              ? "That email already belongs to a system admin. Use a non-admin account for outreach operator invites."
-              : error === "invite-missing"
-                ? "That outreach operator account was not found or cannot be invited right now."
-                : error === "invite-missing-firm"
-                  ? "Invite could not be created because the system admin workspace was not found."
           : undefined;
 
   return (
     <>
       <PageHeader
         title={outreachOperatorOnly ? "Outreach tracker" : "System outreach"}
-        description={outreachOperatorOnly ? "Outreach operator workspace for first-contact prospect tracking." : "Internal operator tracker for the first 25 direct outreach prospects."}
-        actions={outreachOperatorOnly ? undefined : <ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink>}
+        description={outreachOperatorOnly ? "Outreach operator workspace for first-contact prospect tracking." : "Internal queue for first-contact prospect tracking."}
+        actions={
+          <>
+            {!outreachOperatorOnly ? <ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink> : null}
+            <ButtonLink href="/system/outreach/new">Add prospect</ButtonLink>
+          </>
+        }
       />
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
@@ -140,127 +126,23 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         </Card>
       ) : null}
 
-      {!outreachOperatorOnly ? (
-        <Section title="Invite outreach operator" description="Create or upgrade one account for outreach work and send a set-password invite link.">
-          <Card>
-            <form action={inviteSystemOutreachOperator} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Field label="Name" required>
-                <input name="name" required className={inputClassName} />
-              </Field>
-              <Field label="Email" required>
-                <input name="email" type="email" required className={inputClassName} />
-              </Field>
-              <div className="md:col-span-2 xl:col-span-2">
-                <Field label="Note (optional)" hint="Included in the invite email when provided.">
-                  <input name="note" maxLength={300} className={inputClassName} />
-                </Field>
-              </div>
-              <div className="md:col-span-2 xl:col-span-4">
-                <SubmitButton>Invite outreach operator</SubmitButton>
-              </div>
-            </form>
-          </Card>
-
-          <Card className="overflow-x-auto">
-            <table className="min-w-[900px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase tracking-normal text-slate-500">
-                  <th scope="col" className="px-2 py-2 font-semibold">Name</th>
-                  <th scope="col" className="px-2 py-2 font-semibold">Email</th>
-                  <th scope="col" className="px-2 py-2 font-semibold">Workspace</th>
-                  <th scope="col" className="px-2 py-2 font-semibold">Status</th>
-                  <th scope="col" className="px-2 py-2 font-semibold">Invite</th>
-                  <th scope="col" className="px-2 py-2 font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {outreachOperators.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-2 py-6 text-center text-sm text-slate-600">No outreach operators yet.</td>
-                  </tr>
-                ) : (
-                  outreachOperators.map((operator) => (
-                    <tr key={operator.id} className="border-b border-slate-100 align-top text-slate-700 last:border-b-0">
-                      <td className="px-2 py-2 font-medium text-slate-950">{operator.name}</td>
-                      <td className="px-2 py-2">{operator.email}</td>
-                      <td className="px-2 py-2">{operator.firm.name}</td>
-                      <td className="px-2 py-2">{operator.active ? <Badge tone="green">Active</Badge> : <Badge>Inactive</Badge>}</td>
-                      <td className="px-2 py-2">{operator.userInvitationTokens.length > 0 ? <Badge tone="amber">Pending</Badge> : <Badge>None pending</Badge>}</td>
-                      <td className="px-2 py-2">
-                        <form action={resendSystemOutreachOperatorInvite.bind(null, operator.id)}>
-                          <SubmitButton variant="secondary">Resend invite</SubmitButton>
-                        </form>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </Card>
-        </Section>
-      ) : null}
-
-      <Section title="Add outreach prospect" description="Keep this simple: one row per firm to track contact attempts and follow-up.">
-        <Card>
-          <form action={createSystemOutreachProspect} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <Field label="Firm name" required>
-              <input name="firmName" required className={inputClassName} />
-            </Field>
-            <Field label="Website">
-              <input name="website" placeholder="https://..." className={inputClassName} />
-            </Field>
-            <Field label="State">
-              <input name="state" className={inputClassName} />
-            </Field>
-            <Field label="Contact name">
-              <input name="contactName" className={inputClassName} />
-            </Field>
-            <Field label="Email">
-              <input name="email" type="email" className={inputClassName} />
-            </Field>
-            <Field label="Source">
-              <input name="source" placeholder="Directory, referral, manual search" className={inputClassName} />
-            </Field>
-            <Field label="Small-office signal" hint="Short reason this looks like a solo to 5-person office.">
-              <input name="smallOfficeSignal" className={inputClassName} />
-            </Field>
-            <Field label="Status">
-              <select name="status" defaultValue={OutreachProspectStatus.NOT_CONTACTED} className={selectClassName}>
-                {outreachStatusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Date contacted">
-              <input name="dateContacted" type="date" className={inputClassName} />
-            </Field>
-            <Field label="Follow-up date">
-              <input name="followUpDate" type="date" className={inputClassName} />
-            </Field>
-            <div className="xl:col-span-2">
-              <Field label="Reply / objection">
-                <input name="replyObjection" className={inputClassName} />
-              </Field>
-            </div>
-            <div className="md:col-span-2 xl:col-span-3">
-              <Field label="Notes">
-                <textarea name="notes" rows={3} className={textareaClassName} />
-              </Field>
-            </div>
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2 xl:col-span-3">
-              <input type="checkbox" name="trialCreated" className="h-4 w-4 rounded border-slate-300" />
-              Trial created
-            </label>
-            <div className="md:col-span-2 xl:col-span-3">
-              <SubmitButton>Add prospect</SubmitButton>
-            </div>
+      <Section
+        title="Outreach prospects"
+        description="Scannable daily queue. Open a prospect to update status, follow-up, and notes."
+        actions={
+          <form method="get" className="flex items-center gap-2 text-sm">
+            <label htmlFor="sort" className="text-slate-600">Sort</label>
+            <select id="sort" name="sort" defaultValue={sort} className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-950">
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Apply</button>
           </form>
-        </Card>
-      </Section>
-
-      <Section title="Outreach prospects" description="Most recent rows first. Update status, follow-up, objection, trial flag, and notes inline.">
+        }
+      >
         <Card className="overflow-x-auto">
-          <table className="min-w-[1200px] border-collapse text-left text-sm">
+          <table className="min-w-[1400px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs uppercase tracking-normal text-slate-500">
                 <th scope="col" className="px-2 py-2 font-semibold">Firm</th>
@@ -268,23 +150,26 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
                 <th scope="col" className="px-2 py-2 font-semibold">State</th>
                 <th scope="col" className="px-2 py-2 font-semibold">Contact</th>
                 <th scope="col" className="px-2 py-2 font-semibold">Email</th>
-                <th scope="col" className="px-2 py-2 font-semibold">Source</th>
-                <th scope="col" className="px-2 py-2 font-semibold">Small-office signal</th>
+                <th scope="col" className="px-2 py-2 font-semibold">Status</th>
+                <th scope="col" className="px-2 py-2 font-semibold">Follow-up</th>
                 <th scope="col" className="px-2 py-2 font-semibold">Date contacted</th>
-                <th scope="col" className="px-2 py-2 font-semibold">Update</th>
+                <th scope="col" className="px-2 py-2 font-semibold">Updated</th>
                 <th scope="col" className="px-2 py-2 font-semibold">Created</th>
+                <th scope="col" className="px-2 py-2 font-semibold">Reply / notes</th>
               </tr>
             </thead>
             <tbody>
-              {prospects.length === 0 ? (
+              {sortedProspects.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-2 py-6 text-center text-sm text-slate-600">No outreach prospects yet.</td>
+                  <td colSpan={11} className="px-2 py-6 text-center text-sm text-slate-600">No outreach prospects yet.</td>
                 </tr>
               ) : (
-                prospects.map((prospect) => (
+                sortedProspects.map((prospect) => (
                   <tr key={prospect.id} className="border-b border-slate-100 align-top text-slate-700 last:border-b-0">
                     <td className="px-2 py-2">
-                      <p className="font-semibold text-slate-950">{prospect.firmName}</p>
+                      <Link href={`/system/outreach/${prospect.id}`} className="font-semibold text-teal-800 hover:text-teal-900 hover:underline">
+                        {prospect.firmName}
+                      </Link>
                     </td>
                     <td className="px-2 py-2">
                       {prospect.website ? <a href={prospect.website} target="_blank" rel="noreferrer" className="text-teal-800 hover:text-teal-900">{prospect.website}</a> : "-"}
@@ -292,29 +177,12 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
                     <td className="px-2 py-2">{prospect.state ?? "-"}</td>
                     <td className="px-2 py-2">{prospect.contactName ?? "-"}</td>
                     <td className="px-2 py-2">{prospect.email ?? "-"}</td>
-                    <td className="px-2 py-2">{prospect.source ?? "-"}</td>
-                    <td className="px-2 py-2">{prospect.smallOfficeSignal ?? "-"}</td>
+                    <td className="px-2 py-2"><Badge>{statusLabel(prospect.status)}</Badge></td>
+                    <td className="px-2 py-2">{dateText(prospect.followUpDate)}</td>
                     <td className="px-2 py-2">{dateText(prospect.dateContacted)}</td>
-                    <td className="px-2 py-2">
-                      <form action={updateSystemOutreachProspect} className="grid gap-2">
-                        <input type="hidden" name="outreachId" value={prospect.id} />
-                        <select name="status" defaultValue={prospect.status} className={selectClassName}>
-                          {outreachStatusOptions.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                        <input name="followUpDate" type="date" defaultValue={dateInputValue(prospect.followUpDate)} className={inputClassName} />
-                        <input name="replyObjection" defaultValue={prospect.replyObjection ?? ""} className={inputClassName} />
-                        <label className="inline-flex items-center gap-2 text-xs text-slate-700">
-                          <input type="checkbox" name="trialCreated" defaultChecked={prospect.trialCreated} className="h-4 w-4 rounded border-slate-300" />
-                          Trial created
-                        </label>
-                        <textarea name="notes" rows={2} defaultValue={prospect.notes ?? ""} className={textareaClassName} />
-                        <SubmitButton variant="secondary">Save</SubmitButton>
-                      </form>
-                      <div className="mt-2"><Badge>{statusLabel(prospect.status)}</Badge></div>
-                    </td>
+                    <td className="px-2 py-2">{dateText(prospect.updatedAt)}</td>
                     <td className="px-2 py-2 text-xs text-slate-600">{dateText(prospect.createdAt)}</td>
+                    <td className="px-2 py-2 max-w-[360px] text-xs text-slate-600">{previewText(prospect.replyObjection, prospect.notes)}</td>
                   </tr>
                 ))
               )}

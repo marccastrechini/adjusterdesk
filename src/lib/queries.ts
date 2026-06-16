@@ -905,8 +905,8 @@ export async function getSystemOutreachProspects() {
   await requireSystemOutreachContext();
 
   const prospects = await prisma.outreachProspect.findMany({
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: 100,
+    orderBy: [{ followUpDate: "asc" }, { updatedAt: "desc" }, { id: "desc" }],
+    take: 200,
   });
 
   const statusCounts = await prisma.outreachProspect.groupBy({
@@ -925,6 +925,89 @@ export async function getSystemOutreachProspects() {
   return {
     prospects,
     statusCountMap,
-    total: prospects.length,
+    total: await prisma.outreachProspect.count(),
   };
+}
+
+export type SystemOutreachSort =
+  | "default"
+  | "firmName"
+  | "lastContactedDesc"
+  | "lastContactedAsc"
+  | "updatedDesc"
+  | "createdDesc"
+  | "followUpDue";
+
+function byDateAsc(a?: Date | null, b?: Date | null) {
+  const aTime = a ? a.getTime() : Number.POSITIVE_INFINITY;
+  const bTime = b ? b.getTime() : Number.POSITIVE_INFINITY;
+  return aTime - bTime;
+}
+
+function byDateDesc(a?: Date | null, b?: Date | null) {
+  const aTime = a ? a.getTime() : Number.NEGATIVE_INFINITY;
+  const bTime = b ? b.getTime() : Number.NEGATIVE_INFINITY;
+  return bTime - aTime;
+}
+
+export async function getSortedSystemOutreachProspects(sort: SystemOutreachSort) {
+  await requireSystemOutreachContext();
+
+  if (sort === "firmName") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ firmName: "asc" }, { id: "asc" }], take: 200 });
+  }
+
+  if (sort === "lastContactedDesc") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ dateContacted: "desc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
+  }
+
+  if (sort === "lastContactedAsc") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ dateContacted: "asc" }, { id: "asc" }], take: 200 });
+  }
+
+  if (sort === "updatedDesc") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 200 });
+  }
+
+  if (sort === "createdDesc") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 200 });
+  }
+
+  if (sort === "followUpDue") {
+    return prisma.outreachProspect.findMany({ orderBy: [{ followUpDate: "asc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
+  }
+
+  const prospects = await prisma.outreachProspect.findMany({
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    take: 200,
+  });
+
+  return prospects.sort((a, b) => {
+    const aFollowUpPriority = a.followUpDate ? 0 : 1;
+    const bFollowUpPriority = b.followUpDate ? 0 : 1;
+    if (aFollowUpPriority !== bFollowUpPriority) {
+      return aFollowUpPriority - bFollowUpPriority;
+    }
+
+    const followUpCompare = byDateAsc(a.followUpDate, b.followUpDate);
+    if (followUpCompare !== 0) {
+      return followUpCompare;
+    }
+
+    const aNotContacted = a.status === OutreachProspectStatus.NOT_CONTACTED ? 0 : 1;
+    const bNotContacted = b.status === OutreachProspectStatus.NOT_CONTACTED ? 0 : 1;
+    if (aNotContacted !== bNotContacted) {
+      return aNotContacted - bNotContacted;
+    }
+
+    return byDateDesc(a.updatedAt, b.updatedAt);
+  });
+}
+
+export async function getSystemOutreachProspectById(id: string) {
+  await requireSystemOutreachContext();
+
+  return prisma.outreachProspect.findUnique({
+    where: { id },
+  });
 }

@@ -35,7 +35,6 @@ const qaAdminEmail = process.env.AD_QA_ADMIN_EMAIL?.trim() || "";
 const qaAdminPassword = process.env.AD_QA_ADMIN_PASSWORD?.trim() || "";
 const qaOutreachEmail = process.env.AD_QA_OUTREACH_EMAIL?.trim() || "";
 const qaOutreachPassword = process.env.AD_QA_OUTREACH_PASSWORD?.trim() || "";
-const qaOutreachInviteName = process.env.AD_QA_OUTREACH_INVITE_NAME?.trim() || "QA Outreach Operator";
 
 test.use({ baseURL });
 
@@ -165,6 +164,12 @@ test("normal QA user can access office pages and cannot access system admin tool
 
   await page.goto("/system/outreach");
   await expect(page).not.toHaveURL(/\/system\/outreach(?:\?|$)/);
+
+  await page.goto("/system/outreach/new");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
+
+  await page.goto("/system/outreach/test-prospect-id");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/test-prospect-id(?:\?|$)/);
 });
 
 test("admin QA user can access system admin pages", async ({ page }) => {
@@ -199,17 +204,34 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Add outreach prospect", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
+  await expect(page.locator('input[name="firmName"]')).toHaveCount(0);
+  await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
 
-  if (qaOutreachEmail) {
-    await page.locator('input[name="name"]').first().fill(qaOutreachInviteName);
-    await page.locator('input[name="email"]').first().fill(qaOutreachEmail);
-    await page.locator('input[name="note"]').first().fill("Production QA outreach invite path check");
-    await page.getByRole("button", { name: "Invite outreach operator", exact: true }).click();
-    await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-operator-invite-(created|updated)(?:&|$)/);
-  }
+  const qaFirmName = `QA Outreach Firm ${Date.now()}`;
+  await page.goto("/system/outreach/new");
+  await expect(page).toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Add outreach prospect", exact: true })).toBeVisible();
+  await page.locator('input[name="firmName"]').fill(qaFirmName);
+  await page.locator('input[name="website"]').fill("https://example.com");
+  await page.locator('input[name="state"]').fill("TX");
+  await page.locator('input[name="contactName"]').fill("QA Contact");
+  await page.locator('input[name="email"]').fill(`qa+${Date.now()}@example.com`);
+  await page.locator('input[name="source"]').fill("Manual QA");
+  await page.locator('textarea[name="notes"]').fill("Created by production QA smoke test");
+  await page.getByRole("button", { name: "Add prospect", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-created(?:&|$)/);
+
+  const rowLink = page.getByRole("link", { name: qaFirmName, exact: true }).first();
+  await expect(rowLink).toBeVisible();
+  await rowLink.click();
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
+  await expect(page.getByRole("button", { name: "Save updates", exact: true })).toBeVisible();
+  await page.locator('textarea[name="notes"]').fill("Updated from QA detail page");
+  await page.getByRole("button", { name: "Save updates", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
 
   await scanPageText(page, "admin /system/outreach");
 });
@@ -229,6 +251,19 @@ test("outreach operator can access outreach but not broader system admin", async
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: /Outreach tracker|System outreach/, exact: false })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
+
+  await page.goto("/system/outreach/new");
+  await expect(page).toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
+
+  await page.goto("/system/outreach");
+  const firstProspectLink = page.locator('a[href^="/system/outreach/"]:not([href="/system/outreach/new"])').first();
+  if (await firstProspectLink.count()) {
+    await firstProspectLink.click();
+    await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
+    await expect(page.getByRole("button", { name: "Save updates", exact: true })).toBeVisible();
+  }
 
   await page.goto("/system/workspaces");
   await expect(page).not.toHaveURL(/\/system\/workspaces(?:\?|$)/);
@@ -255,6 +290,7 @@ test("system admin can access /system/users and see user management actions", as
   await expect(page).toHaveURL(/\/system\/users(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System users", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "All users", exact: true })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Name", exact: true })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "System Admin", exact: true })).toBeVisible();
@@ -281,4 +317,13 @@ test("normal QA user cannot access /system/users", async ({ page }) => {
   await page.goto("/system/users");
   await expect(page).not.toHaveURL(/\/system\/users(?:\?|$)/);
   await expect(page).not.toHaveURL(/\/system/);
+
+  await page.goto("/system/outreach");
+  await expect(page).not.toHaveURL(/\/system\/outreach(?:\?|$)/);
+
+  await page.goto("/system/outreach/new");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
+
+  await page.goto("/system/outreach/test-prospect-id");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/test-prospect-id(?:\?|$)/);
 });

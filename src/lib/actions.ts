@@ -131,10 +131,24 @@ const outreachCreateSchema = z.object({
 
 const outreachUpdateSchema = z.object({
   outreachId: z.string().trim().min(1, "Missing outreach prospect."),
-  status: z.nativeEnum(OutreachProspectStatus),
+  firmName: z.string().trim().min(2, "Enter a firm name.").max(120, "Firm name is too long.").optional(),
+  website: z.string().trim().max(255, "Website is too long.").optional().transform((value) => value || undefined),
+  state: z.string().trim().max(40, "State is too long.").optional().transform((value) => value || undefined),
+  contactName: z.string().trim().max(120, "Contact name is too long.").optional().transform((value) => value || undefined),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .refine((value) => !value || z.email().safeParse(value).success, "Enter a valid email address.")
+    .transform((value) => value?.toLowerCase()),
+  source: z.string().trim().max(120, "Source is too long.").optional().transform((value) => value || undefined),
+  smallOfficeSignal: z.string().trim().max(240, "Small-office signal is too long.").optional().transform((value) => value || undefined),
+  status: z.nativeEnum(OutreachProspectStatus).optional(),
+  dateContacted: z.string().trim().optional().transform((value) => value || undefined),
   followUpDate: z.string().trim().optional().transform((value) => value || undefined),
   replyObjection: z.string().trim().max(500, "Reply/objection is too long.").optional().transform((value) => value || undefined),
-  trialCreated: z.boolean().default(false),
+  trialCreated: z.boolean().optional(),
   notes: z.string().trim().max(1200, "Notes are too long.").optional().transform((value) => value || undefined),
 });
 
@@ -190,6 +204,18 @@ function hasErrors(errors: FieldErrors) {
 function asDate(value?: string) {
   if (!value) return undefined;
   return new Date(`${value}T12:00:00`);
+}
+
+function systemReturnToValue(formData: FormData, fallback: string) {
+  const returnTo = textValue(formData, "returnTo");
+  if (!returnTo || !returnTo.startsWith("/system/")) {
+    return fallback;
+  }
+  return returnTo;
+}
+
+function withError(path: string, error: string) {
+  return `${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(error)}`;
 }
 
 function asDateTime(value?: string) {
@@ -2081,6 +2107,7 @@ export async function updateSystemWorkspaceSubscription(formData: FormData) {
 
 export async function createSystemOutreachProspect(formData: FormData) {
   await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
 
   const parsed = outreachCreateSchema.safeParse({
     firmName: textValue(formData, "firmName"),
@@ -2099,7 +2126,7 @@ export async function createSystemOutreachProspect(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect("/system/outreach?error=create-validation");
+    redirect(withError(returnTo, "create-validation"));
   }
 
   const values = parsed.data;
@@ -2123,49 +2150,73 @@ export async function createSystemOutreachProspect(formData: FormData) {
   });
 
   revalidatePath("/system/outreach");
-  redirect(withNotice("/system/outreach", "system-outreach-created"));
+  revalidatePath("/system/outreach/new");
+  redirect(withNotice(returnTo, "system-outreach-created"));
 }
 
 export async function updateSystemOutreachProspect(formData: FormData) {
   await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
 
   const parsed = outreachUpdateSchema.safeParse({
     outreachId: textValue(formData, "outreachId"),
+    firmName: textValue(formData, "firmName") || undefined,
+    website: textValue(formData, "website") || undefined,
+    state: textValue(formData, "state") || undefined,
+    contactName: textValue(formData, "contactName") || undefined,
+    email: textValue(formData, "email") || undefined,
+    source: textValue(formData, "source") || undefined,
+    smallOfficeSignal: textValue(formData, "smallOfficeSignal") || undefined,
     status: textValue(formData, "status"),
+    dateContacted: textValue(formData, "dateContacted") || undefined,
     followUpDate: textValue(formData, "followUpDate"),
     replyObjection: textValue(formData, "replyObjection"),
-    trialCreated: checkboxValue(formData, "trialCreated"),
+    trialCreated: formData.has("trialCreated") ? checkboxValue(formData, "trialCreated") : undefined,
     notes: textValue(formData, "notes"),
   });
 
   if (!parsed.success) {
-    redirect("/system/outreach?error=update-validation");
+    redirect(withError(returnTo, "update-validation"));
   }
 
   const values = parsed.data;
 
   const existing = await prisma.outreachProspect.findUnique({
     where: { id: values.outreachId },
-    select: { id: true },
+    select: {
+      id: true,
+      firmName: true,
+      status: true,
+      trialCreated: true,
+    },
   });
 
   if (!existing) {
-    redirect("/system/outreach?error=missing");
+    redirect(withError(returnTo, "missing"));
   }
 
   await prisma.outreachProspect.update({
     where: { id: values.outreachId },
     data: {
-      status: values.status,
+      firmName: values.firmName ?? existing.firmName,
+      website: values.website,
+      state: values.state,
+      contactName: values.contactName,
+      email: values.email,
+      source: values.source,
+      smallOfficeSignal: values.smallOfficeSignal,
+      status: values.status ?? existing.status,
+      dateContacted: asDate(values.dateContacted),
       followUpDate: asDate(values.followUpDate),
       replyObjection: values.replyObjection,
-      trialCreated: values.trialCreated,
+      trialCreated: values.trialCreated ?? existing.trialCreated,
       notes: values.notes,
     },
   });
 
   revalidatePath("/system/outreach");
-  redirect(withNotice("/system/outreach", "system-outreach-updated"));
+  revalidatePath(`/system/outreach/${values.outreachId}`);
+  redirect(withNotice(returnTo, "system-outreach-updated"));
 }
 
 export async function setSystemUserOutreachOperator(userId: string, workspaceId: string, nextOutreachOperator: boolean) {
@@ -2194,6 +2245,7 @@ export async function setSystemUserOutreachOperator(userId: string, workspaceId:
 
 export async function inviteSystemOutreachOperator(formData: FormData) {
   const sessionUser = await requireSystemAdminContext();
+  const returnTo = systemReturnToValue(formData, "/system/users");
 
   const name = requiredText.parse(formData.get("name")?.toString());
   const email = z.email().parse(formData.get("email")?.toString()).toLowerCase();
@@ -2205,7 +2257,7 @@ export async function inviteSystemOutreachOperator(formData: FormData) {
   });
 
   if (!adminFirm) {
-    redirect("/system/outreach?error=invite-missing-firm");
+    redirect(withError(returnTo, "invite-missing-firm"));
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -2226,7 +2278,7 @@ export async function inviteSystemOutreachOperator(formData: FormData) {
   });
 
   if (existingUser?.isSystemAdmin) {
-    redirect("/system/outreach?error=invite-system-admin");
+    redirect(withError(returnTo, "invite-system-admin"));
   }
 
   if (existingUser) {
@@ -2248,12 +2300,13 @@ export async function inviteSystemOutreachOperator(formData: FormData) {
     });
 
     if (!inviteResult.ok) {
-      redirect("/system/outreach?error=invite-send");
+      redirect(withError(returnTo, "invite-send"));
     }
 
+    revalidatePath("/system/users");
     revalidatePath("/system/outreach");
     revalidatePath("/system/workspaces");
-    redirect(withNotice("/system/outreach", "system-outreach-operator-invite-updated"));
+    redirect(withNotice(returnTo, "system-outreach-operator-invite-updated"));
   }
 
   const createdUser = await prisma.user.create({
@@ -2284,16 +2337,18 @@ export async function inviteSystemOutreachOperator(formData: FormData) {
 
   if (!inviteResult.ok) {
     await prisma.user.delete({ where: { id: createdUser.id } });
-    redirect("/system/outreach?error=invite-send");
+    redirect(withError(returnTo, "invite-send"));
   }
 
+  revalidatePath("/system/users");
   revalidatePath("/system/outreach");
   revalidatePath("/system/workspaces");
-  redirect(withNotice("/system/outreach", "system-outreach-operator-invite-created"));
+  redirect(withNotice(returnTo, "system-outreach-operator-invite-created"));
 }
 
 export async function resendSystemOutreachOperatorInvite(userId: string) {
   await requireSystemAdminContext();
+  const returnTo = "/system/users";
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -2309,7 +2364,7 @@ export async function resendSystemOutreachOperatorInvite(userId: string) {
   });
 
   if (!user || !user.active || !user.isOutreachOperator || user.isSystemAdmin) {
-    redirect("/system/outreach?error=invite-missing");
+    redirect(withError(returnTo, "invite-missing"));
   }
 
   const inviteResult = await issueUserInvitation({
@@ -2320,11 +2375,12 @@ export async function resendSystemOutreachOperatorInvite(userId: string) {
   });
 
   if (!inviteResult.ok) {
-    redirect("/system/outreach?error=invite-send");
+    redirect(withError(returnTo, "invite-send"));
   }
 
+  revalidatePath("/system/users");
   revalidatePath("/system/outreach");
-  redirect(withNotice("/system/outreach", "system-outreach-operator-invite-resent"));
+  redirect(withNotice(returnTo, "system-outreach-operator-invite-resent"));
 }
 
 export type ResetSystemUserPasswordState = {

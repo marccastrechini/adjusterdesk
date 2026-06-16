@@ -70,6 +70,7 @@ export default async function SystemUsersPage({ searchParams }: PageProps) {
       >
         <Card>
           <form action={inviteSystemOutreachOperator} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <input type="hidden" name="returnTo" value="/system/users" />
             <Field label="Name" required>
               <input name="name" required className={inputClassName} />
             </Field>

@@ -133,11 +133,11 @@ export const noticeMessages = {
   },
   "system-outreach-created": {
     title: "Outreach prospect added",
-    message: "The outreach prospect is now tracked in the system outreach table.",
+    message: "The outreach prospect is now in the outreach queue.",
   },
   "system-outreach-updated": {
     title: "Outreach prospect updated",
-    message: "Status, follow-up, objection, trial flag, and notes were saved.",
+    message: "Prospect details, status, and follow-up notes were saved.",
   },
   "system-outreach-operator-enabled": {
     title: "Outreach operator enabled",
