@@ -1,7 +1,8 @@
 import { OutreachProspectStatus } from "@/generated/prisma/client";
-import { createSystemOutreachProspect, updateSystemOutreachProspect } from "@/lib/actions";
+import { createSystemOutreachProspect, inviteSystemOutreachOperator, resendSystemOutreachOperatorInvite, updateSystemOutreachProspect } from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
+import { prisma } from "@/lib/prisma";
 import { getSystemOutreachProspects } from "@/lib/queries";
 import { Badge, ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
 
@@ -51,6 +52,31 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
   const notice = getNoticeMessage(query);
   const error = firstValue(query.error);
   const { prospects, statusCountMap, total } = await getSystemOutreachProspects();
+  const outreachOperators = !outreachOperatorOnly
+    ? await prisma.user.findMany({
+        where: {
+          isOutreachOperator: true,
+          isSystemAdmin: false,
+        },
+        include: {
+          firm: { select: { name: true } },
+          userInvitationTokens: {
+            where: {
+              acceptedAt: null,
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
+        },
+        orderBy: [{ active: "desc" }, { createdAt: "desc" }],
+        take: 30,
+      })
+    : [];
 
   const errorMessage =
     error === "create-validation"
@@ -59,6 +85,14 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         ? "Prospect was not updated. Check the entered values."
         : error === "missing"
           ? "That outreach prospect was not found."
+          : error === "invite-send"
+            ? "Invite could not be sent. Check system email setup and try again."
+            : error === "invite-system-admin"
+              ? "That email already belongs to a system admin. Use a non-admin account for outreach operator invites."
+              : error === "invite-missing"
+                ? "That outreach operator account was not found or cannot be invited right now."
+                : error === "invite-missing-firm"
+                  ? "Invite could not be created because the system admin workspace was not found."
           : undefined;
 
   return (
@@ -104,6 +138,66 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         <Card className="text-xs leading-5 text-slate-600">
           <p><span className="font-semibold text-slate-800">Tracked prospects:</span> {total}</p>
         </Card>
+      ) : null}
+
+      {!outreachOperatorOnly ? (
+        <Section title="Invite outreach operator" description="Create or upgrade one account for outreach work and send a set-password invite link.">
+          <Card>
+            <form action={inviteSystemOutreachOperator} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Field label="Name" required>
+                <input name="name" required className={inputClassName} />
+              </Field>
+              <Field label="Email" required>
+                <input name="email" type="email" required className={inputClassName} />
+              </Field>
+              <div className="md:col-span-2 xl:col-span-2">
+                <Field label="Note (optional)" hint="Included in the invite email when provided.">
+                  <input name="note" maxLength={300} className={inputClassName} />
+                </Field>
+              </div>
+              <div className="md:col-span-2 xl:col-span-4">
+                <SubmitButton>Invite outreach operator</SubmitButton>
+              </div>
+            </form>
+          </Card>
+
+          <Card className="overflow-x-auto">
+            <table className="min-w-[900px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-xs uppercase tracking-normal text-slate-500">
+                  <th scope="col" className="px-2 py-2 font-semibold">Name</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Email</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Workspace</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Status</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Invite</th>
+                  <th scope="col" className="px-2 py-2 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {outreachOperators.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-2 py-6 text-center text-sm text-slate-600">No outreach operators yet.</td>
+                  </tr>
+                ) : (
+                  outreachOperators.map((operator) => (
+                    <tr key={operator.id} className="border-b border-slate-100 align-top text-slate-700 last:border-b-0">
+                      <td className="px-2 py-2 font-medium text-slate-950">{operator.name}</td>
+                      <td className="px-2 py-2">{operator.email}</td>
+                      <td className="px-2 py-2">{operator.firm.name}</td>
+                      <td className="px-2 py-2">{operator.active ? <Badge tone="green">Active</Badge> : <Badge>Inactive</Badge>}</td>
+                      <td className="px-2 py-2">{operator.userInvitationTokens.length > 0 ? <Badge tone="amber">Pending</Badge> : <Badge>None pending</Badge>}</td>
+                      <td className="px-2 py-2">
+                        <form action={resendSystemOutreachOperatorInvite.bind(null, operator.id)}>
+                          <SubmitButton variant="secondary">Resend invite</SubmitButton>
+                        </form>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </Card>
+        </Section>
       ) : null}
 
       <Section title="Add outreach prospect" description="Keep this simple: one row per firm to track contact attempts and follow-up.">

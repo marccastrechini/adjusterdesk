@@ -14,6 +14,7 @@ type UserInvitationEmailInput = {
   workspaceName: string;
   acceptInviteUrl: string;
   expiresInMinutes: number;
+  invitationNote?: string;
 };
 
 type TrialSignupAlertEmailInput = {
@@ -145,6 +146,7 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
 }
 
 export async function sendUserInvitationEmail(input: UserInvitationEmailInput): Promise<EmailSendResult> {
+  const trimmedNote = input.invitationNote?.trim();
   const emailContent = renderSystemEmailTemplate({
     preheader: "You have been invited to AdjusterDesk.",
     title: "Set up your account",
@@ -152,6 +154,7 @@ export async function sendUserInvitationEmail(input: UserInvitationEmailInput): 
     bodyLines: [
       `You were invited to join ${input.workspaceName} in AdjusterDesk.`,
       `Use the secure link below to set your password. This invite expires in ${input.expiresInMinutes} minutes and can be used once.`,
+      ...(trimmedNote ? [`Admin note: ${trimmedNote}`] : []),
     ],
     ctaLabel: "Accept invite",
     ctaUrl: input.acceptInviteUrl,

@@ -35,6 +35,7 @@ const qaAdminEmail = process.env.AD_QA_ADMIN_EMAIL?.trim() || "";
 const qaAdminPassword = process.env.AD_QA_ADMIN_PASSWORD?.trim() || "";
 const qaOutreachEmail = process.env.AD_QA_OUTREACH_EMAIL?.trim() || "";
 const qaOutreachPassword = process.env.AD_QA_OUTREACH_PASSWORD?.trim() || "";
+const qaOutreachInviteName = process.env.AD_QA_OUTREACH_INVITE_NAME?.trim() || "QA Outreach Operator";
 
 test.use({ baseURL });
 
@@ -178,7 +179,18 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Add outreach prospect", exact: true })).toBeVisible();
+
+  if (qaOutreachEmail) {
+    await page.locator('input[name="name"]').first().fill(qaOutreachInviteName);
+    await page.locator('input[name="email"]').first().fill(qaOutreachEmail);
+    await page.locator('input[name="note"]').first().fill("Production QA outreach invite path check");
+    await page.getByRole("button", { name: "Invite outreach operator", exact: true }).click();
+    await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-operator-invite-(created|updated)(?:&|$)/);
+  }
+
   await scanPageText(page, "admin /system/outreach");
 });
 
@@ -190,6 +202,7 @@ test("outreach operator can access outreach but not broader system admin", async
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: /Outreach tracker|System outreach/, exact: false })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
 
   await page.goto("/system/workspaces");
   await expect(page).not.toHaveURL(/\/system\/workspaces(?:\?|$)/);

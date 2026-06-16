@@ -224,11 +224,13 @@ async function issueUserInvitation({
   userName,
   userEmail,
   workspaceName,
+  invitationNote,
 }: {
   userId: string;
   userName: string;
   userEmail: string;
   workspaceName: string;
+  invitationNote?: string;
 }) {
   if (!canSendSystemEmail()) {
     return {
@@ -257,6 +259,7 @@ async function issueUserInvitation({
     workspaceName,
     acceptInviteUrl,
     expiresInMinutes: inviteMinutes,
+    invitationNote,
   });
 
   if (!sendResult.ok) {
@@ -2187,6 +2190,141 @@ export async function setSystemUserOutreachOperator(userId: string, workspaceId:
   revalidatePath(`/system/workspaces/${workspaceId}`);
   revalidatePath("/system/outreach");
   redirect(withNotice(`/system/workspaces/${workspaceId}`, nextOutreachOperator ? "system-outreach-operator-enabled" : "system-outreach-operator-disabled"));
+}
+
+export async function inviteSystemOutreachOperator(formData: FormData) {
+  const sessionUser = await requireSystemAdminContext();
+
+  const name = requiredText.parse(formData.get("name")?.toString());
+  const email = z.email().parse(formData.get("email")?.toString()).toLowerCase();
+  const invitationNote = optionalText.parse(formData.get("note")?.toString())?.slice(0, 300);
+
+  const adminFirm = await prisma.firm.findUnique({
+    where: { id: sessionUser.firmId },
+    select: { id: true, name: true },
+  });
+
+  if (!adminFirm) {
+    redirect("/system/outreach?error=invite-missing-firm");
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      active: true,
+      isSystemAdmin: true,
+      isOutreachOperator: true,
+      firm: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (existingUser?.isSystemAdmin) {
+    redirect("/system/outreach?error=invite-system-admin");
+  }
+
+  if (existingUser) {
+    await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
+        name: existingUser.name || name,
+        active: true,
+        isOutreachOperator: true,
+      },
+    });
+
+    const inviteResult = await issueUserInvitation({
+      userId: existingUser.id,
+      userName: existingUser.name || name,
+      userEmail: existingUser.email,
+      workspaceName: existingUser.firm.name,
+      invitationNote,
+    });
+
+    if (!inviteResult.ok) {
+      redirect("/system/outreach?error=invite-send");
+    }
+
+    revalidatePath("/system/outreach");
+    revalidatePath("/system/workspaces");
+    redirect(withNotice("/system/outreach", "system-outreach-operator-invite-updated"));
+  }
+
+  const createdUser = await prisma.user.create({
+    data: {
+      firmId: adminFirm.id,
+      name,
+      email,
+      passwordHash: "",
+      role: UserRole.ADJUSTER,
+      active: true,
+      isSystemAdmin: false,
+      isOutreachOperator: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  const inviteResult = await issueUserInvitation({
+    userId: createdUser.id,
+    userName: createdUser.name,
+    userEmail: createdUser.email,
+    workspaceName: adminFirm.name,
+    invitationNote,
+  });
+
+  if (!inviteResult.ok) {
+    await prisma.user.delete({ where: { id: createdUser.id } });
+    redirect("/system/outreach?error=invite-send");
+  }
+
+  revalidatePath("/system/outreach");
+  revalidatePath("/system/workspaces");
+  redirect(withNotice("/system/outreach", "system-outreach-operator-invite-created"));
+}
+
+export async function resendSystemOutreachOperatorInvite(userId: string) {
+  await requireSystemAdminContext();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      active: true,
+      isOutreachOperator: true,
+      isSystemAdmin: true,
+      firm: { select: { name: true } },
+    },
+  });
+
+  if (!user || !user.active || !user.isOutreachOperator || user.isSystemAdmin) {
+    redirect("/system/outreach?error=invite-missing");
+  }
+
+  const inviteResult = await issueUserInvitation({
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    workspaceName: user.firm.name,
+  });
+
+  if (!inviteResult.ok) {
+    redirect("/system/outreach?error=invite-send");
+  }
+
+  revalidatePath("/system/outreach");
+  redirect(withNotice("/system/outreach", "system-outreach-operator-invite-resent"));
 }
 
 export type ResetSystemUserPasswordState = {

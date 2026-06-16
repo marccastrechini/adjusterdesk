@@ -147,6 +147,18 @@ export const noticeMessages = {
     title: "Outreach operator disabled",
     message: "This user no longer has outreach operator access.",
   },
+  "system-outreach-operator-invite-created": {
+    title: "Outreach operator invited",
+    message: "A new outreach operator account was created and an invite email was sent.",
+  },
+  "system-outreach-operator-invite-updated": {
+    title: "Outreach operator updated",
+    message: "Existing account was updated to outreach operator and an invite email was sent.",
+  },
+  "system-outreach-operator-invite-resent": {
+    title: "Outreach invite resent",
+    message: "A fresh invite link was emailed to this outreach operator.",
+  },
   "user-invite-sent": {
     title: "Invitation sent",
     message: "The user will receive an email link to set their password.",
