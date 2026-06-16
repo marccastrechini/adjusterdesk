@@ -20,7 +20,7 @@ import {
   TemplateType,
   UserRole,
 } from "@/generated/prisma/client";
-import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
+import { getDemoContext, requireSystemAdminContext, requireSystemOutreachContext } from "@/lib/app-context";
 import {
   createPasswordResetTokenValue,
   hashPassword,
@@ -2077,7 +2077,7 @@ export async function updateSystemWorkspaceSubscription(formData: FormData) {
 }
 
 export async function createSystemOutreachProspect(formData: FormData) {
-  await requireSystemAdminContext();
+  await requireSystemOutreachContext();
 
   const parsed = outreachCreateSchema.safeParse({
     firmName: textValue(formData, "firmName"),
@@ -2124,7 +2124,7 @@ export async function createSystemOutreachProspect(formData: FormData) {
 }
 
 export async function updateSystemOutreachProspect(formData: FormData) {
-  await requireSystemAdminContext();
+  await requireSystemOutreachContext();
 
   const parsed = outreachUpdateSchema.safeParse({
     outreachId: textValue(formData, "outreachId"),
@@ -2163,6 +2163,30 @@ export async function updateSystemOutreachProspect(formData: FormData) {
 
   revalidatePath("/system/outreach");
   redirect(withNotice("/system/outreach", "system-outreach-updated"));
+}
+
+export async function setSystemUserOutreachOperator(userId: string, workspaceId: string, nextOutreachOperator: boolean) {
+  await requireSystemAdminContext();
+
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, firmId: true, isOutreachOperator: true },
+  });
+
+  if (!targetUser || targetUser.firmId !== workspaceId) {
+    redirect(`/system/workspaces/${workspaceId}?error=user-missing`);
+  }
+
+  if (targetUser.isOutreachOperator !== nextOutreachOperator) {
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: { isOutreachOperator: nextOutreachOperator },
+    });
+  }
+
+  revalidatePath(`/system/workspaces/${workspaceId}`);
+  revalidatePath("/system/outreach");
+  redirect(withNotice(`/system/workspaces/${workspaceId}`, nextOutreachOperator ? "system-outreach-operator-enabled" : "system-outreach-operator-disabled"));
 }
 
 export type ResetSystemUserPasswordState = {

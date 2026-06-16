@@ -52,12 +52,20 @@ const navItems: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-export function SidebarNav() {
+const outreachOperatorNavItems: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Outreach",
+    items: [{ href: "/system/outreach", label: "Outreach tracker", icon: ListChecks, exact: true }],
+  },
+];
+
+export function SidebarNav({ outreachOperatorOnly = false }: { outreachOperatorOnly?: boolean }) {
   const pathname = usePathname();
+  const groups = outreachOperatorOnly ? outreachOperatorNavItems : navItems;
 
   return (
     <nav suppressHydrationWarning className="grid gap-5">
-      {navItems.map((group) => (
+      {groups.map((group) => (
         <div key={group.label} className="grid gap-1">
           <p className="px-3 text-xs font-semibold uppercase tracking-normal text-slate-400">{group.label}</p>
           {group.items.map((item) => {

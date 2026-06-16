@@ -33,6 +33,8 @@ const qaUserEmail = process.env.AD_QA_USER_EMAIL?.trim() || "";
 const qaUserPassword = process.env.AD_QA_USER_PASSWORD?.trim() || "";
 const qaAdminEmail = process.env.AD_QA_ADMIN_EMAIL?.trim() || "";
 const qaAdminPassword = process.env.AD_QA_ADMIN_PASSWORD?.trim() || "";
+const qaOutreachEmail = process.env.AD_QA_OUTREACH_EMAIL?.trim() || "";
+const qaOutreachPassword = process.env.AD_QA_OUTREACH_PASSWORD?.trim() || "";
 
 test.use({ baseURL });
 
@@ -74,7 +76,7 @@ async function login(page: Page, email: string, password: string) {
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/(today|start|claims|leads|settings)(?:\?|$)/);
+  await expect(page).toHaveURL(/\/(today|start|claims|leads|settings|system\/outreach)(?:\?|$)/);
 }
 
 async function getFirstClaimPath(page: Page) {
@@ -178,4 +180,26 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Add outreach prospect", exact: true })).toBeVisible();
   await scanPageText(page, "admin /system/outreach");
+});
+
+test("outreach operator can access outreach but not broader system admin", async ({ page }) => {
+  test.skip(!qaOutreachEmail || !qaOutreachPassword, "Missing AD_QA_OUTREACH_EMAIL or AD_QA_OUTREACH_PASSWORD in .env.qa.local");
+
+  await login(page, qaOutreachEmail, qaOutreachPassword);
+
+  await page.goto("/system/outreach");
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: /Outreach tracker|System outreach/, exact: false })).toBeVisible();
+
+  await page.goto("/system/workspaces");
+  await expect(page).not.toHaveURL(/\/system\/workspaces(?:\?|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+
+  await page.goto("/system/emails");
+  await expect(page).not.toHaveURL(/\/system\/emails(?:\?|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
+
+  await page.goto("/system");
+  await expect(page).not.toHaveURL(/\/system(?:\?|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
 });

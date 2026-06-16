@@ -85,6 +85,7 @@ export async function getCurrentSessionUser() {
       email: true,
       role: true,
       isSystemAdmin: true,
+      isOutreachOperator: true,
       active: true,
     },
   });

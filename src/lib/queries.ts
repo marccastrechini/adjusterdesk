@@ -18,7 +18,7 @@ import {
   type User,
   UserRole,
 } from "@/generated/prisma/client";
-import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
+import { getDemoContext, requireSystemAdminContext, requireSystemOutreachContext } from "@/lib/app-context";
 import type { ClientStatusClaim } from "@/lib/client-status";
 import { getEnvStatus } from "@/lib/env";
 import { addDays, todayRange } from "@/lib/format";
@@ -867,7 +867,7 @@ export async function getSystemWorkspaceDetail(workspaceId: string) {
 }
 
 export async function getSystemOutreachProspects() {
-  await requireSystemAdminContext();
+  await requireSystemOutreachContext();
 
   const prospects = await prisma.outreachProspect.findMany({
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],

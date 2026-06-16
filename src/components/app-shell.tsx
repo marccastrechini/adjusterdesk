@@ -13,6 +13,8 @@ export function AppShell({
   firmName,
   userName,
   userRole,
+  isSystemAdmin,
+  isOutreachOperator,
   workspaceOverride,
   subscriptionStatus,
   trialEndsAt,
@@ -22,10 +24,13 @@ export function AppShell({
   userName: string;
   userRole: string;
   isSystemAdmin: boolean;
+  isOutreachOperator: boolean;
   workspaceOverride: { firmId: string; firmName: string } | null;
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: Date | null;
 }) {
+  const outreachOperatorOnly = isOutreachOperator && !isSystemAdmin;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <div className="flex min-h-screen flex-col lg:flex-row">
@@ -40,15 +45,15 @@ export function AppShell({
             </div>
           </div>
           <div className="px-3 py-4">
-            <SidebarNav />
+            <SidebarNav outreachOperatorOnly={outreachOperatorOnly} />
           </div>
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col lg:pl-72">
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6 lg:px-8">
             <div>
-              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Workspace</p>
-              <p className="text-sm font-semibold text-slate-950">{firmName}</p>
+              <p className="text-xs font-medium uppercase tracking-normal text-slate-500">{outreachOperatorOnly ? "Internal" : "Workspace"}</p>
+              <p className="text-sm font-semibold text-slate-950">{outreachOperatorOnly ? "Outreach operator" : firmName}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-right">
@@ -70,7 +75,7 @@ export function AppShell({
                   </form>
                 </div>
               ) : null}
-              <TrialBanner firm={{ subscriptionStatus, trialEndsAt }} />
+              {!outreachOperatorOnly ? <TrialBanner firm={{ subscriptionStatus, trialEndsAt }} /> : null}
               {children}
             </div>
           </main>

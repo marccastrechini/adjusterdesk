@@ -72,13 +72,40 @@ export async function requireAuthenticatedAppContext() {
 }
 
 export async function getDemoContext() {
-  return requireAuthenticatedAppContext();
+  const context = await requireAuthenticatedAppContext();
+
+  if (context.sessionUser.isOutreachOperator && !context.sessionUser.isSystemAdmin) {
+    redirect("/system/outreach");
+  }
+
+  return context;
 }
 
 export async function requireSystemAdminContext() {
   const sessionUser = await getCurrentSessionUser();
 
-  if (!sessionUser || !sessionUser.isSystemAdmin) {
+  if (!sessionUser) {
+    redirect("/today");
+  }
+
+  if (!sessionUser.isSystemAdmin) {
+    if (sessionUser.isOutreachOperator) {
+      redirect("/system/outreach");
+    }
+    redirect("/today");
+  }
+
+  return sessionUser;
+}
+
+export async function requireSystemOutreachContext() {
+  const sessionUser = await getCurrentSessionUser();
+
+  if (!sessionUser) {
+    redirect("/today");
+  }
+
+  if (!sessionUser.isSystemAdmin && !sessionUser.isOutreachOperator) {
     redirect("/today");
   }
 

@@ -1,5 +1,5 @@
 import { SubscriptionPlan, SubscriptionStatus } from "@/generated/prisma/client";
-import { enterSystemWorkspaceView, resendSystemUserInvite, setSystemUserActive, updateSystemUserEmail, updateSystemWorkspaceSubscription } from "@/lib/actions";
+import { enterSystemWorkspaceView, resendSystemUserInvite, setSystemUserActive, setSystemUserOutreachOperator, updateSystemUserEmail, updateSystemWorkspaceSubscription } from "@/lib/actions";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { planLabel, planLimitMessage, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
@@ -154,6 +154,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
                     <Badge>{labelFromEnum(user.role)}</Badge>
                     <Badge tone={user.active ? "green" : "slate"}>{user.active ? "Active" : "Inactive"}</Badge>
                     {user.userInvitationTokens.length > 0 ? <Badge tone="amber">Invite pending</Badge> : null}
+                    {user.isOutreachOperator ? <Badge tone="teal">Outreach operator</Badge> : null}
                     {user.isSystemAdmin ? <Badge tone="blue">System admin</Badge> : null}
                   </div>
                 </div>
@@ -174,6 +175,15 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
                       <SubmitButton variant="secondary">Resend invite</SubmitButton>
                     </form>
                   ) : null}
+                  {user.isOutreachOperator ? (
+                    <form action={setSystemUserOutreachOperator.bind(null, user.id, workspace.id, false)}>
+                      <SubmitButton variant="secondary">Disable outreach operator</SubmitButton>
+                    </form>
+                  ) : (
+                    <form action={setSystemUserOutreachOperator.bind(null, user.id, workspace.id, true)}>
+                      <SubmitButton variant="secondary">Enable outreach operator</SubmitButton>
+                    </form>
+                  )}
                   {user.active ? (
                     <form action={setSystemUserActive.bind(null, user.id, workspace.id, false)}>
                       <SubmitButton variant="secondary">Deactivate user</SubmitButton>

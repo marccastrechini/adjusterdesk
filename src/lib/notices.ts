@@ -139,6 +139,14 @@ export const noticeMessages = {
     title: "Outreach prospect updated",
     message: "Status, follow-up, objection, trial flag, and notes were saved.",
   },
+  "system-outreach-operator-enabled": {
+    title: "Outreach operator enabled",
+    message: "This user can now access the outreach operator surface at /system/outreach.",
+  },
+  "system-outreach-operator-disabled": {
+    title: "Outreach operator disabled",
+    message: "This user no longer has outreach operator access.",
+  },
   "user-invite-sent": {
     title: "Invitation sent",
     message: "The user will receive an email link to set their password.",

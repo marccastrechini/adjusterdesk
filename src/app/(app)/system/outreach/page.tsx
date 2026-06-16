@@ -1,5 +1,6 @@
 import { OutreachProspectStatus } from "@/generated/prisma/client";
 import { createSystemOutreachProspect, updateSystemOutreachProspect } from "@/lib/actions";
+import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemOutreachProspects } from "@/lib/queries";
 import { Badge, ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
@@ -44,6 +45,8 @@ function statusLabel(status: OutreachProspectStatus) {
 }
 
 export default async function SystemOutreachPage({ searchParams }: PageProps) {
+  const sessionUser = await requireSystemOutreachContext();
+  const outreachOperatorOnly = sessionUser.isOutreachOperator && !sessionUser.isSystemAdmin;
   const query = await searchParams;
   const notice = getNoticeMessage(query);
   const error = firstValue(query.error);
@@ -61,9 +64,9 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader
-        title="System outreach"
-        description="Internal operator tracker for the first 25 direct outreach prospects."
-        actions={<ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink>}
+        title={outreachOperatorOnly ? "Outreach tracker" : "System outreach"}
+        description={outreachOperatorOnly ? "Outreach operator workspace for first-contact prospect tracking." : "Internal operator tracker for the first 25 direct outreach prospects."}
+        actions={outreachOperatorOnly ? undefined : <ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink>}
       />
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
@@ -74,24 +77,34 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         </Card>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Tracked prospects</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{total}</p>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Not contacted</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.NOT_CONTACTED}</p>
+        </Card>
+        <Card>
+          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Contacted</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.CONTACTED}</p>
         </Card>
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Follow-up due</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.FOLLOW_UP_DUE}</p>
         </Card>
         <Card>
+          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Replied - interested</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.REPLIED_INTERESTED}</p>
+        </Card>
+        <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Trial created</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.TRIAL_CREATED}</p>
         </Card>
       </div>
+
+      {!outreachOperatorOnly ? (
+        <Card className="text-xs leading-5 text-slate-600">
+          <p><span className="font-semibold text-slate-800">Tracked prospects:</span> {total}</p>
+        </Card>
+      ) : null}
 
       <Section title="Add outreach prospect" description="Keep this simple: one row per firm to track contact attempts and follow-up.">
         <Card>
