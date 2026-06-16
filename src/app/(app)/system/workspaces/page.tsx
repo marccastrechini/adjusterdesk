@@ -1,5 +1,4 @@
 import { createSystemWorkspaceWithOwner, enterSystemWorkspaceView } from "@/lib/actions";
-import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemActivationRows, getSystemWorkspaces } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
@@ -34,6 +33,14 @@ function formatDateTimeUtc(date?: Date | string | null) {
   if (Number.isNaN(value.getTime())) return "Not tracked";
 
   return `${value.getUTCFullYear()}-${twoDigits(value.getUTCMonth() + 1)}-${twoDigits(value.getUTCDate())} ${twoDigits(value.getUTCHours())}:${twoDigits(value.getUTCMinutes())} UTC`;
+}
+
+function formatDateUtc(date?: Date | string | null) {
+  if (!date) return "Not set";
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "Not set";
+
+  return `${value.getUTCFullYear()}-${twoDigits(value.getUTCMonth() + 1)}-${twoDigits(value.getUTCDate())} UTC`;
 }
 
 export default async function SystemWorkspacesPage({ searchParams }: PageProps) {
@@ -107,7 +114,7 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-700">Source: {workspace.signupSource}</span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-sm text-slate-600">Created {formatDate(workspace.createdAt)}</p>
+                    <p className="mt-1 text-sm text-slate-600">Created {formatDateUtc(workspace.createdAt)}</p>
                     <p className="mt-1 text-sm text-slate-600">
                       Owner: {owner ? `${owner.name} (${owner.email})` : "No owner user"}
                     </p>
