@@ -55,7 +55,10 @@ const navItems: { label: string; items: NavItem[] }[] = [
 const outreachOperatorNavItems: { label: string; items: NavItem[] }[] = [
   {
     label: "Outreach",
-    items: [{ href: "/system/outreach", label: "Outreach tracker", icon: ListChecks, exact: true }],
+    items: [
+      { href: "/system/outreach", label: "Outreach tracker", icon: ListChecks, exact: true },
+      { href: "/system/outreach/playbook", label: "Outreach playbook", icon: MessageSquare },
+    ],
   },
 ];
 
@@ -66,6 +69,7 @@ const systemAdminNavItems: { label: string; items: NavItem[] }[] = [
       { href: "/system", label: "System admin", icon: LayoutDashboard, exact: true },
       { href: "/system/workspaces", label: "System workspaces", icon: Users },
       { href: "/system/outreach", label: "System outreach", icon: ListChecks },
+      { href: "/system/outreach/playbook", label: "Outreach playbook", icon: MessageSquare },
       { href: "/system/emails", label: "System emails", icon: MessageSquare },
     ],
   },

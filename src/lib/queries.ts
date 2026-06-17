@@ -994,10 +994,10 @@ export async function getSortedSystemOutreachProspects(sort: SystemOutreachSort)
       return followUpCompare;
     }
 
-    const aNotContacted = a.status === OutreachProspectStatus.NOT_CONTACTED ? 0 : 1;
-    const bNotContacted = b.status === OutreachProspectStatus.NOT_CONTACTED ? 0 : 1;
-    if (aNotContacted !== bNotContacted) {
-      return aNotContacted - bNotContacted;
+    const aReadyPriority = a.status === OutreachProspectStatus.NOT_CONTACTED || a.status === OutreachProspectStatus.READY_FOR_OUTREACH ? 0 : 1;
+    const bReadyPriority = b.status === OutreachProspectStatus.NOT_CONTACTED || b.status === OutreachProspectStatus.READY_FOR_OUTREACH ? 0 : 1;
+    if (aReadyPriority !== bReadyPriority) {
+      return aReadyPriority - bReadyPriority;
     }
 
     return byDateDesc(a.updatedAt, b.updatedAt);

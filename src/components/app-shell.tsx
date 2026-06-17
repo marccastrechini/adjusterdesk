@@ -37,12 +37,14 @@ export function AppShell({
         { href: "/system/workspaces", label: "System workspaces" },
         { href: "/system/users", label: "System users" },
         { href: "/system/outreach", label: "Outreach tracker" },
+        { href: "/system/outreach/playbook", label: "Outreach playbook" },
         { href: "/system/emails", label: "System emails" },
         { href: "/settings/account", label: "Account settings" },
       ]
     : isOutreachOperator
       ? [
           { href: "/system/outreach", label: "Outreach tracker" },
+          { href: "/system/outreach/playbook", label: "Outreach playbook" },
           { href: "/settings/account", label: "Account settings" },
         ]
       : [{ href: "/settings/account", label: "Account settings" }];

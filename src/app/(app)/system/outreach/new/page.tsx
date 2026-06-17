@@ -2,21 +2,12 @@ import { OutreachProspectStatus } from "@/generated/prisma/client";
 import { createSystemOutreachProspect } from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
+import { outreachStatusOptions } from "@/lib/outreach";
 import { ButtonLink, Card, Field, Notice, PageHeader, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const outreachStatusOptions: Array<{ value: OutreachProspectStatus; label: string }> = [
-  { value: OutreachProspectStatus.NOT_CONTACTED, label: "Not contacted" },
-  { value: OutreachProspectStatus.CONTACTED, label: "Contacted" },
-  { value: OutreachProspectStatus.FOLLOW_UP_DUE, label: "Follow-up due" },
-  { value: OutreachProspectStatus.REPLIED_INTERESTED, label: "Replied - interested" },
-  { value: OutreachProspectStatus.REPLIED_NOT_NOW, label: "Replied - not now" },
-  { value: OutreachProspectStatus.TRIAL_CREATED, label: "Trial created" },
-  { value: OutreachProspectStatus.BAD_FIT, label: "Bad fit" },
-];
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;

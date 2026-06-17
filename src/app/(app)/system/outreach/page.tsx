@@ -1,23 +1,13 @@
 import Link from "next/link";
-import { OutreachProspectStatus } from "@/generated/prisma/client";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
+import { outreachStatusLabel, outreachStatusOptions } from "@/lib/outreach";
 import { getSortedSystemOutreachProspects, getSystemOutreachProspects, type SystemOutreachSort } from "@/lib/queries";
 import { Badge, ButtonLink, Card, Notice, PageHeader, Section } from "@/components/ui";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const outreachStatusOptions: Array<{ value: OutreachProspectStatus; label: string }> = [
-  { value: OutreachProspectStatus.NOT_CONTACTED, label: "Not contacted" },
-  { value: OutreachProspectStatus.CONTACTED, label: "Contacted" },
-  { value: OutreachProspectStatus.FOLLOW_UP_DUE, label: "Follow-up due" },
-  { value: OutreachProspectStatus.REPLIED_INTERESTED, label: "Replied - interested" },
-  { value: OutreachProspectStatus.REPLIED_NOT_NOW, label: "Replied - not now" },
-  { value: OutreachProspectStatus.TRIAL_CREATED, label: "Trial created" },
-  { value: OutreachProspectStatus.BAD_FIT, label: "Bad fit" },
-];
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -43,10 +33,6 @@ function dateText(value?: Date | string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   return `${date.getUTCFullYear()}-${`${date.getUTCMonth() + 1}`.padStart(2, "0")}-${`${date.getUTCDate()}`.padStart(2, "0")}`;
-}
-
-function statusLabel(status: OutreachProspectStatus) {
-  return outreachStatusOptions.find((option) => option.value === status)?.label ?? status;
 }
 
 function previewText(replyObjection?: string | null, notes?: string | null) {
@@ -84,6 +70,7 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         actions={
           <>
             {!outreachOperatorOnly ? <ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink> : null}
+            <ButtonLink href="/system/outreach/playbook" variant="secondary">Outreach playbook</ButtonLink>
             <ButtonLink href="/system/outreach/new">Add prospect</ButtonLink>
           </>
         }
@@ -103,7 +90,11 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.NOT_CONTACTED}</p>
         </Card>
         <Card>
-          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Contacted</p>
+          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Ready for outreach</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.READY_FOR_OUTREACH}</p>
+        </Card>
+        <Card>
+          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Email 1 sent</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.CONTACTED}</p>
         </Card>
         <Card>
@@ -113,10 +104,6 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Replied - interested</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.REPLIED_INTERESTED}</p>
-        </Card>
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Trial created</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{statusCountMap.TRIAL_CREATED}</p>
         </Card>
       </div>
 
@@ -177,7 +164,7 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
                     <td className="px-2 py-2">{prospect.state ?? "-"}</td>
                     <td className="px-2 py-2">{prospect.contactName ?? "-"}</td>
                     <td className="px-2 py-2">{prospect.email ?? "-"}</td>
-                    <td className="px-2 py-2"><Badge>{statusLabel(prospect.status)}</Badge></td>
+                    <td className="px-2 py-2"><Badge>{outreachStatusLabel(prospect.status)}</Badge></td>
                     <td className="px-2 py-2">{dateText(prospect.followUpDate)}</td>
                     <td className="px-2 py-2">{dateText(prospect.dateContacted)}</td>
                     <td className="px-2 py-2">{dateText(prospect.updatedAt)}</td>
