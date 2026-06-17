@@ -1,4 +1,5 @@
 import { renderSystemEmailTemplate } from "@/lib/email-template";
+import { getOutreachTemplatePreviewDescriptors } from "@/lib/outreach-email";
 
 export type EmailAudience = "customer" | "internal";
 
@@ -91,7 +92,7 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     footer: footer(),
   });
 
-  return [
+  const systemTemplates: SystemEmailTemplateDescriptor[] = [
     {
       id: "password_reset",
       name: "Password reset",
@@ -159,4 +160,8 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       text: welcomeSignup.text,
     },
   ];
+
+  const outreachTemplates = getOutreachTemplatePreviewDescriptors();
+
+  return [...systemTemplates, ...outreachTemplates];
 }

@@ -1011,3 +1011,22 @@ export async function getSystemOutreachProspectById(id: string) {
     where: { id },
   });
 }
+
+export async function getSystemOutreachActivitiesByProspectId(outreachProspectId: string) {
+  await requireSystemOutreachContext();
+
+  return prisma.outreachActivity.findMany({
+    where: { outreachProspectId },
+    include: {
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 25,
+  });
+}

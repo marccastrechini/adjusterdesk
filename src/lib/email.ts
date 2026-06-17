@@ -34,17 +34,18 @@ type WelcomeSignupEmailInput = {
 type EmailSendResult = {
   ok: boolean;
   error?: string;
+  messageId?: string;
 };
 
 function resolveEmailProvider() {
   return process.env.EMAIL_PROVIDER?.trim().toLowerCase() ?? "";
 }
 
-function resolveSystemEmailFrom() {
+export function resolveSystemEmailFrom() {
   return process.env.SYSTEM_EMAIL_FROM?.trim() || "AdjusterDesk <hello@adjusterdesk.xyz>";
 }
 
-function resolveSystemEmailReplyTo() {
+export function resolveSystemEmailReplyTo() {
   return process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz";
 }
 
@@ -85,6 +86,31 @@ async function sendSystemEmail({
   html: string;
   text: string;
 }): Promise<EmailSendResult> {
+  return sendDirectEmail({
+    from: resolveSystemEmailFrom(),
+    toEmail,
+    replyTo: resolveSystemEmailReplyTo(),
+    subject,
+    html,
+    text,
+  });
+}
+
+export async function sendDirectEmail({
+  from,
+  toEmail,
+  replyTo,
+  subject,
+  html,
+  text,
+}: {
+  from: string;
+  toEmail: string;
+  replyTo: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<EmailSendResult> {
   const providerError = getEmailProviderError();
   if (providerError) {
     return {
@@ -103,16 +129,27 @@ async function sendSystemEmail({
 
   try {
     const resend = new Resend(resendApiKey);
-    await resend.emails.send({
-      from: resolveSystemEmailFrom(),
+    const response = await resend.emails.send({
+      from,
       to: [toEmail],
-      replyTo: resolveSystemEmailReplyTo(),
+      replyTo,
       subject,
       html,
       text,
     });
 
-    return { ok: true };
+    const responseError = response && typeof response === "object" ? (response as { error?: { message?: string } }).error : undefined;
+    if (responseError?.message) {
+      return {
+        ok: false,
+        error: `Resend send failed: ${responseError.message}`,
+      };
+    }
+
+    const responseData = response && typeof response === "object" ? (response as { data?: { id?: string }; id?: string }) : undefined;
+    const messageId = responseData?.data?.id || responseData?.id;
+
+    return { ok: true, messageId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown email provider error.";
     return {

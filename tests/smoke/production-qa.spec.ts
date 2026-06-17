@@ -202,6 +202,8 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.goto("/system/emails");
   await expect(page).toHaveURL(/\/system\/emails(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System emails", exact: true })).toBeVisible();
+  await expect(page.getByText("Outreach first email", { exact: true })).toBeVisible();
+  await expect(page.getByText("Outreach follow-up", { exact: true })).toBeVisible();
   await scanPageText(page, "admin /system/emails");
 
   await page.goto("/system/outreach");
@@ -241,12 +243,38 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Mark follow-up due", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark interested", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark trial created", exact: true })).toBeVisible();
+  await expect(page.getByText("Outreach email send", { exact: true })).toBeVisible();
+  await expect(page.getByText("Manual one-prospect send only.", { exact: false })).toBeVisible();
+  await expect(page.getByLabel("Rendered subject", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Rendered body preview", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send email", exact: true })).toBeVisible();
   await expect(page.locator('select[name="status"]')).toContainText("Ready for outreach");
   await expect(page.locator('select[name="status"]')).toContainText("Fit check scheduled");
   await expect(page.locator('select[name="status"]')).toContainText("Email 1 sent");
+
+  await page.getByRole("button", { name: "Send email", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?templateKey=outreach_first_email&notice=system-outreach-email-sent(?:&|$)/);
+  await expect(page.getByText("Outreach activity", { exact: true })).toBeVisible();
+  await expect(page.getByText("SENT", { exact: false })).toBeVisible();
+
   await page.locator('textarea[name="notes"]').fill("Updated from QA detail page");
   await page.getByRole("button", { name: "Save updates", exact: true }).click();
-  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?templateKey=outreach_first_email&notice=system-outreach-updated(?:&|$)/);
+
+  const qaNoEmailFirmName = `QA Outreach No Email ${Date.now()}`;
+  await page.goto("/system/outreach/new");
+  await expect(page).toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
+  await page.locator('input[name="firmName"]').fill(qaNoEmailFirmName);
+  await page.locator('input[name="website"]').fill("https://example.org");
+  await page.locator('input[name="state"]').fill("FL");
+  await page.locator('input[name="contactName"]').fill("No Email Contact");
+  await page.getByRole("button", { name: "Add prospect", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-created(?:&|$)/);
+
+  await page.getByRole("link", { name: qaNoEmailFirmName, exact: true }).first().click();
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
+  await expect(page.getByText("No public email on this prospect.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send email", exact: true })).toBeDisabled();
 
   await page.goto("/system/outreach/playbook");
   await expect(page).toHaveURL(/\/system\/outreach\/playbook(?:\?|$)/);
@@ -283,6 +311,7 @@ test("outreach operator can access outreach but not broader system admin", async
     await firstProspectLink.click();
     await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
     await expect(page.getByRole("button", { name: "Save updates", exact: true })).toBeVisible();
+    await expect(page.getByText("Outreach email send", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Mark interested", exact: true }).click();
     await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
   }

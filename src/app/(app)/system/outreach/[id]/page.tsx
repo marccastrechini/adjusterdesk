@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
 import { OutreachProspectStatus } from "@/generated/prisma/client";
-import { updateSystemOutreachProspect } from "@/lib/actions";
+import { sendSystemOutreachEmail, updateSystemOutreachProspect } from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
 import { freeClaimTrackerUrl, outreachStatusGuide, outreachStatusOptions, trialSignupUrl } from "@/lib/outreach";
-import { getSystemOutreachProspectById } from "@/lib/queries";
+import {
+  isOutreachEmailTemplateKey,
+  outreachEmailTemplateOptions,
+  renderOutreachEmailTemplate,
+  resolveOutreachSenderPolicy,
+} from "@/lib/outreach-email";
+import { getSystemOutreachActivitiesByProspectId, getSystemOutreachProspectById } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
 
 type PageProps = {
@@ -33,13 +39,20 @@ function dateText(value?: Date | string | null) {
   return `${date.getUTCFullYear()}-${`${date.getUTCMonth() + 1}`.padStart(2, "0")}-${`${date.getUTCDate()}`.padStart(2, "0")}`;
 }
 
+function dateTimeText(value?: Date | string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return `${date.getUTCFullYear()}-${`${date.getUTCMonth() + 1}`.padStart(2, "0")}-${`${date.getUTCDate()}`.padStart(2, "0")} ${`${date.getUTCHours()}`.padStart(2, "0")}:${`${date.getUTCMinutes()}`.padStart(2, "0")} UTC`;
+}
+
 function formatDraftText(contactName: string | null, body: string) {
   const greeting = contactName?.trim() ? `Hi ${contactName.trim()},` : "Hi there,";
   return `${greeting}\n\n${body}\n\nThanks,\nAdjusterDesk`;
 }
 
 export default async function SystemOutreachProspectPage({ params, searchParams }: PageProps) {
-  await requireSystemOutreachContext();
+  const sessionUser = await requireSystemOutreachContext();
   const { id } = await params;
   const query = await searchParams;
   const notice = getNoticeMessage(query);
@@ -49,6 +62,25 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
   if (!prospect) {
     notFound();
   }
+
+  const activities = await getSystemOutreachActivitiesByProspectId(id);
+
+  const selectedTemplateCandidate = firstValue(query.templateKey) || "outreach_first_email";
+  const selectedTemplateKey = isOutreachEmailTemplateKey(selectedTemplateCandidate) ? selectedTemplateCandidate : "outreach_first_email";
+  const senderPolicy = resolveOutreachSenderPolicy({
+    userName: sessionUser.name,
+    userEmail: sessionUser.email,
+  });
+  const renderedTemplate = renderOutreachEmailTemplate({
+    templateKey: selectedTemplateKey,
+    prospectFirmName: prospect.firmName,
+    prospectContactName: prospect.contactName,
+    operatorName: sessionUser.name,
+    operatorEmail: sessionUser.email,
+  });
+
+  const hasRecipientEmail = Boolean(prospect.email?.trim());
+  const operatorHasAdjusterDeskEmail = sessionUser.email.toLowerCase().endsWith("@adjusterdesk.xyz");
 
   const today = dateInputValue(new Date());
   const email1Draft = formatDraftText(
@@ -94,6 +126,36 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
         <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
           <p className="font-semibold">Prospect was not updated</p>
           <p className="mt-1 leading-6">Check the entered values and try again.</p>
+        </Card>
+      ) : null}
+      {error === "send-validation" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Email was not sent</p>
+          <p className="mt-1 leading-6">Select an outreach template and try again.</p>
+        </Card>
+      ) : null}
+      {error === "send-template" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Email was not sent</p>
+          <p className="mt-1 leading-6">Only approved outreach templates can be sent from this page.</p>
+        </Card>
+      ) : null}
+      {error === "send-no-email" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Email was not sent</p>
+          <p className="mt-1 leading-6">No public email on this prospect.</p>
+        </Card>
+      ) : null}
+      {error === "send-recipient" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Email was not sent</p>
+          <p className="mt-1 leading-6">Prospect email is invalid. Update it and try again.</p>
+        </Card>
+      ) : null}
+      {error === "send-provider" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Email provider send failed</p>
+          <p className="mt-1 leading-6">The send attempt was logged. Status was not marked as sent.</p>
         </Card>
       ) : null}
 
@@ -181,6 +243,90 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
         <Field label="Follow-up draft">
           <textarea readOnly rows={10} value={followUpDraft} className={textareaClassName} />
         </Field>
+      </Card>
+
+      <Card className="grid gap-4 text-sm text-slate-700">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Outreach email send</p>
+          <p className="mt-1 text-xs text-slate-600">Manual one-prospect send only. No bulk send or automation.</p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">Recipient</p>
+            <p className="mt-1 text-sm text-slate-900">{prospect.email?.trim() || "No public email on this prospect."}</p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">Template</p>
+            <form method="get" className="mt-1 flex gap-2">
+              <input type="hidden" name="returnTo" value={`/system/outreach/${prospect.id}`} />
+              <select name="templateKey" defaultValue={selectedTemplateKey} className={selectClassName}>
+                {outreachEmailTemplateOptions.map((template) => (
+                  <option key={template.key} value={template.key}>{template.label}</option>
+                ))}
+              </select>
+              <button type="submit" className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Preview</button>
+            </form>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">From behavior</p>
+            <p className="mt-1 text-sm text-slate-900">{senderPolicy.from}</p>
+            <p className="mt-1 text-xs text-slate-600">{senderPolicy.note}</p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">Reply-To behavior</p>
+            <p className="mt-1 text-sm text-slate-900">{senderPolicy.replyTo}</p>
+            {!operatorHasAdjusterDeskEmail ? <p className="mt-1 text-xs text-slate-600">Operator email is not an @adjusterdesk.xyz address. Replies use configured fallback behavior.</p> : null}
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Rendered subject">
+            <input readOnly value={renderedTemplate?.subject ?? ""} className={inputClassName} />
+          </Field>
+          <Field label="Rendered body preview">
+            <textarea readOnly rows={12} value={renderedTemplate?.body ?? ""} className={textareaClassName} />
+          </Field>
+        </div>
+
+        <form action={sendSystemOutreachEmail} className="flex flex-wrap items-center gap-2">
+          <input type="hidden" name="outreachId" value={prospect.id} />
+          <input type="hidden" name="templateKey" value={selectedTemplateKey} />
+          <input type="hidden" name="returnTo" value={`/system/outreach/${prospect.id}?templateKey=${selectedTemplateKey}`} />
+          <button
+            type="submit"
+            disabled={!hasRecipientEmail}
+            className="inline-flex h-9 items-center justify-center rounded-md bg-teal-700 px-3 text-sm font-medium text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            Send email
+          </button>
+          {!hasRecipientEmail ? <span className="text-xs text-amber-700">No public email on this prospect.</span> : null}
+        </form>
+      </Card>
+
+      <Card className="grid gap-3 text-sm text-slate-700">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Outreach activity</p>
+          <p className="mt-1 text-xs text-slate-600">Recent outreach email attempts and outcomes for this prospect.</p>
+        </div>
+        {activities.length === 0 ? (
+          <p className="text-sm text-slate-600">No outreach activity yet.</p>
+        ) : (
+          <ul className="grid gap-2">
+            {activities.map((activity) => (
+              <li key={activity.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">{activity.status} · {activity.type}</p>
+                <p className="mt-1 text-sm font-medium text-slate-900">{activity.subject || "No subject"}</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {dateTimeText(activity.createdAt)} · to {activity.recipientEmail || "-"} · from {activity.fromEmail || "-"} · reply-to {activity.replyToEmail || "-"}
+                </p>
+                <p className="mt-1 text-xs text-slate-600">Template: {activity.templateKey || "-"} {activity.providerMessageId ? `· Message ID: ${activity.providerMessageId}` : ""}</p>
+                {activity.errorMessage ? <p className="mt-1 text-xs text-rose-700">Error: {activity.errorMessage}</p> : null}
+                <p className="mt-1 text-xs text-slate-500">By: {activity.createdByUser?.name || activity.createdByUser?.email || "System"}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card>

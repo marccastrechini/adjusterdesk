@@ -3,11 +3,16 @@ import { describe, it } from "node:test";
 import { getSystemEmailTemplates } from "./system-email-templates";
 
 describe("system email templates", () => {
-  it("returns all four expected templates", () => {
+  it("includes core transactional and outreach templates", () => {
     const templates = getSystemEmailTemplates();
     const ids = templates.map((t) => t.id);
 
-    assert.deepEqual(ids, ["password_reset", "user_invitation", "trial_signup_alert", "welcome_signup"]);
+    assert.ok(ids.includes("password_reset"));
+    assert.ok(ids.includes("user_invitation"));
+    assert.ok(ids.includes("trial_signup_alert"));
+    assert.ok(ids.includes("welcome_signup"));
+    assert.ok(ids.includes("outreach_first_email"));
+    assert.ok(ids.includes("outreach_follow_up"));
   });
 
   it("every template has required fields", () => {

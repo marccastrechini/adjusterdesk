@@ -29,6 +29,7 @@ import {
   resolveUserInvitationTokenMinutes,
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
+import { isOutreachEmailTemplateKey, sendOutreachTemplateEmail } from "@/lib/outreach-email";
 import { validateManualActivityInput } from "@/lib/activity-log";
 import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib/client-status";
 import { documentRequestResolution, validateClientStatusUploadInput, validateDocumentCreateInput } from "@/lib/document-requests";
@@ -150,6 +151,11 @@ const outreachUpdateSchema = z.object({
   replyObjection: z.string().trim().max(500, "Reply/objection is too long.").optional().transform((value) => value || undefined),
   trialCreated: z.boolean().optional(),
   notes: z.string().trim().max(1200, "Notes are too long.").optional().transform((value) => value || undefined),
+});
+
+const outreachSendSchema = z.object({
+  outreachId: z.string().trim().min(1, "Missing outreach prospect."),
+  templateKey: z.string().trim().min(1, "Select an outreach template."),
 });
 
 function formObject(formData: FormData) {
@@ -2217,6 +2223,53 @@ export async function updateSystemOutreachProspect(formData: FormData) {
   revalidatePath("/system/outreach");
   revalidatePath(`/system/outreach/${values.outreachId}`);
   redirect(withNotice(returnTo, "system-outreach-updated"));
+}
+
+export async function sendSystemOutreachEmail(formData: FormData) {
+  const sessionUser = await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
+
+  const parsed = outreachSendSchema.safeParse({
+    outreachId: textValue(formData, "outreachId"),
+    templateKey: textValue(formData, "templateKey"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "send-validation"));
+  }
+
+  const values = parsed.data;
+  if (!isOutreachEmailTemplateKey(values.templateKey)) {
+    redirect(withError(returnTo, "send-template"));
+  }
+
+  const result = await sendOutreachTemplateEmail({
+    outreachProspectId: values.outreachId,
+    templateKey: values.templateKey,
+    actor: {
+      id: sessionUser.id,
+      name: sessionUser.name,
+      email: sessionUser.email,
+    },
+  });
+
+  if (!result.ok) {
+    const errorCode =
+      result.errorCode === "missing"
+        ? "missing"
+        : result.errorCode === "template"
+          ? "send-template"
+          : result.errorCode === "email"
+            ? "send-no-email"
+            : result.errorCode === "recipient"
+              ? "send-recipient"
+              : "send-provider";
+    redirect(withError(returnTo, errorCode));
+  }
+
+  revalidatePath("/system/outreach");
+  revalidatePath(`/system/outreach/${values.outreachId}`);
+  redirect(withNotice(returnTo, "system-outreach-email-sent"));
 }
 
 export async function setSystemUserOutreachOperator(userId: string, workspaceId: string, nextOutreachOperator: boolean) {

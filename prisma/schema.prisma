@@ -153,6 +153,17 @@ enum OutreachProspectStatus {
   BAD_FIT
 }
 
+enum OutreachActivityType {
+  EMAIL
+  NOTE
+}
+
+enum OutreachActivityStatus {
+  SENT
+  FAILED
+  NOTE
+}
+
 model Firm {
   id        String   @id @default(cuid())
   name      String
@@ -248,10 +259,35 @@ model OutreachProspect {
   notes            String?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  activities       OutreachActivity[]
 
   @@index([status])
   @@index([followUpDate])
   @@index([createdAt])
+}
+
+model OutreachActivity {
+  id                 String                @id @default(cuid())
+  outreachProspectId String
+  type               OutreachActivityType  @default(EMAIL)
+  status             OutreachActivityStatus @default(SENT)
+  subject            String?
+  bodySnapshot       String?
+  recipientEmail     String?
+  fromEmail          String?
+  replyToEmail       String?
+  templateKey        String?
+  providerMessageId  String?
+  errorMessage       String?
+  createdByUserId    String?
+  createdAt          DateTime              @default(now())
+
+  outreachProspect   OutreachProspect      @relation(fields: [outreachProspectId], references: [id], onDelete: Cascade)
+  createdByUser      User?                 @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([outreachProspectId, createdAt])
+  @@index([status])
+  @@index([createdByUserId])
 }
 
 model User {
@@ -276,6 +312,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   userInvitationTokens UserInvitationToken[]
   feedbackEntries   FeedbackEntry[]
+  outreachActivities OutreachActivity[]
 
   @@index([firmId])
 }
