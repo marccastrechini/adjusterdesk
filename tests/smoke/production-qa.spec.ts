@@ -230,6 +230,8 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.locator('textarea[name="notes"]').fill("Created by production QA smoke test");
   await page.getByRole("button", { name: "Add prospect", exact: true }).click();
   await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-created(?:&|$)/);
+  await page.goto("/system/outreach?view=all");
+  await expect(page).toHaveURL(/\/system\/outreach\?view=all(?:&|$)/);
 
   const rowLink = page.getByRole("link", { name: qaFirmName, exact: true }).first();
   await expect(rowLink).toBeVisible();
@@ -271,6 +273,8 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.locator('input[name="contactName"]').fill("No Email Contact");
   await page.getByRole("button", { name: "Add prospect", exact: true }).click();
   await expect(page).toHaveURL(/\/system\/outreach\?notice=system-outreach-created(?:&|$)/);
+  await page.goto("/system/outreach?view=all");
+  await expect(page).toHaveURL(/\/system\/outreach\?view=all(?:&|$)/);
 
   await page.getByRole("link", { name: qaNoEmailFirmName, exact: true }).first().click();
   await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
