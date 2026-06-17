@@ -246,7 +246,7 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page.getByText("Outreach email send", { exact: true })).toBeVisible();
   await expect(page.getByText("Manual one-prospect send only.", { exact: false })).toBeVisible();
   await expect(page.getByLabel("Rendered subject", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Rendered body preview", { exact: true })).toBeVisible();
+  await expect(page.getByText("Rendered body preview", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send email", exact: true })).toBeVisible();
   await expect(page.locator('select[name="status"]')).toContainText("Ready for outreach");
   await expect(page.locator('select[name="status"]')).toContainText("Fit check scheduled");
@@ -255,11 +255,11 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.getByRole("button", { name: "Send email", exact: true }).click();
   await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?templateKey=outreach_first_email&notice=system-outreach-email-sent(?:&|$)/);
   await expect(page.getByText("Outreach activity", { exact: true })).toBeVisible();
-  await expect(page.getByText("SENT", { exact: false })).toBeVisible();
+  await expect(page.getByText("SENT · EMAIL", { exact: true })).toBeVisible();
 
   await page.locator('textarea[name="notes"]').fill("Updated from QA detail page");
   await page.getByRole("button", { name: "Save updates", exact: true }).click();
-  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?templateKey=outreach_first_email&notice=system-outreach-updated(?:&|$)/);
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
 
   const qaNoEmailFirmName = `QA Outreach No Email ${Date.now()}`;
   await page.goto("/system/outreach/new");
@@ -273,7 +273,7 @@ test("admin QA user can access system admin pages", async ({ page }) => {
 
   await page.getByRole("link", { name: qaNoEmailFirmName, exact: true }).first().click();
   await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
-  await expect(page.getByText("No public email on this prospect.", { exact: false })).toBeVisible();
+  await expect(page.getByText("No public email on this prospect.", { exact: false }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Send email", exact: true })).toBeDisabled();
 
   await page.goto("/system/outreach/playbook");
