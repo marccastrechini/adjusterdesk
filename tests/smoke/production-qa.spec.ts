@@ -207,7 +207,7 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
@@ -241,7 +241,9 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Mark follow-up due", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark interested", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Mark trial created", exact: true })).toBeVisible();
-  await expect(page.locator('select[name="status"] option')).toContainText(["Ready for outreach", "Fit check scheduled", "Email 1 sent"]);
+  await expect(page.locator('select[name="status"]')).toContainText("Ready for outreach");
+  await expect(page.locator('select[name="status"]')).toContainText("Fit check scheduled");
+  await expect(page.locator('select[name="status"]')).toContainText("Email 1 sent");
   await page.locator('textarea[name="notes"]').fill("Updated from QA detail page");
   await page.getByRole("button", { name: "Save updates", exact: true }).click();
   await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
@@ -267,7 +269,7 @@ test("outreach operator can access outreach but not broader system admin", async
   await page.goto("/system/outreach");
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: /Outreach tracker|System outreach/, exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
   await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
