@@ -143,6 +143,14 @@ export const noticeMessages = {
     title: "Outreach email sent",
     message: "The outreach email was sent and activity was logged on this prospect.",
   },
+  "system-outreach-task-updated": {
+    title: "Outreach task updated",
+    message: "The outreach task status was updated.",
+  },
+  "system-outreach-call-logged": {
+    title: "Call attempt logged",
+    message: "The call note was logged and related call tasks were completed when open.",
+  },
   "system-outreach-operator-enabled": {
     title: "Outreach operator enabled",
     message: "This user can now access the outreach operator surface at /system/outreach.",

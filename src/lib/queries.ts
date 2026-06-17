@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import {
+  type Prisma,
   type Carrier,
   ClaimStatus,
   DocumentRequestStatus,
@@ -9,6 +10,7 @@ import {
   InvoiceStatus,
   LeadStatus,
   OutreachProspectStatus,
+  OutreachTaskStatus,
   type Invoice,
   type Lead,
   type Property,
@@ -904,7 +906,16 @@ export async function getSystemUsers() {
 export async function getSystemOutreachProspects() {
   await requireSystemOutreachContext();
 
+  const includeNextTask: Prisma.OutreachProspectInclude = {
+    tasks: {
+      where: { status: OutreachTaskStatus.OPEN },
+      orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
+      take: 1,
+    },
+  };
+
   const prospects = await prisma.outreachProspect.findMany({
+    include: includeNextTask,
     orderBy: [{ followUpDate: "asc" }, { updatedAt: "desc" }, { id: "desc" }],
     take: 200,
   });
@@ -953,31 +964,40 @@ function byDateDesc(a?: Date | null, b?: Date | null) {
 export async function getSortedSystemOutreachProspects(sort: SystemOutreachSort) {
   await requireSystemOutreachContext();
 
+  const includeNextTask: Prisma.OutreachProspectInclude = {
+    tasks: {
+      where: { status: OutreachTaskStatus.OPEN },
+      orderBy: [{ dueDate: "asc" }, { createdAt: "asc" }],
+      take: 1,
+    },
+  };
+
   if (sort === "firmName") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ firmName: "asc" }, { id: "asc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ firmName: "asc" }, { id: "asc" }], take: 200 });
   }
 
   if (sort === "lastContactedDesc") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ dateContacted: "desc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ dateContacted: "desc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
   }
 
   if (sort === "lastContactedAsc") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ dateContacted: "asc" }, { id: "asc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ dateContacted: "asc" }, { id: "asc" }], take: 200 });
   }
 
   if (sort === "updatedDesc") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: 200 });
   }
 
   if (sort === "createdDesc") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 200 });
   }
 
   if (sort === "followUpDue") {
-    return prisma.outreachProspect.findMany({ orderBy: [{ followUpDate: "asc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
+    return prisma.outreachProspect.findMany({ include: includeNextTask, orderBy: [{ followUpDate: "asc" }, { updatedAt: "desc" }, { id: "desc" }], take: 200 });
   }
 
   const prospects = await prisma.outreachProspect.findMany({
+    include: includeNextTask,
     orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
     take: 200,
   });
@@ -1028,5 +1048,15 @@ export async function getSystemOutreachActivitiesByProspectId(outreachProspectId
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 25,
+  });
+}
+
+export async function getSystemOutreachTasksByProspectId(outreachProspectId: string) {
+  await requireSystemOutreachContext();
+
+  return prisma.outreachTask.findMany({
+    where: { outreachProspectId },
+    orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "asc" }],
+    take: 50,
   });
 }

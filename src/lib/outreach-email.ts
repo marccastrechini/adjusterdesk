@@ -1,5 +1,6 @@
 import { OutreachActivityStatus, OutreachActivityType, OutreachProspectStatus } from "@/generated/prisma/client";
 import { sendDirectEmail } from "@/lib/email";
+import { applyOutreachEmailTaskRules } from "@/lib/outreach-tasks";
 import { prisma } from "@/lib/prisma";
 import { freeClaimTrackerUrl, trialSignupUrl } from "@/lib/outreach";
 
@@ -263,6 +264,12 @@ type OutreachPrismaLike = {
   outreachActivity: {
     create: typeof prisma.outreachActivity.create;
   };
+  outreachTask: {
+    findFirst: typeof prisma.outreachTask.findFirst;
+    findMany: typeof prisma.outreachTask.findMany;
+    create: typeof prisma.outreachTask.create;
+    updateMany: typeof prisma.outreachTask.updateMany;
+  };
 };
 
 type DirectEmailResult = {
@@ -378,7 +385,7 @@ export async function sendOutreachTemplateEmail(input: SendOutreachTemplateInput
       prospectUpdate.dateContacted = now;
     }
     if (!prospect.followUpDate) {
-      prospectUpdate.followUpDate = addBusinessDays(now, 3);
+      prospectUpdate.followUpDate = addBusinessDays(now, 4);
     }
   }
 
@@ -401,6 +408,14 @@ export async function sendOutreachTemplateEmail(input: SendOutreachTemplateInput
       providerMessageId: sendResult.messageId,
       createdByUserId: input.actor.id,
     },
+  });
+
+  await applyOutreachEmailTaskRules({
+    outreachProspectId: prospect.id,
+    templateKey: input.templateKey,
+    now,
+    assignedToUserId: input.actor.id,
+    prismaClient,
   });
 
   return {

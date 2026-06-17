@@ -164,6 +164,25 @@ enum OutreachActivityStatus {
   NOTE
 }
 
+enum OutreachTaskType {
+  RESEARCH
+  CALL_ATTEMPT_1
+  SEND_EMAIL_1
+  CALL_ATTEMPT_2
+  SEND_FOLLOW_UP
+  REVIEW_REPLY
+  SCHEDULE_FIT_CHECK
+  RECYCLE_REVIEW
+  MANUAL
+}
+
+enum OutreachTaskStatus {
+  OPEN
+  DONE
+  SKIPPED
+  CANCELLED
+}
+
 model Firm {
   id        String   @id @default(cuid())
   name      String
@@ -260,10 +279,34 @@ model OutreachProspect {
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   activities       OutreachActivity[]
+  tasks            OutreachTask[]
 
   @@index([status])
   @@index([followUpDate])
   @@index([createdAt])
+}
+
+model OutreachTask {
+  id                String            @id @default(cuid())
+  outreachProspectId String
+  assignedToUserId  String?
+  type              OutreachTaskType
+  status            OutreachTaskStatus @default(OPEN)
+  title             String
+  dueDate           DateTime?
+  completedAt       DateTime?
+  skippedAt         DateTime?
+  notes             String?
+  createdByRule     Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  outreachProspect  OutreachProspect  @relation(fields: [outreachProspectId], references: [id], onDelete: Cascade)
+  assignedToUser    User?             @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([outreachProspectId, status, dueDate])
+  @@index([type, status])
+  @@index([assignedToUserId])
 }
 
 model OutreachActivity {
@@ -313,6 +356,7 @@ model User {
   userInvitationTokens UserInvitationToken[]
   feedbackEntries   FeedbackEntry[]
   outreachActivities OutreachActivity[]
+  outreachTasks     OutreachTask[]
 
   @@index([firmId])
 }

@@ -1,6 +1,13 @@
 import { notFound } from "next/navigation";
-import { OutreachProspectStatus } from "@/generated/prisma/client";
-import { sendSystemOutreachEmail, updateSystemOutreachProspect } from "@/lib/actions";
+import { OutreachProspectStatus, OutreachTaskType } from "@/generated/prisma/client";
+import {
+  cancelSystemOutreachTask,
+  completeSystemOutreachTask,
+  markSystemOutreachCallAttempt,
+  sendSystemOutreachEmail,
+  skipSystemOutreachTask,
+  updateSystemOutreachProspect,
+} from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
 import { freeClaimTrackerUrl, outreachStatusGuide, outreachStatusOptions, trialSignupUrl } from "@/lib/outreach";
@@ -10,7 +17,7 @@ import {
   renderOutreachEmailTemplate,
   resolveOutreachSenderPolicy,
 } from "@/lib/outreach-email";
-import { getSystemOutreachActivitiesByProspectId, getSystemOutreachProspectById } from "@/lib/queries";
+import { getSystemOutreachActivitiesByProspectId, getSystemOutreachProspectById, getSystemOutreachTasksByProspectId } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
 
 type PageProps = {
@@ -51,6 +58,21 @@ function formatDraftText(contactName: string | null, body: string) {
   return `${greeting}\n\n${body}\n\nThanks,\nAdjusterDesk`;
 }
 
+function taskTypeLabel(type: OutreachTaskType) {
+  const map: Record<OutreachTaskType, string> = {
+    RESEARCH: "Research",
+    CALL_ATTEMPT_1: "Call attempt 1",
+    SEND_EMAIL_1: "Send Email 1",
+    CALL_ATTEMPT_2: "Call attempt 2",
+    SEND_FOLLOW_UP: "Send follow-up",
+    REVIEW_REPLY: "Review reply",
+    SCHEDULE_FIT_CHECK: "Schedule fit check",
+    RECYCLE_REVIEW: "Recycle review",
+    MANUAL: "Manual task",
+  };
+  return map[type];
+}
+
 export default async function SystemOutreachProspectPage({ params, searchParams }: PageProps) {
   const sessionUser = await requireSystemOutreachContext();
   const { id } = await params;
@@ -63,7 +85,10 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
     notFound();
   }
 
-  const activities = await getSystemOutreachActivitiesByProspectId(id);
+  const [activities, tasks] = await Promise.all([
+    getSystemOutreachActivitiesByProspectId(id),
+    getSystemOutreachTasksByProspectId(id),
+  ]);
 
   const selectedTemplateCandidate = firstValue(query.templateKey) || "outreach_first_email";
   const selectedTemplateKey = isOutreachEmailTemplateKey(selectedTemplateCandidate) ? selectedTemplateCandidate : "outreach_first_email";
@@ -158,6 +183,12 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
           <p className="mt-1 leading-6">The send attempt was logged. Status was not marked as sent.</p>
         </Card>
       ) : null}
+      {error === "task-validation" ? (
+        <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
+          <p className="font-semibold">Task update not completed</p>
+          <p className="mt-1 leading-6">Check task input and try again.</p>
+        </Card>
+      ) : null}
 
       <Card className="text-sm text-slate-700">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -230,6 +261,63 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
             <SubmitButton variant="secondary">Mark trial created</SubmitButton>
           </form>
         </div>
+      </Card>
+
+      <Card className="grid gap-3 text-sm text-slate-700">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Next action tasks</p>
+          <p className="mt-1 text-xs text-slate-600">Complete, skip, or cancel current outreach tasks. This guides daily work only; no email automation.</p>
+        </div>
+
+        <form action={markSystemOutreachCallAttempt} className="flex flex-wrap items-end gap-2">
+          <input type="hidden" name="outreachId" value={prospect.id} />
+          <input type="hidden" name="returnTo" value={`/system/outreach/${prospect.id}?templateKey=${selectedTemplateKey}`} />
+          <Field label="Call note (optional)">
+            <input name="note" placeholder="Left voicemail, no answer, wrong number, etc." className={inputClassName} />
+          </Field>
+          <SubmitButton variant="secondary">Mark call attempted</SubmitButton>
+        </form>
+
+        {tasks.length === 0 ? (
+          <p className="text-sm text-slate-600">No outreach tasks yet.</p>
+        ) : (
+          <ul className="grid gap-2">
+            {tasks.map((task) => {
+              const returnTo = `/system/outreach/${prospect.id}?templateKey=${selectedTemplateKey}`;
+              const isOpen = task.status === "OPEN";
+              return (
+                <li key={task.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{task.title}</p>
+                      <p className="text-xs text-slate-600">{taskTypeLabel(task.type)} · {task.status} · due {dateText(task.dueDate)}</p>
+                      {task.notes ? <p className="mt-1 text-xs text-slate-500">{task.notes}</p> : null}
+                    </div>
+                    {isOpen ? (
+                      <div className="flex flex-wrap gap-2">
+                        <form action={completeSystemOutreachTask}>
+                          <input type="hidden" name="outreachTaskId" value={task.id} />
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <SubmitButton variant="secondary">Complete</SubmitButton>
+                        </form>
+                        <form action={skipSystemOutreachTask}>
+                          <input type="hidden" name="outreachTaskId" value={task.id} />
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <SubmitButton variant="secondary">Skip</SubmitButton>
+                        </form>
+                        <form action={cancelSystemOutreachTask}>
+                          <input type="hidden" name="outreachTaskId" value={task.id} />
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <SubmitButton variant="secondary">Cancel</SubmitButton>
+                        </form>
+                      </div>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Card>
 
       <Card className="grid gap-3 text-sm text-slate-700">

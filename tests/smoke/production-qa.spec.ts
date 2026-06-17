@@ -214,6 +214,7 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.locator('input[name="firmName"]')).toHaveCount(0);
+  await expect(page.locator("table").first()).toBeVisible();
   await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
 
   const qaFirmName = `QA Outreach Firm ${Date.now()}`;
@@ -300,6 +301,7 @@ test("outreach operator can access outreach but not broader system admin", async
   await expect(page.getByRole("main").getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
+  await expect(page.locator("table").first()).toBeVisible();
   await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
 
   await page.goto("/system/outreach/new");

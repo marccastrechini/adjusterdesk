@@ -10,8 +10,12 @@ import {
   DocumentCategory,
   DocumentRequestStatus,
   InvoiceStatus,
+  OutreachActivityStatus,
+  OutreachActivityType,
   LeadStatus,
   OutreachProspectStatus,
+  OutreachTaskStatus,
+  OutreachTaskType,
   SettlementStatus,
   SubscriptionPlan,
   SubscriptionStatus,
@@ -30,6 +34,7 @@ import {
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
 import { isOutreachEmailTemplateKey, sendOutreachTemplateEmail } from "@/lib/outreach-email";
+import { applyOutreachStatusTaskRules } from "@/lib/outreach-tasks";
 import { validateManualActivityInput } from "@/lib/activity-log";
 import { clientStatusUploadMarker, validateClientStatusUpdateInput } from "@/lib/client-status";
 import { documentRequestResolution, validateClientStatusUploadInput, validateDocumentCreateInput } from "@/lib/document-requests";
@@ -156,6 +161,15 @@ const outreachUpdateSchema = z.object({
 const outreachSendSchema = z.object({
   outreachId: z.string().trim().min(1, "Missing outreach prospect."),
   templateKey: z.string().trim().min(1, "Select an outreach template."),
+});
+
+const outreachTaskActionSchema = z.object({
+  outreachTaskId: z.string().trim().min(1, "Missing outreach task."),
+});
+
+const outreachCallAttemptSchema = z.object({
+  outreachId: z.string().trim().min(1, "Missing outreach prospect."),
+  note: z.string().trim().max(400, "Call note is too long.").optional().transform((value) => value || undefined),
 });
 
 function formObject(formData: FormData) {
@@ -2112,7 +2126,7 @@ export async function updateSystemWorkspaceSubscription(formData: FormData) {
 }
 
 export async function createSystemOutreachProspect(formData: FormData) {
-  await requireSystemOutreachContext();
+  const sessionUser = await requireSystemOutreachContext();
   const returnTo = systemReturnToValue(formData, "/system/outreach");
 
   const parsed = outreachCreateSchema.safeParse({
@@ -2137,7 +2151,7 @@ export async function createSystemOutreachProspect(formData: FormData) {
 
   const values = parsed.data;
 
-  await prisma.outreachProspect.create({
+  const created = await prisma.outreachProspect.create({
     data: {
       firmName: values.firmName,
       website: values.website,
@@ -2155,13 +2169,19 @@ export async function createSystemOutreachProspect(formData: FormData) {
     },
   });
 
+  await applyOutreachStatusTaskRules({
+    outreachProspectId: created.id,
+    nextStatus: values.status,
+    assignedToUserId: sessionUser.id,
+  });
+
   revalidatePath("/system/outreach");
   revalidatePath("/system/outreach/new");
   redirect(withNotice(returnTo, "system-outreach-created"));
 }
 
 export async function updateSystemOutreachProspect(formData: FormData) {
-  await requireSystemOutreachContext();
+  const sessionUser = await requireSystemOutreachContext();
   const returnTo = systemReturnToValue(formData, "/system/outreach");
 
   const parsed = outreachUpdateSchema.safeParse({
@@ -2220,6 +2240,14 @@ export async function updateSystemOutreachProspect(formData: FormData) {
     },
   });
 
+  if (values.status) {
+    await applyOutreachStatusTaskRules({
+      outreachProspectId: values.outreachId,
+      nextStatus: values.status,
+      assignedToUserId: sessionUser.id,
+    });
+  }
+
   revalidatePath("/system/outreach");
   revalidatePath(`/system/outreach/${values.outreachId}`);
   redirect(withNotice(returnTo, "system-outreach-updated"));
@@ -2270,6 +2298,145 @@ export async function sendSystemOutreachEmail(formData: FormData) {
   revalidatePath("/system/outreach");
   revalidatePath(`/system/outreach/${values.outreachId}`);
   redirect(withNotice(returnTo, "system-outreach-email-sent"));
+}
+
+export async function completeSystemOutreachTask(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
+
+  const parsed = outreachTaskActionSchema.safeParse({
+    outreachTaskId: textValue(formData, "outreachTaskId"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "task-validation"));
+  }
+
+  await prisma.outreachTask.updateMany({
+    where: {
+      id: parsed.data.outreachTaskId,
+      status: OutreachTaskStatus.OPEN,
+    },
+    data: {
+      status: OutreachTaskStatus.DONE,
+      completedAt: new Date(),
+      skippedAt: null,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  revalidatePath(returnTo.split("?")[0]);
+  redirect(withNotice(returnTo, "system-outreach-task-updated"));
+}
+
+export async function skipSystemOutreachTask(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
+
+  const parsed = outreachTaskActionSchema.safeParse({
+    outreachTaskId: textValue(formData, "outreachTaskId"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "task-validation"));
+  }
+
+  await prisma.outreachTask.updateMany({
+    where: {
+      id: parsed.data.outreachTaskId,
+      status: OutreachTaskStatus.OPEN,
+    },
+    data: {
+      status: OutreachTaskStatus.SKIPPED,
+      skippedAt: new Date(),
+      completedAt: null,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  revalidatePath(returnTo.split("?")[0]);
+  redirect(withNotice(returnTo, "system-outreach-task-updated"));
+}
+
+export async function cancelSystemOutreachTask(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
+
+  const parsed = outreachTaskActionSchema.safeParse({
+    outreachTaskId: textValue(formData, "outreachTaskId"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "task-validation"));
+  }
+
+  await prisma.outreachTask.updateMany({
+    where: {
+      id: parsed.data.outreachTaskId,
+      status: OutreachTaskStatus.OPEN,
+    },
+    data: {
+      status: OutreachTaskStatus.CANCELLED,
+      skippedAt: new Date(),
+      completedAt: null,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  revalidatePath(returnTo.split("?")[0]);
+  redirect(withNotice(returnTo, "system-outreach-task-updated"));
+}
+
+export async function markSystemOutreachCallAttempt(formData: FormData) {
+  const sessionUser = await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach");
+
+  const parsed = outreachCallAttemptSchema.safeParse({
+    outreachId: textValue(formData, "outreachId"),
+    note: textValue(formData, "note"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "task-validation"));
+  }
+
+  const prospect = await prisma.outreachProspect.findUnique({
+    where: { id: parsed.data.outreachId },
+    select: { id: true, firmName: true },
+  });
+
+  if (!prospect) {
+    redirect(withError(returnTo, "missing"));
+  }
+
+  const now = new Date();
+  await prisma.outreachActivity.create({
+    data: {
+      outreachProspectId: prospect.id,
+      type: OutreachActivityType.NOTE,
+      status: OutreachActivityStatus.NOTE,
+      subject: "Call attempt logged",
+      bodySnapshot: parsed.data.note || `Call attempt logged for ${prospect.firmName}.`,
+      createdByUserId: sessionUser.id,
+    },
+  });
+
+  await prisma.outreachTask.updateMany({
+    where: {
+      outreachProspectId: prospect.id,
+      type: { in: [OutreachTaskType.CALL_ATTEMPT_1, OutreachTaskType.CALL_ATTEMPT_2] },
+      status: OutreachTaskStatus.OPEN,
+    },
+    data: {
+      status: OutreachTaskStatus.DONE,
+      completedAt: now,
+      skippedAt: null,
+    },
+  });
+
+  revalidatePath("/system/outreach");
+  revalidatePath(returnTo.split("?")[0]);
+  redirect(withNotice(returnTo, "system-outreach-call-logged"));
 }
 
 export async function setSystemUserOutreachOperator(userId: string, workspaceId: string, nextOutreachOperator: boolean) {

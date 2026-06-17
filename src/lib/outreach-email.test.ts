@@ -106,6 +106,12 @@ test("sendOutreachTemplateEmail logs SENT and updates status/date/follow-up for 
         return {};
       },
     },
+    outreachTask: {
+      findFirst: async () => null,
+      findMany: async () => [],
+      create: async () => ({}),
+      updateMany: async () => ({ count: 0 }),
+    },
   } as never;
 
   const now = new Date("2026-06-19T12:00:00.000Z");
@@ -133,7 +139,7 @@ test("sendOutreachTemplateEmail logs SENT and updates status/date/follow-up for 
   const updatePayload = updates[0] as { data: { status: OutreachProspectStatus; dateContacted: Date; followUpDate: Date } };
   assert.equal(updatePayload.data.status, OutreachProspectStatus.CONTACTED);
   assert.equal(updatePayload.data.dateContacted.toISOString(), now.toISOString());
-  assert.equal(updatePayload.data.followUpDate.toISOString(), "2026-06-24T12:00:00.000Z");
+  assert.equal(updatePayload.data.followUpDate.toISOString(), "2026-06-25T12:00:00.000Z");
 
   const activityPayload = activities[0] as { data: { status: OutreachActivityStatus; providerMessageId?: string } };
   assert.equal(activityPayload.data.status, OutreachActivityStatus.SENT);
@@ -165,6 +171,12 @@ test("sendOutreachTemplateEmail logs FAILED and does not update status on provid
         activities.push(args);
         return {};
       },
+    },
+    outreachTask: {
+      findFirst: async () => null,
+      findMany: async () => [],
+      create: async () => ({}),
+      updateMany: async () => ({ count: 0 }),
     },
   } as never;
 
