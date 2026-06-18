@@ -27,6 +27,9 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: new URL("/sitemap.xml", publicSiteUrl).toString(),
+    sitemap: [
+      new URL("/sitemap.xml", publicSiteUrl).toString(),
+      new URL("/google-sitemap.xml", publicSiteUrl).toString(),
+    ],
   };
 }

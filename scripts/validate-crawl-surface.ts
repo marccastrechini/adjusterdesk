@@ -7,13 +7,25 @@ const defaultBaseUrl = "https://adjusterdesk.xyz";
 
 const expectedPublicPaths = [
   "/",
+  "/product",
+  "/features",
+  "/how-it-works",
   "/pricing",
   "/signup",
+  "/help",
+  "/demo",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/accessibility",
+  "/security",
   "/public-adjuster-software",
   "/free-public-adjuster-claim-tracker",
   "/claimwizard-alternative",
   "/resources",
 ];
+
+const sitemapPaths = ["/sitemap.xml", "/google-sitemap.xml"];
 
 function getBaseUrlArg(): string {
   const arg = process.argv.find((value) => value.startsWith("--base-url="));
@@ -86,20 +98,23 @@ function toAbsoluteUrl(baseUrl: string, path: string): string {
   return new URL(path, baseUrl).toString();
 }
 
-async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }> {
-  const issues: ValidationIssue[] = [];
-
-  const sitemapUrl = toAbsoluteUrl(baseUrl, "/sitemap.xml");
-  const robotsUrl = toAbsoluteUrl(baseUrl, "/robots.txt");
-
+async function validateSitemap({
+  sitemapUrl,
+  expectedPaths,
+  issues,
+}: {
+  sitemapUrl: string;
+  expectedPaths: string[];
+  issues: ValidationIssue[];
+}): Promise<void> {
   const sitemapResponse = await fetchNoRedirect(sitemapUrl);
   if (sitemapResponse.status !== 200) {
-    issues.push({ level: "error", message: `Sitemap status must be 200, got ${sitemapResponse.status}` });
+    issues.push({ level: "error", message: `Sitemap status must be 200, got ${sitemapResponse.status}: ${sitemapUrl}` });
   }
 
   const sitemapContentType = normalizeContentType(sitemapResponse.headers.get("content-type"));
   if (!(sitemapContentType.includes("application/xml") || sitemapContentType.includes("text/xml"))) {
-    issues.push({ level: "error", message: `Sitemap content-type must be XML, got '${sitemapContentType || "(missing)"}'` });
+    issues.push({ level: "error", message: `Sitemap content-type must be XML, got '${sitemapContentType || "(missing)"}': ${sitemapUrl}` });
   }
 
   const sitemapContentEncoding = normalizeContentType(sitemapResponse.headers.get("content-encoding"));
@@ -107,24 +122,24 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
     sitemapContentEncoding &&
     !["gzip", "br", "deflate"].some((encoding) => sitemapContentEncoding.includes(encoding))
   ) {
-    issues.push({ level: "warn", message: `Uncommon sitemap content-encoding '${sitemapContentEncoding}'` });
+    issues.push({ level: "warn", message: `Uncommon sitemap content-encoding '${sitemapContentEncoding}': ${sitemapUrl}` });
   }
 
   const sitemapText = await sitemapResponse.text();
   const trimmedSitemapText = sitemapText.trim();
   if (!trimmedSitemapText.startsWith("<?xml")) {
-    issues.push({ level: "error", message: "Sitemap body does not start with XML declaration." });
+    issues.push({ level: "error", message: `Sitemap body does not start with XML declaration: ${sitemapUrl}` });
   }
   if (!trimmedSitemapText.includes("<urlset")) {
-    issues.push({ level: "error", message: "Sitemap body does not contain <urlset>." });
+    issues.push({ level: "error", message: `Sitemap body does not contain <urlset>: ${sitemapUrl}` });
   }
   if (/<html[\s>]/i.test(trimmedSitemapText)) {
-    issues.push({ level: "error", message: "Sitemap appears to include an HTML shell." });
+    issues.push({ level: "error", message: `Sitemap appears to include an HTML shell: ${sitemapUrl}` });
   }
 
   const sitemapLocs = parseSitemapLocs(trimmedSitemapText);
   if (sitemapLocs.length === 0) {
-    issues.push({ level: "error", message: "Sitemap contains no <loc> URLs." });
+    issues.push({ level: "error", message: `Sitemap contains no <loc> URLs: ${sitemapUrl}` });
   }
 
   const sitemapPathSet = new Set(
@@ -139,9 +154,9 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
       .filter((pathname) => pathname.length > 0),
   );
 
-  for (const path of expectedPublicPaths) {
+  for (const path of expectedPaths) {
     if (!sitemapPathSet.has(path)) {
-      issues.push({ level: "error", message: `Sitemap is missing expected path: ${path}` });
+      issues.push({ level: "error", message: `Sitemap is missing expected path '${path}': ${sitemapUrl}` });
     }
   }
 
@@ -169,6 +184,24 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
     }
   }
 
+  if (sitemapResponse.status === 401 || sitemapResponse.status === 403) {
+    issues.push({ level: "error", message: `Sitemap appears to require auth (401/403): ${sitemapUrl}` });
+  }
+}
+
+async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }> {
+  const issues: ValidationIssue[] = [];
+
+  const robotsUrl = toAbsoluteUrl(baseUrl, "/robots.txt");
+
+  for (const sitemapPath of sitemapPaths) {
+    await validateSitemap({
+      sitemapUrl: toAbsoluteUrl(baseUrl, sitemapPath),
+      expectedPaths: expectedPublicPaths,
+      issues,
+    });
+  }
+
   const robotsResponse = await fetchNoRedirect(robotsUrl);
   if (robotsResponse.status !== 200) {
     issues.push({ level: "error", message: `Robots status must be 200, got ${robotsResponse.status}` });
@@ -180,25 +213,29 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
   }
 
   const robotsText = await robotsResponse.text();
-  const expectedSitemapLine = `Sitemap: ${sitemapUrl}`;
-  const robotsSitemapLineMatch = robotsText.match(/^Sitemap:\s*(.+)$/im);
-  if (!robotsSitemapLineMatch) {
+  const currentHostIsLocal = isLikelyLocalHost(new URL(baseUrl).hostname);
+  const robotsSitemapValues = [...robotsText.matchAll(/^Sitemap:\s*(.+)$/gim)].map((match) => match[1].trim());
+  if (robotsSitemapValues.length === 0) {
     issues.push({ level: "error", message: "Robots is missing a Sitemap line." });
-  } else {
-    const robotsSitemapValue = robotsSitemapLineMatch[1].trim();
-    const currentHostIsLocal = isLikelyLocalHost(new URL(baseUrl).hostname);
+  }
 
-    if (!currentHostIsLocal && robotsSitemapValue !== sitemapUrl) {
-      issues.push({ level: "error", message: `Robots sitemap line should be '${sitemapUrl}', got '${robotsSitemapValue}'` });
+  for (const sitemapPath of sitemapPaths) {
+    const expectedSitemapUrl = toAbsoluteUrl(baseUrl, sitemapPath);
+    const matchedSitemapValue = robotsSitemapValues.find((value) => {
+      try {
+        return new URL(value).pathname === sitemapPath;
+      } catch {
+        return false;
+      }
+    });
+
+    if (!matchedSitemapValue) {
+      issues.push({ level: "error", message: `Robots is missing sitemap path '${sitemapPath}'` });
+      continue;
     }
 
-    try {
-      const parsedRobotsSitemap = new URL(robotsSitemapValue);
-      if (parsedRobotsSitemap.pathname !== "/sitemap.xml") {
-        issues.push({ level: "error", message: `Robots sitemap path should be /sitemap.xml, got '${parsedRobotsSitemap.pathname}'` });
-      }
-    } catch {
-      issues.push({ level: "error", message: `Robots sitemap value is not a valid absolute URL: '${robotsSitemapValue}'` });
+    if (!currentHostIsLocal && matchedSitemapValue !== expectedSitemapUrl) {
+      issues.push({ level: "error", message: `Robots sitemap line should be '${expectedSitemapUrl}', got '${matchedSitemapValue}'` });
     }
   }
 
@@ -226,11 +263,6 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
       message: "Cloudflare managed robots block detected. This can coexist with app robots rules, but should be reviewed in dashboard if Google fetch issues persist.",
     });
   }
-
-  if (sitemapResponse.status === 401 || sitemapResponse.status === 403) {
-    issues.push({ level: "error", message: "Sitemap appears to require auth (401/403)." });
-  }
-
   return { issues };
 }
 

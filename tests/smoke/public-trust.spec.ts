@@ -43,7 +43,9 @@ test("public SEO routes and security headers are present", async ({ request }) =
   const robotsResponse = await request.get("/robots.txt");
   expect(robotsResponse.ok()).toBeTruthy();
   const robotsText = await robotsResponse.text();
-  expect(robotsText).toContain("Sitemap:");
+  expect(robotsText).toContain("Sitemap: ");
+  expect(robotsText).toContain("/sitemap.xml");
+  expect(robotsText).toContain("/google-sitemap.xml");
   expect(robotsText).toContain("Disallow: /claims/");
 
   const sitemapResponse = await request.get("/sitemap.xml");
@@ -54,6 +56,15 @@ test("public SEO routes and security headers are present", async ({ request }) =
   expect(sitemapText).toContain("/security");
   expect(sitemapText).toContain("/free-public-adjuster-claim-tracker");
   expect(sitemapText).not.toContain("/claims");
+
+  const staticSitemapResponse = await request.get("/google-sitemap.xml");
+  expect(staticSitemapResponse.ok()).toBeTruthy();
+  expect(staticSitemapResponse.headers()["content-type"]).toContain("xml");
+  const staticSitemapText = await staticSitemapResponse.text();
+  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/pricing");
+  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/resources");
+  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/claimwizard-alternative");
+  expect(staticSitemapText).not.toContain("<html");
 });
 
 test("free claim tracker page and download asset are reachable", async ({ page, request }) => {
