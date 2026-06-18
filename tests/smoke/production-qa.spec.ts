@@ -173,6 +173,9 @@ test("normal QA user can access office pages and cannot access system admin tool
 
   await page.goto("/system/outreach/playbook");
   await expect(page).not.toHaveURL(/\/system\/outreach\/playbook(?:\?|$)/);
+
+  await page.goto("/system/outreach/candidates");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/candidates(?:\?|$)/);
 });
 
 test("admin QA user can access system admin pages", async ({ page }) => {
@@ -210,12 +213,24 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "System outreach", exact: true })).toBeVisible();
   await expect(page.getByRole("main").getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Lead candidates", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.locator('input[name="firmName"]')).toHaveCount(0);
   await expect(page.locator("table").first()).toBeVisible();
+  await expect(page.getByLabel("View", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
+
+  // Queue view tabs
+  await page.goto("/system/outreach?view=today");
+  await expect(page.getByLabel("View", { exact: true })).toBeVisible();
+  await page.goto("/system/outreach?view=overdue");
+  await expect(page.locator("table").first()).toBeVisible();
+  await page.goto("/system/outreach?view=upcoming");
+  await expect(page.locator("table").first()).toBeVisible();
+  await page.goto("/system/outreach?view=all");
+  await expect(page.locator("table").first()).toBeVisible();
 
   const qaFirmName = `QA Outreach Firm ${Date.now()}`;
   await page.goto("/system/outreach/new");
@@ -238,6 +253,9 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await rowLink.click();
   await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
   await expect(page.getByRole("button", { name: "Save updates", exact: true })).toBeVisible();
+  // Next action summary
+  await expect(page.getByText("Next action summary", { exact: true })).toBeVisible();
+  await expect(page.getByText("Suggested action", { exact: false })).toBeVisible();
   await expect(page.getByText("Status helper", { exact: true })).toBeVisible();
   await expect(page.getByText("Copy-ready email drafts", { exact: true })).toBeVisible();
   await expect(page.getByText("These drafts do not send email.", { exact: false })).toBeVisible();
@@ -285,6 +303,34 @@ test("admin QA user can access system admin pages", async ({ page }) => {
   await expect(page).toHaveURL(/\/system\/outreach\/playbook(?:\?|$)/);
   await expect(page.getByRole("heading", { name: "AdjusterDesk - Outreach Playbook", exact: true })).toBeVisible();
 
+  // Candidate intake
+  await page.goto("/system/outreach/candidates");
+  await expect(page).toHaveURL(/\/system\/outreach\/candidates(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Lead candidates", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add candidate", exact: true })).toBeVisible();
+  await expect(page.locator("table").first()).toBeVisible();
+
+  const qaCandidateFirm = `QA Candidate Firm ${Date.now()}`;
+  await page.goto("/system/outreach/candidates/new");
+  await expect(page).toHaveURL(/\/system\/outreach\/candidates\/new(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Add lead candidate", exact: true })).toBeVisible();
+  await page.locator('input[name="firmName"]').fill(qaCandidateFirm);
+  await page.locator('input[name="website"]').fill(`https://qa-candidate-${Date.now()}.example.com`);
+  await page.locator('input[name="state"]').fill("TX");
+  await page.locator('input[name="contactName"]').fill("QA Candidate Contact");
+  await page.locator('textarea[name="notes"]').fill("Created by QA smoke test");
+  await page.getByRole("button", { name: "Add candidate", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\/candidates\/[^/?#]+\?notice=candidate-created(?:&|$)/);
+  await expect(page.getByText("Next action summary", { exact: false }).or(page.getByText("Save updates", { exact: true }))).toBeVisible();
+
+  await expect(page.getByText("Promote to prospect", { exact: true })).toBeVisible();
+  await expect(page.getByText("Reject candidate", { exact: true })).toBeVisible();
+
+  // Promote candidate to prospect
+  await page.getByRole("button", { name: "Promote to prospect", exact: true }).click();
+  await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=candidate-promoted(?:&|$)/);
+  await expect(page.getByText("Next action summary", { exact: true })).toBeVisible();
+
   await scanPageText(page, "admin /system/outreach");
 });
 
@@ -303,24 +349,38 @@ test("outreach operator can access outreach but not broader system admin", async
   await expect(page).toHaveURL(/\/system\/outreach(?:\?|$)/);
   await expect(page.getByRole("heading", { name: /Outreach tracker|System outreach/, exact: false })).toBeVisible();
   await expect(page.getByRole("main").getByRole("link", { name: "Outreach playbook", exact: true })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Lead candidates", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Invite outreach operator", exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Add prospect", exact: true })).toBeVisible();
   await expect(page.locator("table").first()).toBeVisible();
+  await expect(page.getByLabel("View", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Sort", { exact: true })).toBeVisible();
+
+  // Queue views
+  await page.goto("/system/outreach?view=overdue");
+  await expect(page.locator("table").first()).toBeVisible();
+  await page.goto("/system/outreach?view=upcoming");
+  await expect(page.locator("table").first()).toBeVisible();
 
   await page.goto("/system/outreach/new");
   await expect(page).toHaveURL(/\/system\/outreach\/new(?:\?|$)/);
 
   await page.goto("/system/outreach");
-  const firstProspectLink = page.locator('a[href^="/system/outreach/"]:not([href="/system/outreach/new"]):not([href="/system/outreach/playbook"])').first();
+  const firstProspectLink = page.locator('a[href^="/system/outreach/"]:not([href="/system/outreach/new"]):not([href="/system/outreach/playbook"]):not([href="/system/outreach/candidates"])').first();
   if (await firstProspectLink.count()) {
     await firstProspectLink.click();
     await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+(?:\?|$)/);
     await expect(page.getByRole("button", { name: "Save updates", exact: true })).toBeVisible();
+    await expect(page.getByText("Next action summary", { exact: true })).toBeVisible();
     await expect(page.getByText("Outreach email send", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Mark interested", exact: true }).click();
     await expect(page).toHaveURL(/\/system\/outreach\/[^/?#]+\?notice=system-outreach-updated(?:&|$)/);
   }
+
+  // Candidate intake access for outreach operator
+  await page.goto("/system/outreach/candidates");
+  await expect(page).toHaveURL(/\/system\/outreach\/candidates(?:\?|$)/);
+  await expect(page.getByRole("heading", { name: "Lead candidates", exact: true })).toBeVisible();
 
   await page.goto("/system/workspaces");
   await expect(page).not.toHaveURL(/\/system\/workspaces(?:\?|$)/);
@@ -386,4 +446,7 @@ test("normal QA user cannot access /system/users", async ({ page }) => {
 
   await page.goto("/system/outreach/playbook");
   await expect(page).not.toHaveURL(/\/system\/outreach\/playbook(?:\?|$)/);
+
+  await page.goto("/system/outreach/candidates");
+  await expect(page).not.toHaveURL(/\/system\/outreach\/candidates(?:\?|$)/);
 });

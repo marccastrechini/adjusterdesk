@@ -10,7 +10,7 @@ import {
 } from "@/lib/actions";
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { getNoticeMessage } from "@/lib/notices";
-import { freeClaimTrackerUrl, outreachStatusGuide, outreachStatusOptions, trialSignupUrl } from "@/lib/outreach";
+import { freeClaimTrackerUrl, outreachStatusGuide, outreachStatusLabel, outreachStatusOptions, trialSignupUrl } from "@/lib/outreach";
 import {
   isOutreachEmailTemplateKey,
   outreachEmailTemplateOptions,
@@ -71,6 +71,43 @@ function taskTypeLabel(type: OutreachTaskType) {
     MANUAL: "Manual task",
   };
   return map[type];
+}
+
+function suggestedNextAction(status: string, nextTaskType?: OutreachTaskType | null): string {
+  if (nextTaskType) {
+    const taskMap: Record<OutreachTaskType, string> = {
+      RESEARCH: "Review and verify this prospect. Update contact details and move to Ready for outreach when qualified.",
+      CALL_ATTEMPT_1: "Attempt a call to this prospect.",
+      SEND_EMAIL_1: "Send Email 1 with the free claim tracker link.",
+      CALL_ATTEMPT_2: "Attempt a second call.",
+      SEND_FOLLOW_UP: "Send the follow-up email. Check notes for reply context first.",
+      REVIEW_REPLY: "Review the latest reply and determine next step. Mark interested, not now, or fit check as appropriate.",
+      SCHEDULE_FIT_CHECK: "Schedule a short call to confirm fit for the first 10 claims.",
+      RECYCLE_REVIEW: "Review this prospect. Decide whether to re-engage or mark bad fit.",
+      MANUAL: "Complete the manual task noted above.",
+    };
+    return taskMap[nextTaskType];
+  }
+  const statusMap: Record<string, string> = {
+    NOT_CONTACTED: "Review this prospect and move to Ready for outreach if they look like a good small-office fit.",
+    READY_FOR_OUTREACH: "Send Email 1 with the free claim tracker link.",
+    CONTACTED: "Wait for a reply. If no reply within a week, move to Follow-up due.",
+    FOLLOW_UP_DUE: "Send the follow-up email. Set a follow-up date.",
+    REPLIED_INTERESTED: "Reach out to schedule a short fit check call.",
+    REPLIED_NOT_NOW: "Note the timing. Set a future follow-up date if appropriate.",
+    FIT_CHECK_SCHEDULED: "Confirm the fit check details. Prepare a brief call agenda.",
+    TRIAL_CREATED: "Check in after a few days to see if they have questions.",
+    BAD_FIT: "No further action needed unless circumstances change.",
+  };
+  return statusMap[status] ?? "Review this prospect and update the status.";
+}
+
+function startOfUtcDayDetail(value: Date) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+
+function endOfUtcDayDetail(value: Date) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate(), 23, 59, 59, 999));
 }
 
 export default async function SystemOutreachProspectPage({ params, searchParams }: PageProps) {
@@ -189,6 +226,63 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
           <p className="mt-1 leading-6">Check task input and try again.</p>
         </Card>
       ) : null}
+
+      {(() => {
+        const now = new Date();
+        const todayStart = startOfUtcDayDetail(now);
+        const todayEnd = endOfUtcDayDetail(now);
+        const nextOpenTask = tasks.find((t) => t.status === "OPEN");
+        const due = nextOpenTask?.dueDate ?? null;
+        const isOverdue = Boolean(due && due < todayStart);
+        const isDueToday = Boolean(due && due >= todayStart && due <= todayEnd);
+        const lastActivity = activities[0];
+        const suggestion = suggestedNextAction(prospect.status, nextOpenTask?.type);
+        const dueBadge = isOverdue
+          ? <span className="ml-2 rounded bg-rose-100 px-1.5 py-0.5 text-xs font-medium text-rose-700">Overdue</span>
+          : isDueToday
+            ? <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">Due today</span>
+            : null;
+        return (
+          <Card className={`text-sm ${isOverdue ? "border-rose-200 bg-rose-50" : isDueToday ? "border-amber-200 bg-amber-50" : ""}`}>
+            <p className="text-sm font-semibold text-slate-900">Next action summary</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <p className="text-xs uppercase tracking-normal text-slate-500">Status</p>
+                <p className="mt-1 font-medium text-slate-800">{outreachStatusLabel(prospect.status)}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-normal text-slate-500">Next open task</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {nextOpenTask ? taskTypeLabel(nextOpenTask.type) : <span className="text-slate-500">No open tasks</span>}
+                </p>
+                {nextOpenTask?.title && nextOpenTask.title !== taskTypeLabel(nextOpenTask.type) ? (
+                  <p className="text-xs text-slate-600">{nextOpenTask.title}</p>
+                ) : null}
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-normal text-slate-500">Task due</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {due ? (
+                    <>{dateText(due)}{dueBadge}</>
+                  ) : (
+                    <span className="text-slate-500">-</span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-normal text-slate-500">Last activity</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {lastActivity ? dateText(lastActivity.createdAt) : <span className="text-slate-500">{dateText(prospect.updatedAt)}</span>}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Suggested action</p>
+              <p className="mt-1 text-sm leading-6 text-slate-700">{suggestion}</p>
+            </div>
+          </Card>
+        );
+      })()}
 
       <Card className="text-sm text-slate-700">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -183,6 +183,15 @@ enum OutreachTaskStatus {
   CANCELLED
 }
 
+enum OutreachCandidateStatus {
+  NEW
+  NEEDS_REVIEW
+  APPROVED
+  REJECTED
+  DUPLICATE
+  PROMOTED
+}
+
 model Firm {
   id        String   @id @default(cuid())
   name      String
@@ -280,6 +289,7 @@ model OutreachProspect {
   updatedAt        DateTime              @updatedAt
   activities       OutreachActivity[]
   tasks            OutreachTask[]
+  candidates       OutreachCandidate[]
 
   @@index([status])
   @@index([followUpDate])
@@ -331,6 +341,29 @@ model OutreachActivity {
   @@index([outreachProspectId, createdAt])
   @@index([status])
   @@index([createdByUserId])
+}
+
+model OutreachCandidate {
+  id                         String                   @id @default(cuid())
+  firmName                   String
+  website                    String?
+  state                      String?
+  contactName                String?
+  email                      String?
+  phone                      String?
+  sourceUrl                  String?
+  smallOfficeSignal          String?
+  notes                      String?
+  confidenceScore            Float?
+  status                     OutreachCandidateStatus  @default(NEW)
+  promotedOutreachProspectId String?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+
+  promotedOutreachProspect   OutreachProspect?        @relation(fields: [promotedOutreachProspectId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model User {

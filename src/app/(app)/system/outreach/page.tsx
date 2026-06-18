@@ -65,11 +65,12 @@ function taskTypeLabel(type: OutreachTaskType) {
   return map[type];
 }
 
-type OutreachQueueView = "today" | "overdue" | "ready" | "waiting-follow-up" | "interested" | "all";
+type OutreachQueueView = "today" | "overdue" | "upcoming" | "ready" | "waiting-follow-up" | "interested" | "all";
 
 const queueViewOptions: Array<{ value: OutreachQueueView; label: string }> = [
-  { value: "today", label: "Today" },
+  { value: "today", label: "Today + Overdue" },
   { value: "overdue", label: "Overdue" },
+  { value: "upcoming", label: "Upcoming (7 days)" },
   { value: "ready", label: "Ready for outreach" },
   { value: "waiting-follow-up", label: "Waiting for follow-up" },
   { value: "interested", label: "Interested" },
@@ -96,15 +97,21 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
 
   const todayStart = startOfUtcDay(new Date());
   const todayEnd = endOfUtcDay(new Date());
+  const upcomingEnd = endOfUtcDay(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 7)));
   const visibleProspects = sortedProspects
     .filter((prospect) => {
       const nextTask = prospect.tasks[0];
       const due = nextTask?.dueDate ?? null;
       const isOverdue = Boolean(due && due < todayStart);
       const isDueToday = Boolean(due && due >= todayStart && due <= todayEnd);
+      const isDueUpcoming = Boolean(due && due > todayEnd && due <= upcomingEnd);
 
       if (view === "overdue") {
         return isOverdue;
+      }
+
+      if (view === "upcoming") {
+        return isDueUpcoming;
       }
 
       if (view === "ready") {
@@ -173,6 +180,7 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
         actions={
           <>
             {!outreachOperatorOnly ? <ButtonLink href="/system" variant="secondary">System dashboard</ButtonLink> : null}
+            <ButtonLink href="/system/outreach/candidates" variant="secondary">Lead candidates</ButtonLink>
             <ButtonLink href="/system/outreach/playbook" variant="secondary">Outreach playbook</ButtonLink>
             <ButtonLink href="/system/outreach/new">Add prospect</ButtonLink>
           </>
@@ -269,8 +277,16 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
               ) : (
                 visibleProspects.map((prospect) => {
                   const nextTask = prospect.tasks[0];
+                  const due = nextTask?.dueDate ?? null;
+                  const isOverdue = Boolean(due && due < todayStart);
+                  const isDueToday = Boolean(due && due >= todayStart && due <= todayEnd);
+                  const rowClass = isOverdue
+                    ? "border-b border-rose-100 bg-rose-50 align-top text-slate-700 last:border-b-0"
+                    : isDueToday
+                      ? "border-b border-amber-100 bg-amber-50 align-top text-slate-700 last:border-b-0"
+                      : "border-b border-slate-100 align-top text-slate-700 last:border-b-0";
                   return (
-                  <tr key={prospect.id} className="border-b border-slate-100 align-top text-slate-700 last:border-b-0">
+                  <tr key={prospect.id} className={rowClass}>
                     <td className="px-2 py-2">
                       <Link href={`/system/outreach/${prospect.id}`} className="font-semibold text-teal-800 hover:text-teal-900 hover:underline">
                         {prospect.firmName}
@@ -278,7 +294,15 @@ export default async function SystemOutreachPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-2 py-2"><Badge>{outreachStatusLabel(prospect.status)}</Badge></td>
                     <td className="px-2 py-2">{nextTask ? taskTypeLabel(nextTask.type) : "-"}</td>
-                    <td className="px-2 py-2">{nextTask?.dueDate ? dateText(nextTask.dueDate) : "-"}</td>
+                    <td className="px-2 py-2">
+                      {isOverdue ? (
+                        <span className="font-medium text-rose-700">{dateText(nextTask?.dueDate)} ▲ overdue</span>
+                      ) : isDueToday ? (
+                        <span className="font-medium text-amber-700">{dateText(nextTask?.dueDate)} · today</span>
+                      ) : (
+                        nextTask?.dueDate ? dateText(nextTask.dueDate) : "-"
+                      )}
+                    </td>
                     <td className="px-2 py-2">{prospect.contactName ?? "-"}</td>
                     <td className="px-2 py-2">{prospect.email ?? "-"}</td>
                     <td className="px-2 py-2">

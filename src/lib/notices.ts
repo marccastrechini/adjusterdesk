@@ -171,6 +171,26 @@ export const noticeMessages = {
     title: "Outreach invite resent",
     message: "A fresh invite link was emailed to this outreach operator.",
   },
+  "candidate-created": {
+    title: "Lead candidate added",
+    message: "The lead candidate is now in the intake queue for review.",
+  },
+  "candidate-updated": {
+    title: "Lead candidate updated",
+    message: "Candidate details and status were saved.",
+  },
+  "candidate-promoted": {
+    title: "Candidate promoted to prospect",
+    message: "The lead candidate was added to the outreach queue as a prospect with an initial task.",
+  },
+  "candidate-already-promoted": {
+    title: "Already promoted",
+    message: "This candidate was already promoted. Showing the linked prospect.",
+  },
+  "candidate-rejected": {
+    title: "Candidate rejected",
+    message: "The lead candidate was marked as rejected and removed from the active intake queue.",
+  },
   "user-invite-sent": {
     title: "Invitation sent",
     message: "The user will receive an email link to set their password.",

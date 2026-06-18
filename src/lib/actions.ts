@@ -13,6 +13,7 @@ import {
   OutreachActivityStatus,
   OutreachActivityType,
   LeadStatus,
+  OutreachCandidateStatus,
   OutreachProspectStatus,
   OutreachTaskStatus,
   OutreachTaskType,
@@ -170,6 +171,40 @@ const outreachTaskActionSchema = z.object({
 const outreachCallAttemptSchema = z.object({
   outreachId: z.string().trim().min(1, "Missing outreach prospect."),
   note: z.string().trim().max(400, "Call note is too long.").optional().transform((value) => value || undefined),
+});
+
+const candidateCreateSchema = z.object({
+  firmName: z.string().trim().min(2, "Enter a firm name.").max(120, "Firm name is too long."),
+  website: z.string().trim().max(255, "Website is too long.").optional().transform((value) => value || undefined),
+  state: z.string().trim().max(40, "State is too long.").optional().transform((value) => value || undefined),
+  contactName: z.string().trim().max(120, "Contact name is too long.").optional().transform((value) => value || undefined),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .refine((value) => !value || z.email().safeParse(value).success, "Enter a valid email address.")
+    .transform((value) => value?.toLowerCase()),
+  phone: z.string().trim().max(40, "Phone is too long.").optional().transform((value) => value || undefined),
+  sourceUrl: z.string().trim().max(500, "Source URL is too long.").optional().transform((value) => value || undefined),
+  smallOfficeSignal: z.string().trim().max(240, "Small-office signal is too long.").optional().transform((value) => value || undefined),
+  notes: z.string().trim().max(1200, "Notes are too long.").optional().transform((value) => value || undefined),
+  confidenceScore: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined)
+    .refine((value) => !value || (!Number.isNaN(Number(value)) && Number(value) >= 0 && Number(value) <= 1), "Confidence score must be 0.0–1.0.")
+    .transform((value) => (value ? Number(value) : undefined)),
+  status: z.nativeEnum(OutreachCandidateStatus).default(OutreachCandidateStatus.NEW),
+});
+
+const candidateUpdateSchema = candidateCreateSchema.extend({
+  candidateId: z.string().trim().min(1, "Missing candidate."),
+});
+
+const candidatePromoteSchema = z.object({
+  candidateId: z.string().trim().min(1, "Missing candidate."),
 });
 
 function formObject(formData: FormData) {
@@ -2745,4 +2780,197 @@ export async function resendSystemUserInviteFromUsersPage(userId: string) {
 
   revalidatePath("/system/users");
   redirect(withNotice("/system/users", "user-invite-resent"));
+}
+
+export async function createOutreachCandidate(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach/candidates");
+
+  const parsed = candidateCreateSchema.safeParse({
+    firmName: textValue(formData, "firmName"),
+    website: textValue(formData, "website"),
+    state: textValue(formData, "state"),
+    contactName: textValue(formData, "contactName"),
+    email: textValue(formData, "email"),
+    phone: textValue(formData, "phone"),
+    sourceUrl: textValue(formData, "sourceUrl"),
+    smallOfficeSignal: textValue(formData, "smallOfficeSignal"),
+    notes: textValue(formData, "notes"),
+    confidenceScore: textValue(formData, "confidenceScore"),
+    status: textValue(formData, "status") || OutreachCandidateStatus.NEW,
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "create-validation"));
+  }
+
+  // Simple duplicate check by website or firm name
+  const existing = await prisma.outreachCandidate.findFirst({
+    where: {
+      OR: [
+        { firmName: parsed.data.firmName },
+        ...(parsed.data.website ? [{ website: parsed.data.website }] : []),
+      ],
+      status: { notIn: [OutreachCandidateStatus.REJECTED, OutreachCandidateStatus.DUPLICATE] },
+    },
+    select: { id: true, firmName: true },
+  });
+
+  if (existing) {
+    redirect(withError(returnTo, "candidate-duplicate"));
+  }
+
+  const created = await prisma.outreachCandidate.create({
+    data: {
+      firmName: parsed.data.firmName,
+      website: parsed.data.website,
+      state: parsed.data.state,
+      contactName: parsed.data.contactName,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      sourceUrl: parsed.data.sourceUrl,
+      smallOfficeSignal: parsed.data.smallOfficeSignal,
+      notes: parsed.data.notes,
+      confidenceScore: parsed.data.confidenceScore,
+      status: parsed.data.status,
+    },
+  });
+
+  revalidatePath("/system/outreach/candidates");
+  redirect(withNotice(`/system/outreach/candidates/${created.id}`, "candidate-created"));
+}
+
+export async function updateOutreachCandidate(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach/candidates");
+
+  const parsed = candidateUpdateSchema.safeParse({
+    candidateId: textValue(formData, "candidateId"),
+    firmName: textValue(formData, "firmName"),
+    website: textValue(formData, "website"),
+    state: textValue(formData, "state"),
+    contactName: textValue(formData, "contactName"),
+    email: textValue(formData, "email"),
+    phone: textValue(formData, "phone"),
+    sourceUrl: textValue(formData, "sourceUrl"),
+    smallOfficeSignal: textValue(formData, "smallOfficeSignal"),
+    notes: textValue(formData, "notes"),
+    confidenceScore: textValue(formData, "confidenceScore"),
+    status: textValue(formData, "status") || OutreachCandidateStatus.NEW,
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "update-validation"));
+  }
+
+  await prisma.outreachCandidate.update({
+    where: { id: parsed.data.candidateId },
+    data: {
+      firmName: parsed.data.firmName,
+      website: parsed.data.website,
+      state: parsed.data.state,
+      contactName: parsed.data.contactName,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      sourceUrl: parsed.data.sourceUrl,
+      smallOfficeSignal: parsed.data.smallOfficeSignal,
+      notes: parsed.data.notes,
+      confidenceScore: parsed.data.confidenceScore,
+      status: parsed.data.status,
+    },
+  });
+
+  revalidatePath("/system/outreach/candidates");
+  revalidatePath(`/system/outreach/candidates/${parsed.data.candidateId}`);
+  redirect(withNotice(`/system/outreach/candidates/${parsed.data.candidateId}`, "candidate-updated"));
+}
+
+export async function promoteOutreachCandidate(formData: FormData) {
+  const sessionUser = await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach/candidates");
+
+  const parsed = candidatePromoteSchema.safeParse({
+    candidateId: textValue(formData, "candidateId"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "promote-validation"));
+  }
+
+  const candidate = await prisma.outreachCandidate.findUnique({
+    where: { id: parsed.data.candidateId },
+    select: {
+      id: true,
+      firmName: true,
+      website: true,
+      state: true,
+      contactName: true,
+      email: true,
+      smallOfficeSignal: true,
+      notes: true,
+      status: true,
+      promotedOutreachProspectId: true,
+    },
+  });
+
+  if (!candidate) {
+    redirect(withError(returnTo, "missing"));
+  }
+
+  if (candidate.status === OutreachCandidateStatus.PROMOTED && candidate.promotedOutreachProspectId) {
+    redirect(withNotice(`/system/outreach/${candidate.promotedOutreachProspectId}`, "candidate-already-promoted"));
+  }
+
+  const prospect = await prisma.outreachProspect.create({
+    data: {
+      firmName: candidate.firmName,
+      website: candidate.website,
+      state: candidate.state,
+      contactName: candidate.contactName,
+      email: candidate.email,
+      smallOfficeSignal: candidate.smallOfficeSignal,
+      notes: candidate.notes,
+      source: `Candidate intake`,
+      status: OutreachProspectStatus.NOT_CONTACTED,
+    },
+  });
+
+  await applyOutreachStatusTaskRules({
+    outreachProspectId: prospect.id,
+    nextStatus: OutreachProspectStatus.NOT_CONTACTED,
+    assignedToUserId: sessionUser.id,
+  });
+
+  await prisma.outreachCandidate.update({
+    where: { id: candidate.id },
+    data: {
+      status: OutreachCandidateStatus.PROMOTED,
+      promotedOutreachProspectId: prospect.id,
+    },
+  });
+
+  revalidatePath("/system/outreach/candidates");
+  revalidatePath("/system/outreach");
+  redirect(withNotice(`/system/outreach/${prospect.id}`, "candidate-promoted"));
+}
+
+export async function rejectOutreachCandidate(formData: FormData) {
+  await requireSystemOutreachContext();
+  const returnTo = systemReturnToValue(formData, "/system/outreach/candidates");
+
+  const parsed = candidatePromoteSchema.safeParse({
+    candidateId: textValue(formData, "candidateId"),
+  });
+
+  if (!parsed.success) {
+    redirect(withError(returnTo, "update-validation"));
+  }
+
+  await prisma.outreachCandidate.update({
+    where: { id: parsed.data.candidateId },
+    data: { status: OutreachCandidateStatus.REJECTED },
+  });
+
+  revalidatePath("/system/outreach/candidates");
+  redirect(withNotice("/system/outreach/candidates", "candidate-rejected"));
 }

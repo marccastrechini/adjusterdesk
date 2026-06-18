@@ -9,6 +9,7 @@ import {
   type Firm,
   InvoiceStatus,
   LeadStatus,
+  OutreachCandidateStatus,
   OutreachProspectStatus,
   OutreachTaskStatus,
   type Invoice,
@@ -1058,5 +1059,27 @@ export async function getSystemOutreachTasksByProspectId(outreachProspectId: str
     where: { outreachProspectId },
     orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "asc" }],
     take: 50,
+  });
+}
+
+export async function getSystemOutreachCandidates() {
+  await requireSystemOutreachContext();
+
+  return prisma.outreachCandidate.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 500,
+  });
+}
+
+export async function getSystemOutreachCandidateById(id: string) {
+  await requireSystemOutreachContext();
+
+  return prisma.outreachCandidate.findUnique({
+    where: { id },
+    include: {
+      promotedOutreachProspect: {
+        select: { id: true, firmName: true },
+      },
+    },
   });
 }
