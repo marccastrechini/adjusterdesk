@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ActionForm, FieldError } from "@/components/action-form";
+import { FieldError } from "@/components/action-form";
+import { SignupSubmitTrackingForm } from "@/components/signup-submit-tracking-form";
 import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import {
   findPublicPlanBySlug,
@@ -92,7 +93,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
         </Card>
 
         <Card className="grid gap-4">
-          <ActionForm action={startSignupWithState} className="grid gap-4">
+          <SignupSubmitTrackingForm action={startSignupWithState} className="grid gap-4">
             <Field label="Plan" required>
               <select name="plan" defaultValue={defaultPlan.slug} className={selectClassName}>
                 {listPublicPlans().map((plan) => (
@@ -146,7 +147,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
 
             <p className="text-xs leading-5 text-slate-500">By starting your trial you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No credit card required.</p>
             <SubmitButton>Start your free trial</SubmitButton>
-          </ActionForm>
+          </SignupSubmitTrackingForm>
         </Card>
       </div>
     </main>

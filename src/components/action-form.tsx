@@ -1,13 +1,23 @@
 "use client";
 
-import { createContext, type ReactNode, useActionState, useContext, useEffect, useRef } from "react";
+import { createContext, type FormEvent, type ReactNode, useActionState, useContext, useEffect, useRef } from "react";
 import { emptyActionFormState, type ActionFormState } from "@/lib/form-state";
 
 type FormAction = (state: ActionFormState, formData: FormData) => ActionFormState | Promise<ActionFormState>;
 
 const ActionFormContext = createContext<ActionFormState>(emptyActionFormState);
 
-export function ActionForm({ action, children, className }: { action: FormAction; children: ReactNode; className?: string }) {
+export function ActionForm({
+  action,
+  children,
+  className,
+  onSubmitCapture,
+}: {
+  action: FormAction;
+  children: ReactNode;
+  className?: string;
+  onSubmitCapture?: (form: HTMLFormElement) => void;
+}) {
   const [state, formAction] = useActionState(action, emptyActionFormState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -39,9 +49,19 @@ export function ActionForm({ action, children, className }: { action: FormAction
 
   }, [state.fieldValues, state.message]);
 
+  function handleSubmitCapture(event: FormEvent<HTMLFormElement>) {
+    onSubmitCapture?.(event.currentTarget);
+  }
+
   return (
     <ActionFormContext.Provider value={state}>
-      <form ref={formRef} action={formAction} noValidate className={className}>
+      <form
+        ref={formRef}
+        action={formAction}
+        noValidate
+        className={className}
+        onSubmitCapture={onSubmitCapture ? handleSubmitCapture : undefined}
+      >
         {state.message ? (
           <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
             <p className="font-semibold">Please fix this before saving</p>

@@ -22,6 +22,7 @@ export default async function StartPage({ searchParams }: PageProps) {
   const onboardingProgress = activationProgress(onboardingActions);
   const notice = getNoticeMessage(query);
   const noticeKey = firstValue(query.notice);
+  const signupPlan = firstValue(query.signup_plan);
   const isSignupComplete = noticeKey === "self-service-signup-complete";
 
   return (
@@ -31,6 +32,16 @@ export default async function StartPage({ searchParams }: PageProps) {
           <AnalyticsOnLoad eventName="sign_up" dedupeKey="start:self-service-signup-complete:sign_up" eventData={{ source: "public-signup" }} />
           <AnalyticsOnLoad eventName="trial_created" dedupeKey="start:self-service-signup-complete:trial_created" eventData={{ source: "public-signup" }} />
           <AnalyticsOnLoad eventName="workspace_created" dedupeKey="start:self-service-signup-complete:workspace_created" eventData={{ source: "public-signup" }} />
+          <AnalyticsOnLoad
+            eventName="trial_account_created"
+            dedupeKey="start:self-service-signup-complete:trial_account_created"
+            eventData={{
+              source: "public_signup",
+              plan: signupPlan ?? "unknown",
+              account_type: "trial",
+              event_category: "signup",
+            }}
+          />
         </>
       ) : null}
 

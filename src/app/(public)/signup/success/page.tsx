@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card } from "@/components/ui";
 import { findPublicPlanBySlug } from "@/lib/billing";
+import { withNotice } from "@/lib/notices";
 import { createSessionForUser } from "@/lib/session";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
 
@@ -48,7 +49,11 @@ export default async function SignupSuccessPage({ searchParams }: PageProps) {
       throw new Error("Session could not be created.");
     }
 
-    redirect("/start?notice=self-service-signup-complete");
+    const successPath = withNotice(
+      selectedPlan ? `/start?signup_plan=${selectedPlan.slug}` : "/start",
+      "self-service-signup-complete",
+    );
+    redirect(successPath);
   } catch {
     return (
       <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">

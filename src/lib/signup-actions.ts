@@ -181,5 +181,5 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     }
   }
 
-  redirect(withNotice("/start", "self-service-signup-complete"));
+  redirect(withNotice(`/start?signup_plan=${values.plan}`, "self-service-signup-complete"));
 }

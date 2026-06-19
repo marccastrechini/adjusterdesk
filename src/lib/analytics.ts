@@ -21,9 +21,13 @@ export type ConversionEventName =
   | "trial_created"
   | "workspace_created"
   | "first_claim_created"
-  | "claim_tracker_download";
+  | "claim_tracker_download"
+  | "trial_account_created";
 
-export type AnalyticsEventName = CTAEventName | ConversionEventName;
+export type DiagnosticEventName =
+  | "signup_submit";
+
+export type AnalyticsEventName = CTAEventName | ConversionEventName | DiagnosticEventName;
 
 declare global {
   interface Window {
