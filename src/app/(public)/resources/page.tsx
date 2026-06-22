@@ -1,4 +1,4 @@
-import { CtaBand, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -40,6 +40,21 @@ export default function ResourcesPage() {
       />
       <PublicSection title="Resource library">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-lg border border-teal-200 bg-teal-50 p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-normal text-teal-800">Available now</p>
+            <h2 className="mt-2 text-base font-semibold text-slate-950">Founding office offer</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Try AdjusterDesk with your first 10 active claims and review the feedback-period offer.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <PublicButtonLink href="/founding-public-adjuster-offices" variant="secondary">
+                View Founding Office Page
+              </PublicButtonLink>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
+                Download Free Tracker
+              </PublicButtonLink>
+            </div>
+          </div>
           {resources.map((resource) => (
             <div key={resource.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-normal text-teal-800">Coming soon</p>
@@ -49,7 +64,7 @@ export default function ResourcesPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Need the walkthrough before the resources are filled in?" description="Request a demo and we can cover spreadsheet import, claim tracking habits, templates, and the daily Today view directly." />
+      <CtaBand title="Need help choosing your next step?" description="Start free trial, download the free tracker, or email us with practical questions about your office workflow." />
     </>
   );
 }

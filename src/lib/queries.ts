@@ -9,7 +9,6 @@ import {
   type Firm,
   InvoiceStatus,
   LeadStatus,
-  OutreachCandidateStatus,
   OutreachProspectStatus,
   OutreachTaskStatus,
   type Invoice,

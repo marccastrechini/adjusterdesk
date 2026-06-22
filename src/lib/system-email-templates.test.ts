@@ -11,6 +11,9 @@ describe("system email templates", () => {
     assert.ok(ids.includes("user_invitation"));
     assert.ok(ids.includes("trial_signup_alert"));
     assert.ok(ids.includes("welcome_signup"));
+    assert.ok(ids.includes("tracker_nurture_email_1"));
+    assert.ok(ids.includes("tracker_nurture_email_2"));
+    assert.ok(ids.includes("tracker_nurture_email_3"));
     assert.ok(ids.includes("outreach_first_email"));
     assert.ok(ids.includes("outreach_follow_up"));
   });
@@ -60,6 +63,12 @@ describe("system email templates", () => {
 
     const welcomeSignup = templates.find((t) => t.id === "welcome_signup")!;
     assert.ok(welcomeSignup.html.includes("Welcome to AdjusterDesk"), "welcome_signup html missing title");
+
+    const trackerEmail1 = templates.find((t) => t.id === "tracker_nurture_email_1")!;
+    assert.ok(trackerEmail1.html.includes("Your free claim tracker is ready"), "tracker_nurture_email_1 html missing title");
+
+    const trackerEmail3 = templates.find((t) => t.id === "tracker_nurture_email_3")!;
+    assert.ok(trackerEmail3.text.includes("Start free trial"), "tracker_nurture_email_3 text missing CTA");
   });
 
   it("no template html contains script tags", () => {

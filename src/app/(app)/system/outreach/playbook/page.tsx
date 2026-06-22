@@ -100,12 +100,12 @@ export default async function SystemOutreachPlaybookPage() {
         </section>
 
         <section className="grid gap-2">
-          <h2 className="text-base font-semibold text-slate-900">7. Short call script</h2>
+          <h2 className="text-base font-semibold text-slate-900">7. Short fit-check prompts</h2>
           <ul className="list-disc space-y-1 pl-5">
-            <li>"Thanks for taking a few minutes. I mainly want to understand your current process for the first 10 claims."</li>
-            <li>"Where do things break down most often: spreadsheets, folders, follow-ups, or handoffs?"</li>
-            <li>"If we could simplify one daily pain point, which one matters most to your office?"</li>
-            <li>"If useful, I can set you up with a simple trial workspace and get your feedback."</li>
+            <li>Thanks for the reply. I mainly want to understand your current process for the first 10 claims.</li>
+            <li>Where do things break down most often: spreadsheets, folders, follow-ups, or handoffs?</li>
+            <li>If we could simplify one daily pain point, which one matters most to your office?</li>
+            <li>If useful, I can share a simple trial workspace and get your feedback by email.</li>
           </ul>
         </section>
 
@@ -137,6 +137,17 @@ export default async function SystemOutreachPlaybookPage() {
             <li>Work Follow-up due prospects next, then update follow-up dates.</li>
             <li>Process replies: interested, not now, fit check scheduled, trial created, or bad fit.</li>
             <li>Keep notes short and practical so another operator can pick up the thread quickly.</li>
+          </ol>
+        </section>
+
+        <section className="grid gap-2">
+          <h2 className="text-base font-semibold text-slate-900">11. Tracker download nurture follow-up</h2>
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>When a tracker download lead is known, send Email 1 right away with the tracker and setup steps.</li>
+            <li>After 3 days, send Email 2 about where spreadsheets become too manual.</li>
+            <li>After 7 days, send Email 3 inviting a low-risk trial with the first 10 active claims.</li>
+            <li>Keep CTA options low-touch: Start free trial, Download free tracker, or Reply by email.</li>
+            <li>Reference the System emails page for copy blocks and keep notes in outreach activity.</li>
           </ol>
         </section>
       </Card>

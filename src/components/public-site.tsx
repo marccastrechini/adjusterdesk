@@ -26,7 +26,7 @@ export const publicNavItems = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
   { href: "/resources", label: "Resources" },
-  { href: "/demo", label: "Demo" },
+  { href: "/free-public-adjuster-claim-tracker", label: "Free tracker" },
 ];
 
 const startHref = resolvePublicStartHref();
@@ -112,8 +112,8 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
             <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="/demo" variant="secondary">
-              Talk to us
+            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+              Email us
             </PublicButtonLink>
             <TrackedLink
               href="/login"
@@ -154,7 +154,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
               ]}
             />
             <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
-            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "/demo", label: "Talk to us" }]} />
+            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "mailto:hello@adjusterdesk.xyz", label: "Email us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>
         </div>
@@ -241,8 +241,8 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
             <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="/demo" variant="secondary">
-              Talk to us
+            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+              Email us
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
@@ -334,8 +334,8 @@ export function CtaBand({ title, description }: { title: string; description: st
             <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
               {startLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="/demo" variant="secondary">
-              Talk to us
+            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+              Email us
             </PublicButtonLink>
           </div>
         </div>

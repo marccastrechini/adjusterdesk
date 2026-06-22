@@ -22,10 +22,13 @@ const manualProvider: ClientBillingProvider = {
   isReady() {
     return false;
   },
-  async createOrUpdateCustomer(_firm: Firm, _contact: Contact) {
+  async createOrUpdateCustomer(firm: Firm, contact: Contact) {
+    void firm;
+    void contact;
     return {};
   },
-  async sendInvoice(_firm: Firm, invoice: Invoice) {
+  async sendInvoice(firm: Firm, invoice: Invoice) {
+    void firm;
     return {
       invoiceId: invoice.externalInvoiceId ?? null,
       hostedInvoiceUrl: invoice.externalHostedInvoiceUrl ?? null,
@@ -34,7 +37,8 @@ const manualProvider: ClientBillingProvider = {
       syncedAt: invoice.externalSyncedAt ?? null,
     };
   },
-  async syncInvoiceStatus(_firm: Firm, invoice: Invoice) {
+  async syncInvoiceStatus(firm: Firm, invoice: Invoice) {
+    void firm;
     return {
       invoiceId: invoice.externalInvoiceId ?? null,
       hostedInvoiceUrl: invoice.externalHostedInvoiceUrl ?? null,

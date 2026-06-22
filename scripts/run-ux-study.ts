@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { chromium, type BrowserContext, type Locator, type Page } from "playwright";
+import { chromium, type Locator, type Page } from "playwright";
 
 type Severity = "P0" | "P1" | "P2" | "P3";
 

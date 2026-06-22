@@ -326,7 +326,7 @@ const stripeConnectProvider: ClientBillingProvider = {
       syncedAt: new Date(),
     };
   },
-  handleWebhook(event) {
+  handleWebhook() {
     return;
   },
 };

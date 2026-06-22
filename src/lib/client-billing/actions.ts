@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { ClientBillingConnectionStatus, ClientBillingProvider, InvoiceStatus } from "@/generated/prisma/client";
+import { ClientBillingProvider, InvoiceStatus } from "@/generated/prisma/client";
 import { getDemoContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";

@@ -92,6 +92,51 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     footer: footer(),
   });
 
+  const trackerNurtureEmail1 = renderSystemEmailTemplate({
+    preheader: "Your free public adjuster claim tracker is ready.",
+    title: "Your free claim tracker is ready",
+    intro: "Hello Alex Johnson,",
+    bodyLines: [
+      "Here is your free public adjuster claim tracker.",
+      "Use it right away: add your active claims, set the next follow-up date, and mark missing documents.",
+      "When the spreadsheet starts becoming too manual, AdjusterDesk gives you the same structure in a shared workspace.",
+    ],
+    ctaLabel: "Download free tracker",
+    ctaUrl: "https://adjusterdesk.xyz/free-public-adjuster-claim-tracker",
+    secondaryText: "Questions? Reply to this email and we will help.",
+    footer: footer(),
+  });
+
+  const trackerNurtureEmail2 = renderSystemEmailTemplate({
+    preheader: "Where claim spreadsheets usually start to break down.",
+    title: "Where spreadsheets start to break down",
+    intro: "Hello Alex Johnson,",
+    bodyLines: [
+      "Spreadsheets work for getting started, but follow-ups, deadlines, documents, and payment tracking become harder as claim volume grows.",
+      "Most small offices notice this around 10 to 15 active claims, especially when more than one person is helping.",
+      "AdjusterDesk keeps the same practical claim structure, just in a shared workspace that is easier to manage day to day.",
+    ],
+    ctaLabel: "Start free trial",
+    ctaUrl: "https://adjusterdesk.xyz/signup",
+    secondaryText: "Not ready yet? Keep using the free tracker and reply by email if you want practical guidance.",
+    footer: footer(),
+  });
+
+  const trackerNurtureEmail3 = renderSystemEmailTemplate({
+    preheader: "Try AdjusterDesk with your first 10 active claims.",
+    title: "Try AdjusterDesk with your first 10 active claims",
+    intro: "Hello Alex Johnson,",
+    bodyLines: [
+      "If your tracker is getting harder to maintain, try AdjusterDesk with your first 10 active claims.",
+      "Founding offices receive discounted early pricing during the feedback period in exchange for practical product feedback.",
+      "No credit card is required to start, and you can keep your spreadsheet running in parallel while you test.",
+    ],
+    ctaLabel: "Start free trial",
+    ctaUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
+    secondaryText: "You can also download the tracker again or reply by email if you prefer a slower rollout.",
+    footer: footer(),
+  });
+
   const systemTemplates: SystemEmailTemplateDescriptor[] = [
     {
       id: "password_reset",
@@ -158,6 +203,51 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       },
       html: welcomeSignup.html,
       text: welcomeSignup.text,
+    },
+    {
+      id: "tracker_nurture_email_1",
+      name: "Tracker nurture email 1",
+      description: "Tracker delivery email with immediate setup guidance.",
+      audience: "customer",
+      from,
+      replyTo,
+      subject: "Your free public adjuster claim tracker is ready",
+      sampleDataLabels: {
+        userName: "Alex Johnson",
+        trackerUrl: "https://adjusterdesk.xyz/free-public-adjuster-claim-tracker",
+      },
+      html: trackerNurtureEmail1.html,
+      text: trackerNurtureEmail1.text,
+    },
+    {
+      id: "tracker_nurture_email_2",
+      name: "Tracker nurture email 2",
+      description: "Educational follow-up about spreadsheet limits and low-touch next step.",
+      audience: "customer",
+      from,
+      replyTo,
+      subject: "This is where spreadsheets start to break down",
+      sampleDataLabels: {
+        userName: "Alex Johnson",
+        signupUrl: "https://adjusterdesk.xyz/signup",
+      },
+      html: trackerNurtureEmail2.html,
+      text: trackerNurtureEmail2.text,
+    },
+    {
+      id: "tracker_nurture_email_3",
+      name: "Tracker nurture email 3",
+      description: "Invite to try AdjusterDesk with first 10 active claims during feedback period.",
+      audience: "customer",
+      from,
+      replyTo,
+      subject: "Try AdjusterDesk with your first 10 active claims",
+      sampleDataLabels: {
+        userName: "Alex Johnson",
+        foundingUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
+      },
+      html: trackerNurtureEmail3.html,
+      text: trackerNurtureEmail3.text,
     },
   ];
 

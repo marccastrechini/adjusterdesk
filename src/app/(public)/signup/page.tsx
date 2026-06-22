@@ -50,10 +50,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/demo"
+                href="mailto:hello@adjusterdesk.xyz"
                 className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
               >
-                Talk to us
+                Email us
               </Link>
               <Link
                 href="/pricing"
