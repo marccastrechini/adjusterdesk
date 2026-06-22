@@ -18,6 +18,7 @@ const publicRoutes = [
   "/security",
   "/public-adjuster-software",
   "/free-public-adjuster-claim-tracker",
+  "/founding-public-adjuster-offices",
   "/claimwizard-alternative",
 ];
 

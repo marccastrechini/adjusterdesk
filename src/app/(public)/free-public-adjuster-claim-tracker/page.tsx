@@ -43,7 +43,7 @@ export default function FreeClaimTrackerPage() {
       <PublicPageHeader
         eyebrow="Free template"
         title="Free Public Adjuster Claim Tracker"
-        description="Still tracking claims in a spreadsheet? Download a clean claim tracker template built for solo adjusters and small public adjusting offices. When the spreadsheet gets messy, move to AdjusterDesk."
+        description="Still managing claims in a spreadsheet? Start with a cleaner public adjuster claim tracker. When the spreadsheet starts becoming too manual, AdjusterDesk gives you the same structure in a shared workspace for claims, clients, documents, follow-ups, payments, and deadlines."
       />
 
       <PublicSection title="Start in two practical steps" tone="white">
@@ -146,12 +146,15 @@ export default function FreeClaimTrackerPage() {
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-950">Talk to us</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Moving from a spreadsheet? Let&apos;s talk through your setup and how AdjusterDesk fits your office workflow.</p>
+            <h3 className="text-base font-semibold text-slate-950">Questions about moving to software?</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Email us about your specific workflow, office size, claim volume, or how the software could help your team.</p>
             <div className="mt-4">
-              <PublicButtonLink href="/demo" variant="secondary">
-                Schedule Demo
-              </PublicButtonLink>
+              <a
+                href="mailto:hello@adjusterdesk.xyz"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+              >
+                Email us
+              </a>
             </div>
           </div>
         </div>

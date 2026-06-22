@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
@@ -156,15 +155,15 @@ export default function PricingPage() {
           <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
             When your trial ends, choose a plan in Settings/Billing to continue. Your data is preserved whether you subscribe or not.
           </p>
-          <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
-            Still in spreadsheets? Start with the <Link href="/free-public-adjuster-claim-tracker" className="font-semibold text-teal-800 hover:text-teal-900">free claim tracker</Link> and move over when your active claims grow.
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
+            Starting in spreadsheets? The free claim tracker is a good first step. Move into AdjusterDesk when follow-ups, documents, payments, and deadlines become too much to manage manually.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PublicButtonLink href={defaultCtaHref} variant="primary" eventName="trial_start_click">
               {defaultCtaLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="/demo" variant="secondary">
-              Talk to us
+            <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
+              Download Free Tracker
             </PublicButtonLink>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FieldError } from "@/components/action-form";
+import { PublicButtonLink } from "@/components/public-site";
 import { SignupSubmitTrackingForm } from "@/components/signup-submit-tracking-form";
 import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import {
@@ -148,6 +149,16 @@ export default async function SignupPage({ searchParams }: PageProps) {
             <p className="text-xs leading-5 text-slate-500">By starting your trial you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No credit card required.</p>
             <SubmitButton>Start your free trial</SubmitButton>
           </SignupSubmitTrackingForm>
+        </Card>
+
+        <Card className="grid gap-3 border-teal-200 bg-teal-50">
+          <p className="text-sm font-semibold text-slate-950">Not ready to try software yet?</p>
+          <p className="text-sm leading-6 text-slate-700">Download the free public adjuster claim tracker and explore at your own pace. You can start a trial anytime.</p>
+          <div>
+            <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
+              Download Free Tracker
+            </PublicButtonLink>
+          </div>
         </Card>
       </div>
     </main>
