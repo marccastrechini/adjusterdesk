@@ -1,4 +1,6 @@
+import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureCard, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { FOUNDING_SOLO_SIGNUP_HREF } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import {
   BriefcaseBusiness,
@@ -6,7 +8,6 @@ import {
   CheckCircle2,
   ClipboardList,
   ContactRound,
-  Download,
   FileText,
   HandCoins,
   ReceiptText,
@@ -163,46 +164,21 @@ export default function PublicAdjusterSoftwarePage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="Founding Office Offer" tone="slate">
-        <div className="rounded-lg border border-teal-200 bg-teal-50 p-6">
-          <h3 className="text-base font-semibold text-slate-950">Keep it practical while you grow</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Try AdjusterDesk with your first 10 active claims. Founding offices can receive early pricing during the feedback period.
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            Offer availability can change as we learn from early offices.
-          </p>
-        </div>
+      <PublicSection title="Founding office offer" description="First 10 offices. Start the desk with your first 10 active claims." tone="slate">
+        <FoundingOfferSummary heading="Founding seats" headingLevel="h3" showPageLink />
       </PublicSection>
 
-      <PublicSection title="Get started today" description="Choose Solo, Small Office, or Team, then create your workspace. Your 14-day free trial starts immediately. No credit card required." tone="white">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4">
-              <BriefcaseBusiness className="mt-1 h-6 w-6 flex-none text-teal-700" aria-hidden />
-              <div>
-                <h3 className="text-base font-semibold text-slate-950">Start your free trial</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Create a workspace, add a few active claims, and run your next follow-ups from one place. No credit card required for 14 days.</p>
-                <div className="mt-4">
-                  <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
-                    Start Free Trial
-                  </PublicButtonLink>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-4">
-              <Download className="mt-1 h-6 w-6 flex-none text-teal-700" aria-hidden />
-              <div>
-                <h3 className="text-base font-semibold text-slate-950">Download a free claim tracker</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Still tracking in a spreadsheet? Use a clean tracker template to organize claims and try AdjusterDesk later.</p>
-                <div className="mt-4">
-                  <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
-                    Get Free Tracker
-                  </PublicButtonLink>
-                </div>
+      <PublicSection title="Get started today" description="Choose Solo or Small Office. Stripe Checkout collects a card, and $0 is due during the 14-day trial." tone="white">
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-start gap-4">
+            <BriefcaseBusiness className="mt-1 h-6 w-6 flex-none text-teal-700" aria-hidden />
+            <div>
+              <h3 className="text-base font-semibold text-slate-950">Start the desk</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Create a workspace, add your first 10 active claims, and run the next follow-ups from one place.</p>
+              <div className="mt-4">
+                <PublicButtonLink href={FOUNDING_SOLO_SIGNUP_HREF} variant="primary" eventName="trial_start_click">
+                  Start Solo founding desk
+                </PublicButtonLink>
               </div>
             </div>
           </div>
@@ -210,8 +186,10 @@ export default function PublicAdjusterSoftwarePage() {
       </PublicSection>
 
       <CtaBand
-        title="Ready to move beyond spreadsheets?"
-        description="AdjusterDesk is built for small offices that want one simple workspace for leads, claims, documents, follow-ups, payments, and fees. Start your free trial now and see how much simpler it can be."
+        title="Ready to put claims, follow-ups, documents, and fees on one desk?"
+        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 14-day trial Stripe starts today."
+        primaryHref={FOUNDING_SOLO_SIGNUP_HREF}
+        primaryLabel="Start Solo founding desk"
       />
     </>
   );

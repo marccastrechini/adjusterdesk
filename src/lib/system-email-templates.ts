@@ -123,17 +123,17 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
   });
 
   const trackerNurtureEmail3 = renderSystemEmailTemplate({
-    preheader: "Try AdjusterDesk with your first 10 active claims.",
-    title: "Try AdjusterDesk with your first 10 active claims",
+    preheader: "First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office.",
+    title: "Put the first 10 active claims on the desk",
     intro: "Hello Alex Johnson,",
     bodyLines: [
-      "If your tracker is getting harder to maintain, try AdjusterDesk with your first 10 active claims.",
-      "Founding offices receive discounted early pricing during the feedback period in exchange for practical product feedback.",
-      "No credit card is required to start, and you can keep your spreadsheet running in parallel while you test.",
+      "If follow-ups, documents, and fees are slipping across email and files, start AdjusterDesk with your first 10 active claims.",
+      "First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing is Solo $49/month and Small Office $99/month.",
+      "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial Stripe starts today. The 90-day $0 period and the $29/$49 lock are not in Stripe yet. Reply to hello@adjusterdesk.xyz if you are in the first 10. Async onboarding, no sales call.",
     ],
-    ctaLabel: "Start free trial",
+    ctaLabel: "See founding desk offer",
     ctaUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
-    secondaryText: "You can also download the tracker again or reply by email if you prefer a slower rollout.",
+    secondaryText: "Prefer a sheet for now? The tracker page is still available. Reply by email if you want the founding seat confirmed.",
     footer: footer(),
   });
 

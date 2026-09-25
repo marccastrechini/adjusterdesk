@@ -15,7 +15,8 @@ test("comfortable trial state renders a low-key banner", () => {
   );
 
   assert.match(html, /Free trial:/);
-  assert.match(html, /No credit card required/);
+  assert.match(html, /\$0 is due during the trial/);
+  assert.doesNotMatch(html, /No credit card required/);
   assert.match(html, /Billing/);
 });
 

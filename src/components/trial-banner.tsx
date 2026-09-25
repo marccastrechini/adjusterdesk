@@ -26,7 +26,7 @@ export function TrialBanner({ firm }: { firm: FirmTrialFields }) {
     return (
       <div className="flex flex-col gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 sm:flex-row sm:items-center sm:justify-between">
         <p>
-          Free trial: {days !== null && days >= 0 ? `${daysLabel(days)} left.` : "active."} No credit card required. Choose a plan anytime from{" "}
+          Free trial: {days !== null && days >= 0 ? `${daysLabel(days)} left.` : "active."} $0 is due during the trial. Choose a plan anytime from{" "}
           <Link href="/settings/billing" className="font-medium text-teal-800 hover:underline">
             Billing
           </Link>

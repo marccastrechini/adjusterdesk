@@ -141,7 +141,7 @@ export default function ClaimWizardAlternativePage() {
       <PublicSection title="No complex setup. No per-user pricing. No enterprise features you don&apos;t need." tone="white">
         <div className="rounded-lg border border-teal-200 bg-teal-50 p-6">
           <h3 className="text-base font-semibold text-slate-950">Start your free trial</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-700">Create a workspace with AdjusterDesk and explore how it handles your leads, claims, follow-ups, documents, settlements, and fees. 14-day free trial. No credit card required.</p>
+          <p className="mt-3 text-sm leading-6 text-slate-700">Create a workspace with AdjusterDesk and explore how it handles your leads, claims, follow-ups, documents, settlements, and fees. Stripe Checkout collects a card. $0 is due during the 14-day trial.</p>
           <div className="mt-5 flex flex-wrap gap-3">
             <PublicButtonLink href="/signup" variant="primary">
               Start Free Trial

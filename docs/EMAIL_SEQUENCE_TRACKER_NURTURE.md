@@ -134,29 +134,21 @@ Hi [Name],
 
 We're building AdjusterDesk with real public adjusters like you.
 
-If your spreadsheet is starting to feel like too much, we'd like to invite you 
-to try AdjusterDesk with your first 10 active claims. It's free for 14 days, 
-no credit card required.
+If follow-ups, documents, and fees are slipping across email and files, start 
+AdjusterDesk with your first 10 active claims.
 
-Founding offices get:
-- 14-day free trial (no credit card needed)
-- Try it with your first 10 claims
-- Priority email support during feedback period
-- Early pricing locked in for 12 months
-- Direct input on what we build next
+First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month 
+Small Office, locked for 12 months. Standard pricing is Solo $49/month and 
+Small Office $99/month.
 
-What we need from you:
-- Use it with 5-10 real active claims
-- Share what works and what doesn't via email
-- Let us know when you're ready to move more claims
+Stripe Checkout collects a card at signup. $0 is due during the 14-day trial 
+Stripe starts today. The 90-day $0 period and the $29/$49 lock are not in 
+Stripe yet. Reply to hello@adjusterdesk.xyz if you are in the first 10. Async 
+onboarding, no sales call.
 
-It takes 15 minutes to set up. Keep your spreadsheet running in parallel. 
-No lock-in, cancel anytime.
+[See founding desk offer] — https://adjusterdesk.xyz/founding-public-adjuster-offices
 
-[Start Free Trial] — https://adjusterdesk.xyz/signup
-
-If the spreadsheet is still working great for you, no pressure. Keep the tracker. 
-Reach out if things change.
+Prefer a sheet for now? Keep the tracker. Reply if you want the founding seat confirmed.
 
 Best,
 [Founder name]

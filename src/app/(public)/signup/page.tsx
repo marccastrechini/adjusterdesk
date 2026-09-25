@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FieldError } from "@/components/action-form";
-import { PublicButtonLink } from "@/components/public-site";
 import { SignupSubmitTrackingForm } from "@/components/signup-submit-tracking-form";
 import { Card, Field, SubmitButton, inputClassName, selectClassName } from "@/components/ui";
 import {
@@ -8,6 +7,15 @@ import {
   listPublicPlans,
   selfServiceSignupEnabled,
 } from "@/lib/billing";
+import {
+  CHECKOUT_CARD_LINE,
+  FOUNDING_HONESTY_NOTE,
+  FOUNDING_ONBOARDING,
+  FOUNDING_PRICE_LINE,
+  FOUNDING_STANDARD_COMPARE,
+  TRACKER_PAGE_HREF,
+  isFoundingOffer,
+} from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { startSignupWithState } from "@/lib/signup-actions";
 
@@ -30,7 +38,8 @@ function firstValue(value: string | string[] | undefined) {
 export default async function SignupPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const requestedPlan = firstValue(query.plan);
-  const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? listPublicPlans()[1];
+  const founding = isFoundingOffer(firstValue(query.offer));
+  const defaultPlan = findPublicPlanBySlug(requestedPlan) ?? (founding ? listPublicPlans()[0] : listPublicPlans()[1]);
 
   if (!selfServiceSignupEnabled()) {
     return (
@@ -75,12 +84,22 @@ export default async function SignupPage({ searchParams }: PageProps) {
           <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Start your 14-day free trial. No credit card required. Choose a plan now and start using AdjusterDesk right away.
+            {founding
+              ? `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${CHECKOUT_CARD_LINE}`
+              : `${CHECKOUT_CARD_LINE} Choose a plan and continue to Checkout.`}
           </p>
         </div>
 
+        {founding ? (
+          <Card className="grid gap-2 border-teal-200 bg-teal-50">
+            <p className="text-sm font-semibold text-slate-950">Founding office signup</p>
+            <p className="text-sm leading-6 text-slate-700">{FOUNDING_ONBOARDING} Start with your first 10 active claims. Choose Solo or Small Office. Team stays at $199/month.</p>
+            <p className="text-sm leading-6 text-slate-700">{FOUNDING_HONESTY_NOTE}</p>
+          </Card>
+        ) : null}
+
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
-          <p className="text-sm font-semibold text-slate-950">Plan options — 14-day free trial, no credit card required</p>
+          <p className="text-sm font-semibold text-slate-950">Plan options — card collected in Checkout, $0 due for 14 days</p>
           <ul className="grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
             {listPublicPlans().map((plan) => (
               <li key={plan.slug} className="rounded-md border border-teal-200 bg-white px-3 py-2">
@@ -90,7 +109,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               </li>
             ))}
           </ul>
-          <p className="text-xs leading-5 text-slate-600">Your trial starts immediately. Billing starts only when you choose to subscribe from Settings/Billing after your trial.</p>
+          <p className="text-xs leading-5 text-slate-600">{CHECKOUT_CARD_LINE} The standard plan price begins when that trial ends, unless a founding rate is applied after you start.</p>
         </Card>
 
         <Card className="grid gap-4">
@@ -146,20 +165,17 @@ export default async function SignupPage({ searchParams }: PageProps) {
             </label>
             <FieldError name="agreedToTerms" />
 
-            <p className="text-xs leading-5 text-slate-500">By starting your trial you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. No credit card required.</p>
-            <SubmitButton>Start your free trial</SubmitButton>
+            {founding ? <input type="hidden" name="offer" value="founding" /> : null}
+            <p className="text-xs leading-5 text-slate-500">By continuing you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. The next step is Stripe Checkout, which collects a card. $0 is due during the 14-day trial.</p>
+            <SubmitButton>{founding ? "Continue to founding checkout" : "Continue to checkout"}</SubmitButton>
           </SignupSubmitTrackingForm>
         </Card>
 
-        <Card className="grid gap-3 border-teal-200 bg-teal-50">
-          <p className="text-sm font-semibold text-slate-950">Not ready to try software yet?</p>
-          <p className="text-sm leading-6 text-slate-700">Download the free public adjuster claim tracker and explore at your own pace. You can start a trial anytime.</p>
-          <div>
-            <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
-              Download Free Tracker
-            </PublicButtonLink>
-          </div>
-        </Card>
+        <p className="text-center text-sm leading-6 text-slate-600">
+          <Link href={TRACKER_PAGE_HREF} className="font-medium text-teal-800 hover:text-teal-900">
+            Prefer a sheet for now?
+          </Link>
+        </p>
       </div>
     </main>
   );

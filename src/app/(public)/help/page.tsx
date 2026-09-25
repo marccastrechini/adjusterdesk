@@ -37,7 +37,7 @@ const faqs = [
   {
     question: "Can I start from a spreadsheet?",
     answer:
-      "Yes. Many offices start with the free claim tracker or a cleaned spreadsheet, then move active claim work into AdjusterDesk.",
+      "Yes. After you start the desk, you can import a cleaned spreadsheet. A claim tracker sheet is available if you want a file first.",
   },
   {
     question: "Can I track settlements, fees, and invoices?",
@@ -52,7 +52,7 @@ const faqs = [
   {
     question: "How does the free trial work?",
     answer:
-      "Your workspace starts with a 14-day free trial. No credit card is required to begin. You can choose a paid plan from Billing when you are ready.",
+      "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial. The standard plan price begins when that trial ends, unless a founding rate is applied. First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. That longer $0 period and the $29/$49 lock are applied after you start.",
   },
   {
     question: "What should I do first after signing up?",
@@ -83,11 +83,11 @@ export default function HelpPage() {
 
       <PublicSection title="Quick next steps" tone="slate">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
-            Start free trial
+          <PublicButtonLink href="/founding-public-adjuster-offices" variant="primary" eventName="trial_start_click">
+            See founding desk offer
           </PublicButtonLink>
-          <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
-            Download free claim tracker
+          <PublicButtonLink href="/signup" variant="secondary" eventName="trial_start_click">
+            Start free trial
           </PublicButtonLink>
           <PublicButtonLink href="/public-adjuster-software" variant="secondary">
             Public adjuster software page
@@ -99,11 +99,18 @@ export default function HelpPage() {
             Pricing
           </Link>
         </div>
+        <p className="mt-4 text-sm leading-6 text-slate-600">
+          <Link href="/free-public-adjuster-claim-tracker" className="font-medium text-teal-800 hover:text-teal-900">
+            Prefer a sheet for now?
+          </Link>
+        </p>
       </PublicSection>
 
       <CtaBand
         title="Need a practical walkthrough for your office?"
-        description="Start your trial or review the free tracker first, then move your active claims into one shared workspace."
+        description="Start with your first 10 active claims. Email hello@adjusterdesk.xyz if you want the founding rate confirmed."
+        primaryHref="/founding-public-adjuster-offices"
+        primaryLabel="See founding desk offer"
       />
     </>
   );

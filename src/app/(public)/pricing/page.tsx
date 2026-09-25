@@ -1,5 +1,7 @@
+import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
+import { CHECKOUT_CARD_LINE, FOUNDING_PRICE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -77,11 +79,11 @@ const plans: Array<{
 const faqs = [
   {
     question: "How do I start?",
-    answer: "Choose Solo, Small Office, or Team, then create your workspace. Your 14-day free trial starts immediately. No credit card required.",
+    answer: "Choose Solo, Small Office, or Team, then continue to Stripe Checkout. A card is collected at signup. $0 is due during the 14-day trial.",
   },
   {
     question: "When does billing begin?",
-    answer: "Billing starts only when you choose a plan in Settings/Billing. Your free trial lasts 14 days. No credit card is required to start.",
+    answer: "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial. The standard plan price begins when that trial ends, unless a founding rate is applied.",
   },
   {
     question: "Can I change plans later?",
@@ -101,7 +103,12 @@ const faqs = [
   },
   {
     question: "Is billing automated in-app right now?",
-    answer: "Card collection happens in Settings/Billing when you choose to subscribe after your free trial. No card is required to start.",
+    answer: "Yes. Signup opens Stripe Checkout, collects a card, and starts a 14-day trial with $0 due. The standard plan price begins when that trial ends, unless a founding rate is applied.",
+  },
+  {
+    question: "Is there a founding office price?",
+    answer:
+      "Yes, for the first 10 offices. $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing is Solo $49/month and Small Office $99/month. Checkout collects a card and only automates the 14-day $0 trial. The 90-day $0 period and the $29/$49 lock are applied after you start. Reply to hello@adjusterdesk.xyz if you are in the first 10.",
   },
 ];
 
@@ -148,36 +155,22 @@ export default function PricingPage() {
           ))}
         </div>
         <div className="mt-8 rounded-lg border border-teal-200 bg-teal-50 p-5">
-          <h2 className="text-base font-semibold text-slate-950">14-day free trial — no credit card required</h2>
+          <h2 className="text-base font-semibold text-slate-950">14-day trial — card collected in Checkout</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            Start your free trial now. Your workspace is set up immediately and your 14-day trial begins. No credit card is needed to start.
+            {CHECKOUT_CARD_LINE} The standard plan price begins when that trial ends.
           </p>
           <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
-            When your trial ends, choose a plan in Settings/Billing to continue. Your data is preserved whether you subscribe or not.
-          </p>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">
-            Starting in spreadsheets? The free claim tracker is a good first step. Move into AdjusterDesk when follow-ups, documents, payments, and deadlines become too much to manage manually.
+            {FOUNDING_PRICE_LINE} That longer $0 period and the locked founding rates are applied after you start. Reply to hello@adjusterdesk.xyz if you are in the first 10.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PublicButtonLink href={defaultCtaHref} variant="primary" eventName="trial_start_click">
               {defaultCtaLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
-              Download Free Tracker
-            </PublicButtonLink>
           </div>
         </div>
       </PublicSection>
-      <PublicSection title="Founding Office Offer" tone="slate">
-        <div className="rounded-lg border border-teal-200 bg-teal-50 p-6">
-          <h2 className="text-base font-semibold text-slate-950">Keep it practical while you grow</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Try AdjusterDesk with your first 10 active claims. Founding offices can receive early pricing during the feedback period.
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            Offer availability can change as we learn from early offices.
-          </p>
-        </div>
+      <PublicSection title="Founding office offer" description="First 10 offices. The rates below are the offer. Checkout does not enforce them yet." tone="slate">
+        <FoundingOfferSummary heading="Founding seats" headingLevel="h3" />
       </PublicSection>
       <PublicSection title="Pricing FAQ" tone="slate">
         <div className="grid gap-4 md:grid-cols-2">
@@ -189,7 +182,10 @@ export default function PricingPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Start simple, then grow with your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. No credit card required. Subscribe from Billing when you are ready." />
+      <CtaBand
+        title="Start the desk, then confirm your founding seat."
+        description={`${FOUNDING_PRICE_LINE} ${CHECKOUT_CARD_LINE} Reply to hello@adjusterdesk.xyz if you are in the first 10.`}
+      />
     </>
   );
 }

@@ -14,6 +14,7 @@ import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
 import { canSendSystemEmail, sendTrialSignupAlertEmail, sendWelcomeSignupEmail } from "@/lib/email";
+import { FOUNDING_OPS_ALERT, resolveSignupSource } from "@/lib/founding-offer";
 import { beginPublicSignup } from "@/lib/signup";
 
 const signupSchema = z
@@ -101,6 +102,7 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
   }
 
   const values = parsed.data;
+  const signupSource = resolveSignupSource(formData.get("offer")?.toString());
   const selectedPlan = findPublicPlanBySlug(values.plan);
   const fieldValues = safeSignupFieldValues(values);
   if (!selectedPlan) {
@@ -138,6 +140,7 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
       ownerEmail: values.ownerEmail,
       ownerPhone: values.ownerPhone,
       passwordHash: hashPassword(values.password),
+      signupSource,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Workspace setup failed.";
@@ -154,6 +157,20 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
   }
 
   if (result.mode === "checkout") {
+    if (signupSource === "founding" && canSendSystemEmail()) {
+      const notificationResult = await sendTrialSignupAlertEmail({
+        workspaceName: values.firmName,
+        ownerName: values.ownerName,
+        ownerEmail: values.ownerEmail,
+        planLabel: selectedPlan.label,
+        offerLabel: FOUNDING_OPS_ALERT,
+      });
+
+      if (!notificationResult.ok) {
+        console.warn(`[signup] Founding checkout alert email not sent: ${notificationResult.error}`);
+      }
+    }
+
     redirect(result.url);
   }
 
@@ -181,6 +198,7 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
       ownerName: values.ownerName,
       ownerEmail: values.ownerEmail,
       planLabel: selectedPlan.label,
+      offerLabel: signupSource === "founding" ? FOUNDING_OPS_ALERT : undefined,
     });
 
     if (!notificationResult.ok) {

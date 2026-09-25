@@ -84,7 +84,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
         <Section title="Start subscription">
           <Card className="grid gap-4">
             <p className="text-sm leading-6 text-slate-700">
-              Choose the plan that fits your office and start a paid subscription through Stripe. No card is required until you choose to subscribe.
+              Choose the plan that fits your office. Starting a paid subscription opens Stripe Checkout and collects a card if one is not already on file.
             </p>
             <form
               action={async (formData: FormData) => {
@@ -109,7 +109,11 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
       <Section title="Billing details">
         <Card className="grid gap-3">
-          <p className="text-sm leading-6 text-slate-700">No credit card is required to start your trial. Billing starts only when you choose a plan.</p>
+          <p className="text-sm leading-6 text-slate-700">
+            {billingProvider === "stripe" && stripeReady
+              ? "Signup collects a card in Stripe Checkout. $0 is due during the 14-day trial. The standard plan price begins when that trial ends, unless a founding rate was applied."
+              : "Card collection is not active in this environment. Billing starts when a plan is activated."}
+          </p>
           <p className="text-sm leading-6 text-slate-700">
             Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
           </p>
