@@ -5,17 +5,16 @@ import { z } from "zod";
 import { hashPassword, resolveAppBaseUrl } from "@/lib/auth";
 import {
   findPublicPlanBySlug,
+  resolveBillingProvider,
   selfServiceSignupEnabled,
-  type PublicPlanSlug,
+  stripeConfigured,
 } from "@/lib/billing";
 import { formError, type ActionFormState, type FieldErrors, type FieldValues } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { createSessionForUser } from "@/lib/session";
 import { canSendSystemEmail, sendTrialSignupAlertEmail, sendWelcomeSignupEmail } from "@/lib/email";
-import {
-  provisionTrialSignup,
-} from "@/lib/signup";
+import { beginPublicSignup } from "@/lib/signup";
 
 const signupSchema = z
   .object({
@@ -130,10 +129,10 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
     }, fieldValues);
   }
 
-  let result: { firmId: string; ownerUserId: string };
+  let result: Awaited<ReturnType<typeof beginPublicSignup>>;
   try {
-    result = await provisionTrialSignup({
-      planSlug: values.plan as PublicPlanSlug,
+    result = await beginPublicSignup({
+      planSlug: values.plan,
       firmName: values.firmName,
       ownerName: values.ownerName,
       ownerEmail: values.ownerEmail,
@@ -147,7 +146,15 @@ export async function startSignupWithState(_state: ActionFormState, formData: Fo
         ownerEmail: "That email is already used by an existing account.",
       }, fieldValues);
     }
+    if (resolveBillingProvider() === "stripe" && stripeConfigured()) {
+      console.warn(`[signup] Stripe Checkout could not be started: ${message}`);
+      return formError("Checkout could not be started right now. Please try again.", {}, fieldValues);
+    }
     return formError("Workspace setup could not be completed right now. Please try again.", {}, fieldValues);
+  }
+
+  if (result.mode === "checkout") {
+    redirect(result.url);
   }
 
   const sessionCreated = await createSessionForUser(result.ownerUserId);
