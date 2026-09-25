@@ -70,6 +70,9 @@ export default function DemoPage() {
           <PublicButtonLink href="/pricing" variant="secondary">
             View Pricing
           </PublicButtonLink>
+          <PublicButtonLink href="/training" variant="secondary">
+            Open training
+          </PublicButtonLink>
         </div>
       </section>
     </>

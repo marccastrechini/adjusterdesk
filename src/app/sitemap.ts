@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { publicSiteUrl } from "@/lib/public-metadata";
+import { trainingPublicPaths } from "@/lib/training";
 
 const publicRoutes = [
   "/",
@@ -20,6 +21,7 @@ const publicRoutes = [
   "/free-public-adjuster-claim-tracker",
   "/founding-public-adjuster-offices",
   "/claimwizard-alternative",
+  ...trainingPublicPaths,
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

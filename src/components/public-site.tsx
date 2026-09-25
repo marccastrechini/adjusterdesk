@@ -27,6 +27,7 @@ export const publicNavItems = [
   { href: "/pricing", label: "Pricing" },
   { href: "/founding-public-adjuster-offices", label: "Founding" },
   { href: "/resources", label: "Resources" },
+  { href: "/training", label: "Training" },
 ];
 
 const startHref = resolvePublicStartHref();
@@ -153,7 +154,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
                 { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
               ]}
             />
-            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: "/training", label: "Training" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
             <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "mailto:hello@adjusterdesk.xyz", label: "Email us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>
@@ -346,11 +347,13 @@ export function CtaBand({
   description,
   primaryHref,
   primaryLabel,
+  trackPrimaryClick = true,
 }: {
   title: string;
   description: string;
   primaryHref?: string;
   primaryLabel?: string;
+  trackPrimaryClick?: boolean;
 }) {
   return (
     <section className="bg-white">
@@ -361,7 +364,7 @@ export function CtaBand({
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">{description}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3 sm:mt-0">
-            <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName="trial_start_click">
+            <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName={trackPrimaryClick ? "trial_start_click" : undefined}>
               {primaryLabel ?? startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
