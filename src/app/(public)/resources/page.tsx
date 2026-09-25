@@ -3,7 +3,7 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
   title: "Resources | AdjusterDesk",
-  description: "Getting started, spreadsheet import, demo walkthrough, claim tracking checklist, and template resources for AdjusterDesk.",
+  description: "Getting started, spreadsheet import, training walkthrough, claim tracking checklist, and template resources for AdjusterDesk.",
   path: "/resources",
 });
 
@@ -15,10 +15,6 @@ const resources = [
   {
     title: "Importing from spreadsheets",
     description: "Plain guidance for cleaning up lead and claim spreadsheets before importing them into AdjusterDesk.",
-  },
-  {
-    title: "Demo walkthrough",
-    description: "A short walkthrough of the main office flow from lead intake to claim tracking, documents, money, and reports.",
   },
   {
     title: "Small office claim tracking checklist",
@@ -47,6 +43,16 @@ export default function ResourcesPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               <PublicButtonLink href="/founding-public-adjuster-offices" variant="secondary">
                 View founding desk offer
+              </PublicButtonLink>
+            </div>
+          </div>
+          <div className="rounded-lg border border-teal-200 bg-teal-50 p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-normal text-teal-800">Available now</p>
+            <h2 className="mt-2 text-base font-semibold text-slate-950">Training walkthrough</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Walk through Today, a lead turning into a claim, and follow-ups on an active claim. Read it on your own time.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <PublicButtonLink href="/training" variant="secondary">
+                Open training
               </PublicButtonLink>
             </div>
           </div>

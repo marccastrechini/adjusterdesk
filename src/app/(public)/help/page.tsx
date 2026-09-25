@@ -108,9 +108,10 @@ export default function HelpPage() {
 
       <CtaBand
         title="Need a practical walkthrough for your office?"
-        description="Start with your first 10 active claims. Email hello@adjusterdesk.xyz if you want the founding rate confirmed."
-        primaryHref="/founding-public-adjuster-offices"
-        primaryLabel="See founding desk offer"
+        description="Walk through Today, a lead turning into a claim, and follow-ups on an active claim. Questions go to hello@adjusterdesk.xyz."
+        primaryHref="/training"
+        primaryLabel="Open the training"
+        trackPrimaryClick={false}
       />
     </>
   );
