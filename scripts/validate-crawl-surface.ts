@@ -23,6 +23,10 @@ const expectedPublicPaths = [
   "/free-public-adjuster-claim-tracker",
   "/claimwizard-alternative",
   "/resources",
+  "/training",
+  "/training/desk-overview",
+  "/training/lead-to-claim",
+  "/training/follow-ups",
 ];
 
 const sitemapPaths = ["/sitemap.xml", "/google-sitemap.xml"];
