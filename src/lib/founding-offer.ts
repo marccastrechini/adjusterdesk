@@ -24,17 +24,15 @@ export const FOUNDING_TERMS = [
 export const CHECKOUT_CARD_LINE =
   "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial.";
 
-// Checkout can charge the founding price with a 90-day trial once
-// STRIPE_PRICE_FOUNDING_SOLO_MONTHLY and STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY
-// are set. Until those env vars are filled, founding Checkout falls back to the
-// standard price and 14-day trial, so this public note stays honest.
-// Update this copy only after the founding prices are live — do not claim the
-// $29/$49 rate is in Stripe before that.
+export const FOUNDING_TRIAL_DUE_LINE =
+  "Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate.";
+
+// Founding Checkout is live: $29 Solo / $49 Small Office after a 90-day $0 trial. The 12-month lock is a commercial promise, not an automatic Stripe price change.
 export const FOUNDING_HONESTY_NOTE =
-  "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial Stripe starts today. The founding offer is $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. That longer $0 period and the $29/$49 lock are not in Stripe yet. Reply to hello@adjusterdesk.xyz if you are in the first 10 and we will apply the founding rate.";
+  "Stripe Checkout collects a card at signup. For the first 10 founding offices, $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing stays Solo $49/month, Small Office $99/month, and Team $199/month, with $0 due during a 14-day trial.";
 
 export const FOUNDING_OPS_ALERT =
-  "Founding office request. Apply $0 for 90 days, then locked Solo $29/month or Small Office $49/month if this office is in the first 10.";
+  "Founding office signup. Checkout charges $0 for 90 days, then Solo $29/month or Small Office $49/month. Confirm this office is within the first 10. The 12-month lock is a promise to keep, not an automatic Stripe price change.";
 
 export function isFoundingOffer(value: string | null | undefined) {
   return value?.trim().toLowerCase() === "founding";

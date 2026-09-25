@@ -137,7 +137,7 @@ export default function FreeClaimTrackerPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-base font-semibold text-slate-950">Start the founding desk</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">First 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Start with your first 10 active claims. Checkout collects a card, and $0 is due during the 14-day trial Stripe starts today. The 90-day $0 period and the $29/$49 lock are applied after you start.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">First 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Start with your first 10 active claims. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate.</p>
             <div className="mt-4">
               <PublicButtonLink href="/founding-public-adjuster-offices" variant="primary" eventName="trial_start_click">
                 See founding desk offer
@@ -162,7 +162,7 @@ export default function FreeClaimTrackerPage() {
 
       <CtaBand
         title="When the sheet is not enough, start the desk."
-        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 14-day trial Stripe starts today."
+        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate."
         primaryHref="/founding-public-adjuster-offices"
         primaryLabel="See founding desk offer"
       />

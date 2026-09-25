@@ -70,6 +70,8 @@ describe("system email templates", () => {
     const trackerEmail3 = templates.find((t) => t.id === "tracker_nurture_email_3")!;
     assert.ok(trackerEmail3.text.includes("See founding desk offer"), "tracker_nurture_email_3 text missing CTA");
     assert.ok(trackerEmail3.text.includes("$29/month"), "tracker_nurture_email_3 text missing founding price");
+    assert.ok(trackerEmail3.text.includes("90-day trial"), "tracker_nurture_email_3 text missing founding trial");
+    assert.equal(trackerEmail3.text.includes("not in Stripe"), false);
   });
 
   it("no template html contains script tags", () => {

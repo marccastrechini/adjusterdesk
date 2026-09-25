@@ -168,7 +168,7 @@ export default function PublicAdjusterSoftwarePage() {
         <FoundingOfferSummary heading="Founding seats" headingLevel="h3" showPageLink />
       </PublicSection>
 
-      <PublicSection title="Get started today" description="Choose Solo or Small Office. Stripe Checkout collects a card, and $0 is due during the 14-day trial." tone="white">
+      <PublicSection title="Get started today" description="Choose Solo or Small Office. Stripe Checkout collects a card, and $0 is due during the 90-day founding trial." tone="white">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
             <BriefcaseBusiness className="mt-1 h-6 w-6 flex-none text-teal-700" aria-hidden />
@@ -187,7 +187,7 @@ export default function PublicAdjusterSoftwarePage() {
 
       <CtaBand
         title="Ready to put claims, follow-ups, documents, and fees on one desk?"
-        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 14-day trial Stripe starts today."
+        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate."
         primaryHref={FOUNDING_SOLO_SIGNUP_HREF}
         primaryLabel="Start Solo founding desk"
       />

@@ -15,9 +15,14 @@ test("founding terms stay in plain dollars", () => {
   assert.match(FOUNDING_PRICE_LINE, /\$49\/month Small Office/);
   assert.match(FOUNDING_PRICE_LINE, /locked for 12 months/);
   assert.match(FOUNDING_HONESTY_NOTE, /collects a card at signup/);
-  assert.match(FOUNDING_HONESTY_NOTE, /\$0 is due during the 14-day trial/);
-  assert.match(FOUNDING_HONESTY_NOTE, /not in Stripe yet/);
+  assert.match(FOUNDING_HONESTY_NOTE, /\$0 is due during the 90-day trial/);
+  assert.match(FOUNDING_HONESTY_NOTE, /\$29\/month Solo/);
+  assert.match(FOUNDING_HONESTY_NOTE, /\$49\/month Small Office/);
+  assert.match(FOUNDING_HONESTY_NOTE, /locked for 12 months/);
+  assert.match(FOUNDING_HONESTY_NOTE, /14-day trial/);
+  assert.doesNotMatch(FOUNDING_HONESTY_NOTE, /not in Stripe/i);
   assert.doesNotMatch(FOUNDING_HONESTY_NOTE, /no card/i);
+  assert.doesNotMatch(FOUNDING_HONESTY_NOTE, /auto-rais/i);
 });
 
 test("founding signup links tag solo and small office", () => {
