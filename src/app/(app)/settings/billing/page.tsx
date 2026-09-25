@@ -111,7 +111,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
         <Card className="grid gap-3">
           <p className="text-sm leading-6 text-slate-700">
             {billingProvider === "stripe" && stripeReady
-              ? "Signup collects a card in Stripe Checkout. $0 is due during the 14-day trial. The standard plan price begins when that trial ends, unless a founding rate was applied."
+              ? "Signup collects a card in Stripe Checkout. The standard path charges $0 during a 14-day trial, then the plan price. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month."
               : "Card collection is not active in this environment. Billing starts when a plan is activated."}
           </p>
           <p className="text-sm leading-6 text-slate-700">

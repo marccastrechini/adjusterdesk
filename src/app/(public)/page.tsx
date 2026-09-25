@@ -1,7 +1,7 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
 import { TrackedLink } from "@/components/tracked-link";
-import { CHECKOUT_CARD_LINE, FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE } from "@/lib/founding-offer";
+import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -42,7 +42,7 @@ export default function HomePage() {
         primaryLabel="See founding desk offer"
         assurance={
           <>
-            {FOUNDING_PRICE_LINE} {CHECKOUT_CARD_LINE} The founding $29/$49 lock is applied after you start if you are in the first 10. Already using AdjusterDesk?{" "}
+            {FOUNDING_PRICE_LINE} {FOUNDING_TRIAL_DUE_LINE} Already using AdjusterDesk?{" "}
             <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">
               Log in.
             </TrackedLink>
@@ -106,7 +106,7 @@ export default function HomePage() {
 
       <CtaBand
         title="Put the slipping claims on one desk."
-        description={`${FOUNDING_PRICE_LINE} ${CHECKOUT_CARD_LINE} Reply to hello@adjusterdesk.xyz if you are in the first 10.`}
+        description={`${FOUNDING_PRICE_LINE} ${FOUNDING_TRIAL_DUE_LINE}`}
         primaryHref={FOUNDING_PAGE_HREF}
         primaryLabel="See founding desk offer"
       />

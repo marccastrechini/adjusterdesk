@@ -13,6 +13,7 @@ import {
   FOUNDING_ONBOARDING,
   FOUNDING_PRICE_LINE,
   FOUNDING_STANDARD_COMPARE,
+  FOUNDING_TRIAL_DUE_LINE,
   TRACKER_PAGE_HREF,
   isFoundingOffer,
 } from "@/lib/founding-offer";
@@ -33,6 +34,19 @@ type PageProps = {
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function shownPrice(slug: string, standard: string, founding: boolean) {
+  if (!founding) {
+    return standard;
+  }
+  if (slug === "solo") {
+    return "$29/month";
+  }
+  if (slug === "small-office") {
+    return "$49/month";
+  }
+  return standard;
 }
 
 export default async function SignupPage({ searchParams }: PageProps) {
@@ -85,7 +99,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {founding
-              ? `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${CHECKOUT_CARD_LINE}`
+              ? `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${FOUNDING_TRIAL_DUE_LINE}`
               : `${CHECKOUT_CARD_LINE} Choose a plan and continue to Checkout.`}
           </p>
         </div>
@@ -99,17 +113,25 @@ export default async function SignupPage({ searchParams }: PageProps) {
         ) : null}
 
         <Card className="grid gap-3 border-teal-200 bg-teal-50">
-          <p className="text-sm font-semibold text-slate-950">Plan options — card collected in Checkout, $0 due for 14 days</p>
+          <p className="text-sm font-semibold text-slate-950">
+            {founding
+              ? "Founding Checkout — card collected, $0 due for 90 days on Solo and Small Office"
+              : "Plan options — card collected in Checkout, $0 due for 14 days"}
+          </p>
           <ul className="grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
             {listPublicPlans().map((plan) => (
               <li key={plan.slug} className="rounded-md border border-teal-200 bg-white px-3 py-2">
                 <p className="font-semibold text-slate-950">{plan.label}</p>
-                <p>{plan.priceLabel}</p>
+                <p>{shownPrice(plan.slug, plan.priceLabel, founding)}</p>
                 <p>{plan.includedUserLimit} active user{plan.includedUserLimit === 1 ? "" : "s"} included</p>
               </li>
             ))}
           </ul>
-          <p className="text-xs leading-5 text-slate-600">{CHECKOUT_CARD_LINE} The standard plan price begins when that trial ends, unless a founding rate is applied after you start.</p>
+          <p className="text-xs leading-5 text-slate-600">
+            {founding
+              ? "Solo and Small Office founding Checkout charges $0 during the 90-day trial, then $29/month or $49/month. Team stays at $199/month with a 14-day trial."
+              : `${CHECKOUT_CARD_LINE} The standard plan price begins when that trial ends.`}
+          </p>
         </Card>
 
         <Card className="grid gap-4">
@@ -118,7 +140,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
               <select name="plan" defaultValue={defaultPlan.slug} className={selectClassName}>
                 {listPublicPlans().map((plan) => (
                   <option key={plan.slug} value={plan.slug}>
-                    {plan.label} ({plan.priceLabel}, {plan.includedUserLimit} active user{plan.includedUserLimit === 1 ? "" : "s"})
+                    {plan.label} ({shownPrice(plan.slug, plan.priceLabel, founding)}, {plan.includedUserLimit} active user{plan.includedUserLimit === 1 ? "" : "s"})
                   </option>
                 ))}
               </select>
@@ -166,7 +188,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
             <FieldError name="agreedToTerms" />
 
             {founding ? <input type="hidden" name="offer" value="founding" /> : null}
-            <p className="text-xs leading-5 text-slate-500">By continuing you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. The next step is Stripe Checkout, which collects a card. $0 is due during the 14-day trial.</p>
+            <p className="text-xs leading-5 text-slate-500">
+              By continuing you agree to the <a href="/terms" className="underline">Terms</a> and <a href="/privacy" className="underline">Privacy Policy</a>. The next step is Stripe Checkout, which collects a card.{" "}
+              {founding ? "$0 is due during the 90-day founding trial, then the founding monthly rate. Team stays on the 14-day trial." : "$0 is due during the 14-day trial."}
+            </p>
             <SubmitButton>{founding ? "Continue to founding checkout" : "Continue to checkout"}</SubmitButton>
           </SignupSubmitTrackingForm>
         </Card>

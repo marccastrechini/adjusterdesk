@@ -38,7 +38,7 @@ const sections: TrustSection[] = [
   {
     title: "Plans, billing timing, and plan terms",
     paragraphs: [
-      "Public pricing is shown for Solo, Small Office, and Team plans. Signup uses Stripe Checkout and collects a card. $0 is due during the 14-day trial. The plan price begins when that trial ends, unless a different rate was agreed for the office.",
+      "Public pricing is Solo $49/month, Small Office $99/month, and Team $199/month. Signup uses Stripe Checkout and collects a card. On that path, $0 is due during the 14-day trial, then the plan price. Founding Solo and Small Office Checkout charges $0 during a 90-day trial, then $29/month or $49/month, locked for 12 months for the first 10 offices.",
     ],
   },
   {

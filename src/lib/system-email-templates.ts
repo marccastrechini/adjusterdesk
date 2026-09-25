@@ -129,11 +129,11 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     bodyLines: [
       "If follow-ups, documents, and fees are slipping across email and files, start AdjusterDesk with your first 10 active claims.",
       "First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing is Solo $49/month and Small Office $99/month.",
-      "Stripe Checkout collects a card at signup. $0 is due during the 14-day trial Stripe starts today. The 90-day $0 period and the $29/$49 lock are not in Stripe yet. Reply to hello@adjusterdesk.xyz if you are in the first 10. Async onboarding, no sales call.",
+      "Stripe Checkout collects a card at signup. For the first 10 founding offices, $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months. Async onboarding, no sales call.",
     ],
     ctaLabel: "See founding desk offer",
     ctaUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
-    secondaryText: "Prefer a sheet for now? The tracker page is still available. Reply by email if you want the founding seat confirmed.",
+    secondaryText: "Prefer a sheet for now? The tracker page is still available.",
     footer: footer(),
   });
 

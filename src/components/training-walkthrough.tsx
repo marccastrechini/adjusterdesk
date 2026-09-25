@@ -5,12 +5,12 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { CtaBand, PublicButtonLink } from "@/components/public-site";
 import {
-  CHECKOUT_CARD_LINE,
   FOUNDING_ONBOARDING,
   FOUNDING_PAGE_HREF,
   FOUNDING_PRICE_LINE,
   FOUNDING_SOLO_SIGNUP_HREF,
   FOUNDING_SUPPORT_EMAIL,
+  FOUNDING_TRIAL_DUE_LINE,
 } from "@/lib/founding-offer";
 import { trainingIndexPath, trainingModulePath, type TrainingModule, type TrainingStep } from "@/lib/training";
 
@@ -152,7 +152,7 @@ export function TrainingClose() {
       <section className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <p className="max-w-3xl text-sm leading-6 text-slate-700">
-            {FOUNDING_PRICE_LINE} {CHECKOUT_CARD_LINE} Questions:{" "}
+            {FOUNDING_PRICE_LINE} {FOUNDING_TRIAL_DUE_LINE} Questions:{" "}
             <a href={`mailto:${FOUNDING_SUPPORT_EMAIL}`} className="font-medium text-teal-800 hover:text-teal-900">
               {FOUNDING_SUPPORT_EMAIL}
             </a>
