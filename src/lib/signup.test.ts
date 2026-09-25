@@ -13,7 +13,7 @@ import {
   type TrialSignupInput,
 } from "@/lib/signup";
 import { startSignupWithState } from "@/lib/signup-actions";
-import { TRIAL_DAYS } from "@/lib/trial";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/trial";
 
 const CHECKOUT_URL = "https://checkout.stripe.com/c/pay/cs_test_signup";
 
@@ -25,6 +25,8 @@ const stripeEnvKeys = [
   "STRIPE_PRICE_SOLO_MONTHLY",
   "STRIPE_PRICE_SMALL_OFFICE_MONTHLY",
   "STRIPE_PRICE_TEAM_MONTHLY",
+  "STRIPE_PRICE_FOUNDING_SOLO_MONTHLY",
+  "STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY",
   "APP_BASE_URL",
 ] as const;
 
@@ -50,6 +52,8 @@ function configureStripeEnv(provider: "stripe" | "manual" = "stripe") {
   process.env.STRIPE_PRICE_SOLO_MONTHLY = "price_solo";
   process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_small";
   process.env.STRIPE_PRICE_TEAM_MONTHLY = "price_team";
+  delete process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY;
+  delete process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY;
   process.env.APP_BASE_URL = "http://localhost:3000";
 }
 
@@ -131,6 +135,47 @@ test("checkout session reuse helper only accepts open sessions with URL", () => 
   assert.equal(canReuseOpenCheckoutSession({ status: "complete", url: "https://checkout.stripe.test/session" }), false);
   assert.equal(canReuseOpenCheckoutSession({ status: "open", url: null }), false);
   assert.equal(canReuseOpenCheckoutSession(undefined), false);
+});
+
+test("founding checkout params keep a 14-day trial unless the session charges the founding price", () => {
+  const previousFoundingSolo = process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY;
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+
+  const intent = {
+    id: "intent_123",
+    ownerEmail: "owner@example.com",
+    ownerName: "Pat Owner",
+    firmName: "Harbor Public Adjusting",
+    ownerPhone: "555-0100",
+  };
+
+  try {
+    const founding = buildStripeCheckoutSessionParams({
+      intent,
+      planSlug: "solo",
+      appBaseUrl: "http://localhost:3000",
+      priceId: "price_test_founding_solo",
+      signupSource: "founding",
+    });
+    const fallback = buildStripeCheckoutSessionParams({
+      intent,
+      planSlug: "solo",
+      appBaseUrl: "http://localhost:3000",
+      priceId: "price_test_solo",
+      signupSource: "founding",
+    });
+
+    assert.equal(founding.subscription_data?.trial_period_days, FOUNDING_TRIAL_DAYS);
+    assert.equal(founding.line_items?.[0]?.price, "price_test_founding_solo");
+    assert.equal(fallback.subscription_data?.trial_period_days, TRIAL_DAYS);
+    assert.equal(fallback.line_items?.[0]?.price, "price_test_solo");
+  } finally {
+    if (previousFoundingSolo === undefined) {
+      delete process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY;
+    } else {
+      process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = previousFoundingSolo;
+    }
+  }
 });
 
 test("checkout session params include the selected Stripe price ID", () => {
@@ -319,8 +364,180 @@ test("founding signup still opens Checkout and tags the intent", async () => {
   assert.equal(intentSource, "founding");
   assert.equal(capturedParams?.payment_method_collection, "always");
   assert.equal(capturedParams?.subscription_data?.trial_period_days, TRIAL_DAYS);
+  assert.equal(capturedParams?.line_items?.[0]?.price, "price_solo");
   assert.equal(capturedParams?.metadata?.signupSource, "founding");
   assert.equal(capturedParams?.subscription_data?.metadata?.signupSource, "founding");
+});
+
+test("founding signup uses the founding price and 90-day trial when founding prices are set", async () => {
+  const restoreEnv = snapshotEnv();
+  configureStripeEnv("stripe");
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+  process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY = "price_test_founding_small";
+
+  let capturedParams: Stripe.Checkout.SessionCreateParams | undefined;
+  let storedPriceId: string | undefined;
+
+  const restoreUserLookup = patch(prisma.user, "findUnique", async () => null);
+  const restoreFirmLookup = patch(prisma.firm, "findFirst", async () => null);
+  const restoreIntentCreate = patch(prisma.signupIntent, "create", async () => ({ id: "intent_founding_priced" }));
+  const restoreIntentFind = patch(prisma.signupIntent, "findUnique", async () => ({
+    id: "intent_founding_priced",
+    ownerEmail: "pat@example.com",
+    ownerName: "Pat Owner",
+    firmName: "Harbor Public Adjusting",
+    ownerPhone: "555-0101",
+    stripeCheckoutSessionId: null,
+    status: "PENDING",
+    source: "founding",
+  }));
+  const restoreIntentUpdate = patch(prisma.signupIntent, "update", async (args: { data?: { stripePriceId?: string } }) => {
+    storedPriceId = args.data?.stripePriceId;
+    return { id: "intent_founding_priced" };
+  });
+  const restoreTransaction = patch(prisma, "$transaction", async () => {
+    throw new Error("Workspace must not be created before Checkout.");
+  });
+
+  const stripe = requireStripeClient();
+  const restoreCheckoutCreate = patch(stripe.checkout.sessions, "create", async (params: Stripe.Checkout.SessionCreateParams) => {
+    capturedParams = params;
+    return { id: "cs_test_founding_priced", url: CHECKOUT_URL, status: "open" };
+  });
+
+  const formData = signupForm("small-office");
+  formData.set("offer", "founding");
+
+  try {
+    await startSignupWithState({}, formData);
+    assert.fail("Expected redirect to Stripe Checkout.");
+  } catch (error) {
+    assert.equal(redirectUrlFromError(error), CHECKOUT_URL);
+  } finally {
+    restoreCheckoutCreate();
+    restoreTransaction();
+    restoreIntentUpdate();
+    restoreIntentFind();
+    restoreIntentCreate();
+    restoreFirmLookup();
+    restoreUserLookup();
+    restoreEnv();
+  }
+
+  assert.equal(capturedParams?.payment_method_collection, "always");
+  assert.equal(capturedParams?.subscription_data?.trial_period_days, FOUNDING_TRIAL_DAYS);
+  assert.equal(capturedParams?.line_items?.[0]?.price, "price_test_founding_small");
+  assert.equal(storedPriceId, "price_test_founding_small");
+  assert.equal(capturedParams?.metadata?.signupSource, "founding");
+  assert.equal(capturedParams?.subscription_data?.metadata?.signupSource, "founding");
+});
+
+test("public signup keeps the standard price and 14-day trial when founding prices are set", async () => {
+  const restoreEnv = snapshotEnv();
+  configureStripeEnv("stripe");
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+
+  let capturedParams: Stripe.Checkout.SessionCreateParams | undefined;
+
+  const restoreUserLookup = patch(prisma.user, "findUnique", async () => null);
+  const restoreFirmLookup = patch(prisma.firm, "findFirst", async () => null);
+  const restoreIntentCreate = patch(prisma.signupIntent, "create", async () => ({ id: "intent_public" }));
+  const restoreIntentFind = patch(prisma.signupIntent, "findUnique", async () => ({
+    id: "intent_public",
+    ownerEmail: "pat@example.com",
+    ownerName: "Pat Owner",
+    firmName: "Harbor Public Adjusting",
+    ownerPhone: "555-0101",
+    stripeCheckoutSessionId: null,
+    status: "PENDING",
+    source: "public-signup",
+  }));
+  const restoreIntentUpdate = patch(prisma.signupIntent, "update", async () => ({ id: "intent_public" }));
+  const restoreTransaction = patch(prisma, "$transaction", async () => {
+    throw new Error("Workspace must not be created before Checkout.");
+  });
+
+  const stripe = requireStripeClient();
+  const restoreCheckoutCreate = patch(stripe.checkout.sessions, "create", async (params: Stripe.Checkout.SessionCreateParams) => {
+    capturedParams = params;
+    return { id: "cs_test_public", url: CHECKOUT_URL, status: "open" };
+  });
+
+  try {
+    await startSignupWithState({}, signupForm("solo"));
+    assert.fail("Expected redirect to Stripe Checkout.");
+  } catch (error) {
+    assert.equal(redirectUrlFromError(error), CHECKOUT_URL);
+  } finally {
+    restoreCheckoutCreate();
+    restoreTransaction();
+    restoreIntentUpdate();
+    restoreIntentFind();
+    restoreIntentCreate();
+    restoreFirmLookup();
+    restoreUserLookup();
+    restoreEnv();
+  }
+
+  assert.equal(capturedParams?.subscription_data?.trial_period_days, TRIAL_DAYS);
+  assert.equal(capturedParams?.line_items?.[0]?.price, "price_solo");
+  assert.equal(capturedParams?.metadata?.signupSource, "public-signup");
+});
+
+test("founding team signup stays on the standard team price and 14-day trial", async () => {
+  const restoreEnv = snapshotEnv();
+  configureStripeEnv("stripe");
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+  process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY = "price_test_founding_small";
+
+  let capturedParams: Stripe.Checkout.SessionCreateParams | undefined;
+
+  const restoreUserLookup = patch(prisma.user, "findUnique", async () => null);
+  const restoreFirmLookup = patch(prisma.firm, "findFirst", async () => null);
+  const restoreIntentCreate = patch(prisma.signupIntent, "create", async () => ({ id: "intent_team" }));
+  const restoreIntentFind = patch(prisma.signupIntent, "findUnique", async () => ({
+    id: "intent_team",
+    ownerEmail: "pat@example.com",
+    ownerName: "Pat Owner",
+    firmName: "Harbor Public Adjusting",
+    ownerPhone: "555-0101",
+    stripeCheckoutSessionId: null,
+    status: "PENDING",
+    source: "founding",
+  }));
+  const restoreIntentUpdate = patch(prisma.signupIntent, "update", async () => ({ id: "intent_team" }));
+  const restoreTransaction = patch(prisma, "$transaction", async () => {
+    throw new Error("Workspace must not be created before Checkout.");
+  });
+
+  const stripe = requireStripeClient();
+  const restoreCheckoutCreate = patch(stripe.checkout.sessions, "create", async (params: Stripe.Checkout.SessionCreateParams) => {
+    capturedParams = params;
+    return { id: "cs_test_team", url: CHECKOUT_URL, status: "open" };
+  });
+
+  const formData = signupForm("team");
+  formData.set("offer", "founding");
+
+  try {
+    await startSignupWithState({}, formData);
+    assert.fail("Expected redirect to Stripe Checkout.");
+  } catch (error) {
+    assert.equal(redirectUrlFromError(error), CHECKOUT_URL);
+  } finally {
+    restoreCheckoutCreate();
+    restoreTransaction();
+    restoreIntentUpdate();
+    restoreIntentFind();
+    restoreIntentCreate();
+    restoreFirmLookup();
+    restoreUserLookup();
+    restoreEnv();
+  }
+
+  assert.equal(capturedParams?.subscription_data?.trial_period_days, TRIAL_DAYS);
+  assert.equal(capturedParams?.line_items?.[0]?.price, "price_team");
+  assert.equal(capturedParams?.metadata?.signupSource, "founding");
 });
 
 test("manual billing still provisions a trial workspace without Checkout", async () => {

@@ -7,7 +7,7 @@ import {
   logStripeConfigIssue,
   mapStripeSubscriptionStatus,
   resolveBillingProvider,
-  resolveStripePriceId,
+  resolveCheckoutPrice,
   stripeConfigured,
   type PublicPlanSlug,
 } from "@/lib/billing";
@@ -56,6 +56,13 @@ export function buildStripeCheckoutSessionParams(params: {
   signupSource?: string | null;
 }): Stripe.Checkout.SessionCreateParams {
   const signupSource = params.signupSource?.trim() || "public-signup";
+  const checkoutPrice = resolveCheckoutPrice(params.planSlug, signupSource);
+  // 90 days only when this session charges the resolved founding price.
+  // A missing founding price keeps the public 14-day trial on the standard price.
+  const trialPeriodDays =
+    checkoutPrice.usesFoundingPrice && checkoutPrice.priceId === params.priceId
+      ? checkoutPrice.trialPeriodDays
+      : TRIAL_DAYS;
   return {
     mode: "subscription",
     success_url: `${params.appBaseUrl}/signup/success?plan=${params.planSlug}&session_id={CHECKOUT_SESSION_ID}`,
@@ -73,7 +80,7 @@ export function buildStripeCheckoutSessionParams(params: {
     },
     payment_method_collection: "always",
     subscription_data: {
-      trial_period_days: TRIAL_DAYS,
+      trial_period_days: trialPeriodDays,
       metadata: {
         signupIntentId: params.intent.id,
         planSlug: params.planSlug,
@@ -137,7 +144,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
     }
   }
 
-  const priceId = requireStripePriceId(planSlug);
+  const priceId = requireStripePriceId(planSlug, intent.source);
   const appBaseUrl = resolveAppBaseUrl();
   const session = await stripe.checkout.sessions.create(
     buildStripeCheckoutSessionParams({
@@ -153,7 +160,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
     where: { id: intent.id },
     data: {
       stripeCheckoutSessionId: session.id,
-      stripePriceId: resolveStripePriceId(planSlug),
+      stripePriceId: priceId,
     },
   });
 

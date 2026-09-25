@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { resolveStripePriceId, type PublicPlanSlug } from "@/lib/billing";
+import { resolveCheckoutPrice, type PublicPlanSlug } from "@/lib/billing";
 
 let stripeClient: Stripe | null = null;
 
@@ -43,8 +43,8 @@ export function requireStripeConnectWebhookSecret() {
   return webhookSecret;
 }
 
-export function requireStripePriceId(planSlug: PublicPlanSlug) {
-  const priceId = resolveStripePriceId(planSlug);
+export function requireStripePriceId(planSlug: PublicPlanSlug, signupSource?: string | null) {
+  const priceId = resolveCheckoutPrice(planSlug, signupSource).priceId;
   if (!priceId) {
     throw new Error(`Stripe price id is missing for ${planSlug}.`);
   }

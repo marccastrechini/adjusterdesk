@@ -42,6 +42,11 @@ Environment:
 - `STRIPE_PRICE_SMALL_OFFICE_MONTHLY`
 - `STRIPE_PRICE_TEAM_MONTHLY`
 
+Optional founding-offer prices. Leave these unset until the prices exist in Stripe. When unset, `offer=founding` Checkout keeps the standard price and 14-day trial. When set, Solo and Small Office founding Checkout uses these prices and a 90-day trial. Team has no founding price. Create new price IDs only. Never edit an existing live standard price.
+
+- `STRIPE_PRICE_FOUNDING_SOLO_MONTHLY` ($29/month)
+- `STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY` ($49/month)
+
 Behavior:
 
 - `/signup` creates pending signup intent and redirects to Stripe Checkout.

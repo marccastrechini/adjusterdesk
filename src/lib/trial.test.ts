@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { SubscriptionStatus } from "@/generated/prisma/client";
-import { TRIAL_DAYS, trialEndDate, trialDaysRemaining, trialPromptState } from "@/lib/trial";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS, trialEndDate, trialDaysRemaining, trialPromptState } from "@/lib/trial";
 
 describe("trial helpers", () => {
   test("TRIAL_DAYS is 14", () => {
     assert.equal(TRIAL_DAYS, 14);
+  });
+
+  test("FOUNDING_TRIAL_DAYS is 90", () => {
+    assert.equal(FOUNDING_TRIAL_DAYS, 90);
   });
 
   test("trialEndDate returns start date plus TRIAL_DAYS", () => {

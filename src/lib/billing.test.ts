@@ -8,12 +8,14 @@ import {
   mapStripeSubscriptionStatus,
   parsePlanSlug,
   publicSelfServiceReady,
+  resolveCheckoutPrice,
   resolvePublicStartHref,
   resolvePublicStartLabel,
   resolveStripePriceId,
   stripeConfigured,
 } from "@/lib/billing";
 import { requireStripeWebhookSecret } from "@/lib/stripe";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/trial";
 
 afterEach(() => {
   delete process.env.SELF_SERVICE_SIGNUP_ENABLED;
@@ -23,6 +25,8 @@ afterEach(() => {
   delete process.env.STRIPE_PRICE_SOLO_MONTHLY;
   delete process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY;
   delete process.env.STRIPE_PRICE_TEAM_MONTHLY;
+  delete process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY;
+  delete process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY;
 });
 
 test("public plan slugs map to plan and user limits", () => {
@@ -74,6 +78,9 @@ test("stripe provider becomes ready when all stripe vars are set", () => {
   process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_small";
   process.env.STRIPE_PRICE_TEAM_MONTHLY = "price_team";
 
+  delete process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY;
+  delete process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY;
+
   assert.equal(stripeConfigured(), true);
   assert.equal(publicSelfServiceReady(), true);
   assert.equal(resolvePublicStartHref("small-office"), "/signup?plan=small-office");
@@ -98,6 +105,67 @@ test("stripe price mapping falls back to empty string when missing", () => {
   assert.equal(resolveStripePriceId("solo"), null);
   assert.equal(resolveStripePriceId("small-office"), null);
   assert.equal(resolveStripePriceId("team"), null);
+});
+
+test("public checkout stays on standard prices and the 14-day trial", () => {
+  process.env.STRIPE_PRICE_SOLO_MONTHLY = "price_test_solo";
+  process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_test_small";
+  process.env.STRIPE_PRICE_TEAM_MONTHLY = "price_test_team";
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+  process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY = "price_test_founding_small";
+
+  assert.equal(TRIAL_DAYS, 14);
+  assert.deepEqual(resolveCheckoutPrice("solo", "public-signup"), {
+    priceId: "price_test_solo",
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  });
+  assert.deepEqual(resolveCheckoutPrice("small-office"), {
+    priceId: "price_test_small",
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  });
+  assert.deepEqual(resolveCheckoutPrice("team", "founding"), {
+    priceId: "price_test_team",
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  });
+});
+
+test("founding checkout uses founding prices and a 90-day trial when env is set", () => {
+  process.env.STRIPE_PRICE_SOLO_MONTHLY = "price_test_solo";
+  process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_test_small";
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "price_test_founding_solo";
+  process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY = "price_test_founding_small";
+
+  assert.equal(FOUNDING_TRIAL_DAYS, 90);
+  assert.deepEqual(resolveCheckoutPrice("solo", "founding"), {
+    priceId: "price_test_founding_solo",
+    trialPeriodDays: FOUNDING_TRIAL_DAYS,
+    usesFoundingPrice: true,
+  });
+  assert.deepEqual(resolveCheckoutPrice("small-office", " founding "), {
+    priceId: "price_test_founding_small",
+    trialPeriodDays: FOUNDING_TRIAL_DAYS,
+    usesFoundingPrice: true,
+  });
+});
+
+test("founding checkout falls back to the standard price and 14-day trial when founding prices are unset", () => {
+  process.env.STRIPE_PRICE_SOLO_MONTHLY = "price_test_solo";
+  process.env.STRIPE_PRICE_SMALL_OFFICE_MONTHLY = "price_test_small";
+  process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY = "   ";
+
+  assert.deepEqual(resolveCheckoutPrice("solo", "founding"), {
+    priceId: "price_test_solo",
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  });
+  assert.deepEqual(resolveCheckoutPrice("small-office", "founding"), {
+    priceId: "price_test_small",
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  });
 });
 
 test("plan slug helpers validate and parse only allowed values", () => {
