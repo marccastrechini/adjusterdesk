@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { TrainingClose } from "@/components/training-walkthrough";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
@@ -19,6 +20,10 @@ export default function TrainingPage() {
         title="Walk through the desk on your own time."
         description="A public walkthrough for a 1–5 person public adjusting office. AdjusterDesk is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call."
       />
+
+      <PublicSection title="Watch the overview" description="A silent Demo Office walkthrough. Captions are on the screen, and the note under the player covers the same path." tone="slate">
+        <ProductOverviewVideo />
+      </PublicSection>
 
       <PublicSection
         title="Three modules"
