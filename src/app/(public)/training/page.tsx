@@ -17,12 +17,12 @@ export default function TrainingPage() {
       <PublicPageHeader
         eyebrow="Training"
         title="Walk through the desk on your own time."
-        description="A public walkthrough for a 1–5 person public adjusting office. AdjusterDesk is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens will be Demo Office. No sales call."
+        description="A public walkthrough for a 1–5 person public adjusting office. AdjusterDesk is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call."
       />
 
       <PublicSection
         title="Three modules"
-        description="Start with Today, then a lead, then the follow-up on an active claim. Each step has a placeholder frame and a caption you can follow without a call."
+        description="Start with Today, then a lead, then the follow-up on an active claim. Each step is a Demo Office screenshot and a caption you can follow without a call."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           {trainingModules.map((trainingModule, index) => (

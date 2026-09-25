@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -20,31 +22,28 @@ function stepLinkClassName() {
   return "inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2";
 }
 
+function readPngSize(imageSrc: string) {
+  const relative = imageSrc.replace(/^\//, "");
+  const filePath = path.join(process.cwd(), "public", relative);
+  const buffer = fs.readFileSync(filePath);
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
 function TrainingFigure({ step }: { step: TrainingStep }) {
-  if (step.imageSrc) {
-    return (
-      <Image
-        src={step.imageSrc}
-        alt={step.alt}
-        width={1600}
-        height={1000}
-        className="aspect-[16/10] h-auto w-full bg-slate-100 object-cover"
-      />
-    );
-  }
+  const { width, height } = readPngSize(step.imageSrc);
 
   return (
-    <div role="img" aria-label={step.alt} className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-slate-100 px-6 text-center">
-      <p aria-hidden="true" className="text-xs font-semibold uppercase tracking-normal text-teal-800">
-        Screenshot placeholder
-      </p>
-      <p aria-hidden="true" className="text-sm font-semibold text-slate-950">
-        Demo Office
-      </p>
-      <p aria-hidden="true" className="max-w-md text-sm leading-6 text-slate-600">
-        {step.alt}
-      </p>
-    </div>
+    <Image
+      src={step.imageSrc}
+      alt={step.alt}
+      width={width}
+      height={height}
+      className="h-auto w-full bg-white"
+      sizes="(min-width: 896px) 896px, 100vw"
+    />
   );
 }
 

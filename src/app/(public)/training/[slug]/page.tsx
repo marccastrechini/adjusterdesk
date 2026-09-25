@@ -43,7 +43,7 @@ export default async function TrainingModulePage({ params }: PageProps) {
       <PublicPageHeader eyebrow="Training" title={trainingModule.title} description={trainingModule.summary} />
       <PublicSection
         title="Follow these steps"
-        description="The frames are placeholders for Demo Office screenshots. The captions are enough to follow the desk without a call."
+        description="These screens are from Demo Office. The caption says what to look at on each one."
       >
         <TrainingWalkthrough trainingModule={trainingModule} previousModule={previous} nextModule={next} />
       </PublicSection>
