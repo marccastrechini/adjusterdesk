@@ -1,5 +1,6 @@
 import { SubscriptionPlan, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultIncludedUserLimit } from "@/lib/plans";
+import { FOUNDING_TRIAL_DAYS, TRIAL_DAYS } from "@/lib/trial";
 
 export type PublicPlanSlug = "solo" | "small-office" | "team";
 export type BillingProvider = "manual" | "stripe";
@@ -188,6 +189,67 @@ export function resolveStripePriceId(planSlug: PublicPlanSlug): string | null {
   }
 
   return process.env.STRIPE_PRICE_TEAM_MONTHLY?.trim() || null;
+}
+
+/**
+ * Optional founding prices. Not part of stripeConfigured(): production Checkout
+ * must keep working before these env vars are filled.
+ * Team has no founding price. Founding links are solo and small-office only.
+ */
+export function resolveFoundingStripePriceId(planSlug: PublicPlanSlug): string | null {
+  if (planSlug === "solo") {
+    return process.env.STRIPE_PRICE_FOUNDING_SOLO_MONTHLY?.trim() || null;
+  }
+
+  if (planSlug === "small-office") {
+    return process.env.STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY?.trim() || null;
+  }
+
+  return null;
+}
+
+export type CheckoutPriceResolution = {
+  priceId: string | null;
+  trialPeriodDays: number;
+  usesFoundingPrice: boolean;
+};
+
+function isFoundingSignup(signupSource?: string | null) {
+  return signupSource?.trim().toLowerCase() === "founding";
+}
+
+/**
+ * Public Checkout uses the standard monthly price and TRIAL_DAYS (14).
+ *
+ * Founding solo / small-office Checkout uses the founding price and
+ * FOUNDING_TRIAL_DAYS (90) only when that plan's founding price env var is set.
+ * If it is unset, fall back to the standard price and 14-day trial so signup
+ * does not break before founding prices exist in Stripe.
+ * Team stays on the standard Team price and 14-day trial even when the signup
+ * source is founding.
+ */
+export function resolveCheckoutPrice(planSlug: PublicPlanSlug, signupSource?: string | null): CheckoutPriceResolution {
+  const standardPriceId = resolveStripePriceId(planSlug);
+  const standard: CheckoutPriceResolution = {
+    priceId: standardPriceId,
+    trialPeriodDays: TRIAL_DAYS,
+    usesFoundingPrice: false,
+  };
+
+  if (!isFoundingSignup(signupSource)) {
+    return standard;
+  }
+
+  const foundingPriceId = resolveFoundingStripePriceId(planSlug);
+  if (!foundingPriceId) {
+    return standard;
+  }
+
+  return {
+    priceId: foundingPriceId,
+    trialPeriodDays: FOUNDING_TRIAL_DAYS,
+    usesFoundingPrice: true,
+  };
 }
 
 export function mapStripeSubscriptionStatus(status: string | null | undefined): SubscriptionStatus {

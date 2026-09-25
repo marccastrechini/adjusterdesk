@@ -36,6 +36,8 @@ For Stripe mode, also configure:
 - `STRIPE_PRICE_SMALL_OFFICE_MONTHLY`
 - `STRIPE_PRICE_TEAM_MONTHLY`
 
+Founding prices are optional. Leave `STRIPE_PRICE_FOUNDING_SOLO_MONTHLY` and `STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY` unset until those Stripe prices exist. Unset founding Checkout keeps the standard price and 14-day trial.
+
 ## Safe Fallback Behavior
 
 - If self-service is disabled, `/signup` should still explain that plan/workspace details are saved and setup is confirmed before billing begins.

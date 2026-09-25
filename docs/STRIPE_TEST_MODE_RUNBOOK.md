@@ -24,6 +24,11 @@ Set these values when testing Stripe mode:
 - STRIPE_PRICE_SMALL_OFFICE_MONTHLY=price_...
 - STRIPE_PRICE_TEAM_MONTHLY=price_...
 
+Optional, for founding Checkout (`offer=founding`). Leave unset to keep the standard price and 14-day trial. Set only after creating new test prices. Do not edit the standard prices above.
+
+- STRIPE_PRICE_FOUNDING_SOLO_MONTHLY=price_... ($29/month, 90-day Checkout trial)
+- STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY=price_... ($49/month, 90-day Checkout trial)
+
 Recommended local baseline values:
 
 - APP_ENV=development
@@ -48,6 +53,16 @@ Create products and monthly recurring prices:
 1. Product: AdjusterDesk Team
 2. Price: 199 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_TEAM_MONTHLY
+
+Optional founding prices. Create new prices. Do not edit the standard prices above. Leave the env vars blank to keep founding Checkout on the standard price and 14-day trial.
+
+1. Product: AdjusterDesk Founding Solo
+2. Price: 29 USD monthly recurring
+3. Save generated price ID to STRIPE_PRICE_FOUNDING_SOLO_MONTHLY
+
+1. Product: AdjusterDesk Founding Small Office
+2. Price: 49 USD monthly recurring
+3. Save generated price ID to STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY
 
 ## Webhook Setup
 

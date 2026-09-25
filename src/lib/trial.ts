@@ -2,6 +2,9 @@ import { SubscriptionStatus } from "@/generated/prisma/client";
 
 export const TRIAL_DAYS = 14;
 
+/** Founding Checkout trial. Used only when a founding Stripe price is actually charged. */
+export const FOUNDING_TRIAL_DAYS = 90;
+
 export type TrialPromptState = "comfortable" | "ending-soon" | "ending-imminent" | "expired" | "none";
 
 type FirmTrialFields = {
