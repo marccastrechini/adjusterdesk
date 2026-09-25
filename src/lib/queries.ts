@@ -658,8 +658,8 @@ export async function getSystemDashboardData() {
   await requireSystemAdminContext();
 
   const [workspaceCount, activeUserCount] = await Promise.all([
-    prisma.firm.count(),
-    prisma.user.count({ where: { active: true } }),
+    prisma.firm.count({ where: { archivedAt: null } }),
+    prisma.user.count({ where: { active: true, firm: { archivedAt: null } } }),
   ]);
 
   return {
@@ -669,10 +669,11 @@ export async function getSystemDashboardData() {
   };
 }
 
-export async function getSystemWorkspaces() {
+export async function getSystemWorkspaces(options?: { includeArchived?: boolean }) {
   await requireSystemAdminContext();
 
-  return prisma.firm.findMany({
+  const workspaces = await prisma.firm.findMany({
+    where: options?.includeArchived ? undefined : { archivedAt: null },
     include: {
       users: {
         where: { role: UserRole.OWNER },
@@ -694,12 +695,32 @@ export async function getSystemWorkspaces() {
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
   });
+
+  if (workspaces.length === 0) {
+    return workspaces.map((workspace) => ({ ...workspace, hasSystemAdminUser: false }));
+  }
+
+  const systemAdminUsers = await prisma.user.findMany({
+    where: {
+      isSystemAdmin: true,
+      firmId: { in: workspaces.map((workspace) => workspace.id) },
+    },
+    select: { firmId: true },
+    distinct: ["firmId"],
+  });
+  const systemAdminFirmIds = new Set(systemAdminUsers.map((user) => user.firmId));
+
+  return workspaces.map((workspace) => ({
+    ...workspace,
+    hasSystemAdminUser: systemAdminFirmIds.has(workspace.id),
+  }));
 }
 
 export async function getSystemActivationRows(limit = 25) {
   await requireSystemAdminContext();
 
   const workspaces = await prisma.firm.findMany({
+    where: { archivedAt: null },
     include: {
       users: {
         where: { role: UserRole.OWNER },

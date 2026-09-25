@@ -116,7 +116,7 @@ export function ButtonLink({ href, children, variant = "primary" }: { href: stri
   );
 }
 
-export function SubmitButton({ children, variant = "primary" }: { children: ReactNode; variant?: "primary" | "secondary" }) {
+export function SubmitButton({ children, variant = "primary" }: { children: ReactNode; variant?: "primary" | "secondary" | "danger" }) {
   return (
     <button
       type="submit"
@@ -124,7 +124,9 @@ export function SubmitButton({ children, variant = "primary" }: { children: Reac
         "inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition",
         variant === "primary"
           ? "bg-teal-700 text-white hover:bg-teal-800"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+          : variant === "danger"
+            ? "bg-rose-700 text-white hover:bg-rose-800"
+            : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
       )}
     >
       {children}

@@ -131,6 +131,18 @@ export const noticeMessages = {
     title: "Workspace subscription updated",
     message: "Plan, subscription status, and included active-user limit were saved.",
   },
+  "system-workspace-archived": {
+    title: "Workspace archived",
+    message: "The workspace is hidden from the default list. Use Show archived to review or restore it.",
+  },
+  "system-workspace-restored": {
+    title: "Workspace restored",
+    message: "The workspace is active again and appears in the default workspace list.",
+  },
+  "system-workspace-deleted": {
+    title: "Workspace deleted",
+    message: "The workspace and its records were permanently removed. Stripe subscriptions are not canceled by this action.",
+  },
   "system-outreach-created": {
     title: "Outreach prospect added",
     message: "The outreach prospect is now in the outreach queue.",

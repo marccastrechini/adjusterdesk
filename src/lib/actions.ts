@@ -45,7 +45,13 @@ import { canAddActiveUser, defaultIncludedUserLimit, resolveIncludedUserLimit } 
 import { prisma } from "@/lib/prisma";
 import { generateClientStatusToken } from "@/lib/status-links";
 import { saveUploadedFile, validateUploadFile } from "@/lib/storage";
-import { clearAdminWorkspaceOverride, setAdminWorkspaceOverride } from "@/lib/session";
+import { clearAdminWorkspaceOverride, getAdminWorkspaceOverrideId, setAdminWorkspaceOverride } from "@/lib/session";
+import {
+  evaluateWorkspaceRemoval,
+  evaluateWorkspaceRestore,
+  workspaceRemovalAuditNote,
+  workspaceRemovalReturnPath,
+} from "@/lib/workspace-removal";
 import {
   activityInputFromTemplate,
   documentInputFromTemplate,
@@ -2158,6 +2164,193 @@ export async function updateSystemWorkspaceSubscription(formData: FormData) {
   revalidatePath("/system/workspaces");
   revalidatePath(`/system/workspaces/${workspaceId}`);
   redirect(withNotice(`/system/workspaces/${workspaceId}`, "system-workspace-subscription-updated"));
+}
+
+function redirectWorkspaceRemovalError(returnTo: string | undefined, workspaceId: string, code: string): never {
+  redirect(withError(workspaceRemovalReturnPath(returnTo, `/system/workspaces/${workspaceId}`), code));
+}
+
+async function findWorkspaceForRemoval(workspaceId: string) {
+  return prisma.firm.findUnique({
+    where: { id: workspaceId },
+    select: {
+      id: true,
+      name: true,
+      archivedAt: true,
+      billingSubscriptionId: true,
+      users: {
+        where: { isSystemAdmin: true },
+        select: { id: true },
+        take: 1,
+      },
+      _count: {
+        select: {
+          users: true,
+          leads: true,
+          claims: true,
+        },
+      },
+    },
+  });
+}
+
+async function writeWorkspaceRemovalAudit(input: {
+  action: "archive" | "restore" | "delete";
+  actorUserId: string;
+  actorFirmId: string;
+  workspace: {
+    id: string;
+    name: string;
+    billingSubscriptionId: string | null;
+    _count: { users: number; leads: number; claims: number };
+  };
+}) {
+  const note = workspaceRemovalAuditNote({
+    action: input.action,
+    workspaceId: input.workspace.id,
+    workspaceName: input.workspace.name,
+    actorUserId: input.actorUserId,
+    userCount: input.workspace._count.users,
+    leadCount: input.workspace._count.leads,
+    claimCount: input.workspace._count.claims,
+    billingSubscriptionId: input.workspace.billingSubscriptionId,
+  });
+  console.info(`[system] ${note.subject}. ${note.body}`);
+
+  if (input.action === "delete" && input.actorFirmId === input.workspace.id) {
+    return;
+  }
+
+  try {
+    await prisma.activity.create({
+      data: {
+        firmId: input.actorFirmId,
+        userId: input.actorUserId,
+        type: ActivityType.NOTE,
+        subject: note.subject,
+        body: note.body,
+      },
+    });
+  } catch (error) {
+    console.warn("[system] Workspace lifecycle audit note was not saved.", error);
+  }
+}
+
+export async function archiveSystemWorkspace(formData: FormData) {
+  const sessionUser = await requireSystemAdminContext();
+  const workspaceId = requiredText.parse(formData.get("workspaceId")?.toString());
+  const returnTo = formData.get("returnTo")?.toString();
+  const workspace = await findWorkspaceForRemoval(workspaceId);
+
+  if (!workspace) {
+    redirect(withError(workspaceRemovalReturnPath(returnTo, "/system/workspaces"), "workspace-missing"));
+  }
+
+  const decision = evaluateWorkspaceRemoval({
+    action: "archive",
+    workspaceName: workspace.name,
+    confirmationName: formData.get("confirmationName")?.toString() ?? "",
+    billingSubscriptionId: workspace.billingSubscriptionId,
+    hasSystemAdminUser: workspace.users.length > 0,
+    alreadyArchived: Boolean(workspace.archivedAt),
+  });
+
+  if (!decision.ok) {
+    redirectWorkspaceRemovalError(returnTo, workspace.id, decision.code);
+  }
+
+  await prisma.firm.update({
+    where: { id: workspace.id },
+    data: { archivedAt: new Date() },
+  });
+  await writeWorkspaceRemovalAudit({
+    action: "archive",
+    actorUserId: sessionUser.id,
+    actorFirmId: sessionUser.firmId,
+    workspace,
+  });
+
+  revalidatePath("/system");
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspace.id}`);
+  redirect(withNotice(workspaceRemovalReturnPath(returnTo, `/system/workspaces/${workspace.id}`), "system-workspace-archived"));
+}
+
+export async function restoreSystemWorkspace(formData: FormData) {
+  const sessionUser = await requireSystemAdminContext();
+  const workspaceId = requiredText.parse(formData.get("workspaceId")?.toString());
+  const returnTo = formData.get("returnTo")?.toString();
+  const workspace = await findWorkspaceForRemoval(workspaceId);
+
+  if (!workspace) {
+    redirect(withError(workspaceRemovalReturnPath(returnTo, "/system/workspaces"), "workspace-missing"));
+  }
+
+  const decision = evaluateWorkspaceRestore(Boolean(workspace.archivedAt));
+  if (!decision.ok) {
+    redirectWorkspaceRemovalError(returnTo, workspace.id, decision.code);
+  }
+
+  await prisma.firm.update({
+    where: { id: workspace.id },
+    data: { archivedAt: null },
+  });
+  await writeWorkspaceRemovalAudit({
+    action: "restore",
+    actorUserId: sessionUser.id,
+    actorFirmId: sessionUser.firmId,
+    workspace,
+  });
+
+  revalidatePath("/system");
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspace.id}`);
+  redirect(withNotice(workspaceRemovalReturnPath(returnTo, `/system/workspaces/${workspace.id}`), "system-workspace-restored"));
+}
+
+export async function deleteSystemWorkspace(formData: FormData) {
+  const sessionUser = await requireSystemAdminContext();
+  const workspaceId = requiredText.parse(formData.get("workspaceId")?.toString());
+  const returnTo = formData.get("returnTo")?.toString();
+  const workspace = await findWorkspaceForRemoval(workspaceId);
+
+  if (!workspace) {
+    redirect(withError(workspaceRemovalReturnPath(returnTo, "/system/workspaces"), "workspace-missing"));
+  }
+
+  const decision = evaluateWorkspaceRemoval({
+    action: "delete",
+    workspaceName: workspace.name,
+    confirmationName: formData.get("confirmationName")?.toString() ?? "",
+    stripeDeleteConfirmation: formData.get("stripeDeleteConfirmation")?.toString() ?? "",
+    billingSubscriptionId: workspace.billingSubscriptionId,
+    hasSystemAdminUser: workspace.users.length > 0,
+  });
+
+  if (!decision.ok) {
+    redirectWorkspaceRemovalError(returnTo, workspace.id, decision.code);
+  }
+
+  const overrideId = await getAdminWorkspaceOverrideId();
+  if (overrideId === workspace.id) {
+    await clearAdminWorkspaceOverride();
+  }
+
+  await prisma.firm.delete({ where: { id: workspace.id } });
+  await writeWorkspaceRemovalAudit({
+    action: "delete",
+    actorUserId: sessionUser.id,
+    actorFirmId: sessionUser.firmId,
+    workspace,
+  });
+
+  revalidatePath("/system");
+  revalidatePath("/system/workspaces");
+  revalidatePath(`/system/workspaces/${workspace.id}`);
+
+  const returnPath = workspaceRemovalReturnPath(returnTo, "/system/workspaces");
+  const listPath = returnPath.startsWith("/system/workspaces/") ? "/system/workspaces" : returnPath;
+  redirect(withNotice(listPath, "system-workspace-deleted"));
 }
 
 export async function createSystemOutreachProspect(formData: FormData) {
