@@ -14,7 +14,7 @@ import {
 import { resolveAppBaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireStripeClient, requireStripePriceId } from "@/lib/stripe";
-import { trialEndDate } from "@/lib/trial";
+import { TRIAL_DAYS, trialEndDate } from "@/lib/trial";
 
 export type SignupIntentInput = {
   planSlug: PublicPlanSlug;
@@ -67,7 +67,9 @@ export function buildStripeCheckoutSessionParams(params: {
       ownerName: params.intent.ownerName,
       ownerPhone: params.intent.ownerPhone ?? "",
     },
+    payment_method_collection: "always",
     subscription_data: {
+      trial_period_days: TRIAL_DAYS,
       metadata: {
         signupIntentId: params.intent.id,
         planSlug: params.planSlug,
@@ -284,6 +286,46 @@ export type TrialSignupInput = {
   ownerPhone?: string;
   passwordHash: string;
 };
+
+export type PublicSignupResult =
+  | {
+      mode: "checkout";
+      url: string;
+    }
+  | {
+      mode: "trial";
+      firmId: string;
+      ownerUserId: string;
+      planSlug: PublicPlanSlug;
+    };
+
+/**
+ * Stripe mode with a complete config opens Checkout and does not create a workspace.
+ * Manual billing, or Stripe mode without a complete config, creates a trial workspace immediately.
+ */
+export async function beginPublicSignup(input: TrialSignupInput): Promise<PublicSignupResult> {
+  if (resolveBillingProvider() === "stripe") {
+    if (!stripeConfigured()) {
+      logStripeConfigIssue("beginPublicSignup");
+    } else {
+      const intent = await createSignupIntent(input);
+      const session = await createStripeCheckoutSessionForIntent(intent.id, input.planSlug);
+      if (!session.url) {
+        throw new Error("Stripe Checkout did not return a session URL.");
+      }
+
+      return { mode: "checkout", url: session.url };
+    }
+  }
+
+  const trial = await provisionTrialSignup(input);
+  return {
+    mode: "trial",
+    firmId: trial.firmId,
+    ownerUserId: trial.ownerUserId,
+    planSlug: trial.planSlug,
+  };
+}
 
 /**
  * Creates a workspace and owner user on a free trial.
