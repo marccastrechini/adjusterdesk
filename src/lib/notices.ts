@@ -217,7 +217,7 @@ export const noticeMessages = {
   },
   "self-service-signup-complete": {
     title: "Welcome to AdjusterDesk",
-    message: "Your workspace is ready and your 14-day free trial has started. No credit card is required during your trial.",
+    message: "Your workspace is ready and your 14-day trial has started. $0 is due during the trial.",
   },
   "billing-portal-unavailable": {
     title: "Billing portal unavailable",

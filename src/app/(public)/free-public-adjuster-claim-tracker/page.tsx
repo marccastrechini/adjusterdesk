@@ -43,7 +43,7 @@ export default function FreeClaimTrackerPage() {
       <PublicPageHeader
         eyebrow="Free template"
         title="Free Public Adjuster Claim Tracker"
-        description="Still managing claims in a spreadsheet? Start with a cleaner public adjuster claim tracker. When the spreadsheet starts becoming too manual, AdjusterDesk gives you the same structure in a shared workspace for claims, clients, documents, follow-ups, payments, and deadlines."
+        description="A claim tracker spreadsheet for leads, follow-ups, documents, settlements, and fees. When email, memory, and scattered files are where claims slip, the AdjusterDesk founding desk is the next step."
       />
 
       <PublicSection title="Start in two practical steps" tone="white">
@@ -136,11 +136,11 @@ export default function FreeClaimTrackerPage() {
       <PublicSection title="Ready for more than a spreadsheet?" tone="white">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-950">Start a free trial</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Move your tracker into AdjusterDesk and explore how it handles follow-ups, client updates, payments, and fees. Try AdjusterDesk with your first 10 claims. 14-day free trial, no credit card required.</p>
+            <h3 className="text-base font-semibold text-slate-950">Start the founding desk</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">First 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Start with your first 10 active claims. Checkout collects a card, and $0 is due during the 14-day trial Stripe starts today. The 90-day $0 period and the $29/$49 lock are applied after you start.</p>
             <div className="mt-4">
-              <PublicButtonLink href="/signup" variant="primary" eventName="trial_start_click">
-                Start free trial with your first 10 claims
+              <PublicButtonLink href="/founding-public-adjuster-offices" variant="primary" eventName="trial_start_click">
+                See founding desk offer
               </PublicButtonLink>
             </div>
           </div>
@@ -161,8 +161,10 @@ export default function FreeClaimTrackerPage() {
       </PublicSection>
 
       <CtaBand
-        title="Download the free tracker or start with AdjusterDesk."
-        description="The free spreadsheet is a good starting point. When you outgrow it, AdjusterDesk handles leads, claims, documents, follow-ups, settlements, and fees in one organized workspace."
+        title="When the sheet is not enough, start the desk."
+        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 14-day trial Stripe starts today."
+        primaryHref="/founding-public-adjuster-offices"
+        primaryLabel="See founding desk offer"
       />
     </>
   );

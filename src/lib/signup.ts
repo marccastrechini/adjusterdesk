@@ -23,6 +23,7 @@ export type SignupIntentInput = {
   ownerEmail: string;
   ownerPhone?: string;
   passwordHash: string;
+  signupSource?: string;
 };
 
 function toDateFromUnix(value: number | null | undefined) {
@@ -52,7 +53,9 @@ export function buildStripeCheckoutSessionParams(params: {
   planSlug: PublicPlanSlug;
   appBaseUrl: string;
   priceId: string;
+  signupSource?: string | null;
 }): Stripe.Checkout.SessionCreateParams {
+  const signupSource = params.signupSource?.trim() || "public-signup";
   return {
     mode: "subscription",
     success_url: `${params.appBaseUrl}/signup/success?plan=${params.planSlug}&session_id={CHECKOUT_SESSION_ID}`,
@@ -63,6 +66,7 @@ export function buildStripeCheckoutSessionParams(params: {
     metadata: {
       signupIntentId: params.intent.id,
       planSlug: params.planSlug,
+      signupSource,
       workspaceName: params.intent.firmName,
       ownerName: params.intent.ownerName,
       ownerPhone: params.intent.ownerPhone ?? "",
@@ -73,6 +77,7 @@ export function buildStripeCheckoutSessionParams(params: {
       metadata: {
         signupIntentId: params.intent.id,
         planSlug: params.planSlug,
+        signupSource,
       },
     },
     allow_promotion_codes: true,
@@ -95,7 +100,7 @@ export async function createSignupIntent(input: SignupIntentInput) {
       ownerPhone: input.ownerPhone,
       passwordHash: input.passwordHash,
       termsAcceptedAt: new Date(),
-      source: "public-signup",
+      source: input.signupSource?.trim() || "public-signup",
     },
   });
 }
@@ -117,6 +122,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
       ownerPhone: true,
       stripeCheckoutSessionId: true,
       status: true,
+      source: true,
     },
   });
 
@@ -139,6 +145,7 @@ export async function createStripeCheckoutSessionForIntent(intentId: string, pla
       planSlug,
       appBaseUrl,
       priceId,
+      signupSource: intent.source,
     }),
   );
 
@@ -285,6 +292,7 @@ export type TrialSignupInput = {
   ownerEmail: string;
   ownerPhone?: string;
   passwordHash: string;
+  signupSource?: string;
 };
 
 export type PublicSignupResult =
@@ -360,7 +368,7 @@ export async function provisionTrialSignup(input: TrialSignupInput) {
         includedUserLimit: defaultLimitForPlan(plan.plan),
         trialStartedAt: now,
         trialEndsAt: trialEnds,
-        signupSource: "public-signup",
+        signupSource: input.signupSource?.trim() || "public-signup",
       },
     });
 

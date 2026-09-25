@@ -38,7 +38,7 @@ const sections: TrustSection[] = [
   {
     title: "Plans, billing timing, and plan terms",
     paragraphs: [
-      "Public pricing is shown for Solo, Small Office, and Team plans. No credit card is required to start a trial. Billing starts only when a customer chooses a paid plan in Billing. Paid access remains subject to the plan terms agreed for the customer office.",
+      "Public pricing is shown for Solo, Small Office, and Team plans. Signup uses Stripe Checkout and collects a card. $0 is due during the 14-day trial. The plan price begins when that trial ends, unless a different rate was agreed for the office.",
     ],
   },
   {

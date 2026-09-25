@@ -68,7 +68,8 @@ describe("system email templates", () => {
     assert.ok(trackerEmail1.html.includes("Your free claim tracker is ready"), "tracker_nurture_email_1 html missing title");
 
     const trackerEmail3 = templates.find((t) => t.id === "tracker_nurture_email_3")!;
-    assert.ok(trackerEmail3.text.includes("Start free trial"), "tracker_nurture_email_3 text missing CTA");
+    assert.ok(trackerEmail3.text.includes("See founding desk offer"), "tracker_nurture_email_3 text missing CTA");
+    assert.ok(trackerEmail3.text.includes("$29/month"), "tracker_nurture_email_3 text missing founding price");
   });
 
   it("no template html contains script tags", () => {

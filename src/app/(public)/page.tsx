@@ -1,4 +1,7 @@
+import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
+import { TrackedLink } from "@/components/tracked-link";
+import { CHECKOUT_CARD_LINE, FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 
 export const metadata = publicPageMetadata({
@@ -32,34 +35,30 @@ export default function HomePage() {
   return (
     <>
       <PublicHero
-        eyebrow="Simple public adjusting office workspace"
+        eyebrow="For 1–5 person public adjusting offices"
         title="AdjusterDesk"
-        description="Stop running your adjusting business out of spreadsheets, email, and memory. Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices in one practical place for a solo or small public adjusting office."
+        description="Claims, follow-ups, documents, and fees slip across email, memory, and scattered files. Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices on one desk."
+        primaryHref={FOUNDING_PAGE_HREF}
+        primaryLabel="See founding desk offer"
+        assurance={
+          <>
+            {FOUNDING_PRICE_LINE} {CHECKOUT_CARD_LINE} The founding $29/$49 lock is applied after you start if you are in the first 10. Already using AdjusterDesk?{" "}
+            <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">
+              Log in.
+            </TrackedLink>
+          </>
+        }
       >
         <WorkspacePreview />
       </PublicHero>
 
-      <PublicSection title="Start with the path that fits your office" tone="white">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-950">Need software for active claims?</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">See how AdjusterDesk helps small offices run the first 10-50 active claims without spreadsheet chaos.</p>
-            <div className="mt-4">
-              <PublicButtonLink href="/public-adjuster-software" variant="secondary">
-                View Public Adjuster Software
-              </PublicButtonLink>
-            </div>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-950">Still in spreadsheets?</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Start with a clean free claim tracker and move to AdjusterDesk when your workflow gets messy.</p>
-            <div className="mt-4">
-              <PublicButtonLink href="/free-public-adjuster-claim-tracker" variant="secondary">
-                Get Free Claim Tracker
-              </PublicButtonLink>
-            </div>
-          </div>
-        </div>
+      <PublicSection title="Start with the desk" description="The founding offer is for the first 10 offices. The sheet stays available if you want a file first." tone="white">
+        <FoundingOfferSummary heading="Founding desk offer" headingLevel="h3" showPageLink />
+        <p className="mt-4 text-sm leading-6 text-slate-600">
+          <PublicButtonLink href="/public-adjuster-software" variant="secondary">
+            View public adjuster software
+          </PublicButtonLink>
+        </p>
       </PublicSection>
 
       <PublicSection title="When the office is spread across too many places" tone="slate">
@@ -105,7 +104,12 @@ export default function HomePage() {
         <StepList steps={howItWorksSteps} />
       </PublicSection>
 
-      <CtaBand title="Start with the plan that fits your office." description="Choose your plan, create your workspace, and start using AdjusterDesk now. No credit card required. Subscribe from Billing when you are ready." />
+      <CtaBand
+        title="Put the slipping claims on one desk."
+        description={`${FOUNDING_PRICE_LINE} ${CHECKOUT_CARD_LINE} Reply to hello@adjusterdesk.xyz if you are in the first 10.`}
+        primaryHref={FOUNDING_PAGE_HREF}
+        primaryLabel="See founding desk offer"
+      />
     </>
   );
 }

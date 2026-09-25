@@ -22,6 +22,7 @@ type TrialSignupAlertEmailInput = {
   ownerName: string;
   ownerEmail: string;
   planLabel: string;
+  offerLabel?: string;
 };
 
 type WelcomeSignupEmailInput = {
@@ -225,6 +226,7 @@ export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInpu
       `Owner: ${input.ownerName}`,
       `Owner email: ${input.ownerEmail}`,
       `Plan selected: ${input.planLabel}`,
+      ...(input.offerLabel ? [`Offer: ${input.offerLabel}`] : []),
     ],
     secondaryText: "Sign in to system workspaces to review the new office and follow up.",
     footer: resolveSystemEmailFooter(),

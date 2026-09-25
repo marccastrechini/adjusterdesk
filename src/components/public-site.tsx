@@ -25,8 +25,8 @@ export const publicNavItems = [
   { href: "/features", label: "Features" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/founding-public-adjuster-offices", label: "Founding" },
   { href: "/resources", label: "Resources" },
-  { href: "/free-public-adjuster-claim-tracker", label: "Free tracker" },
 ];
 
 const startHref = resolvePublicStartHref();
@@ -153,7 +153,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
                 { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
               ]}
             />
-            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/resources", label: "Resources" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
             <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "mailto:hello@adjusterdesk.xyz", label: "Email us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>
@@ -229,7 +229,23 @@ export function PublicButtonLink({
   );
 }
 
-export function PublicHero({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children?: ReactNode }) {
+export function PublicHero({
+  eyebrow,
+  title,
+  description,
+  children,
+  assurance,
+  primaryHref,
+  primaryLabel,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children?: ReactNode;
+  assurance?: ReactNode;
+  primaryHref?: string;
+  primaryLabel?: string;
+}) {
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -238,15 +254,19 @@ export function PublicHero({ eyebrow, title, description, children }: { eyebrow:
           <h1 className="mt-3 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
-              {startLabel}
+            <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName="trial_start_click">
+              {primaryLabel ?? startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
               Email us
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Start your free trial now. No credit card required. Subscribe from Billing when you are ready. Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
+            {assurance ?? (
+              <>
+                Stripe Checkout collects a card at signup. $0 is due during the 14-day trial. Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
+              </>
+            )}
           </p>
         </div>
         {children ? <div className="mt-10">{children}</div> : null}
@@ -321,7 +341,17 @@ export function StepList({ steps }: { steps: Array<{ title: string; description:
   );
 }
 
-export function CtaBand({ title, description }: { title: string; description: string }) {
+export function CtaBand({
+  title,
+  description,
+  primaryHref,
+  primaryLabel,
+}: {
+  title: string;
+  description: string;
+  primaryHref?: string;
+  primaryLabel?: string;
+}) {
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -331,8 +361,8 @@ export function CtaBand({ title, description }: { title: string; description: st
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">{description}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3 sm:mt-0">
-            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
-              {startLabel}
+            <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName="trial_start_click">
+              {primaryLabel ?? startLabel}
             </PublicButtonLink>
             <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
               Email us
