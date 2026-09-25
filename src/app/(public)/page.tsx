@@ -1,4 +1,5 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
+import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
 import { TrackedLink } from "@/components/tracked-link";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
@@ -51,6 +52,10 @@ export default function HomePage() {
       >
         <WorkspacePreview />
       </PublicHero>
+
+      <PublicSection title="See the desk in 60 seconds" description="A silent Demo Office walkthrough. Captions are on the screen, and the note under the player covers the same path." tone="slate">
+        <ProductOverviewVideo />
+      </PublicSection>
 
       <PublicSection title="Start with the desk" description="The founding offer is for the first 10 offices. The sheet stays available if you want a file first." tone="white">
         <FoundingOfferSummary heading="Founding desk offer" headingLevel="h3" showPageLink />

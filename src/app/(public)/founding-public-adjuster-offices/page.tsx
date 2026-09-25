@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
+import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { CtaBand, PublicButtonLink, PublicSection } from "@/components/public-site";
 import {
   FOUNDING_HONESTY_NOTE,
@@ -90,6 +91,10 @@ export default function FoundingPublicAdjusterOfficesPage() {
           </p>
         </div>
       </section>
+
+      <PublicSection title="See the desk in 60 seconds" description="A silent Demo Office walkthrough. Captions are on the screen, and the note under the player covers the same path." tone="slate">
+        <ProductOverviewVideo />
+      </PublicSection>
 
       <PublicSection title="Where the work slips" tone="white">
         <div className="grid gap-4 md:grid-cols-3">
