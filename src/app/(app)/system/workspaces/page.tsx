@@ -1,7 +1,9 @@
 import { createSystemWorkspaceWithOwner, enterSystemWorkspaceView } from "@/lib/actions";
 import { getNoticeMessage } from "@/lib/notices";
 import { getSystemActivationRows, getSystemWorkspaces } from "@/lib/queries";
-import { ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
+import { workspaceRemovalErrorMessage } from "@/lib/workspace-removal";
+import { SystemWorkspaceRemovalPanel } from "@/components/system-workspace-removal";
+import { ButtonLink, Card, EmptyState, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -47,29 +49,34 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
   const params = await searchParams;
   const notice = getNoticeMessage(params);
   const error = firstValue(params.error);
-  const [workspaces, activationRows] = await Promise.all([getSystemWorkspaces(), getSystemActivationRows()]);
+  const showArchived = firstValue(params.archived) === "1";
+  const [workspaces, activationRows] = await Promise.all([
+    getSystemWorkspaces({ includeArchived: showArchived }),
+    getSystemActivationRows(),
+  ]);
 
   const errorMessage =
-    error === "workspace-owner-email"
+    workspaceRemovalErrorMessage(error) ??
+    (error === "workspace-owner-email"
         ? "A user with that owner email already exists."
         : error === "workspace-name"
           ? "A workspace with that name already exists."
         : error === "invite-send"
           ? "Workspace was not created because the invite email could not be sent. Check system email setup and try again."
-          : undefined;
+          : undefined);
 
   return (
     <div suppressHydrationWarning>
       <PageHeader
         title="System workspaces"
-        description="Global local-admin view for workspace provisioning and ownership details."
+        description="Global admin view for workspace provisioning, archive, and removal."
         actions={<ButtonLink href="/system">System dashboard</ButtonLink>}
       />
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
       {errorMessage ? (
         <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
-          <p className="font-semibold">Workspace update not completed</p>
+          <p className="font-semibold">Workspace action not completed</p>
           <p className="mt-1 leading-6">{errorMessage}</p>
         </Card>
       ) : null}
@@ -96,7 +103,21 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
         </Card>
       </Section>
 
-      <Section title="Workspace list" description="Names, owner account, user totals, lead totals, and claim totals.">
+      <Section
+        title="Workspace list"
+        description="Names, owner account, user totals, lead totals, and claim totals. Archived workspaces stay off this list until you show them."
+        actions={
+          <ButtonLink href={showArchived ? "/system/workspaces" : "/system/workspaces?archived=1"} variant="secondary">
+            {showArchived ? "Hide archived" : "Show archived"}
+          </ButtonLink>
+        }
+      >
+        {workspaces.length === 0 ? (
+          <EmptyState
+            title={showArchived ? "No workspaces" : "No active workspaces"}
+            message={showArchived ? "There are no workspaces in this install." : "Archived workspaces stay hidden until you choose Show archived."}
+          />
+        ) : null}
         <div className="grid gap-3">
           {workspaces.map((workspace) => {
             const owner = workspace.users[0];
@@ -107,6 +128,9 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                   <div>
                     <p className="font-semibold text-slate-950">{workspace.name}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                      {workspace.archivedAt ? (
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 font-medium text-slate-800">Archived {formatDateUtc(workspace.archivedAt)}</span>
+                      ) : null}
                       {classifyWorkspaceName(workspace.name) ? (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">{classifyWorkspaceName(workspace.name)}</span>
                       ) : null}
@@ -133,6 +157,21 @@ export default async function SystemWorkspacesPage({ searchParams }: PageProps) 
                     </div>
                   </div>
                 </div>
+                <SystemWorkspaceRemovalPanel
+                  layout="compact"
+                  workspaceId={workspace.id}
+                  workspaceName={workspace.name}
+                  archivedAt={workspace.archivedAt}
+                  userCount={workspace._count.users}
+                  leadCount={workspace._count.leads}
+                  claimCount={workspace._count.claims}
+                  billingCustomerId={workspace.billingCustomerId}
+                  billingSubscriptionId={workspace.billingSubscriptionId}
+                  billingPriceId={workspace.billingPriceId}
+                  stripeConnectAccountId={workspace.stripeConnectAccountId}
+                  hasSystemAdminUser={workspace.hasSystemAdminUser}
+                  returnTo={showArchived ? "/system/workspaces?archived=1" : "/system/workspaces"}
+                />
               </Card>
             );
           })}

@@ -4,7 +4,9 @@ import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { planLabel, planLimitMessage, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
 import { getSystemWorkspaceDetail } from "@/lib/queries";
+import { workspaceRemovalErrorMessage } from "@/lib/workspace-removal";
 import { SystemResetPasswordForm } from "@/components/system-reset-password-form";
+import { SystemWorkspaceRemovalPanel } from "@/components/system-workspace-removal";
 import { Badge, ButtonLink, Card, Field, Notice, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
 
 type PageProps = {
@@ -24,6 +26,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
   const tempPassword = firstValue(query.tempPassword);
 
   const { workspace, owner, leadCount, claimCount } = await getSystemWorkspaceDetail(id);
+  const hasSystemAdminUser = workspace.users.some((entry) => entry.isSystemAdmin);
   const activeUserCount = workspace.users.filter((entry) => entry.active).length;
   const includedUserLimit = resolveIncludedUserLimit(workspace);
   const overLimit = includedUserLimit > 0 && activeUserCount > includedUserLimit;
@@ -35,8 +38,10 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
     [SubscriptionPlan.PROFESSIONAL]: "Custom",
   } as const)[workspace.subscriptionPlan];
 
+  const removalError = workspaceRemovalErrorMessage(error);
   const errorMessage =
-    error === "user-missing"
+    removalError ??
+    (error === "user-missing"
       ? "That user was not found in this workspace."
       : error === "user-email-duplicate"
         ? "That email is already used by another user."
@@ -48,13 +53,17 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
               ? "This workspace is at its included active-user limit. Update plan or limit before activating another user."
               : error === "invalid-limit"
                 ? "Included active-user limit must be a positive whole number."
-          : undefined;
+          : undefined);
 
   return (
     <>
       <PageHeader
         title={workspace.name}
-        description="System admin workspace detail for local workspace operations."
+        description={
+          workspace.archivedAt
+            ? `Archived ${formatDate(workspace.archivedAt)}. Records are kept until you restore or permanently delete this workspace.`
+            : "System admin workspace detail for local workspace operations."
+        }
         actions={
           <>
             <form action={enterSystemWorkspaceView.bind(null, workspace.id)}>
@@ -68,7 +77,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
       {errorMessage ? (
         <Card className="border-amber-200 bg-amber-50 text-sm text-amber-900">
-          <p className="font-semibold">User update not completed</p>
+          <p className="font-semibold">{removalError ? "Workspace action not completed" : "User update not completed"}</p>
           <p className="mt-1 leading-6">{errorMessage}</p>
         </Card>
       ) : null}
@@ -85,6 +94,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
         <Card>
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Workspace created</p>
           <p className="mt-2 text-sm font-semibold text-slate-950">{formatDate(workspace.createdAt)}</p>
+          {workspace.archivedAt ? <div className="mt-2"><Badge tone="amber">Archived</Badge></div> : null}
           {workspace.signupSource ? <p className="mt-1 text-xs text-slate-600">Source: {workspace.signupSource}</p> : null}
         </Card>
         <Card>
@@ -198,6 +208,27 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
             </Card>
           ))}
         </div>
+      </Section>
+
+      <Section
+        title="Archive or delete workspace"
+        description="Archive is the default for smoke and test offices. Hard delete is permanent and does not cancel Stripe."
+      >
+        <SystemWorkspaceRemovalPanel
+          layout="full"
+          workspaceId={workspace.id}
+          workspaceName={workspace.name}
+          archivedAt={workspace.archivedAt}
+          userCount={workspace.users.length}
+          leadCount={leadCount}
+          claimCount={claimCount}
+          billingCustomerId={workspace.billingCustomerId}
+          billingSubscriptionId={workspace.billingSubscriptionId}
+          billingPriceId={workspace.billingPriceId}
+          stripeConnectAccountId={workspace.stripeConnectAccountId}
+          hasSystemAdminUser={hasSystemAdminUser}
+          returnTo={`/system/workspaces/${workspace.id}`}
+        />
       </Section>
     </>
   );

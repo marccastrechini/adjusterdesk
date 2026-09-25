@@ -220,6 +220,7 @@ model Firm {
   clientPaymentFeeFixedCents Int?
   clientPaymentFeeAcknowledgedAt DateTime?
   signupSource       String?
+  archivedAt         DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -241,6 +242,8 @@ model Firm {
   templates         Template[]
   feedbackEntries   FeedbackEntry[]
   signupIntents     SignupIntent[]
+
+  @@index([archivedAt])
 }
 
 model SignupIntent {
