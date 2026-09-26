@@ -43,7 +43,7 @@ export const trainingModules: TrainingModule[] = [
       {
         title: "Open a claim",
         caption:
-          "Open claims, then open a file. This is the Monica Alvarez claim in Demo Office: wind damage at 52 Garden Isle Loop, Largo, FL 33770. The tabs are Overview, Tasks, Documents, Activity, Money, and Client status. Overview shows Bayline Insurance, claim number BAY-25-0410, policy not set, date of loss May 17, 2026, and deadline June 9, 2026. The next step on the file is: Confirm the final settlement check and release the fee invoice. What to work next shows Tasks 1 open, Documents 0 requested, and Money $0 due. The money snapshot shows invoice AD-DEMO-1001, calculated fee $3,800, payment received $19,000, status Paid, and amount due $0.",
+          "Open claims, then open a file. This is the Monica Alvarez claim in Demo Office: wind damage at 52 Garden Isle Loop, Largo, FL 33770. The tabs are Overview, Tasks, Documents, Activity, Money, and Client status. Overview shows Bayline Insurance, claim number BAY-25-0410, policy not set, date of loss May 17, 2026, and deadline June 9, 2026. The next step on the file is: Confirm the final settlement check and release the fee invoice. What to work next shows Tasks 1 open, Documents 0 requested, and Money $0 due. The money snapshot shows invoice AD-DEMO-1001, calculated fee $3,800, payment received $3,800, status Paid, and amount due $0.",
         alt: "Monica Alvarez claim overview in Demo Office, with the next step and money snapshot",
         imageSrc: "/training/05-claim-overview.png",
       },
@@ -73,7 +73,7 @@ export const trainingModules: TrainingModule[] = [
       {
         title: "See the claim on the claims list",
         caption:
-          "Claims is where a converted lead is worked. Demo Office shows 4 matching claims, 4 active, 1 waiting on client, and 1 waiting on carrier. Monica Alvarez is Negotiating: wind damage at 52 Garden Isle Loop, Largo, FL 33770, Bayline Insurance, claim BAY-25-0410, deadline June 9, 2026. The next step on the row is: Confirm the final settlement check and release the fee invoice. She is assigned to Demo Adjuster, with 1 open task, and the row shows Receivable -$15,200. The row actions are Open claim, Tasks (1), Documents, Log note, and Money.",
+          "Claims is where a converted lead is worked. Demo Office shows 4 matching claims, 4 active, 1 waiting on client, and 1 waiting on carrier. Monica Alvarez is Negotiating: wind damage at 52 Garden Isle Loop, Largo, FL 33770, Bayline Insurance, claim BAY-25-0410, deadline June 9, 2026. The next step on the row is: Confirm the final settlement check and release the fee invoice. She is assigned to Demo Adjuster, with 1 open task, and the row shows Receivable $0. The row actions are Open claim, Tasks (1), Documents, Log note, and Money.",
         alt: "Claims list in Demo Office, with Monica Alvarez and Tasks on the row",
         imageSrc: "/training/04-claims.png",
       },
