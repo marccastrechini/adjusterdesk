@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { publicSiteUrl } from "@/lib/public-metadata";
+import { canonicalSitemapPath } from "@/lib/public-sitemap";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -27,9 +28,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: [
-      new URL("/sitemap.xml", publicSiteUrl).toString(),
-      new URL("/google-sitemap.xml", publicSiteUrl).toString(),
-    ],
+    sitemap: new URL(canonicalSitemapPath, publicSiteUrl).toString(),
   };
 }

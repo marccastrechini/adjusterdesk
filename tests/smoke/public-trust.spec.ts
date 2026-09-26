@@ -49,28 +49,32 @@ test("public SEO routes and security headers are present", async ({ request }) =
   const robotsText = await robotsResponse.text();
   expect(robotsText).toContain("Sitemap: ");
   expect(robotsText).toContain("/sitemap.xml");
-  expect(robotsText).toContain("/google-sitemap.xml");
+  expect(robotsText).not.toContain("/google-sitemap.xml");
+  expect(robotsText).toContain("Disallow: /login");
   expect(robotsText).toContain("Disallow: /claims/");
 
   const sitemapResponse = await request.get("/sitemap.xml");
   expect(sitemapResponse.ok()).toBeTruthy();
+  expect(sitemapResponse.headers()["content-type"]).toContain("xml");
   const sitemapText = await sitemapResponse.text();
-  expect(sitemapText).toContain("/pricing");
+  expect(sitemapText).toContain("https://adjusterdesk.xyz/pricing");
   expect(sitemapText).toContain("/about");
   expect(sitemapText).toContain("/contact");
   expect(sitemapText).toContain("/privacy");
   expect(sitemapText).toContain("/security");
   expect(sitemapText).toContain("/free-public-adjuster-claim-tracker");
+  expect(sitemapText).toContain("/training/desk-overview");
+  expect(sitemapText).toContain("/founding-public-adjuster-offices");
   expect(sitemapText).not.toContain("/claims");
+  expect(sitemapText).not.toContain("<html");
 
-  const staticSitemapResponse = await request.get("/google-sitemap.xml");
-  expect(staticSitemapResponse.ok()).toBeTruthy();
-  expect(staticSitemapResponse.headers()["content-type"]).toContain("xml");
-  const staticSitemapText = await staticSitemapResponse.text();
-  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/pricing");
-  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/resources");
-  expect(staticSitemapText).toContain("https://adjusterdesk.xyz/claimwizard-alternative");
-  expect(staticSitemapText).not.toContain("<html");
+  const legacySitemapResponse = await request.get("/google-sitemap.xml", { maxRedirects: 0 });
+  expect(legacySitemapResponse.status()).toBe(308);
+  expect(legacySitemapResponse.headers().location).toContain("/sitemap.xml");
+
+  const faviconResponse = await request.get("/favicon.ico");
+  expect(faviconResponse.ok()).toBeTruthy();
+  expect(faviconResponse.headers()["content-type"] ?? "").toMatch(/image\/|icon/);
 });
 
 test("free claim tracker page and download asset are reachable", async ({ page, request }) => {

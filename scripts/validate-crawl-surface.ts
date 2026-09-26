@@ -1,3 +1,5 @@
+import { publicSitemapPaths } from "../src/lib/public-sitemap";
+
 type ValidationIssue = {
   level: "error" | "warn";
   message: string;
@@ -5,33 +7,10 @@ type ValidationIssue = {
 
 const defaultBaseUrl = "https://adjusterdesk.xyz";
 
-const expectedPublicPaths = [
-  "/",
-  "/product",
-  "/features",
-  "/how-it-works",
-  "/pricing",
-  "/signup",
-  "/help",
-  "/demo",
-  "/about",
-  "/contact",
-  "/privacy",
-  "/terms",
-  "/cookies",
-  "/accessibility",
-  "/security",
-  "/public-adjuster-software",
-  "/free-public-adjuster-claim-tracker",
-  "/claimwizard-alternative",
-  "/resources",
-  "/training",
-  "/training/desk-overview",
-  "/training/lead-to-claim",
-  "/training/follow-ups",
-];
-
-const sitemapPaths = ["/sitemap.xml", "/google-sitemap.xml"];
+const expectedPublicPaths = [...publicSitemapPaths];
+const canonicalSitemapPath = "/sitemap.xml";
+const legacySitemapPath = "/google-sitemap.xml";
+const permanentRedirectStatuses = new Set([301, 308]);
 
 function getBaseUrlArg(): string {
   const arg = process.argv.find((value) => value.startsWith("--base-url="));
@@ -200,13 +179,14 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
 
   const robotsUrl = toAbsoluteUrl(baseUrl, "/robots.txt");
 
-  for (const sitemapPath of sitemapPaths) {
-    await validateSitemap({
-      sitemapUrl: toAbsoluteUrl(baseUrl, sitemapPath),
-      expectedPaths: expectedPublicPaths,
-      issues,
-    });
-  }
+  await validateSitemap({
+    sitemapUrl: toAbsoluteUrl(baseUrl, canonicalSitemapPath),
+    expectedPaths: expectedPublicPaths,
+    issues,
+  });
+  await validateLegacySitemapRedirect(baseUrl, issues);
+  await validateFavicon(baseUrl, issues);
+  await validateCanonicalHostRedirects(baseUrl, issues);
 
   const robotsResponse = await fetchNoRedirect(robotsUrl);
   if (robotsResponse.status !== 200) {
@@ -221,28 +201,30 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
   const robotsText = await robotsResponse.text();
   const currentHostIsLocal = isLikelyLocalHost(new URL(baseUrl).hostname);
   const robotsSitemapValues = [...robotsText.matchAll(/^Sitemap:\s*(.+)$/gim)].map((match) => match[1].trim());
-  if (robotsSitemapValues.length === 0) {
-    issues.push({ level: "error", message: "Robots is missing a Sitemap line." });
+  if (robotsSitemapValues.length !== 1) {
+    issues.push({
+      level: "error",
+      message: `Robots should advertise one sitemap, found ${robotsSitemapValues.length}: ${robotsSitemapValues.join(", ") || "(none)"}`,
+    });
   }
 
-  for (const sitemapPath of sitemapPaths) {
-    const expectedSitemapUrl = toAbsoluteUrl(baseUrl, sitemapPath);
-    const matchedSitemapValue = robotsSitemapValues.find((value) => {
-      try {
-        return new URL(value).pathname === sitemapPath;
-      } catch {
-        return false;
-      }
-    });
-
-    if (!matchedSitemapValue) {
-      issues.push({ level: "error", message: `Robots is missing sitemap path '${sitemapPath}'` });
-      continue;
+  const expectedSitemapUrl = toAbsoluteUrl(baseUrl, canonicalSitemapPath);
+  const matchedSitemapValue = robotsSitemapValues.find((value) => {
+    try {
+      return new URL(value).pathname === canonicalSitemapPath;
+    } catch {
+      return false;
     }
+  });
 
-    if (!currentHostIsLocal && matchedSitemapValue !== expectedSitemapUrl) {
-      issues.push({ level: "error", message: `Robots sitemap line should be '${expectedSitemapUrl}', got '${matchedSitemapValue}'` });
-    }
+  if (!matchedSitemapValue) {
+    issues.push({ level: "error", message: `Robots is missing sitemap path '${canonicalSitemapPath}'` });
+  } else if (!currentHostIsLocal && matchedSitemapValue !== expectedSitemapUrl) {
+    issues.push({ level: "error", message: `Robots sitemap line should be '${expectedSitemapUrl}', got '${matchedSitemapValue}'` });
+  }
+
+  if (robotsSitemapValues.some((value) => value.includes(legacySitemapPath))) {
+    issues.push({ level: "error", message: "Robots should not advertise the legacy google-sitemap.xml URL." });
   }
 
   const wildcardDisallowLines = new Set(getWildcardUserAgentDisallowLines(robotsText));
@@ -270,6 +252,105 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
     });
   }
   return { issues };
+}
+
+function isProductionSite(baseUrl: string): boolean {
+  const hostname = new URL(baseUrl).hostname.toLowerCase();
+  return hostname === "adjusterdesk.xyz" || hostname === "www.adjusterdesk.xyz";
+}
+
+async function validateLegacySitemapRedirect(baseUrl: string, issues: ValidationIssue[]): Promise<void> {
+  const legacyUrl = toAbsoluteUrl(baseUrl, legacySitemapPath);
+  const response = await fetchNoRedirect(legacyUrl);
+  if (!permanentRedirectStatuses.has(response.status)) {
+    issues.push({
+      level: "error",
+      message: `Legacy sitemap should permanently redirect, got ${response.status}: ${legacyUrl}`,
+    });
+    return;
+  }
+
+  const location = response.headers.get("location");
+  if (!location) {
+    issues.push({ level: "error", message: `Legacy sitemap redirect is missing Location: ${legacyUrl}` });
+    return;
+  }
+
+  const resolved = new URL(location, legacyUrl);
+  if (resolved.pathname !== canonicalSitemapPath) {
+    issues.push({
+      level: "error",
+      message: `Legacy sitemap should redirect to ${canonicalSitemapPath}, got '${location}'`,
+    });
+  }
+}
+
+async function validateFavicon(baseUrl: string, issues: ValidationIssue[]): Promise<void> {
+  const faviconUrl = toAbsoluteUrl(baseUrl, "/favicon.ico");
+  const response = await fetchNoRedirect(faviconUrl);
+  if (response.status !== 200) {
+    issues.push({ level: "error", message: `Favicon status must be 200, got ${response.status}` });
+  }
+
+  const contentType = normalizeContentType(response.headers.get("content-type"));
+  if (!(contentType.includes("image/") || contentType.includes("icon"))) {
+    issues.push({ level: "error", message: `Favicon content-type must be an image, got '${contentType || "(missing)"}'` });
+  }
+
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.length < 16) {
+    issues.push({ level: "error", message: "Favicon body is empty." });
+    return;
+  }
+
+  const looksLikeIco = bytes[0] === 0 && bytes[1] === 0 && bytes[2] === 1 && bytes[3] === 0;
+  const looksLikePng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  if (!looksLikeIco && !looksLikePng) {
+    issues.push({ level: "error", message: "Favicon body is not an ICO or PNG file." });
+  }
+}
+
+async function validateCanonicalHostRedirects(baseUrl: string, issues: ValidationIssue[]): Promise<void> {
+  if (!isProductionSite(baseUrl)) {
+    return;
+  }
+
+  const probes = [
+    "http://adjusterdesk.xyz/",
+    "http://adjusterdesk.xyz/how-it-works",
+    "http://adjusterdesk.xyz/cookies",
+    "http://adjusterdesk.xyz/signup",
+    "http://www.adjusterdesk.xyz/",
+    "https://www.adjusterdesk.xyz/",
+    "https://www.adjusterdesk.xyz/cookies",
+  ];
+
+  for (const url of probes) {
+    const response = await fetchNoRedirect(url);
+    const expectedPath = new URL(url).pathname;
+    if (!permanentRedirectStatuses.has(response.status)) {
+      issues.push({
+        level: "error",
+        message: `Expected permanent redirect for ${url}, got ${response.status}`,
+      });
+      continue;
+    }
+
+    const location = response.headers.get("location");
+    if (!location) {
+      issues.push({ level: "error", message: `Redirect is missing Location header: ${url}` });
+      continue;
+    }
+
+    const resolved = new URL(location, url);
+    const expected = new URL(expectedPath, "https://adjusterdesk.xyz");
+    if (resolved.origin !== expected.origin || resolved.pathname !== expected.pathname) {
+      issues.push({
+        level: "error",
+        message: `Expected redirect to ${expected.origin}${expected.pathname}, got '${location}' for ${url}`,
+      });
+    }
+  }
 }
 
 async function main() {
