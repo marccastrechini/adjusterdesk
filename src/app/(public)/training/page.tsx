@@ -21,7 +21,7 @@ export default function TrainingPage() {
         description="A public walkthrough for a 1–5 person public adjusting office. AdjusterDesk is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call."
       />
 
-      <PublicSection title="Watch the overview" description="A silent Demo Office walkthrough. Captions are on the screen, and the note under the player covers the same path." tone="slate">
+      <PublicSection title="Watch the overview" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
         <ProductOverviewVideo />
       </PublicSection>
 
