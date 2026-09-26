@@ -62,6 +62,20 @@ const privateRouteSources = [
 ];
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/founding",
+        destination: "/founding-public-adjuster-offices",
+        permanent: true,
+      },
+      {
+        source: "/register",
+        destination: "/signup",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
