@@ -78,7 +78,7 @@ async function createDirectClaim(page: Page, suffix: string) {
 
 test("public marketing pages render and workspace routes stay protected", async ({ page }) => {
   const publicPages = [
-    { path: "/", heading: "AdjusterDesk", copy: "Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices" },
+    { path: "/", heading: "The desk for small public adjusting offices", copy: "Leads, claims, documents, follow-ups, settlements, and fees—on one desk instead of email, memory, and folders." },
     { path: "/product", heading: "A daily operating workspace for public adjusting offices.", copy: "Lead and client intake" },
     { path: "/features", heading: "Practical tools for the work your office already does.", copy: "Claim tracking" },
     { path: "/how-it-works", heading: "Simple steps from scattered claim work to a shared office view.", copy: "Bring over the basics" },

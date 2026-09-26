@@ -37,8 +37,8 @@ export default function HomePage() {
     <>
       <PublicHero
         eyebrow="For 1–5 person public adjusting offices"
-        title="AdjusterDesk"
-        description="Claims, follow-ups, documents, and fees slip across email, memory, and scattered files. Keep claims, clients, documents, follow-ups, payments, deadlines, fees, and invoices on one desk."
+        title="The desk for small public adjusting offices"
+        description="Leads, claims, documents, follow-ups, settlements, and fees—on one desk instead of email, memory, and folders."
         primaryHref={FOUNDING_PAGE_HREF}
         primaryLabel="See founding desk offer"
         assurance={
@@ -52,10 +52,6 @@ export default function HomePage() {
       >
         <WorkspacePreview />
       </PublicHero>
-
-      <PublicSection title="See the desk in 60 seconds" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
-        <ProductOverviewVideo />
-      </PublicSection>
 
       <PublicSection title="Start with the desk" description="The founding offer is for the first 10 offices. The sheet stays available if you want a file first." tone="white">
         <FoundingOfferSummary heading="Founding desk offer" headingLevel="h3" showPageLink />
@@ -90,7 +86,11 @@ export default function HomePage() {
         <FeatureGrid features={featureHighlights} />
       </PublicSection>
 
-      <PublicSection title="Built for solo adjusters and small offices" tone="slate">
+      <PublicSection title="Optional: watch a 60-second Demo Office walkthrough" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
+        <ProductOverviewVideo />
+      </PublicSection>
+
+      <PublicSection title="Built for solo adjusters and small offices" tone="white">
         <div className="grid gap-4 md:grid-cols-3">
           {[
             ["Solo adjusters", "Keep client files, claim dates, follow-up notes, and payments organized without running the office from your inbox."],
@@ -105,7 +105,7 @@ export default function HomePage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="How it works" description="A straightforward flow from first call to settlement and fee tracking.">
+      <PublicSection title="How it works" description="A straightforward flow from first call to settlement and fee tracking." tone="slate">
         <StepList steps={howItWorksSteps} />
       </PublicSection>
 

@@ -18,6 +18,7 @@ import {
 import { TrackedLink } from "@/components/tracked-link";
 import type { CTAEventName } from "@/lib/analytics";
 import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
+import { FOUNDING_PAGE_HREF } from "@/lib/founding-offer";
 import { cn } from "@/lib/utils";
 
 export const publicNavItems = [
@@ -110,8 +111,8 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
-            <PublicButtonLink href={startHref} variant="primary" eventName="trial_start_click">
-              {startLabel}
+            <PublicButtonLink href={FOUNDING_PAGE_HREF} variant="primary" eventName="trial_start_click">
+              Founding desk · $0/90 days
             </PublicButtonLink>
             <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
               Email us
@@ -248,7 +249,7 @@ export function PublicHero({
   primaryLabel?: string;
 }) {
   return (
-    <section className="bg-white">
+    <section className="border-b border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-normal text-teal-800">{eyebrow}</p>
