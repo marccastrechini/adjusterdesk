@@ -11,7 +11,7 @@ export const productOverviewChapters = [
 ] as const;
 
 export const productOverviewBlurb =
-  "In about a minute, Demo Office shows the desk for today, a new lead, the claim file, and the follow-up that should not slip. The video is silent. Captions are burned into the picture.";
+  "In about a minute, Demo Office shows the desk for today, a new lead, the claim file, and the follow-up that should not slip.";
 
 export function ProductOverviewVideo() {
   return (

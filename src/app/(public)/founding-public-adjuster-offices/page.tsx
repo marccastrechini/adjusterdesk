@@ -92,7 +92,7 @@ export default function FoundingPublicAdjusterOfficesPage() {
         </div>
       </section>
 
-      <PublicSection title="See the desk in 60 seconds" description="A silent Demo Office walkthrough. Captions are on the screen, and the note under the player covers the same path." tone="slate">
+      <PublicSection title="See the desk in 60 seconds" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
         <ProductOverviewVideo />
       </PublicSection>
 
