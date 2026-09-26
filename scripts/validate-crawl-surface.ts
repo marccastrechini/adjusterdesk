@@ -14,6 +14,8 @@ const expectedPublicPaths = [
   "/signup",
   "/help",
   "/demo",
+  "/about",
+  "/contact",
   "/privacy",
   "/terms",
   "/cookies",

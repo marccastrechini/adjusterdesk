@@ -98,7 +98,7 @@ async function getFirstClaimPath(page: Page) {
 }
 
 test("production public pages load and primary routes are healthy", async ({ page }) => {
-  const publicPaths = ["/", "/login", "/forgot-password", "/pricing", "/privacy", "/terms", "/cookies", "/accessibility", "/security", "/demo"];
+  const publicPaths = ["/", "/login", "/forgot-password", "/pricing", "/about", "/contact", "/privacy", "/terms", "/cookies", "/accessibility", "/security", "/demo"];
 
   for (const route of publicPaths) {
     await page.goto(route);
@@ -112,6 +112,8 @@ test("production public pages load and primary routes are healthy", async ({ pag
   await expect(page.getByRole("link", { name: "Log in" }).first()).toHaveAttribute("href", "/login");
 
   const footer = page.getByRole("contentinfo");
+  await expect(footer.getByRole("link", { name: "About", exact: true })).toHaveAttribute("href", "/about");
+  await expect(footer.getByRole("link", { name: "Contact", exact: true })).toHaveAttribute("href", "/contact");
   await expect(footer.getByRole("link", { name: "Privacy", exact: true })).toHaveAttribute("href", "/privacy");
   await expect(footer.getByRole("link", { name: "Terms", exact: true })).toHaveAttribute("href", "/terms");
   await expect(footer.getByRole("link", { name: "Cookies", exact: true })).toHaveAttribute("href", "/cookies");

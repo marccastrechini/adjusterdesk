@@ -4,6 +4,19 @@ export type TrustSection = {
   items?: string[];
 };
 
+export function NotAttorneyReviewedBanner() {
+  return (
+    <div className="border-b border-amber-300 bg-amber-50" role="note">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <p className="text-sm font-semibold text-amber-950">Not attorney-reviewed</p>
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-amber-950">
+          This page is plain-language product guidance for AdjusterDesk. A lawyer has not drafted or reviewed it. Do not treat it as a finished customer agreement, a court filing, or a compliance certification.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function TrustPageContent({ sections }: { sections: TrustSection[] }) {
   return (
     <div className="grid gap-5">
