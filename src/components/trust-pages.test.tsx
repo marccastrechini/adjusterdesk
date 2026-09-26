@@ -6,8 +6,8 @@ import ContactPage from "@/app/(public)/contact/page";
 import CookiesPage from "@/app/(public)/cookies/page";
 import PrivacyPage from "@/app/(public)/privacy/page";
 import TermsPage from "@/app/(public)/terms/page";
-import sitemap from "@/app/sitemap";
 import { PublicSiteChrome } from "@/components/public-site";
+import { publicSitemapPaths } from "@/lib/public-sitemap";
 
 const publishedPricing =
   "Public pricing is Solo $49/month, Small Office $99/month, and Team $199/month. Signup uses Stripe Checkout and collects a card. On that path, $0 is due during the 14-day trial, then the plan price. Founding Solo and Small Office Checkout charges $0 during a 90-day trial, then $29/month or $49/month, locked for 12 months for the first 10 offices.";
@@ -79,7 +79,6 @@ test("footer and sitemap link about and contact", () => {
   assert.match(html, /href="\/about"/);
   assert.match(html, /href="\/contact"/);
 
-  const paths = sitemap().map((entry) => new URL(entry.url).pathname);
-  assert.ok(paths.includes("/about"));
-  assert.ok(paths.includes("/contact"));
+  assert.ok(publicSitemapPaths.includes("/about"));
+  assert.ok(publicSitemapPaths.includes("/contact"));
 });

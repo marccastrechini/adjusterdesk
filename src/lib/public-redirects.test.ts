@@ -19,4 +19,9 @@ test("short public paths permanently redirect to the canonical pages", async () 
     destination: "/signup",
     permanent: true,
   });
+  assert.deepEqual(bySource.get("/google-sitemap.xml"), {
+    source: "/google-sitemap.xml",
+    destination: "/sitemap.xml",
+    permanent: true,
+  });
 });
