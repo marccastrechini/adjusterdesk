@@ -70,6 +70,9 @@ export default function FoundingPublicAdjusterOfficesPage() {
           <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-4xl">
             Claims, follow-ups, documents, and fees are slipping.
           </h1>
+          <p className="mt-4 max-w-3xl text-lg font-medium leading-7 text-slate-950">
+            One workspace: leads, claims, documents, follow-ups, settlements, fees.
+          </p>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
             In a 1–5 person public adjusting office, that work lives in email, memory, and scattered files. A carrier follow-up waits. A document request stays in a thread. A fee never gets invoiced. AdjusterDesk is the desk for those claims. Start with your first 10 active claims.
           </p>
@@ -84,6 +87,7 @@ export default function FoundingPublicAdjusterOfficesPage() {
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
             {FOUNDING_PRICE_LINE} {FOUNDING_STANDARD_COMPARE}
           </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Built by Marc (Product) and Jenn (Customers)</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             <Link href={TRACKER_PAGE_HREF} className="font-medium text-teal-800 hover:text-teal-900">
               Prefer a sheet for now?
@@ -91,10 +95,6 @@ export default function FoundingPublicAdjusterOfficesPage() {
           </p>
         </div>
       </section>
-
-      <PublicSection title="See the desk in 60 seconds" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
-        <ProductOverviewVideo />
-      </PublicSection>
 
       <PublicSection title="Where the work slips" tone="white">
         <div className="grid gap-4 md:grid-cols-3">
@@ -154,6 +154,10 @@ export default function FoundingPublicAdjusterOfficesPage() {
           </a>
           .
         </p>
+      </PublicSection>
+
+      <PublicSection title="Optional: watch a 60-second Demo Office walkthrough" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
+        <ProductOverviewVideo />
       </PublicSection>
 
       <CtaBand
