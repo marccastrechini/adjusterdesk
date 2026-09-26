@@ -12,6 +12,8 @@ const publicRoutes = [
   "/resources",
   "/help",
   "/demo",
+  "/about",
+  "/contact",
   "/privacy",
   "/terms",
   "/cookies",
