@@ -1,6 +1,6 @@
-# AdjusterDesk Coding Instructions
+# PA ClaimBoard Coding Instructions
 
-AdjusterDesk is a simple workspace for small public adjusting offices. Build for solo to 5-person public adjusting firms that currently rely on spreadsheets, email, text messages, folders, QuickBooks, calendar reminders, and memory.
+PA ClaimBoard is a simple workspace for small public adjusting offices. Build for solo to 5-person public adjusting firms that currently rely on spreadsheets, email, text messages, folders, QuickBooks, calendar reminders, and memory.
 
 ## Product Language
 

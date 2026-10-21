@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it, afterEach } from "node:test";
 import { getEnvStatus, resolveAppBaseUrl, resolveAppEnvironment, resolveDatabaseUrl, resolveUploadsDir } from "./env";
+import { canonicalOrigin } from "@/lib/brand";
 
 describe("env status helper", () => {
   afterEach(() => {
     delete process.env.APP_ENV;
     delete process.env.APP_BASE_URL;
+    delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.DATABASE_URL;
     delete process.env.UPLOADS_DIR;
     delete process.env.AUTH_SECRET;
@@ -38,7 +40,7 @@ describe("env status helper", () => {
     assert.equal(resolveAppEnvironment(), "production");
     assert.equal(resolveDatabaseUrl(), "file:./prisma/production.db");
     assert.equal(resolveUploadsDir(), "storage/uploads-production");
-    assert.equal(resolveAppBaseUrl(), "https://adjusterdesk.xyz");
+    assert.equal(resolveAppBaseUrl(), canonicalOrigin);
   });
 
   it("keeps development defaults when APP_ENV is not production", () => {

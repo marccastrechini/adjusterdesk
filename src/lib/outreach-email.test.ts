@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { OutreachActivityStatus, OutreachProspectStatus } from "@/generated/prisma/client";
 import { renderOutreachEmailTemplate, resolveOutreachSenderPolicy, sendOutreachTemplateEmail } from "@/lib/outreach-email";
+import { brandName, canonicalOrigin, supportEmail, adminEmail, operatorEmailDomain } from "@/lib/brand";
 
 function withEnv<T>(values: Record<string, string | undefined>, callback: () => T): T {
   const previous: Record<string, string | undefined> = {};
@@ -33,15 +34,15 @@ test("outreach templates render key variables", () => {
     prospectFirmName: "Harbor Public Adjusting",
     prospectContactName: "Dana",
     operatorName: "Jenn",
-    operatorEmail: "jenn@adjusterdesk.xyz",
+    operatorEmail: `jenn@${operatorEmailDomain}`,
   });
 
   assert.ok(rendered);
   assert.ok(rendered.subject.includes("Harbor Public Adjusting"));
   assert.ok(rendered.body.includes("Hi Dana,"));
-  assert.ok(rendered.body.includes("https://adjusterdesk.xyz/free-public-adjuster-claim-tracker"));
-  assert.ok(rendered.body.includes("https://adjusterdesk.xyz/signup"));
-  assert.ok(rendered.body.includes("jenn@adjusterdesk.xyz"));
+  assert.ok(rendered.body.includes(`${canonicalOrigin}/free-public-adjuster-claim-tracker`));
+  assert.ok(rendered.body.includes(`${canonicalOrigin}/signup`));
+  assert.ok(rendered.body.includes(`jenn@${operatorEmailDomain}`));
 });
 
 test("sender policy uses operator reply-to with safe fallback from when direct from is disabled", () => {
@@ -49,13 +50,13 @@ test("sender policy uses operator reply-to with safe fallback from when direct f
     {
       EMAIL_PROVIDER: "resend",
       OUTREACH_ALLOW_OPERATOR_FROM: "false",
-      SYSTEM_EMAIL_FROM: "AdjusterDesk <hello@adjusterdesk.xyz>",
-      SYSTEM_EMAIL_REPLY_TO: "hello@adjusterdesk.xyz",
+      SYSTEM_EMAIL_FROM: `${brandName} <${supportEmail}>`,
+      SYSTEM_EMAIL_REPLY_TO: supportEmail,
     },
     () => {
-      const sender = resolveOutreachSenderPolicy({ userName: "Jenn", userEmail: "jenn@adjusterdesk.xyz" });
-      assert.equal(sender.fromEmail, "hello@adjusterdesk.xyz");
-      assert.equal(sender.replyToEmail, "jenn@adjusterdesk.xyz");
+      const sender = resolveOutreachSenderPolicy({ userName: "Jenn", userEmail: `jenn@${operatorEmailDomain}` });
+      assert.equal(sender.fromEmail, supportEmail);
+      assert.equal(sender.replyToEmail, `jenn@${operatorEmailDomain}`);
       assert.equal(sender.usingOperatorFrom, false);
       assert.equal(sender.usingOperatorReplyTo, true);
     },
@@ -67,15 +68,15 @@ test("sender policy never uses admin mailbox for outreach", () => {
     {
       EMAIL_PROVIDER: "resend",
       OUTREACH_ALLOW_OPERATOR_FROM: "true",
-      SYSTEM_EMAIL_FROM: "AdjusterDesk <admin@adjusterdesk.xyz>",
-      SYSTEM_EMAIL_REPLY_TO: "admin@adjusterdesk.xyz",
+      SYSTEM_EMAIL_FROM: `${brandName} <${adminEmail}>`,
+      SYSTEM_EMAIL_REPLY_TO: adminEmail,
     },
     () => {
-      const sender = resolveOutreachSenderPolicy({ userName: "Admin", userEmail: "admin@adjusterdesk.xyz" });
-      assert.notEqual(sender.fromEmail, "admin@adjusterdesk.xyz");
-      assert.notEqual(sender.replyToEmail, "admin@adjusterdesk.xyz");
-      assert.equal(sender.fromEmail, "hello@adjusterdesk.xyz");
-      assert.equal(sender.replyToEmail, "hello@adjusterdesk.xyz");
+      const sender = resolveOutreachSenderPolicy({ userName: "Admin", userEmail: adminEmail });
+      assert.notEqual(sender.fromEmail, adminEmail);
+      assert.notEqual(sender.replyToEmail, adminEmail);
+      assert.equal(sender.fromEmail, supportEmail);
+      assert.equal(sender.replyToEmail, supportEmail);
     },
   );
 });
@@ -122,7 +123,7 @@ test("sendOutreachTemplateEmail logs SENT and updates status/date/follow-up for 
       actor: {
         id: "user_1",
         name: "Jenn",
-        email: "jenn@adjusterdesk.xyz",
+        email: `jenn@${operatorEmailDomain}`,
       },
     },
     {
@@ -187,7 +188,7 @@ test("sendOutreachTemplateEmail logs FAILED and does not update status on provid
       actor: {
         id: "user_1",
         name: "Jenn",
-        email: "jenn@adjusterdesk.xyz",
+        email: `jenn@${operatorEmailDomain}`,
       },
     },
     {

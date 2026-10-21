@@ -19,11 +19,12 @@ import {
 } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { startSignupWithState } from "@/lib/signup-actions";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = publicPageMetadata({
-  title: "Sign Up | AdjusterDesk",
+  title: `Sign Up | ${brandName}`,
   description: "Create your workspace and choose the plan that fits your office.",
   path: "/signup",
 });
@@ -60,8 +61,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
       <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl gap-6">
           <div className="text-center">
-            <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
+            <p className="text-sm font-medium text-teal-800">{brandName} signup</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your {brandName} workspace</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Self-service signup is not available right now. Contact us to get started.
             </p>
@@ -73,7 +74,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="mailto:hello@adjusterdesk.xyz"
+                href={`mailto:${supportEmail}`}
                 className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800"
               >
                 Email us
@@ -95,8 +96,8 @@ export default async function SignupPage({ searchParams }: PageProps) {
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-3xl gap-6">
         <div className="text-center">
-          <p className="text-sm font-medium text-teal-800">AdjusterDesk signup</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your AdjusterDesk workspace</h1>
+          <p className="text-sm font-medium text-teal-800">{brandName} signup</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your {brandName} workspace</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {founding
               ? `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${FOUNDING_TRIAL_DUE_LINE}`

@@ -1,6 +1,7 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureCard, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { FOUNDING_SOLO_SIGNUP_HREF } from "@/lib/founding-offer";
+import { brandName } from "@/lib/brand";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import {
   BriefcaseBusiness,
@@ -14,8 +15,8 @@ import {
 } from "lucide-react";
 
 export const metadata = publicPageMetadata({
-  title: "Public Adjuster Software for Small Offices | AdjusterDesk",
-  description: "AdjusterDesk keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices organized for small public adjusting offices.",
+  title: `Public Adjuster Software for Small Offices | ${brandName}`,
+  description: `${brandName} keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices organized for small public adjusting offices.`,
   path: "/public-adjuster-software",
 });
 
@@ -88,7 +89,7 @@ export default function PublicAdjusterSoftwarePage() {
       <PublicPageHeader
         eyebrow="Office management software"
         title="Public Adjuster Software for Small Offices"
-        description="Built for solo adjusters and 2-5 person public adjusting offices. AdjusterDesk keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices in one simple workspace instead of spreadsheets, inboxes, and memory."
+        description={`Built for solo adjusters and 2-5 person public adjusting offices. ${brandName} keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices in one simple workspace instead of spreadsheets, inboxes, and memory.`}
       />
 
       <PublicSection title="Who this is for and what to do first" tone="white">
@@ -113,8 +114,8 @@ export default function PublicAdjusterSoftwarePage() {
       </PublicSection>
 
       <PublicSection
-        title="What AdjusterDesk organizes for you"
-        description="A small public adjusting office needs one place to manage leads, claims, follow-ups, documents, payments, and fees. AdjusterDesk handles the pieces you already work with every day."
+        title={`What ${brandName} organizes for you`}
+        description={`A small public adjusting office needs one place to manage leads, claims, follow-ups, documents, payments, and fees. ${brandName} handles the pieces you already work with every day.`}
         tone="slate"
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,7 +128,7 @@ export default function PublicAdjusterSoftwarePage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="Built for the way small offices work" description="AdjusterDesk is designed for offices that track claims in practical terms, not complicated enterprise configurations.">
+      <PublicSection title="Built for the way small offices work" description={`${brandName} is designed for offices that track claims in practical terms, not complicated enterprise configurations.`}>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {softwareFeatures.map((feature) => (
             <FeatureCard key={feature.title} feature={feature} />
@@ -135,7 +136,7 @@ export default function PublicAdjusterSoftwarePage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="AdjusterDesk for different size offices" tone="slate">
+      <PublicSection title={`${brandName} for different size offices`} tone="slate">
         <div className="grid gap-4 md:grid-cols-3">
           {useCases.map(({ title, description }) => (
             <div key={title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -148,7 +149,7 @@ export default function PublicAdjusterSoftwarePage() {
 
       <PublicSection
         title="Start simple with your first 10-50 active claims"
-        description="AdjusterDesk is built so a small office can get organized without a long setup project."
+        description={`${brandName} is built so a small office can get organized without a long setup project.`}
       >
         <div className="grid gap-4 md:grid-cols-3">
           {[

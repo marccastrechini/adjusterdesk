@@ -3,6 +3,7 @@ import { sendDirectEmail } from "@/lib/email";
 import { applyOutreachEmailTaskRules } from "@/lib/outreach-tasks";
 import { prisma } from "@/lib/prisma";
 import { freeClaimTrackerUrl, trialSignupUrl } from "@/lib/outreach";
+import { adminEmail, brandName, operatorEmailDomain, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
 
 const outreachTemplateCatalog = [
   {
@@ -22,7 +23,7 @@ const outreachTemplateCatalog = [
       "If you are open to it, I would value a quick reply with what your office would want most.",
       "",
       "Thanks,",
-      "{{operatorNameOrAdjusterDesk}}",
+      "{{operatorNameOrBrand}}",
       "{{operatorEmailLine}}",
     ].join("\n"),
   },
@@ -44,7 +45,7 @@ const outreachTemplateCatalog = [
       "No pressure at all. If now is not a good time, I can follow up later.",
       "",
       "Thanks,",
-      "{{operatorNameOrAdjusterDesk}}",
+      "{{operatorNameOrBrand}}",
       "{{operatorEmailLine}}",
     ].join("\n"),
   },
@@ -95,13 +96,13 @@ export function renderOutreachEmailTemplate(input: OutreachTemplateRenderInput) 
     return null;
   }
 
-  const safeOperatorName = input.operatorName?.trim() || "AdjusterDesk";
+  const safeOperatorName = input.operatorName?.trim() || brandName;
   const safeOperatorEmail = input.operatorEmail?.trim() || "";
 
   const variables: Record<string, string> = {
     firmName: input.prospectFirmName.trim() || "your office",
     contactNameOrFallback: input.prospectContactName?.trim() || "there",
-    operatorNameOrAdjusterDesk: safeOperatorName,
+    operatorNameOrBrand: safeOperatorName,
     operatorEmail: safeOperatorEmail,
     operatorEmailLine: safeOperatorEmail ? safeOperatorEmail : "",
     claimTrackerLink: freeClaimTrackerUrl,
@@ -116,32 +117,12 @@ export function renderOutreachEmailTemplate(input: OutreachTemplateRenderInput) 
   };
 }
 
-function extractEmailAddress(value: string) {
-  const match = value.match(/<([^>]+)>/);
-  return (match?.[1] || value).trim().toLowerCase();
-}
-
 function parseSystemFrom() {
-  const configured = process.env.SYSTEM_EMAIL_FROM?.trim() || "AdjusterDesk <hello@adjusterdesk.xyz>";
-  const email = extractEmailAddress(configured);
-  if (email === "admin@adjusterdesk.xyz") {
-    return {
-      from: "AdjusterDesk <hello@adjusterdesk.xyz>",
-      fromEmail: "hello@adjusterdesk.xyz",
-    };
-  }
-  return {
-    from: configured,
-    fromEmail: email,
-  };
+  return resolveBrandFromHeader(process.env.SYSTEM_EMAIL_FROM);
 }
 
 function parseSystemReplyTo() {
-  const configured = (process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz").toLowerCase();
-  if (configured === "admin@adjusterdesk.xyz") {
-    return "hello@adjusterdesk.xyz";
-  }
-  return configured;
+  return resolveBrandReplyTo(process.env.SYSTEM_EMAIL_REPLY_TO);
 }
 
 function canUseOperatorFromAddress() {
@@ -153,7 +134,7 @@ function canUseOperatorFromAddress() {
 function isAllowedOperatorAddress(value?: string | null) {
   if (!value) return false;
   const email = value.trim().toLowerCase();
-  return email.endsWith("@adjusterdesk.xyz") && email !== "admin@adjusterdesk.xyz";
+  return email.endsWith(`@${operatorEmailDomain}`) && email !== adminEmail;
 }
 
 function formatFromName(name: string | undefined, email: string) {
@@ -217,7 +198,7 @@ function toSimpleHtml(body: string) {
     .map((block) => `<p style=\"margin: 0 0 12px; color: #334155; font-size: 14px; line-height: 1.6;\">${block.replaceAll("\n", "<br />")}</p>`)
     .join("");
 
-  return `<!doctype html><html><body style=\"font-family: Arial, Helvetica, sans-serif; background: #f8fafc; padding: 24px;\"><div style=\"max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;\"><p style=\"margin: 0 0 14px; color: #0f766e; font-size: 13px; font-weight: 700;\">AdjusterDesk Outreach</p>${paragraphHtml}</div></body></html>`;
+  return `<!doctype html><html><body style=\"font-family: Arial, Helvetica, sans-serif; background: #f8fafc; padding: 24px;\"><div style=\"max-width: 640px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px;\"><p style=\"margin: 0 0 14px; color: #0f766e; font-size: 13px; font-weight: 700;\">${brandName} Outreach</p>${paragraphHtml}</div></body></html>`;
 }
 
 function addBusinessDays(date: Date, businessDays: number) {
@@ -336,7 +317,7 @@ export async function sendOutreachTemplateEmail(input: SendOutreachTemplateInput
   }
 
   const sender = resolveOutreachSenderPolicy({ userName: input.actor.name, userEmail: input.actor.email });
-  if (sender.fromEmail === "admin@adjusterdesk.xyz" || sender.replyToEmail === "admin@adjusterdesk.xyz") {
+  if (sender.fromEmail === adminEmail || sender.replyToEmail === adminEmail) {
     return { ok: false, errorCode: "provider", errorMessage: "Outreach sender policy rejected admin mailbox usage." };
   }
 
@@ -436,7 +417,7 @@ export function getOutreachTemplatePreviewDescriptors() {
       prospectFirmName: "Sample Public Adjusting",
       prospectContactName: "Jordan",
       operatorName: "Outreach Operator",
-      operatorEmail: "operator@adjusterdesk.xyz",
+      operatorEmail: `operator@${operatorEmailDomain}`,
     });
 
     return {
@@ -445,13 +426,13 @@ export function getOutreachTemplatePreviewDescriptors() {
       description: `${template.description} (Outreach manual send template)` ,
       audience: "customer" as const,
       from: fallbackFrom,
-      replyTo: `operator@adjusterdesk.xyz (fallback: ${fallbackReplyTo})`,
+      replyTo: `operator@${operatorEmailDomain} (fallback: ${fallbackReplyTo})`,
       subject: rendered?.subject ?? template.subject,
       sampleDataLabels: {
         contactName: "Jordan",
         firmName: "Sample Public Adjusting",
         operatorName: "Outreach Operator",
-        operatorEmail: "operator@adjusterdesk.xyz",
+        operatorEmail: `operator@${operatorEmailDomain}`,
         claimTrackerLink: freeClaimTrackerUrl,
         trialSignupLink: trialSignupUrl,
       },

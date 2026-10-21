@@ -6,6 +6,7 @@ import robots from "@/app/robots";
 import { canonicalRedirectStatus, canonicalRedirectTarget } from "@/lib/public-canonical";
 import { buildPublicSitemapXml, publicSitemapPaths } from "@/lib/public-sitemap";
 import { proxy } from "@/proxy";
+import { canonicalHost, canonicalOrigin } from "@/lib/brand";
 
 test("checked-in sitemap matches the public marketing paths", () => {
   const xml = readFileSync(new URL("../../public/sitemap.xml", import.meta.url), "utf8");
@@ -49,14 +50,61 @@ test("robots advertises only the canonical sitemap and still blocks app paths", 
 test("public host redirects preserve path and query", () => {
   assert.equal(
     canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
+      host: canonicalHost,
       forwardedHost: null,
       forwardedProto: "http",
       cfVisitor: '{"scheme":"http"}',
       pathname: "/how-it-works",
       search: "",
     }),
-    "https://adjusterdesk.xyz/how-it-works",
+    `${canonicalOrigin}/how-it-works`,
+  );
+  assert.equal(
+    canonicalRedirectTarget({
+      host: `www.${canonicalHost}`,
+      forwardedHost: null,
+      forwardedProto: "https",
+      cfVisitor: '{"scheme":"https"}',
+      pathname: "/cookies",
+      search: "?ref=1",
+    }),
+    `${canonicalOrigin}/cookies?ref=1`,
+  );
+  assert.equal(
+    canonicalRedirectTarget({
+      host: `www.${canonicalHost}:80`,
+      forwardedHost: null,
+      forwardedProto: "http",
+      cfVisitor: null,
+      pathname: "/",
+      search: "",
+    }),
+    `${canonicalOrigin}/`,
+  );
+  assert.equal(
+    canonicalRedirectTarget({
+      host: canonicalHost,
+      forwardedHost: null,
+      forwardedProto: "https",
+      cfVisitor: '{"scheme":"https"}',
+      pathname: "/signup",
+      search: "",
+    }),
+    null,
+  );
+});
+
+test("hosts outside the canonical site are left unchanged", () => {
+  assert.equal(
+    canonicalRedirectTarget({
+      host: "adjusterdesk.xyz",
+      forwardedHost: null,
+      forwardedProto: "http",
+      cfVisitor: '{"scheme":"http"}',
+      pathname: "/",
+      search: "",
+    }),
+    null,
   );
   assert.equal(
     canonicalRedirectTarget({
@@ -64,29 +112,7 @@ test("public host redirects preserve path and query", () => {
       forwardedHost: null,
       forwardedProto: "https",
       cfVisitor: '{"scheme":"https"}',
-      pathname: "/cookies",
-      search: "?ref=1",
-    }),
-    "https://adjusterdesk.xyz/cookies?ref=1",
-  );
-  assert.equal(
-    canonicalRedirectTarget({
-      host: "www.adjusterdesk.xyz:80",
-      forwardedHost: null,
-      forwardedProto: "http",
-      cfVisitor: null,
-      pathname: "/",
-      search: "",
-    }),
-    "https://adjusterdesk.xyz/",
-  );
-  assert.equal(
-    canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
-      forwardedHost: null,
-      forwardedProto: "https",
-      cfVisitor: '{"scheme":"https"}',
-      pathname: "/signup",
+      pathname: "/pricing",
       search: "",
     }),
     null,
@@ -107,7 +133,7 @@ test("unknown or local hosts and missing scheme are not protocol-redirected", ()
   );
   assert.equal(
     canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
+      host: canonicalHost,
       forwardedHost: null,
       forwardedProto: null,
       cfVisitor: null,
@@ -132,7 +158,7 @@ test("unknown or local hosts and missing scheme are not protocol-redirected", ()
 test("forwarded proto uses the first token and cf-visitor wins", () => {
   assert.equal(
     canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
+      host: canonicalHost,
       forwardedHost: null,
       forwardedProto: "https,http",
       cfVisitor: null,
@@ -143,18 +169,18 @@ test("forwarded proto uses the first token and cf-visitor wins", () => {
   );
   assert.equal(
     canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
+      host: canonicalHost,
       forwardedHost: null,
       forwardedProto: "http,http",
       cfVisitor: null,
       pathname: "/signup",
       search: "",
     }),
-    "https://adjusterdesk.xyz/signup",
+    `${canonicalOrigin}/signup`,
   );
   assert.equal(
     canonicalRedirectTarget({
-      host: "adjusterdesk.xyz",
+      host: canonicalHost,
       forwardedHost: null,
       forwardedProto: "http",
       cfVisitor: '{"scheme":"https"}',
@@ -166,20 +192,20 @@ test("forwarded proto uses the first token and cf-visitor wins", () => {
   assert.equal(
     canonicalRedirectTarget({
       host: "origin.internal",
-      forwardedHost: "www.adjusterdesk.xyz",
+      forwardedHost: `www.${canonicalHost}`,
       forwardedProto: "https",
       cfVisitor: null,
       pathname: "/help",
       search: "",
     }),
-    "https://adjusterdesk.xyz/help",
+    `${canonicalOrigin}/help`,
   );
 });
 
 test("unsafe paths are not turned into redirects", () => {
   assert.equal(
     canonicalRedirectTarget({
-      host: "www.adjusterdesk.xyz",
+      host: `www.${canonicalHost}`,
       forwardedHost: null,
       forwardedProto: "https",
       cfVisitor: null,
@@ -191,16 +217,16 @@ test("unsafe paths are not turned into redirects", () => {
 });
 
 test("proxy redirects public duplicates and leaves localhost alone", () => {
-  const httpWww = new NextRequest("http://www.adjusterdesk.xyz/cookies?x=1", {
+  const httpWww = new NextRequest(`http://www.${canonicalHost}/cookies?x=1`, {
     headers: {
-      host: "www.adjusterdesk.xyz",
+      host: `www.${canonicalHost}`,
       "x-forwarded-proto": "http",
       "cf-visitor": '{"scheme":"http"}',
     },
   });
   const redirected = proxy(httpWww);
   assert.equal(redirected.status, canonicalRedirectStatus);
-  assert.equal(redirected.headers.get("location"), "https://adjusterdesk.xyz/cookies?x=1");
+  assert.equal(redirected.headers.get("location"), `${canonicalOrigin}/cookies?x=1`);
 
   const local = new NextRequest("http://localhost:3000/pricing", {
     headers: { host: "localhost:3000" },

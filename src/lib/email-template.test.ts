@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { renderSystemEmailTemplate } from "./email-template";
+import { brandName } from "@/lib/brand";
 
 describe("system email template", () => {
   it("renders html and plain text output", () => {
@@ -12,10 +13,10 @@ describe("system email template", () => {
       ctaLabel: "Reset password",
       ctaUrl: "http://localhost:3000/reset-password?token=test",
       secondaryText: "If this was not you, ignore this email.",
-      footer: "AdjusterDesk system email",
+      footer: `${brandName} system email`,
     });
 
-    assert.ok(result.html.includes("AdjusterDesk"));
+    assert.ok(result.html.includes(brandName));
     assert.ok(result.html.includes("Reset password"));
     assert.ok(result.html.includes("href=\"http://localhost:3000/reset-password?token=test\""));
     assert.ok(result.text.includes("Reset password: http://localhost:3000/reset-password?token=test"));

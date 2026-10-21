@@ -1,12 +1,13 @@
 # Email Setup (IONOS + GoDaddy + Resend)
 
-This document defines how email is split for AdjusterDesk on `adjusterdesk.xyz`.
+This document defines how email is split for PA ClaimBoard. The public site is `paclaimboard.com`. Mailboxes stay on `adjusterdesk.xyz` until `paclaimboard.com` mail exists.
 
 ## Roles And Addresses
 
 - Operator login address: `admin@adjusterdesk.xyz`
 - Outbound system email address: `hello@adjusterdesk.xyz`
-- App public domain: `adjusterdesk.xyz`
+- App public domain: `paclaimboard.com`
+- Mailbox domain until mail moves: `adjusterdesk.xyz`
 
 ## Service Ownership
 
@@ -33,7 +34,7 @@ APP_ENV=development
 APP_BASE_URL=http://localhost:3000
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
+SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"
 SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
 PASSWORD_RESET_TOKEN_MINUTES=30
 USER_INVITATION_TOKEN_MINUTES=4320
@@ -44,7 +45,7 @@ For the local production profile, change only:
 
 ```dotenv
 APP_ENV=production
-APP_BASE_URL=https://adjusterdesk.xyz
+APP_BASE_URL=https://paclaimboard.com
 DATABASE_URL=file:./prisma/production.db
 UPLOADS_DIR=storage/uploads-production
 ```
@@ -67,7 +68,7 @@ UPLOADS_DIR=storage/uploads-production
 - Reset emails are plain-text and sent through Resend using:
 
 - Reset emails now use the shared system renderer for both HTML and plain-text output and are sent through Resend using:
-	- `SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"`
+	- `SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"`
 	- `SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz`
 
 ## Implemented Invite Flow

@@ -1,4 +1,5 @@
-export const FOUNDING_SUPPORT_EMAIL = "hello@adjusterdesk.xyz";
+import { supportEmail } from "@/lib/brand";
+export const FOUNDING_SUPPORT_EMAIL = supportEmail;
 
 export const FOUNDING_SOLO_SIGNUP_HREF = "/signup?plan=solo&offer=founding";
 export const FOUNDING_SMALL_OFFICE_SIGNUP_HREF = "/signup?plan=small-office&offer=founding";
@@ -11,7 +12,7 @@ export const FOUNDING_PRICE_LINE =
 export const FOUNDING_STANDARD_COMPARE = "Standard pricing is Solo $49/month and Small Office $99/month.";
 
 export const FOUNDING_ONBOARDING =
-  "Async onboarding, no sales call. Email support at hello@adjusterdesk.xyz.";
+  `Async onboarding, no sales call. Email support at ${supportEmail}.`;
 
 export const FOUNDING_TERMS = [
   "First 10 founding offices only.",

@@ -1,5 +1,5 @@
 param(
-  [string]$TaskName = "AdjusterDeskLocalProduction",
+  [string]$TaskName = "PA ClaimBoardLocalProduction",
   [switch]$ConfirmInstall
 )
 

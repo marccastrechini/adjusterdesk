@@ -1,9 +1,10 @@
 import { CtaBand, PublicPageHeader, PublicSection, StepList, WorkspacePreview } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Product | AdjusterDesk",
-  description: "See how AdjusterDesk supports the daily claim workflow for small public adjusting offices.",
+  title: `Product | ${brandName}`,
+  description: `See how ${brandName} supports the daily claim workflow for small public adjusting offices.`,
   path: "/product",
 });
 
@@ -48,7 +49,7 @@ export default function ProductPage() {
       <PublicPageHeader
         eyebrow="Product"
         title="A daily operating workspace for public adjusting offices."
-        description="AdjusterDesk follows the way a small office works: intake, claim setup, documents, follow-ups, carrier offers, settlement payments, fees, invoices, and the Today view."
+        description={`${brandName} follows the way a small office works: intake, claim setup, documents, follow-ups, carrier offers, settlement payments, fees, invoices, and the Today view.`}
       />
       <PublicSection title="The workflow from lead to Today">
         <StepList steps={workflowSteps} />

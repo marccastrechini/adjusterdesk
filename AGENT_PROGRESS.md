@@ -13,7 +13,7 @@
 - Built Today, Leads, Claims, claim tabs, Money, Reports, Settings, CSV Import, and public Status routes.
 - Added server actions for core lead, claim, task, document, communication, money, template, user, CSV import, and status upload workflows.
 - Added CSV export route handlers for leads, claims, and invoices.
-- Replaced the generated README with AdjusterDesk setup and MVP notes.
+- Replaced the generated README with PA ClaimBoard setup and MVP notes.
 - Completed a QA walkthrough of all required routes, claim tabs, public status pages, sidebar navigation, and CSV exports.
 - Polished navigation grouping, demo-user display, receivable labels, document storage wording, inactive-user creation, and demo data depth.
 - Added a `prisma:generate` script alias so the repo supports the requested Prisma verification command.
@@ -69,7 +69,7 @@
 - Linked `docs/DEMO_SCRIPT.md` and `docs/DEMO_READINESS.md` from `README.md` setup and readiness sections.
 - Updated env/documentation configuration for email and password-reset readiness only: expanded `.env.example`, added safe non-secret placeholders to local `.env`, created `docs/EMAIL_SETUP.md`, linked the new doc from `README.md`, `docs/LOCAL_HOSTING.md`, and `docs/SYSTEM_ADMIN.md`, and kept this slice free of feature code changes.
 - Implemented transactional password-reset infrastructure: added Resend email helper, forgot/reset password pages, generic non-enumerating reset request behavior, one-time expiring password reset tokens in Prisma, login notice support for reset completion, and docs updates for email/reset validation.
-- Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent AdjusterDesk branding and plain-language tone.
+- Added a shared system email template renderer (`src/lib/email-template.ts`) with both HTML and text output, and updated password-reset email sending to use the shared renderer for consistent PA ClaimBoard branding and plain-language tone.
 - Added secure user invitations with one-time hashed invitation tokens, invite email delivery through the shared system template, an `/accept-invite` password setup page, and resend-invite actions in system and workspace user management.
 - Added local production runtime operations tooling for the main demo machine: `run-local-production.ps1`, `deploy-local-production.ps1`, Task Scheduler management scripts, npm aliases, and a new `docs/LOCAL_PRODUCTION.md` runbook linked from README and local-hosting docs.
 - Added a production-only demo bootstrap slice for the public demo instance, including a guarded `prod:demo:bootstrap` npm alias, a repeatable production demo workspace seeding script, and `docs/PRODUCTION_DEMO_BOOTSTRAP.md`.

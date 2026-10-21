@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { resolveCheckoutPrice, type PublicPlanSlug } from "@/lib/billing";
+import { brandName } from "@/lib/brand";
 
 let stripeClient: Stripe | null = null;
 
@@ -17,7 +18,7 @@ export function requireStripeClient() {
     stripeClient = new Stripe(secretKey, {
       apiVersion: "2026-05-27.dahlia",
       appInfo: {
-        name: "AdjusterDesk",
+        name: brandName,
       },
     });
   }

@@ -1,5 +1,7 @@
-export const productOverviewVideoSrc = "/marketing/adjusterdesk-overview.mp4";
-export const productOverviewPosterSrc = "/marketing/adjusterdesk-overview-poster.jpg";
+import { brandName } from "@/lib/brand";
+// Kept for a future re-record. Marketing pages do not embed this file while it still shows the previous brand.
+export const productOverviewVideoSrc = "/marketing/product-overview.mp4";
+export const productOverviewPosterSrc = "/marketing/product-overview-poster.jpg";
 
 export const productOverviewChapters = [
   "Your desk for today",
@@ -24,7 +26,7 @@ export function ProductOverviewVideo() {
         poster={productOverviewPosterSrc}
         width={1280}
         height={720}
-        aria-label="AdjusterDesk overview, about 60 seconds"
+        aria-label={`${brandName} overview, about 60 seconds`}
       >
         <source src={productOverviewVideoSrc} type="video/mp4" />
       </video>

@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { canonicalOrigin } from "@/lib/brand";
 
 function loadLocalQaEnv(repoRoot: string) {
   const qaEnvPath = path.join(repoRoot, ".env.qa.local");
@@ -46,7 +47,7 @@ async function main() {
   const repoRoot = process.cwd();
   const { qaEnvPath, loaded } = loadLocalQaEnv(repoRoot);
 
-  const baseUrl = process.env.AD_QA_BASE_URL?.trim() || "https://adjusterdesk.xyz";
+  const baseUrl = process.env.AD_QA_BASE_URL?.trim() || canonicalOrigin;
 
   const env = {
     ...process.env,

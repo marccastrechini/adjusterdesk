@@ -8,6 +8,7 @@ import { getUsers } from "@/lib/queries";
 import { Badge, Card, Notice, PageHeader, Section, SubmitButton } from "@/components/ui";
 import { trialDaysRemaining, trialPromptState } from "@/lib/trial";
 import { selectClassName } from "@/components/ui";
+import { brandName } from "@/lib/brand";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -45,7 +46,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
           {trialState === "expired" ? (
             <>
               <p className="font-semibold text-slate-950">Your free trial has ended.</p>
-              <p className="text-sm leading-6 text-slate-700">Choose a plan below to continue using AdjusterDesk. Your data and settings are preserved.</p>
+              <p className="text-sm leading-6 text-slate-700">Choose a plan below to continue using {brandName}. Your data and settings are preserved.</p>
             </>
           ) : (
             <p className="text-sm leading-6 text-slate-700">

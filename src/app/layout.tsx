@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist } from "next/font/google";
+import { brandName } from "@/lib/brand";
 import { publicSiteUrl } from "@/lib/public-metadata";
 import "./globals.css";
 
@@ -12,22 +13,22 @@ const geistSans = Geist({
 function buildMetadata(): Metadata {
   const metadata: Metadata = {
     metadataBase: publicSiteUrl,
-    applicationName: "AdjusterDesk",
+    applicationName: brandName,
     title: {
-      default: "AdjusterDesk",
+      default: brandName,
       template: "%s",
     },
     description: "A simple workspace for small public adjusting offices.",
     openGraph: {
-      title: "AdjusterDesk",
+      title: brandName,
       description: "A simple workspace for small public adjusting offices.",
       url: "/",
-      siteName: "AdjusterDesk",
+      siteName: brandName,
       type: "website",
     },
     twitter: {
       card: "summary",
-      title: "AdjusterDesk",
+      title: brandName,
       description: "A simple workspace for small public adjusting offices.",
     },
     robots: {

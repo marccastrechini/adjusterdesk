@@ -57,7 +57,7 @@ foreach ($envPath in @($profileEnvPath, $sharedEnvPath)) {
 
 $manifestPath = Join-Path $backupDir "backup-manifest.txt"
 $manifest = @(
-  "AdjusterDesk local backup ($Profile)",
+  "PA ClaimBoard local backup ($Profile)",
   "Created: $(Get-Date -Format s)",
   "Computer: $env:COMPUTERNAME",
   "Repo root: $repoRoot",

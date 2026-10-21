@@ -1,8 +1,9 @@
 import { CtaBand, FeatureGrid, PublicPageHeader, PublicSection, extendedFeatureHighlights } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Features | AdjusterDesk",
+  title: `Features | ${brandName}`,
   description: "Simple claim tracking, contacts, documents, follow-ups, payments, fees, invoices, templates, and spreadsheet import for small public adjusting offices.",
   path: "/features",
 });
@@ -13,7 +14,7 @@ export default function FeaturesPage() {
       <PublicPageHeader
         eyebrow="Features"
         title="Practical tools for the work your office already does."
-        description="AdjusterDesk keeps the important claim details together without asking a small public adjusting office to learn a heavy system."
+        description={`${brandName} keeps the important claim details together without asking a small public adjusting office to learn a heavy system.`}
       />
       <PublicSection title="Core features">
         <FeatureGrid features={extendedFeatureHighlights} />

@@ -1,6 +1,6 @@
-# AdjusterDesk Project Context
+# PA ClaimBoard Project Context
 
-AdjusterDesk is the simple workspace for small public adjusting offices. The MVP helps a solo to 5-person public adjusting firm keep leads, claims, follow-ups, documents, communications, settlements, checks, fees, and invoices in one place.
+PA ClaimBoard is the simple workspace for small public adjusting offices. The MVP helps a solo to 5-person public adjusting firm keep leads, claims, follow-ups, documents, communications, settlements, checks, fees, and invoices in one place.
 
 ## Primary Promise
 
@@ -12,7 +12,7 @@ Small public adjusting offices that manage work today with spreadsheets, email, 
 
 ## Product Boundaries
 
-AdjusterDesk does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. The product is an office workspace and tracking system.
+PA ClaimBoard does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. The product is an office workspace and tracking system.
 
 ## Local MVP Architecture
 

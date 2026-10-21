@@ -1,6 +1,6 @@
-# AdjusterDesk
+# PA ClaimBoard
 
-AdjusterDesk is a simple workspace for small public adjusting offices. The local MVP helps a solo to 5-person office track Claims, Clients, Properties, Policies, Carriers, Adjusters, Follow-ups, Deadlines, Documents, Photos, Settlements, Checks, Fees, and Invoices.
+PA ClaimBoard is a simple workspace for small public adjusting offices. The local MVP helps a solo to 5-person office track Claims, Clients, Properties, Policies, Carriers, Adjusters, Follow-ups, Deadlines, Documents, Photos, Settlements, Checks, Fees, and Invoices.
 
 The app is intentionally local-first for this MVP: Next.js App Router, TypeScript, Tailwind CSS, Prisma, SQLite, seeded demo users, and local development uploads.
 
@@ -74,7 +74,7 @@ npm run dev:local
 
 Open `http://localhost:3000`.
 
-`AUTH_SECRET` should be set before any shared deployment. If it is missing in local development, AdjusterDesk falls back to an insecure built-in signing secret so the seeded credentials flow still works locally.
+`AUTH_SECRET` should be set before any shared deployment. If it is missing in local development, PA ClaimBoard falls back to an insecure built-in signing secret so the seeded credentials flow still works locally.
 
 ## Demo URLs
 
@@ -133,7 +133,7 @@ Claim columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `s
 
 ## MVP Boundaries
 
-AdjusterDesk does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. It is an office workspace and tracking system.
+PA ClaimBoard does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. It is an office workspace and tracking system.
 
 Production authentication, billing, carrier integrations, QuickBooks sync, email/SMS sending, and advanced permissions are intentionally outside this local MVP pass.
 

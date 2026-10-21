@@ -1,5 +1,5 @@
 param(
-  [string]$TaskName = "AdjusterDeskLocalProduction"
+  [string]$TaskName = "PA ClaimBoardLocalProduction"
 )
 
 $ErrorActionPreference = "Stop"
@@ -121,7 +121,7 @@ if (-not $task.Found) {
 
 $processes = Get-Port3000ProcessDetails
 $localStatus = Test-UrlResponse -Url "http://127.0.0.1:3000"
-$publicStatus = Test-UrlResponse -Url "https://adjusterdesk.xyz/system"
+$publicStatus = Test-UrlResponse -Url "https://paclaimboard.com/system"
 
 $hasProcessDetails = $processes.Count -gt 0
 $isPortListening = $hasProcessDetails -or $localStatus.StartsWith("OK")
@@ -137,4 +137,4 @@ if ($isPortListening -and -not $hasProcessDetails) {
 }
 
 Write-Output "Local URL http://127.0.0.1:3000: $localStatus"
-Write-Output "Public URL https://adjusterdesk.xyz/system: $publicStatus"
+Write-Output "Public URL https://paclaimboard.com/system: $publicStatus"

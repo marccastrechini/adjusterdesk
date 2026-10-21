@@ -1,5 +1,5 @@
 /**
- * Lightweight GA4 event tracking for AdjusterDesk
+ * Lightweight GA4 event tracking for PA ClaimBoard
  * Only sends events if window.gtag is available (GA4 loaded)
  */
 

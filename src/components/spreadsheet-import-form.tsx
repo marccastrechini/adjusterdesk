@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { confirmSpreadsheetImport, previewSpreadsheetImport, type SpreadsheetImportState } from "@/lib/import-actions";
 import type { ImportRowValues } from "@/lib/import-utils";
 import { Badge, ButtonLink, Card, Field, inputClassName, selectClassName, StatCard, SubmitButton } from "@/components/ui";
+import { brandName } from "@/lib/brand";
 
 const emptyState: SpreadsheetImportState = {};
 
@@ -119,7 +120,7 @@ export function SpreadsheetImportForm({ defaultImportType = "leads", returnPath 
           <Card className="grid gap-3 border-dashed">
             <h2 className="text-base font-semibold text-slate-950">Review comes next</h2>
             <p className="text-sm leading-6 text-slate-600">
-              After you upload a CSV, AdjusterDesk will show which rows are ready and which rows need a missing name, property address, loss type, or date fix.
+              After you upload a CSV, {brandName} will show which rows are ready and which rows need a missing name, property address, loss type, or date fix.
             </p>
           </Card>
         )}

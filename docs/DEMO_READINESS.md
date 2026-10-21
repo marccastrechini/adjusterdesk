@@ -1,6 +1,6 @@
 # Demo Readiness Checklist
 
-Use this before showing AdjusterDesk to a friendly public adjuster office and before allowing real office work in the local install.
+Use this before showing PA ClaimBoard to a friendly public adjuster office and before allowing real office work in the local install.
 
 ## Safe To Demo Now
 

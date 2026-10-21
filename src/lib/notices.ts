@@ -1,3 +1,4 @@
+import { brandName } from "@/lib/brand";
 export const noticeMessages = {
   "lead-created": {
     title: "Lead saved",
@@ -228,7 +229,7 @@ export const noticeMessages = {
     message: "Your password is set. Sign in with your email and new password.",
   },
   "self-service-signup-complete": {
-    title: "Welcome to AdjusterDesk",
+    title: `Welcome to ${brandName}`,
     message: "Your workspace is ready and your 14-day trial has started. $0 is due during the trial.",
   },
   "billing-portal-unavailable": {
@@ -237,7 +238,7 @@ export const noticeMessages = {
   },
   "subscription-activated": {
     title: "Subscription started",
-    message: "Your subscription is now active. Thank you for subscribing to AdjusterDesk.",
+    message: `Your subscription is now active. Thank you for subscribing to ${brandName}.`,
   },
   "subscription-canceled": {
     title: "Subscription not started",

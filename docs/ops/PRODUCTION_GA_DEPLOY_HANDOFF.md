@@ -24,10 +24,10 @@ Use the existing project production scripts documented in docs/LOCAL_PRODUCTION.
 
 ## 3. Verify Public URLs Return 200
 Verify these routes after deploy:
-- https://adjusterdesk.xyz/
-- https://adjusterdesk.xyz/login
-- https://adjusterdesk.xyz/public-adjuster-software
-- https://adjusterdesk.xyz/free-public-adjuster-claim-tracker
+- https://paclaimboard.com/
+- https://paclaimboard.com/login
+- https://paclaimboard.com/public-adjuster-software
+- https://paclaimboard.com/free-public-adjuster-claim-tracker
 
 ## 4. Verify GA Script Is Live
 In browser view-source or DevTools on production pages, confirm one of:
@@ -52,22 +52,22 @@ From the public site, click these and confirm events in GA DebugView/Realtime if
 Run these commands from PowerShell after deploy/restart:
 
 ```powershell
-curl.exe -I https://adjusterdesk.xyz/sitemap.xml
-curl.exe -A "Googlebot" -I https://adjusterdesk.xyz/sitemap.xml
-curl.exe https://adjusterdesk.xyz/sitemap.xml
-curl.exe -I https://adjusterdesk.xyz/robots.txt
-curl.exe https://adjusterdesk.xyz/robots.txt
+curl.exe -I https://paclaimboard.com/sitemap.xml
+curl.exe -A "Googlebot" -I https://paclaimboard.com/sitemap.xml
+curl.exe https://paclaimboard.com/sitemap.xml
+curl.exe -I https://paclaimboard.com/robots.txt
+curl.exe https://paclaimboard.com/robots.txt
 ```
 
 Expected results:
 - `/sitemap.xml` returns `200 OK`
 - `Content-Type` for `/sitemap.xml` is `application/xml`
 - Sitemap XML includes required public URLs:
-	- `https://adjusterdesk.xyz/`
-	- `https://adjusterdesk.xyz/public-adjuster-software`
-	- `https://adjusterdesk.xyz/free-public-adjuster-claim-tracker`
-	- `https://adjusterdesk.xyz/pricing`
-	- `https://adjusterdesk.xyz/signup`
+	- `https://paclaimboard.com/`
+	- `https://paclaimboard.com/public-adjuster-software`
+	- `https://paclaimboard.com/free-public-adjuster-claim-tracker`
+	- `https://paclaimboard.com/pricing`
+	- `https://paclaimboard.com/signup`
 - `/robots.txt` returns `200 OK`
-- `/robots.txt` includes `Sitemap: https://adjusterdesk.xyz/sitemap.xml`
+- `/robots.txt` includes `Sitemap: https://paclaimboard.com/sitemap.xml`
 - Googlebot user-agent request to `/sitemap.xml` is not challenged or blocked

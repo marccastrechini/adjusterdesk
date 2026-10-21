@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
-import { BriefcaseBusiness } from "lucide-react";
 import { SubscriptionStatus } from "@/generated/prisma/client";
+import { BrandMark } from "@/components/brand-mark";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { SubmitButton } from "@/components/ui";
 import { TrialBanner } from "@/components/trial-banner";
 import { exitSystemWorkspaceView } from "@/lib/actions";
 import { labelFromEnum } from "@/lib/format";
 import { UserMenu } from "@/components/user-menu";
+import { brandName } from "@/lib/brand";
 
 export function AppShell({
   children,
@@ -54,11 +55,9 @@ export function AppShell({
       <div className="flex min-h-screen flex-col lg:flex-row">
         <aside className="border-b border-slate-200 bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r">
           <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-teal-700 text-white">
-              <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
-            </span>
+            <BrandMark />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-950">AdjusterDesk</p>
+              <p className="truncate text-sm font-semibold text-slate-950">{brandName}</p>
               <p className="truncate text-xs text-slate-500">{firmName}</p>
             </div>
           </div>

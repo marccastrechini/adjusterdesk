@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
+import { brandName, canonicalOrigin, supportEmail } from "@/lib/brand";
 
 const trustPages = [
   { path: "/about", heading: "A desk for small public adjusting offices.", copy: "Marc works on the product. Jenn works with customers." },
-  { path: "/contact", heading: "Email hello@adjusterdesk.xyz.", copy: "We try to reply within a few business days." },
-  { path: "/privacy", heading: "How AdjusterDesk handles information.", copy: "Information from workspace setup, demo, and contact requests" },
-  { path: "/terms", heading: "Plain terms for using AdjusterDesk.", copy: "Professional judgment and advice" },
-  { path: "/cookies", heading: "How AdjusterDesk uses cookies.", copy: "Strictly necessary cookies" },
+  { path: "/contact", heading: `Email ${supportEmail}.`, copy: "We try to reply within a few business days." },
+  { path: "/privacy", heading: `How ${brandName} handles information.`, copy: "Information from workspace setup, demo, and contact requests" },
+  { path: "/terms", heading: `Plain terms for using ${brandName}.`, copy: "Professional judgment and advice" },
+  { path: "/cookies", heading: `How ${brandName} uses cookies.`, copy: "Strictly necessary cookies" },
   { path: "/accessibility", heading: "A practical commitment to accessible public pages.", copy: "Accessibility commitment" },
-  { path: "/security", heading: "Practical security notes for AdjusterDesk.", copy: "What AdjusterDesk does not claim" },
+  { path: "/security", heading: `Practical security notes for ${brandName}.`, copy: `What ${brandName} does not claim` },
 ];
 
 const footerLinks = [
@@ -18,7 +19,7 @@ const footerLinks = [
   { name: "Cookies", href: "/cookies" },
   { name: "Accessibility", href: "/accessibility" },
   { name: "Security", href: "/security" },
-  { name: "Email us", href: "mailto:hello@adjusterdesk.xyz" },
+  { name: "Email us", href: `mailto:${supportEmail}` },
 ];
 
 test("public trust pages render and footer links are available", async ({ page }) => {
@@ -26,8 +27,8 @@ test("public trust pages render and footer links are available", async ({ page }
     await page.goto(trustPage.path);
     await expect(page.getByRole("heading", { name: trustPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(trustPage.copy, { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Start (using AdjusterDesk|free trial)/i }).first()).toHaveAttribute("href", "/signup");
-    await expect(page.getByRole("link", { name: "Email us", exact: true }).first()).toHaveAttribute("href", "mailto:hello@adjusterdesk.xyz");
+    await expect(page.getByRole("link", { name: /Start free trial/i }).first()).toHaveAttribute("href", "/signup");
+    await expect(page.getByRole("link", { name: "Email us", exact: true }).first()).toHaveAttribute("href", `mailto:${supportEmail}`);
     await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
 
     for (const footerLink of footerLinks) {
@@ -57,7 +58,7 @@ test("public SEO routes and security headers are present", async ({ request }) =
   expect(sitemapResponse.ok()).toBeTruthy();
   expect(sitemapResponse.headers()["content-type"]).toContain("xml");
   const sitemapText = await sitemapResponse.text();
-  expect(sitemapText).toContain("https://adjusterdesk.xyz/pricing");
+  expect(sitemapText).toContain(`${canonicalOrigin}/pricing`);
   expect(sitemapText).toContain("/about");
   expect(sitemapText).toContain("/contact");
   expect(sitemapText).toContain("/privacy");

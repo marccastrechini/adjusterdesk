@@ -109,14 +109,14 @@ function Get-LocalRuntimeConfig {
 
   $appBaseUrl = $values["APP_BASE_URL"]
   if (-not $appBaseUrl) {
-    $appBaseUrl = if ($Profile -eq "production") { "https://adjusterdesk.xyz" } else { "http://localhost:3000" }
+    $appBaseUrl = if ($Profile -eq "production") { "https://paclaimboard.com" } else { "http://localhost:3000" }
   }
 
   $normalizedUploadsDir = Normalize-UploadsDir -UploadsDir $uploadsDir
   $normalizedAppBaseUrl = Normalize-AppBaseUrl -AppBaseUrl $appBaseUrl
   $expectedDatabaseFragment = if ($Profile -eq "production") { "production.db" } else { "dev.db" }
   $expectedUploadsFragment = if ($Profile -eq "production") { "uploads-production" } else { "uploads-development" }
-  $expectedAppBaseUrl = if ($Profile -eq "production") { "https://adjusterdesk.xyz" } else { "http://localhost:3000" }
+  $expectedAppBaseUrl = if ($Profile -eq "production") { "https://paclaimboard.com" } else { "http://localhost:3000" }
 
   return [pscustomobject]@{
     Profile = $Profile

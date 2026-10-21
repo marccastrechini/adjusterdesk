@@ -1,13 +1,13 @@
 # Demo Runbook
 
 ## Demo Purpose
-Provide a practical, plain-language walkthrough of AdjusterDesk for small public adjusting offices and collect concrete usability and workflow feedback.
+Provide a practical, plain-language walkthrough of PA ClaimBoard for small public adjusting offices and collect concrete usability and workflow feedback.
 
 ## Target Audience
 Solo to 5-person public adjusting offices currently managing work with spreadsheets, email, text messages, calendar reminders, and memory.
 
 ## Demo Environment Notes
-- Environment: production demo workspace on https://adjusterdesk.xyz
+- Environment: production demo workspace on https://paclaimboard.com
 - Verified baseline:
   - HEAD and origin/main at e6fbb09
   - Latest production build active
@@ -36,7 +36,7 @@ Solo to 5-person public adjusting offices currently managing work with spreadshe
 12. Return to Today and close with the daily command-center message.
 
 ## Close Message
-"AdjusterDesk is built to be the daily command center for your office: what to follow up, what is waiting, what is due, and what is still unpaid."
+"PA ClaimBoard is built to be the daily command center for your office: what to follow up, what is waiting, what is due, and what is still unpaid."
 
 ## Suggested Demo Timing (Optional)
 - Intro and framing: 2 minutes

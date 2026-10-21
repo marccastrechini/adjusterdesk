@@ -1,6 +1,6 @@
-# AdjusterDesk Production Demo Script
+# PA ClaimBoard Production Demo Script
 
-Use this script for a confident walkthrough of the production demo workspace at https://adjusterdesk.xyz.
+Use this script for a confident walkthrough of the production demo workspace at https://paclaimboard.com.
 
 Core positioning:
 
@@ -24,7 +24,7 @@ $env:DEMO_OWNER_PASSWORD = "<set a strong local-only password>"
 npm run prod:demo:bootstrap -- -ConfirmProductionDemo
 ```
 
-Sign in at https://adjusterdesk.xyz/login with:
+Sign in at https://paclaimboard.com/login with:
 
 - Email: demo.owner@adjusterdesk.xyz
 - Password: value set through `DEMO_OWNER_PASSWORD` during bootstrap

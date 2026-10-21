@@ -19,6 +19,7 @@ import {
 } from "@/lib/outreach-email";
 import { getSystemOutreachActivitiesByProspectId, getSystemOutreachProspectById, getSystemOutreachTasksByProspectId } from "@/lib/queries";
 import { ButtonLink, Card, Field, Notice, PageHeader, SubmitButton, inputClassName, selectClassName, textareaClassName } from "@/components/ui";
+import { brandName, operatorEmailDomain } from "@/lib/brand";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -55,7 +56,7 @@ function dateTimeText(value?: Date | string | null) {
 
 function formatDraftText(contactName: string | null, body: string) {
   const greeting = contactName?.trim() ? `Hi ${contactName.trim()},` : "Hi there,";
-  return `${greeting}\n\n${body}\n\nThanks,\nAdjusterDesk`;
+  return `${greeting}\n\n${body}\n\nThanks,\n${brandName}`;
 }
 
 function taskTypeLabel(type: OutreachTaskType) {
@@ -142,7 +143,7 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
   });
 
   const hasRecipientEmail = Boolean(prospect.email?.trim());
-  const operatorHasAdjusterDeskEmail = sessionUser.email.toLowerCase().endsWith("@adjusterdesk.xyz");
+  const operatorHasCompanyEmail = sessionUser.email.toLowerCase().endsWith(`@${operatorEmailDomain}`);
 
   const today = dateInputValue(new Date());
   const email1Draft = formatDraftText(
@@ -458,7 +459,7 @@ export default async function SystemOutreachProspectPage({ params, searchParams 
           <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-normal text-slate-600">Reply-To behavior</p>
             <p className="mt-1 text-sm text-slate-900">{senderPolicy.replyTo}</p>
-            {!operatorHasAdjusterDeskEmail ? <p className="mt-1 text-xs text-slate-600">Operator email is not an @adjusterdesk.xyz address. Replies use configured fallback behavior.</p> : null}
+            {!operatorHasCompanyEmail ? <p className="mt-1 text-xs text-slate-600">{`Operator email is not an @${operatorEmailDomain} address. Replies use configured fallback behavior.`}</p> : null}
           </div>
         </div>
 

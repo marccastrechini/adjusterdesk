@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { brandName, canonicalOrigin } from "@/lib/brand";
 
 function loadQaEnv() {
   const qaEnvPath = path.join(process.cwd(), ".env.qa.local");
@@ -28,7 +29,7 @@ function loadQaEnv() {
 
 loadQaEnv();
 
-const baseURL = process.env.AD_QA_BASE_URL?.trim() || "https://adjusterdesk.xyz";
+const baseURL = process.env.AD_QA_BASE_URL?.trim() || canonicalOrigin;
 const qaUserEmail = process.env.AD_QA_USER_EMAIL?.trim() || "";
 const qaUserPassword = process.env.AD_QA_USER_PASSWORD?.trim() || "";
 const qaAdminEmail = process.env.AD_QA_ADMIN_EMAIL?.trim() || "";
@@ -303,7 +304,7 @@ test("admin QA user can access system admin pages", async ({ page }) => {
 
   await page.goto("/system/outreach/playbook");
   await expect(page).toHaveURL(/\/system\/outreach\/playbook(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: "AdjusterDesk - Outreach Playbook", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: `${brandName} - Outreach Playbook`, exact: true })).toBeVisible();
 
   // Candidate intake
   await page.goto("/system/outreach/candidates");

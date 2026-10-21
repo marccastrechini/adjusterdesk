@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { renderSystemEmailTemplate } from "@/lib/email-template";
+import { brandName, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
 
 type PasswordResetEmailInput = {
   toEmail: string;
@@ -43,15 +44,15 @@ function resolveEmailProvider() {
 }
 
 export function resolveSystemEmailFrom() {
-  return process.env.SYSTEM_EMAIL_FROM?.trim() || "AdjusterDesk <hello@adjusterdesk.xyz>";
+  return resolveBrandFromHeader(process.env.SYSTEM_EMAIL_FROM).from;
 }
 
 export function resolveSystemEmailReplyTo() {
-  return process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz";
+  return resolveBrandReplyTo(process.env.SYSTEM_EMAIL_REPLY_TO);
 }
 
 function resolveSystemEmailFooter() {
-  return `AdjusterDesk system email from ${resolveSystemEmailReplyTo()}`;
+  return `${brandName} system email from ${resolveSystemEmailReplyTo()}`;
 }
 
 function getEmailProviderError() {
@@ -162,11 +163,11 @@ export async function sendDirectEmail({
 
 export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Promise<EmailSendResult> {
   const emailContent = renderSystemEmailTemplate({
-    preheader: "Reset your AdjusterDesk password.",
+    preheader: `Reset your ${brandName} password.`,
     title: "Reset your password",
     intro: `Hello ${input.userName},`,
     bodyLines: [
-      "A password reset was requested for your AdjusterDesk account.",
+      `A password reset was requested for your ${brandName} account.`,
       `Use the button below to set a new password. This link expires in ${input.expiresInMinutes} minutes and can be used once.`,
     ],
     ctaLabel: "Reset password",
@@ -177,7 +178,7 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
 
   return sendSystemEmail({
     toEmail: input.toEmail,
-    subject: "AdjusterDesk password reset",
+    subject: `${brandName} password reset`,
     html: emailContent.html,
     text: emailContent.text,
   });
@@ -186,11 +187,11 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
 export async function sendUserInvitationEmail(input: UserInvitationEmailInput): Promise<EmailSendResult> {
   const trimmedNote = input.invitationNote?.trim();
   const emailContent = renderSystemEmailTemplate({
-    preheader: "You have been invited to AdjusterDesk.",
+    preheader: `You have been invited to ${brandName}.`,
     title: "Set up your account",
     intro: `Hello ${input.userName},`,
     bodyLines: [
-      `You were invited to join ${input.workspaceName} in AdjusterDesk.`,
+      `You were invited to join ${input.workspaceName} in ${brandName}.`,
       `Use the secure link below to set your password. This invite expires in ${input.expiresInMinutes} minutes and can be used once.`,
       ...(trimmedNote ? [`Admin note: ${trimmedNote}`] : []),
     ],
@@ -202,7 +203,7 @@ export async function sendUserInvitationEmail(input: UserInvitationEmailInput): 
 
   return sendSystemEmail({
     toEmail: input.toEmail,
-    subject: "AdjusterDesk account invitation",
+    subject: `${brandName} account invitation`,
     html: emailContent.html,
     text: emailContent.text,
   });
@@ -218,7 +219,7 @@ export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInpu
   }
 
   const emailContent = renderSystemEmailTemplate({
-    preheader: "A new AdjusterDesk trial workspace was created.",
+    preheader: `A new ${brandName} trial workspace was created.`,
     title: "New trial signup",
     intro: "A new workspace was created from the public signup form.",
     bodyLines: [
@@ -234,7 +235,7 @@ export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInpu
 
   return sendSystemEmail({
     toEmail,
-    subject: "AdjusterDesk new trial signup",
+    subject: `${brandName} new trial signup`,
     html: emailContent.html,
     text: emailContent.text,
   });
@@ -242,11 +243,11 @@ export async function sendTrialSignupAlertEmail(input: TrialSignupAlertEmailInpu
 
 export async function sendWelcomeSignupEmail(input: WelcomeSignupEmailInput): Promise<EmailSendResult> {
   const emailContent = renderSystemEmailTemplate({
-    preheader: "Welcome to AdjusterDesk. Start with your first claim in the first five minutes.",
-    title: "Welcome to AdjusterDesk",
+    preheader: `Welcome to ${brandName}. Start with your first claim in the first five minutes.`,
+    title: `Welcome to ${brandName}`,
     intro: `Hello ${input.userName},`,
     bodyLines: [
-      "Welcome to AdjusterDesk. It is built for solo and small public adjusting offices.",
+      `Welcome to ${brandName}. It is built for solo and small public adjusting offices.`,
       "Start with these three steps:",
       "1. Add your first lead or claim.",
       "2. Add the next follow-up.",
@@ -261,7 +262,7 @@ export async function sendWelcomeSignupEmail(input: WelcomeSignupEmailInput): Pr
 
   return sendSystemEmail({
     toEmail: input.toEmail,
-    subject: "Welcome to AdjusterDesk - start with your first claim",
+    subject: `Welcome to ${brandName} - start with your first claim`,
     html: emailContent.html,
     text: emailContent.text,
   });

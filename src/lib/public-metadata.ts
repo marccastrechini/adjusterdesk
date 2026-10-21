@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { brandName, canonicalOrigin } from "@/lib/brand";
 
-const fallbackSiteUrl = "https://adjusterdesk.xyz";
+const fallbackSiteUrl = canonicalOrigin;
 
 function resolvePublicSiteUrl() {
   try {
@@ -23,7 +24,7 @@ export function publicPageMetadata({ title, description, path }: { title: string
       title,
       description,
       url: path,
-      siteName: "AdjusterDesk",
+      siteName: brandName,
       type: "website",
     },
     twitter: {

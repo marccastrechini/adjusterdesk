@@ -5,6 +5,7 @@ import { findPublicPlanBySlug } from "@/lib/billing";
 import { withNotice } from "@/lib/notices";
 import { createSessionForUser } from "@/lib/session";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
+import { supportEmail } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function SignupSuccessPage({ searchParams }: PageProps) {
             <p className="text-sm leading-6 text-slate-700">Contact support if you need help choosing or changing a plan.</p>
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800">Back to signup</Link>
-              <Link href="mailto:hello@adjusterdesk.xyz" className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Email us</Link>
+              <Link href={`mailto:${supportEmail}`} className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Email us</Link>
             </div>
           </Card>
         </div>
@@ -66,7 +67,7 @@ export default async function SignupSuccessPage({ searchParams }: PageProps) {
             <p className="text-sm leading-6 text-slate-700">Contact support if you need help choosing or changing a plan.</p>
             <div className="flex flex-wrap gap-3">
               <Link href="/signup" className="inline-flex min-h-10 items-center justify-center rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800">Back to signup</Link>
-              <Link href="mailto:hello@adjusterdesk.xyz" className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Email support</Link>
+              <Link href={`mailto:${supportEmail}`} className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Email support</Link>
             </div>
           </Card>
         </div>

@@ -5,6 +5,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient, UserRole } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/auth";
 import { resolveAppBaseUrl, resolveDatabaseUrl, resolveUploadsDir } from "../src/lib/env";
+import { brandName, canonicalOrigin, adminEmail, operatorEmailDomain } from "@/lib/brand";
 
 type CliOptions = {
   confirmProductionQaSetup: boolean;
@@ -25,17 +26,17 @@ type UserResult = {
 };
 
 const expectedAppEnv = "production";
-const expectedAppBaseUrl = "https://adjusterdesk.xyz";
+const expectedAppBaseUrl = canonicalOrigin;
 const expectedDatabaseFragment = "production.db";
 const expectedUploadsFragment = "uploads-production";
 
 function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     confirmProductionQaSetup: false,
-    userEmail: "qa.user@adjusterdesk.xyz",
-    adminEmail: "qa.admin@adjusterdesk.xyz",
-    outreachEmail: "qa.outreach@adjusterdesk.xyz",
-    workspaceName: "AdjusterDesk QA",
+    userEmail: `qa.user@${operatorEmailDomain}`,
+    adminEmail: `qa.${adminEmail}`,
+    outreachEmail: `qa.outreach@${operatorEmailDomain}`,
+    workspaceName: `${brandName} QA`,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -143,7 +144,7 @@ function loadProductionProfile(repoRoot: string) {
 
   const appBaseUrl = resolveAppBaseUrl();
   if (appBaseUrl !== expectedAppBaseUrl) {
-    throw new Error("Refusing to run. APP_BASE_URL must be https://adjusterdesk.xyz.");
+    throw new Error(`Refusing to run. APP_BASE_URL must be ${canonicalOrigin}.`);
   }
 
   const databaseUrl = resolveDatabaseUrl();
@@ -275,7 +276,7 @@ async function main() {
 
       if (!workspace) {
         workspace = await tx.firm.create({
-          data: { name: workspaceName, email: "qa@adjusterdesk.xyz" },
+          data: { name: workspaceName, email: `qa@${operatorEmailDomain}` },
           select: { id: true, name: true },
         });
         workspaceResult = "created";

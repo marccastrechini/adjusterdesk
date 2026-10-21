@@ -4,6 +4,7 @@ import { TrainingClose, TrainingWalkthrough } from "@/components/training-walkth
 import { PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { getAdjacentTrainingModules, getTrainingModule, trainingModulePath, trainingModules } from "@/lib/training";
+import { brandName } from "@/lib/brand";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return publicPageMetadata({
-    title: `${trainingModule.title} | AdjusterDesk`,
+    title: `${trainingModule.title} | ${brandName}`,
     description: trainingModule.summary,
     path: trainingModulePath(trainingModule.slug),
   });

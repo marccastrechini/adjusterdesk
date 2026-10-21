@@ -1,5 +1,6 @@
 import { Badge, ButtonLink, Card, PageHeader, StatCard } from "@/components/ui";
 import { getSystemDashboardData } from "@/lib/queries";
+import { brandName } from "@/lib/brand";
 
 export default async function SystemDashboardPage() {
   const { workspaceCount, activeUserCount, installStatus } = await getSystemDashboardData();
@@ -8,7 +9,7 @@ export default async function SystemDashboardPage() {
     <>
       <PageHeader
         title="System admin"
-        description="Local-only global admin tools for workspace and user management across this AdjusterDesk install."
+        description={`Local-only global admin tools for workspace and user management across this ${brandName} install.`}
         actions={
           <>
             <ButtonLink href="/system/emails" variant="secondary">System emails</ButtonLink>

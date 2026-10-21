@@ -1,10 +1,11 @@
 import { CtaBand, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { TrustPageContent, type TrustSection } from "@/components/trust-page";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Security | AdjusterDesk",
-  description: "Honest security and trust practices for AdjusterDesk.",
+  title: `Security | ${brandName}`,
+  description: `Honest security and trust practices for ${brandName}.`,
   path: "/security",
 });
 
@@ -12,7 +13,7 @@ const sections: TrustSection[] = [
   {
     title: "Production access",
     paragraphs: [
-      "AdjusterDesk is intended to run over HTTPS in production. Signed-in workspace access uses protected login and server-side session checks before private office pages load.",
+      `${brandName} is intended to run over HTTPS in production. Signed-in workspace access uses protected login and server-side session checks before private office pages load.`,
     ],
   },
   {
@@ -31,15 +32,15 @@ const sections: TrustSection[] = [
     ],
   },
   {
-    title: "What AdjusterDesk does not claim",
+    title: `What ${brandName} does not claim`,
     paragraphs: [
-      "AdjusterDesk does not claim SOC 2, HIPAA compliance, bank-grade security, end-to-end encryption, formal penetration testing, or security certification on this public site. Those claims should only be added after the work is completed and reviewed.",
+      `${brandName} does not claim SOC 2, HIPAA compliance, bank-grade security, end-to-end encryption, formal penetration testing, or security certification on this public site. Those claims should only be added after the work is completed and reviewed.`,
     ],
   },
   {
     title: "Security contact",
     paragraphs: [
-      "Security questions or responsible disclosure notes can be sent to hello@adjusterdesk.xyz with Security in the subject line.",
+      `Security questions or responsible disclosure notes can be sent to ${supportEmail} with Security in the subject line.`,
     ],
   },
 ];
@@ -49,13 +50,13 @@ export default function SecurityPage() {
     <>
       <PublicPageHeader
         eyebrow="Security"
-        title="Practical security notes for AdjusterDesk."
+        title={`Practical security notes for ${brandName}.`}
         description="A clear summary of current safeguards without claiming certifications that are not in place."
       />
       <PublicSection title="Security baseline">
         <TrustPageContent sections={sections} />
       </PublicSection>
-      <CtaBand title="Have a security question?" description="Email hello@adjusterdesk.xyz with Security in the subject line so the concern can be reviewed." />
+      <CtaBand title="Have a security question?" description={`Email ${supportEmail} with Security in the subject line so the concern can be reviewed.`} />
     </>
   );
 }

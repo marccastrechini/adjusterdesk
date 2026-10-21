@@ -20,7 +20,7 @@ Scoring scale:
 
 ## Ratings and Notes
 
-### 1) Could you understand what AdjusterDesk is for?
+### 1) Could you understand what PA ClaimBoard is for?
 - Rating (1-5):
 - Notes:
 

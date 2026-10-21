@@ -3,6 +3,7 @@ import path from "node:path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient, UserRole } from "../src/generated/prisma/client";
 import { resolveAppBaseUrl, resolveDatabaseUrl } from "../src/lib/env";
+import { brandName, canonicalOrigin, operatorEmailDomain } from "@/lib/brand";
 
 type Profile = "development" | "production";
 
@@ -29,11 +30,11 @@ const profileConfig: Record<Profile, { workspaceName: string; users: ExpectedUse
   },
   production: {
     workspaceName: "AdjusterDesk Demo Office",
-    defaultBaseUrl: "https://adjusterdesk.xyz",
+    defaultBaseUrl: canonicalOrigin,
     users: [
-      { email: "demo.owner@adjusterdesk.xyz", role: UserRole.OWNER },
-      { email: "demo.adjuster@adjusterdesk.xyz", role: UserRole.ADJUSTER },
-      { email: "demo.assistant@adjusterdesk.xyz", role: UserRole.ASSISTANT },
+      { email: `demo.owner@${operatorEmailDomain}`, role: UserRole.OWNER },
+      { email: `demo.adjuster@${operatorEmailDomain}`, role: UserRole.ADJUSTER },
+      { email: `demo.assistant@${operatorEmailDomain}`, role: UserRole.ASSISTANT },
     ],
   },
 };
@@ -52,7 +53,7 @@ const appRoutes = [
 ] as const;
 
 const publicRoutes = [
-  { path: "/", expectedText: "AdjusterDesk" },
+  { path: "/", expectedText: brandName },
   { path: "/product", expectedText: "Lead and client intake" },
   { path: "/features", expectedText: "Claim tracking" },
   { path: "/how-it-works", expectedText: "Bring over the basics" },

@@ -1,13 +1,13 @@
 # Lifecycle Emails
 
-This document defines the minimal customer-facing lifecycle email policy for AdjusterDesk.
+This document defines the minimal customer-facing lifecycle email policy for PA ClaimBoard.
 
 ## Sender Policy
 
 - Customer-facing lifecycle, onboarding, support, and product guidance emails must use `hello@adjusterdesk.xyz`.
 - Internal and admin operational emails may use `admin@adjusterdesk.xyz` only when intentionally admin-only.
 - Current app sender variables:
-  - `SYSTEM_EMAIL_FROM` should be set to `"AdjusterDesk <hello@adjusterdesk.xyz>"`
+  - `SYSTEM_EMAIL_FROM` should be set to `"PA ClaimBoard <hello@adjusterdesk.xyz>"`
   - `SYSTEM_EMAIL_REPLY_TO` should be set to `hello@adjusterdesk.xyz`
   - `SYSTEM_ADMIN_EMAIL` is for internal admin notifications and should be `admin@adjusterdesk.xyz`
 
@@ -27,7 +27,7 @@ No scheduled lifecycle infrastructure is implemented yet. Keep this lightweight 
 
 ## Welcome Email Details
 
-- Subject: `Welcome to AdjusterDesk - start with your first claim`
+- Subject: `Welcome to PA ClaimBoard - start with your first claim`
 - Purpose: Help a new solo or small public adjusting office get value in the first five minutes.
 - Key guidance in the body:
   1. Add your first lead or claim.
