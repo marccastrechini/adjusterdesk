@@ -1,13 +1,13 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
-import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
 import { TrackedLink } from "@/components/tracked-link";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "AdjusterDesk | Simple Workspace for Public Adjusters",
-  description: "AdjusterDesk keeps claims, clients, documents, follow-ups, payments, fees, and invoices together for small public adjusting offices.",
+  title: `${brandName} | Simple Workspace for Public Adjusters`,
+  description: `${brandName} keeps claims, clients, documents, follow-ups, payments, fees, and invoices together for small public adjusting offices.`,
   path: "/",
 });
 
@@ -43,7 +43,7 @@ export default function HomePage() {
         primaryLabel="See founding desk offer"
         assurance={
           <>
-            {FOUNDING_PRICE_LINE} {FOUNDING_TRIAL_DUE_LINE} Already using AdjusterDesk?{" "}
+            {FOUNDING_PRICE_LINE} {FOUNDING_TRIAL_DUE_LINE} Already using {brandName}?{" "}
             <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">
               Log in.
             </TrackedLink>
@@ -81,13 +81,9 @@ export default function HomePage() {
 
       <PublicSection
         title="One workspace for the daily claim work"
-        description="AdjusterDesk is a simple office workspace for tracking the pieces a small public adjusting firm already works with every day."
+        description={`${brandName} is a simple office workspace for tracking the pieces a small public adjusting firm already works with every day.`}
       >
         <FeatureGrid features={featureHighlights} />
-      </PublicSection>
-
-      <PublicSection title="Optional: watch a 60-second Demo Office walkthrough" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
-        <ProductOverviewVideo />
       </PublicSection>
 
       <PublicSection title="Built for solo adjusters and small offices" tone="white">

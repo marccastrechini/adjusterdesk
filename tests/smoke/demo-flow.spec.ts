@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { brandName } from "@/lib/brand";
 
 const seededOwnerEmail = "dana@harboradjusting.example";
 const seededPassword = "AdjusterDeskDemo123!";
@@ -84,14 +85,14 @@ test("public marketing pages render and workspace routes stay protected", async 
     { path: "/how-it-works", heading: "Simple steps from scattered claim work to a shared office view.", copy: "Bring over the basics" },
     { path: "/pricing", heading: "Simple plans for small public adjusting offices.", copy: "Choose the package that matches how your office works today." },
     { path: "/resources", heading: "Practical resources for small public adjusting offices.", copy: "Importing from spreadsheets" },
-    { path: "/demo", heading: "See AdjusterDesk with a small-office workflow.", copy: "Email Demo Request" },
+    { path: "/demo", heading: `See ${brandName} with a small-office workflow.`, copy: "Email Demo Request" },
   ];
 
   for (const publicPage of publicPages) {
     await page.goto(publicPage.path);
     await expect(page.getByRole("heading", { name: publicPage.heading, exact: true })).toBeVisible();
     await expect(page.getByText(publicPage.copy, { exact: false }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "Start using AdjusterDesk", exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Start free trial", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Talk to us", exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Log in", exact: true }).first()).toHaveAttribute("href", "/login");
   }

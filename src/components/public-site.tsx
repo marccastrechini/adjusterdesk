@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ComponentType, ReactNode } from "react";
 import {
   ArrowRight,
-  BriefcaseBusiness,
   CalendarCheck,
   CheckCircle2,
   ClipboardList,
@@ -20,6 +19,8 @@ import type { CTAEventName } from "@/lib/analytics";
 import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { FOUNDING_PAGE_HREF } from "@/lib/founding-offer";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/brand-mark";
+import { brandName, brandTagline, supportEmail } from "@/lib/brand";
 
 export const publicNavItems = [
   { href: "/product", label: "Product" },
@@ -89,12 +90,10 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-teal-700 text-white">
-              <BriefcaseBusiness className="h-5 w-5" aria-hidden />
-            </span>
+            <BrandMark />
             <span className="grid">
-              <span className="text-base font-semibold">AdjusterDesk</span>
-              <span className="text-xs text-slate-500">For small public adjusting offices</span>
+              <span className="text-base font-semibold">{brandName}</span>
+              <span className="text-xs text-slate-500">{brandTagline}</span>
             </span>
           </Link>
 
@@ -116,7 +115,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
             <PublicButtonLink href={FOUNDING_PAGE_HREF} variant="primary" eventName="trial_start_click">
               Founding desk · $0/90 days
             </PublicButtonLink>
-            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+            <PublicButtonLink href={`mailto:${supportEmail}`} variant="secondary">
               Email us
             </PublicButtonLink>
             <TrackedLink
@@ -136,16 +135,14 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.2fr_2fr] lg:px-8">
           <div>
             <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-teal-700 text-white">
-                <BriefcaseBusiness className="h-5 w-5" aria-hidden />
-              </span>
-              <span className="font-semibold">AdjusterDesk</span>
+              <BrandMark />
+              <span className="font-semibold">{brandName}</span>
             </Link>
             <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
               A simple workspace for small public adjusting offices to keep claims, clients, documents, follow-ups, payments, fees, and invoices together.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
+              Already using {brandName}? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
             </p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -158,7 +155,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
               ]}
             />
             <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: "/training", label: "Training" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
-            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: "mailto:hello@adjusterdesk.xyz", label: "Email us" }]} />
+            <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: `mailto:${supportEmail}`, label: "Email us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>
         </div>
@@ -261,14 +258,14 @@ export function PublicHero({
             <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName="trial_start_click">
               {primaryLabel ?? startLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+            <PublicButtonLink href={`mailto:${supportEmail}`} variant="secondary">
               Email us
             </PublicButtonLink>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             {assurance ?? (
               <>
-                Stripe Checkout collects a card at signup. $0 is due during the 14-day trial. Already using AdjusterDesk? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
+                Stripe Checkout collects a card at signup. $0 is due during the 14-day trial. Already using {brandName}? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
               </>
             )}
           </p>
@@ -370,7 +367,7 @@ export function CtaBand({
             <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName={trackPrimaryClick ? "trial_start_click" : undefined}>
               {primaryLabel ?? startLabel}
             </PublicButtonLink>
-            <PublicButtonLink href="mailto:hello@adjusterdesk.xyz" variant="secondary">
+            <PublicButtonLink href={`mailto:${supportEmail}`} variant="secondary">
               Email us
             </PublicButtonLink>
           </div>
@@ -384,7 +381,7 @@ export function WorkspacePreview() {
   const rows = [
     { label: "Call client about missing photos", detail: "Due today · Water claim · Dana" },
     { label: "Follow up with carrier desk adjuster", detail: "Tomorrow · Wind roof leak · Luis" },
-    { label: "Record partial fee payment", detail: "$1,200 check · Invoice AD-1042" },
+    { label: "Record partial fee payment", detail: "$1,200 check · Invoice PA-1042" },
   ];
   const previewNavItems: PublicFeature[] = [
     { title: "Today", description: "", icon: LayoutDashboard },

@@ -18,7 +18,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const { type } = await context.params;
   if (type === "sample-office-leads") {
     const csv = importTemplateCsv("leads", "sample-office");
-    return csvResponse("adjusterdesk-sample-office-leads.csv", csv);
+    return csvResponse("pa-claimboard-sample-office-leads.csv", csv);
   }
 
   const normalizedType = normalizeImportType(type);
@@ -27,5 +27,5 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const csv = importTemplateCsv(normalizedType);
-  return csvResponse(`adjusterdesk-${normalizedType}-sample.csv`, csv);
+  return csvResponse(`pa-claimboard-${normalizedType}-sample.csv`, csv);
 }

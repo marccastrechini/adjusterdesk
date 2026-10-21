@@ -2,7 +2,7 @@
 
 For a persistent local production runtime that survives VS Code/debugger/terminal sessions, see `docs/LOCAL_PRODUCTION.md`.
 
-This guide sets up AdjusterDesk as a local demo or staging server on the main Windows computer in the office. The goal is a stable local host with:
+This guide sets up PA ClaimBoard as a local demo or staging server on the main Windows computer in the office. The goal is a stable local host with:
 
 - a persistent SQLite database
 - persistent uploaded files
@@ -16,7 +16,7 @@ For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP
 
 ## Local Runtime Layout
 
-- App code: the AdjusterDesk repo folder, for example `C:\Projects\adjusterdesk`
+- App code: the PA ClaimBoard repo folder, for example `C:\Projects\adjusterdesk`
 - SQLite database: `prisma/dev.db`
 - SQLite sidecar files when SQLite is active: `prisma/dev.db-wal`, `prisma/dev.db-shm`, `prisma/dev.db-journal`
 - Uploaded files: `storage/uploads-development`
@@ -61,12 +61,12 @@ APP_BASE_URL=http://localhost:3000
 UPLOADS_DIR=storage/uploads-development
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-SYSTEM_EMAIL_FROM="AdjusterDesk <hello@adjusterdesk.xyz>"
+SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"
 SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
 PASSWORD_RESET_TOKEN_MINUTES=30
 USER_INVITATION_TOKEN_MINUTES=4320
 SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
-NEXT_PUBLIC_APP_NAME="AdjusterDesk"
+NEXT_PUBLIC_APP_NAME="PA ClaimBoard"
 ```
 
 6. Install dependencies.
@@ -216,7 +216,7 @@ The `.env` backup may contain your real local `AUTH_SECRET`, so treat backups li
 
 ## Restore From Backup
 
-1. Stop the local AdjusterDesk server.
+1. Stop the local PA ClaimBoard server.
 2. Pick the backup folder you want to restore from under `backups/`.
 3. Run the guarded restore command with explicit confirmation:
 

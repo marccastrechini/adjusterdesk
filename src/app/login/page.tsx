@@ -6,6 +6,8 @@ import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { loginWithPassword } from "@/lib/auth-actions";
 import { getNoticeMessage } from "@/lib/notices";
 import { getCurrentSessionUser } from "@/lib/session";
+import { BrandMark } from "@/components/brand-mark";
+import { brandName } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,10 @@ export default async function LoginPage({ searchParams }: PageProps) {
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-md gap-6">
         <div className="text-center">
-          <p className="text-sm font-medium text-teal-800">AdjusterDesk</p>
+          <div className="flex justify-center">
+            <BrandMark />
+          </div>
+          <p className="mt-3 text-sm font-medium text-teal-800">{brandName}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Sign in</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">Use an active office user account to continue.</p>
         </div>
@@ -54,7 +59,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           </div>
           <p className="text-xs leading-5 text-slate-500">Public client status links stay available without sign-in. Use your office email and password to open the internal workspace.</p>
           <p className="text-xs leading-5 text-slate-500">
-            New to AdjusterDesk? <Link href={startHref} className="font-medium text-teal-800 hover:underline">{startLabel}</Link>.
+            New to {brandName}? <Link href={startHref} className="font-medium text-teal-800 hover:underline">{startLabel}</Link>.
           </p>
         </Card>
       </div>

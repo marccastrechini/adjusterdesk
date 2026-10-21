@@ -52,7 +52,7 @@ Questions? Reply to this email and we'll help.
 
 Best,
 [Founder name]
-AdjusterDesk
+PA ClaimBoard
 ```
 
 ---
@@ -94,7 +94,7 @@ The free tracker gets you organized. But coordination, visibility, and
 follow-up reliability? That's where software helps.
 
 You might not be there yet—and that's fine. But when coordination becomes 
-a problem, AdjusterDesk makes it simple again.
+a problem, PA ClaimBoard makes it simple again.
 
 When should you move?
 - Tracking 15+ active claims
@@ -108,14 +108,14 @@ If you're not there yet, keep the tracker. No rush.
 
 Best,
 [Founder name]
-AdjusterDesk
+PA ClaimBoard
 ```
 
 ---
 
 ## Email 3: Invite to Trial
 
-**Subject:** Ready to try AdjusterDesk? Here's your founding office option  
+**Subject:** Ready to try PA ClaimBoard? Here's your founding office option  
 **Send:** 7 days after download  
 **Goals:**
 - Convert to trial signup
@@ -128,14 +128,14 @@ AdjusterDesk
 **Copy:**
 
 ```
-Subject: Ready to try AdjusterDesk? Here's your founding office option
+Subject: Ready to try PA ClaimBoard? Here's your founding office option
 
 Hi [Name],
 
-We're building AdjusterDesk with real public adjusters like you.
+We're building PA ClaimBoard with real public adjusters like you.
 
 If follow-ups, documents, and fees are slipping across email and files, start 
-AdjusterDesk with your first 10 active claims.
+PA ClaimBoard with your first 10 active claims.
 
 First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month 
 Small Office, locked for 12 months. Standard pricing is Solo $49/month and 
@@ -145,13 +145,13 @@ Stripe Checkout collects a card at signup. For the first 10 founding offices,
 $0 is due during the 90-day trial, then $29/month Solo or $49/month Small 
 Office, locked for 12 months. Async onboarding, no sales call.
 
-[See founding desk offer] — https://adjusterdesk.xyz/founding-public-adjuster-offices
+[See founding desk offer] — https://paclaimboard.com/founding-public-adjuster-offices
 
 Prefer a sheet for now? Keep the tracker.
 
 Best,
 [Founder name]
-AdjusterDesk
+PA ClaimBoard
 ```
 
 ---

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { getSystemEmailTemplates } from "./system-email-templates";
+import { brandName, supportEmail } from "@/lib/brand";
 
 describe("system email templates", () => {
   it("includes core transactional and outreach templates", () => {
@@ -27,7 +28,7 @@ describe("system email templates", () => {
       assert.ok(template.subject, `${template.id}: missing subject`);
       assert.ok(template.from, `${template.id}: missing from`);
       assert.ok(template.replyTo, `${template.id}: missing replyTo`);
-      assert.ok(template.html.includes("AdjusterDesk"), `${template.id}: html missing AdjusterDesk`);
+      assert.ok(template.html.includes(brandName), `${template.id}: html missing ${brandName}`);
       assert.ok(template.text.length > 0, `${template.id}: text is empty`);
     }
   });
@@ -38,7 +39,7 @@ describe("system email templates", () => {
 
     assert.ok(customer.length > 0, "expected customer templates");
     for (const t of customer) {
-      assert.ok(t.from.includes("hello@adjusterdesk.xyz") || t.from.length > 0, `${t.id}: unexpected from`);
+      assert.ok(t.from.includes(supportEmail) || t.from.length > 0, `${t.id}: unexpected from`);
     }
   });
 
@@ -62,7 +63,7 @@ describe("system email templates", () => {
     assert.ok(invitation.html.includes("Sample Adjusting Co"), "user_invitation html missing workspace name");
 
     const welcomeSignup = templates.find((t) => t.id === "welcome_signup")!;
-    assert.ok(welcomeSignup.html.includes("Welcome to AdjusterDesk"), "welcome_signup html missing title");
+    assert.ok(welcomeSignup.html.includes(`Welcome to ${brandName}`), "welcome_signup html missing title");
 
     const trackerEmail1 = templates.find((t) => t.id === "tracker_nurture_email_1")!;
     assert.ok(trackerEmail1.html.includes("Your free claim tracker is ready"), "tracker_nurture_email_1 html missing title");

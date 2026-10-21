@@ -3,6 +3,7 @@ import { createLeadWithState } from "@/lib/actions";
 import { getDemoContext } from "@/lib/app-context";
 import { leadStatusOptions, usStateOptions } from "@/lib/options";
 import { Card, Field, inputClassName, PageHeader, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
+import { brandName } from "@/lib/brand";
 
 export default async function NewLeadPage() {
   const { users } = await getDemoContext();
@@ -40,7 +41,7 @@ export default async function NewLeadPage() {
             <Field label="ZIP" required><input name="postalCode" required className={inputClassName} /><FieldError name="postalCode" /></Field>
             <Field label="Loss type" required hint="Keep it short and recognizable to the office."><input name="lossType" required placeholder="Water damage, wind, fire..." className={inputClassName} /><FieldError name="lossType" /></Field>
             <Field label="Date of loss" hint="Optional if the caller does not know yet."><input name="dateOfLoss" type="date" className={inputClassName} /></Field>
-            <Field label="Follow-up date" hint="If you set this, AdjusterDesk also creates a follow-up task."><input name="followUpDate" type="date" className={inputClassName} /></Field>
+            <Field label="Follow-up date" hint={`If you set this, ${brandName} also creates a follow-up task.`}><input name="followUpDate" type="date" className={inputClassName} /></Field>
           </div>
         </Card>
 

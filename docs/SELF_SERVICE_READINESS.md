@@ -1,6 +1,6 @@
 # Self-Service Readiness
 
-This document covers the staged self-service launch path for AdjusterDesk.
+This document covers the staged self-service launch path for PA ClaimBoard.
 
 For Stripe local setup steps, see docs/STRIPE_TEST_MODE_RUNBOOK.md.
 

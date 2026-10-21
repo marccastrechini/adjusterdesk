@@ -1,9 +1,10 @@
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Resources | AdjusterDesk",
-  description: "Getting started, spreadsheet import, training walkthrough, claim tracking checklist, and template resources for AdjusterDesk.",
+  title: `Resources | ${brandName}`,
+  description: `Getting started, spreadsheet import, training walkthrough, claim tracking checklist, and template resources for ${brandName}.`,
   path: "/resources",
 });
 
@@ -14,7 +15,7 @@ const resources = [
   },
   {
     title: "Importing from spreadsheets",
-    description: "Plain guidance for cleaning up lead and claim spreadsheets before importing them into AdjusterDesk.",
+    description: `Plain guidance for cleaning up lead and claim spreadsheets before importing them into ${brandName}.`,
   },
   {
     title: "Small office claim tracking checklist",
@@ -65,7 +66,7 @@ export default function ResourcesPage() {
           ))}
         </div>
       </PublicSection>
-      <CtaBand title="Need help choosing your next step?" description="Start the founding desk, or email hello@adjusterdesk.xyz with practical questions about your office workflow." primaryHref="/founding-public-adjuster-offices" primaryLabel="See founding desk offer" />
+      <CtaBand title="Need help choosing your next step?" description={`Start the founding desk, or email ${supportEmail} with practical questions about your office workflow.`} primaryHref="/founding-public-adjuster-offices" primaryLabel="See founding desk offer" />
     </>
   );
 }

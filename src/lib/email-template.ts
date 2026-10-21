@@ -1,3 +1,4 @@
+import { brandName } from "@/lib/brand";
 type SystemEmailTemplateInput = {
   preheader: string;
   title: string;
@@ -61,7 +62,7 @@ export function renderSystemEmailTemplate(input: SystemEmailTemplateInput): Rend
         <td align="center">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 620px;">
             <tr>
-              <td style="padding: 0 8px 12px; color: #0f766e; font-size: 13px; font-weight: 700; letter-spacing: 0.2px;">AdjusterDesk</td>
+              <td style="padding: 0 8px 12px; color: #0f766e; font-size: 13px; font-weight: 700; letter-spacing: 0.2px;">${brandName}</td>
             </tr>
             <tr>
               <td style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px 24px;">

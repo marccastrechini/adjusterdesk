@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
-import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { CtaBand, PublicButtonLink, PublicSection } from "@/components/public-site";
 import {
   FOUNDING_HONESTY_NOTE,
@@ -14,9 +13,10 @@ import {
 } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { CheckCircle2 } from "lucide-react";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Founding Office Desk | AdjusterDesk",
+  title: `Founding Office Desk | ${brandName}`,
   description:
     "First 10 founding public adjusting offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. A desk for claims, follow-ups, documents, and fees.",
   path: "/founding-public-adjuster-offices",
@@ -56,7 +56,7 @@ const deskIncludes = [
   "One desk for claims, follow-ups, documents, and fees",
   "Your first 10 active claims, with the rest of the book left in place until this is working",
   "Async onboarding. No sales call.",
-  "Email support at hello@adjusterdesk.xyz",
+  `Email support at ${supportEmail}`,
   "A say in what the desk should do next",
   FOUNDING_PRICE_LINE,
 ];
@@ -74,7 +74,7 @@ export default function FoundingPublicAdjusterOfficesPage() {
             One workspace: leads, claims, documents, follow-ups, settlements, fees.
           </p>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-            In a 1–5 person public adjusting office, that work lives in email, memory, and scattered files. A carrier follow-up waits. A document request stays in a thread. A fee never gets invoiced. AdjusterDesk is the desk for those claims. Start with your first 10 active claims.
+            In a 1–5 person public adjusting office, that work lives in email, memory, and scattered files. A carrier follow-up waits. A document request stays in a thread. A fee never gets invoiced. {brandName} is the desk for those claims. Start with your first 10 active claims.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <PublicButtonLink href={FOUNDING_SOLO_SIGNUP_HREF} variant="primary" eventName="trial_start_click">
@@ -154,10 +154,6 @@ export default function FoundingPublicAdjusterOfficesPage() {
           </a>
           .
         </p>
-      </PublicSection>
-
-      <PublicSection title="Optional: watch a 60-second Demo Office walkthrough" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
-        <ProductOverviewVideo />
       </PublicSection>
 
       <CtaBand

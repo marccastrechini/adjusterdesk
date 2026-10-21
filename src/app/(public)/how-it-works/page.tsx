@@ -1,9 +1,10 @@
 import { CheckList, CtaBand, PublicPageHeader, PublicSection, StepList } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "How It Works | AdjusterDesk",
-  description: "A plain-language workflow for small public adjusting offices using AdjusterDesk.",
+  title: `How It Works | ${brandName}`,
+  description: `A plain-language workflow for small public adjusting offices using ${brandName}.`,
   path: "/how-it-works",
 });
 
@@ -43,7 +44,7 @@ export default function HowItWorksPage() {
       <PublicPageHeader
         eyebrow="How it works"
         title="Simple steps from scattered claim work to a shared office view."
-        description="AdjusterDesk is meant to fit into the daily rhythm of a small public adjusting office, not replace the judgment of the adjuster."
+        description={`${brandName} is meant to fit into the daily rhythm of a small public adjusting office, not replace the judgment of the adjuster.`}
       />
       <PublicSection title="The office flow">
         <StepList steps={steps} />
@@ -51,7 +52,7 @@ export default function HowItWorksPage() {
       <PublicSection title="What stays simple" tone="slate">
         <CheckList items={checklistItems} />
       </PublicSection>
-      <CtaBand title="Walk through the workflow with your current setup in mind." description="Request a demo and compare AdjusterDesk to the spreadsheets, folders, reminders, and accounting notes your office uses now." />
+      <CtaBand title="Walk through the workflow with your current setup in mind." description={`Request a demo and compare ${brandName} to the spreadsheets, folders, reminders, and accounting notes your office uses now.`} />
     </>
   );
 }

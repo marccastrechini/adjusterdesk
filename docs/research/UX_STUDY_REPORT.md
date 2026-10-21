@@ -1,7 +1,7 @@
-# AdjusterDesk Production UX Study Report
+# PA ClaimBoard Production UX Study Report
 
 Study date: 2026-06-11  
-Production site: https://adjusterdesk.xyz  
+Production site: https://paclaimboard.com  
 Evidence artifacts: `artifacts/ux-study/2026-06-11-1612/`  
 Harness: `npm run ux:study:prod`
 
@@ -9,7 +9,7 @@ Harness: `npm run ux:study:prod`
 
 Overall UX readiness: **Good MVP readiness with two P1 outreach risks**.
 
-AdjusterDesk largely meets the goal of feeling simple, natural, practical, and real for somewhat technically oriented solo to 5-person public adjusting offices. The strongest areas are public positioning, lead intake, claim intake, claim detail navigation, document/task workflows, client status sharing, and permission separation.
+PA ClaimBoard largely meets the goal of feeling simple, natural, practical, and real for somewhat technically oriented solo to 5-person public adjusting offices. The strongest areas are public positioning, lead intake, claim intake, claim detail navigation, document/task workflows, client status sharing, and permission separation.
 
 Overall score: **3.85 / 5**  
 Task average: **3.92 / 5**
@@ -223,7 +223,7 @@ Run 3-5 moderated sessions with representative users:
 
 Session tasks:
 
-- Explain what the homepage says AdjusterDesk does.
+- Explain what the homepage says PA ClaimBoard does.
 - Create a lead from a phone call.
 - Open a claim and schedule next work.
 - Request or upload a document.

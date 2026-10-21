@@ -19,6 +19,7 @@ import {
 import { hashPassword } from "../src/lib/auth";
 import { resolveAppBaseUrl, resolveDatabaseUrl, resolveUploadsDir } from "../src/lib/env";
 import { generateClientStatusToken } from "../src/lib/status-links";
+import { canonicalOrigin, adminEmail, operatorEmailDomain } from "@/lib/brand";
 
 type CliOptions = {
   confirmProductionDemo: boolean;
@@ -44,15 +45,15 @@ type BootstrapCounts = {
 };
 
 const demoWorkspaceName = "AdjusterDesk Demo Office";
-const demoOwnerEmail = "demo.owner@adjusterdesk.xyz";
+const demoOwnerEmail = `demo.owner@${operatorEmailDomain}`;
 const demoOwnerName = "Demo Owner";
-const demoAdjusterEmail = "demo.adjuster@adjusterdesk.xyz";
+const demoAdjusterEmail = `demo.adjuster@${operatorEmailDomain}`;
 const demoAdjusterName = "Demo Adjuster";
-const demoAssistantEmail = "demo.assistant@adjusterdesk.xyz";
+const demoAssistantEmail = `demo.assistant@${operatorEmailDomain}`;
 const demoAssistantName = "Demo Assistant";
 const demoPasswordEnvVar = "DEMO_OWNER_PASSWORD";
 const expectedAppEnv = "production";
-const expectedAppBaseUrl = "https://adjusterdesk.xyz";
+const expectedAppBaseUrl = canonicalOrigin;
 const expectedDatabaseFragment = "production.db";
 const expectedUploadsDir = "storage/uploads-production";
 const demoUploadsFolder = "adjusterdesk-demo-office";
@@ -236,7 +237,7 @@ async function bootstrapDemoData(prisma: PrismaClient, config: ReturnType<typeof
         data: {
           name: demoWorkspaceName,
           phone: "(813) 555-0195",
-          email: "office@adjusterdesk.xyz",
+          email: `office@${operatorEmailDomain}`,
         },
       });
     }
@@ -969,15 +970,15 @@ async function main() {
 
   try {
     const admin = await prisma.user.findUnique({
-      where: { email: "admin@adjusterdesk.xyz" },
+      where: { email: adminEmail },
       select: { email: true, isSystemAdmin: true },
     });
 
     if (!admin || !admin.isSystemAdmin) {
-      throw new Error("System admin admin@adjusterdesk.xyz is missing or no longer marked as system admin.");
+      throw new Error(`System admin ${adminEmail} is missing or no longer marked as system admin.`);
     }
 
-    console.log("System admin verified: admin@adjusterdesk.xyz remains system admin.");
+    console.log(`System admin verified: ${adminEmail} remains system admin.`);
     console.log(`Public URL: ${config.appBaseUrl}`);
     console.log(`Production database: ${config.databaseUrl}`);
     console.log(`Production uploads: ${config.uploadsDir}`);

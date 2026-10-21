@@ -1,6 +1,6 @@
 # Production Demo Bootstrap
 
-Use this guide to create or refresh the fixed demo workspace in the local production profile for the public demo site at [https://adjusterdesk.xyz](https://adjusterdesk.xyz).
+Use this guide to create or refresh the fixed demo workspace in the local production profile for the public demo site at [https://paclaimboard.com](https://paclaimboard.com).
 
 This bootstrap is for fake demo data only. Do not point it at real customer claims, real customers, or real uploaded documents.
 
@@ -28,7 +28,7 @@ The bootstrap also creates a fresh backup before it changes data, but the manual
 The script refuses to run unless all of these are true:
 
 - `APP_ENV=production`
-- `APP_BASE_URL=https://adjusterdesk.xyz`
+- `APP_BASE_URL=https://paclaimboard.com`
 - `DATABASE_URL` points to `prisma/production.db`
 - You pass `-ConfirmProductionDemo`
 - The database contains only the demo workspace and system-admin-only support workspaces, unless you explicitly set the mixed-database override described below
@@ -76,7 +76,7 @@ The bootstrap verifies that `admin@adjusterdesk.xyz` is still marked as system a
 
 ## How To Log In
 
-After the bootstrap finishes, sign in at [https://adjusterdesk.xyz/login](https://adjusterdesk.xyz/login) with:
+After the bootstrap finishes, sign in at [https://paclaimboard.com/login](https://paclaimboard.com/login) with:
 
 - Email: `demo.owner@adjusterdesk.xyz`
 - Password: the runtime password you supplied
@@ -132,7 +132,7 @@ npm run prod:demo:bootstrap -- -ConfirmProductionDemo
 
 That updates the shared owner login without changing the workspace name or recreating the demo story in a different shape.
 
-If the owner is already signed in, you can also change the password from [Settings > Account](https://adjusterdesk.xyz/settings/account) after logging in, but the bootstrap is the safest shared-password rotation path for the production demo login.
+If the owner is already signed in, you can also change the password from [Settings > Account](https://paclaimboard.com/settings/account) after logging in, but the bootstrap is the safest shared-password rotation path for the production demo login.
 
 ## Warning
 

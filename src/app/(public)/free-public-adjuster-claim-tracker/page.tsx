@@ -2,9 +2,10 @@ import { Download, Zap } from "lucide-react";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { TrackedDownloadLink } from "@/components/tracked-download-link";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Free Public Adjuster Claim Tracker | AdjusterDesk",
+  title: `Free Public Adjuster Claim Tracker | ${brandName}`,
   description: "Download a free claim tracker spreadsheet template to organize leads, clients, properties, carriers, claims, follow-ups, settlements, fees, and invoices.",
   path: "/free-public-adjuster-claim-tracker",
 });
@@ -43,7 +44,7 @@ export default function FreeClaimTrackerPage() {
       <PublicPageHeader
         eyebrow="Free template"
         title="Free Public Adjuster Claim Tracker"
-        description="A claim tracker spreadsheet for leads, follow-ups, documents, settlements, and fees. When email, memory, and scattered files are where claims slip, the AdjusterDesk founding desk is the next step."
+        description={`A claim tracker spreadsheet for leads, follow-ups, documents, settlements, and fees. When email, memory, and scattered files are where claims slip, the ${brandName} founding desk is the next step.`}
       />
 
       <PublicSection title="Start in two practical steps" tone="white">
@@ -53,7 +54,7 @@ export default function FreeClaimTrackerPage() {
             <p className="mt-2 text-sm leading-6 text-slate-600">Track lead/client details, claim status, follow-ups, documents, settlement amounts, and fee status in one clean sheet.</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-950">Step 2: Move to AdjusterDesk</h3>
+            <h3 className="text-base font-semibold text-slate-950">Step 2: Move to {brandName}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">When tracking gets harder across active claims, start your free trial and run claim work from one workspace.</p>
           </div>
         </div>
@@ -111,7 +112,7 @@ export default function FreeClaimTrackerPage() {
               <Zap className="mt-1 h-5 w-5 flex-none text-teal-700" aria-hidden />
               <div>
                 <h3 className="text-base font-semibold text-slate-950">When spreadsheets get messy</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">The free tracker is great for getting started, but when you need to coordinate between team members, send client updates, track payment status, or manage follow-ups reliably, AdjusterDesk makes it easier.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">The free tracker is great for getting started, but when you need to coordinate between team members, send client updates, track payment status, or manage follow-ups reliably, {brandName} makes it easier.</p>
               </div>
             </div>
           </div>
@@ -119,8 +120,8 @@ export default function FreeClaimTrackerPage() {
       </PublicSection>
 
       <PublicSection
-        title="Signs it's time to move to AdjusterDesk"
-        description="The free tracker works for getting organized, but AdjusterDesk handles what spreadsheets can't."
+        title={`Signs it's time to move to ${brandName}`}
+        description={`The free tracker works for getting organized, but ${brandName} handles what spreadsheets can't.`}
         tone="slate"
       >
         <div className="grid gap-3 sm:grid-cols-2">
@@ -150,7 +151,7 @@ export default function FreeClaimTrackerPage() {
             <p className="mt-2 text-sm leading-6 text-slate-600">Email us about your specific workflow, office size, claim volume, or how the software could help your team.</p>
             <div className="mt-4">
               <a
-                href="mailto:hello@adjusterdesk.xyz"
+                href={`mailto:${supportEmail}`}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
               >
                 Email us

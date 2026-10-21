@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SubscriptionStatus } from "@/generated/prisma/client";
 import { trialPromptState, trialDaysRemaining, type TrialPromptState } from "@/lib/trial";
+import { brandName } from "@/lib/brand";
 
 type FirmTrialFields = {
   subscriptionStatus: SubscriptionStatus;
@@ -39,7 +40,7 @@ export function TrialBanner({ firm }: { firm: FirmTrialFields }) {
   if (state === "expired") {
     return (
       <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-medium">Your free trial has ended. Choose a plan to keep using AdjusterDesk.</p>
+        <p className="font-medium">Your free trial has ended. Choose a plan to keep using {brandName}.</p>
         <Link
           href="/settings/billing"
           className="inline-flex min-h-9 items-center justify-center rounded-md bg-teal-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-teal-800 whitespace-nowrap"

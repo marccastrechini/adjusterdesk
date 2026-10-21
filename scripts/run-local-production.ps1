@@ -34,7 +34,7 @@ if (-not (Test-Path $buildIdPath -PathType Leaf)) {
   Write-Error "No production build found. Run npm run build before starting local production."
 }
 
-Write-LocalRuntimeSummary -Config $config -Heading "Starting AdjusterDesk local production runtime..."
+Write-LocalRuntimeSummary -Config $config -Heading "Starting PA ClaimBoard local production runtime..."
 Write-Output "Repo: $repoRoot"
 Write-Output "Binding: http://${BindHost}:$Port"
 Write-Output "NODE_ENV=$($env:NODE_ENV)"

@@ -1,6 +1,6 @@
 # Stripe Test Mode Runbook
 
-This runbook prepares AdjusterDesk for Stripe test mode only.
+This runbook prepares PA ClaimBoard for Stripe test mode only.
 
 ## Scope and Safety
 
@@ -42,25 +42,25 @@ In Stripe Dashboard, ensure Test mode is enabled.
 
 Create products and monthly recurring prices:
 
-1. Product: AdjusterDesk Solo
+1. Product: PA ClaimBoard Solo
 2. Price: 49 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_SOLO_MONTHLY
 
-1. Product: AdjusterDesk Small Office
+1. Product: PA ClaimBoard Small Office
 2. Price: 99 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_SMALL_OFFICE_MONTHLY
 
-1. Product: AdjusterDesk Team
+1. Product: PA ClaimBoard Team
 2. Price: 199 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_TEAM_MONTHLY
 
 Optional founding prices. Create new prices. Do not edit the standard prices above. Leave the env vars blank to keep founding Checkout on the standard price and 14-day trial.
 
-1. Product: AdjusterDesk Founding Solo
+1. Product: PA ClaimBoard Founding Solo
 2. Price: 29 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_FOUNDING_SOLO_MONTHLY
 
-1. Product: AdjusterDesk Founding Small Office
+1. Product: PA ClaimBoard Founding Small Office
 2. Price: 49 USD monthly recurring
 3. Save generated price ID to STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY
 
@@ -80,7 +80,7 @@ Required events:
 
 Future production endpoint URL:
 
-- https://adjusterdesk.xyz/api/stripe/webhook
+- https://paclaimboard.com/api/stripe/webhook
 
 Local testing options:
 

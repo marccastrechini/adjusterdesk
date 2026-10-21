@@ -1,5 +1,6 @@
 import { renderSystemEmailTemplate } from "@/lib/email-template";
 import { getOutreachTemplatePreviewDescriptors } from "@/lib/outreach-email";
+import { brandName, canonicalOrigin, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
 
 export type EmailAudience = "customer" | "internal";
 
@@ -17,15 +18,15 @@ export type SystemEmailTemplateDescriptor = {
 };
 
 function resolveFrom() {
-  return process.env.SYSTEM_EMAIL_FROM?.trim() || "AdjusterDesk <hello@adjusterdesk.xyz>";
+  return resolveBrandFromHeader(process.env.SYSTEM_EMAIL_FROM).from;
 }
 
 function resolveReplyTo() {
-  return process.env.SYSTEM_EMAIL_REPLY_TO?.trim() || "hello@adjusterdesk.xyz";
+  return resolveBrandReplyTo(process.env.SYSTEM_EMAIL_REPLY_TO);
 }
 
 function footer() {
-  return `AdjusterDesk system email from ${resolveReplyTo()}`;
+  return `${brandName} system email from ${resolveReplyTo()}`;
 }
 
 export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
@@ -33,35 +34,35 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
   const replyTo = resolveReplyTo();
 
   const passwordReset = renderSystemEmailTemplate({
-    preheader: "Reset your AdjusterDesk password.",
+    preheader: `Reset your ${brandName} password.`,
     title: "Reset your password",
     intro: "Hello Alex Johnson,",
     bodyLines: [
-      "A password reset was requested for your AdjusterDesk account.",
+      `A password reset was requested for your ${brandName} account.`,
       "Use the button below to set a new password. This link expires in 60 minutes and can be used once.",
     ],
     ctaLabel: "Reset password",
-    ctaUrl: "https://adjusterdesk.xyz/reset-password?token=sample-token",
+    ctaUrl: `${canonicalOrigin}/reset-password?token=sample-token`,
     secondaryText: "If you did not request this, you can ignore this email.",
     footer: footer(),
   });
 
   const userInvitation = renderSystemEmailTemplate({
-    preheader: "You have been invited to AdjusterDesk.",
+    preheader: `You have been invited to ${brandName}.`,
     title: "Set up your account",
     intro: "Hello Alex Johnson,",
     bodyLines: [
-      "You were invited to join Sample Adjusting Co in AdjusterDesk.",
+      `You were invited to join Sample Adjusting Co in ${brandName}.`,
       "Use the secure link below to set your password. This invite expires in 60 minutes and can be used once.",
     ],
     ctaLabel: "Accept invite",
-    ctaUrl: "https://adjusterdesk.xyz/accept-invite?token=sample-token",
+    ctaUrl: `${canonicalOrigin}/accept-invite?token=sample-token`,
     secondaryText: "If you were not expecting this invite, you can ignore this email.",
     footer: footer(),
   });
 
   const trialSignupAlert = renderSystemEmailTemplate({
-    preheader: "A new AdjusterDesk trial workspace was created.",
+    preheader: `A new ${brandName} trial workspace was created.`,
     title: "New trial signup",
     intro: "A new workspace was created from the public signup form.",
     bodyLines: [
@@ -75,11 +76,11 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
   });
 
   const welcomeSignup = renderSystemEmailTemplate({
-    preheader: "Welcome to AdjusterDesk. Start with your first claim in the first five minutes.",
-    title: "Welcome to AdjusterDesk",
+    preheader: `Welcome to ${brandName}. Start with your first claim in the first five minutes.`,
+    title: `Welcome to ${brandName}`,
     intro: "Hello Alex Johnson,",
     bodyLines: [
-      "Welcome to AdjusterDesk. It is built for solo and small public adjusting offices.",
+      `Welcome to ${brandName}. It is built for solo and small public adjusting offices.`,
       "Start with these three steps:",
       "1. Add your first lead or claim.",
       "2. Add the next follow-up.",
@@ -87,8 +88,8 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       "Use Start for a quick walkthrough, and Help for practical how-to guidance.",
     ],
     ctaLabel: "Open Start",
-    ctaUrl: "https://adjusterdesk.xyz/start",
-    secondaryText: "Need guidance? Open https://adjusterdesk.xyz/help",
+    ctaUrl: `${canonicalOrigin}/start`,
+    secondaryText: `Need guidance? Open ${canonicalOrigin}/help`,
     footer: footer(),
   });
 
@@ -99,10 +100,10 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     bodyLines: [
       "Here is your free public adjuster claim tracker.",
       "Use it right away: add your active claims, set the next follow-up date, and mark missing documents.",
-      "When the spreadsheet starts becoming too manual, AdjusterDesk gives you the same structure in a shared workspace.",
+      `When the spreadsheet starts becoming too manual, ${brandName} gives you the same structure in a shared workspace.`,
     ],
     ctaLabel: "Download free tracker",
-    ctaUrl: "https://adjusterdesk.xyz/free-public-adjuster-claim-tracker",
+    ctaUrl: `${canonicalOrigin}/free-public-adjuster-claim-tracker`,
     secondaryText: "Questions? Reply to this email and we will help.",
     footer: footer(),
   });
@@ -114,10 +115,10 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     bodyLines: [
       "Spreadsheets work for getting started, but follow-ups, deadlines, documents, and payment tracking become harder as claim volume grows.",
       "Most small offices notice this around 10 to 15 active claims, especially when more than one person is helping.",
-      "AdjusterDesk keeps the same practical claim structure, just in a shared workspace that is easier to manage day to day.",
+      `${brandName} keeps the same practical claim structure, just in a shared workspace that is easier to manage day to day.`,
     ],
     ctaLabel: "Start free trial",
-    ctaUrl: "https://adjusterdesk.xyz/signup",
+    ctaUrl: `${canonicalOrigin}/signup`,
     secondaryText: "Not ready yet? Keep using the free tracker and reply by email if you want practical guidance.",
     footer: footer(),
   });
@@ -127,12 +128,12 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     title: "Put the first 10 active claims on the desk",
     intro: "Hello Alex Johnson,",
     bodyLines: [
-      "If follow-ups, documents, and fees are slipping across email and files, start AdjusterDesk with your first 10 active claims.",
+      `If follow-ups, documents, and fees are slipping across email and files, start ${brandName} with your first 10 active claims.`,
       "First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing is Solo $49/month and Small Office $99/month.",
       "Stripe Checkout collects a card at signup. For the first 10 founding offices, $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months. Async onboarding, no sales call.",
     ],
     ctaLabel: "See founding desk offer",
-    ctaUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
+    ctaUrl: `${canonicalOrigin}/founding-public-adjuster-offices`,
     secondaryText: "Prefer a sheet for now? The tracker page is still available.",
     footer: footer(),
   });
@@ -145,10 +146,10 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       audience: "customer",
       from,
       replyTo,
-      subject: "AdjusterDesk password reset",
+      subject: `${brandName} password reset`,
       sampleDataLabels: {
         userName: "Alex Johnson",
-        resetUrl: "https://adjusterdesk.xyz/reset-password?token=sample-token",
+        resetUrl: `${canonicalOrigin}/reset-password?token=sample-token`,
         expiresInMinutes: "60",
       },
       html: passwordReset.html,
@@ -161,11 +162,11 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       audience: "customer",
       from,
       replyTo,
-      subject: "AdjusterDesk account invitation",
+      subject: `${brandName} account invitation`,
       sampleDataLabels: {
         userName: "Alex Johnson",
         workspaceName: "Sample Adjusting Co",
-        acceptInviteUrl: "https://adjusterdesk.xyz/accept-invite?token=sample-token",
+        acceptInviteUrl: `${canonicalOrigin}/accept-invite?token=sample-token`,
         expiresInMinutes: "60",
       },
       html: userInvitation.html,
@@ -178,7 +179,7 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       audience: "internal",
       from,
       replyTo,
-      subject: "AdjusterDesk new trial signup",
+      subject: `${brandName} new trial signup`,
       sampleDataLabels: {
         workspaceName: "Sample Adjusting Co",
         ownerName: "Alex Johnson",
@@ -195,11 +196,11 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       audience: "customer",
       from,
       replyTo,
-      subject: "Welcome to AdjusterDesk - start with your first claim",
+      subject: `Welcome to ${brandName} - start with your first claim`,
       sampleDataLabels: {
         userName: "Alex Johnson",
-        startUrl: "https://adjusterdesk.xyz/start",
-        helpUrl: "https://adjusterdesk.xyz/help",
+        startUrl: `${canonicalOrigin}/start`,
+        helpUrl: `${canonicalOrigin}/help`,
       },
       html: welcomeSignup.html,
       text: welcomeSignup.text,
@@ -214,7 +215,7 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       subject: "Your free public adjuster claim tracker is ready",
       sampleDataLabels: {
         userName: "Alex Johnson",
-        trackerUrl: "https://adjusterdesk.xyz/free-public-adjuster-claim-tracker",
+        trackerUrl: `${canonicalOrigin}/free-public-adjuster-claim-tracker`,
       },
       html: trackerNurtureEmail1.html,
       text: trackerNurtureEmail1.text,
@@ -229,7 +230,7 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       subject: "This is where spreadsheets start to break down",
       sampleDataLabels: {
         userName: "Alex Johnson",
-        signupUrl: "https://adjusterdesk.xyz/signup",
+        signupUrl: `${canonicalOrigin}/signup`,
       },
       html: trackerNurtureEmail2.html,
       text: trackerNurtureEmail2.text,
@@ -237,14 +238,14 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     {
       id: "tracker_nurture_email_3",
       name: "Tracker nurture email 3",
-      description: "Invite to try AdjusterDesk with first 10 active claims during feedback period.",
+      description: `Invite to try ${brandName} with first 10 active claims during feedback period.`,
       audience: "customer",
       from,
       replyTo,
-      subject: "Try AdjusterDesk with your first 10 active claims",
+      subject: `Try ${brandName} with your first 10 active claims`,
       sampleDataLabels: {
         userName: "Alex Johnson",
-        foundingUrl: "https://adjusterdesk.xyz/founding-public-adjuster-offices",
+        foundingUrl: `${canonicalOrigin}/founding-public-adjuster-offices`,
       },
       html: trackerNurtureEmail3.html,
       text: trackerNurtureEmail3.text,

@@ -5,6 +5,8 @@ import { Card, Field, Notice, SubmitButton, inputClassName } from "@/components/
 import { requestPasswordResetWithState } from "@/lib/auth-actions";
 import { getNoticeMessage } from "@/lib/notices";
 import { getCurrentSessionUser } from "@/lib/session";
+import { BrandMark } from "@/components/brand-mark";
+import { brandName } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,10 @@ export default async function ForgotPasswordPage({ searchParams }: PageProps) {
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-md gap-6">
         <div className="text-center">
-          <p className="text-sm font-medium text-teal-800">AdjusterDesk</p>
+          <div className="flex justify-center">
+            <BrandMark />
+          </div>
+          <p className="mt-3 text-sm font-medium text-teal-800">{brandName}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Forgot password</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">Enter your account email and we will send a reset link if the account is active.</p>
         </div>

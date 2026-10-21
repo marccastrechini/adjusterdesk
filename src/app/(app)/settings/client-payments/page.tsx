@@ -3,6 +3,7 @@ import { getDemoContext } from "@/lib/app-context";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { startOrResumeClientBillingConnection, refreshClientBillingStatus, saveClientPaymentFeeSettings } from "@/lib/client-billing/actions";
 import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
+import { brandName } from "@/lib/brand";
 
 export default async function ClientPaymentsSettingsPage() {
   const { firm } = await getDemoContext();
@@ -22,7 +23,7 @@ export default async function ClientPaymentsSettingsPage() {
         <p className="mt-1 text-sm leading-6">
           Payment processing surcharges, convenience fees, and fee recovery are restricted in some states and by card-network rules. If you enable them, this firm is responsible for compliance, notices, and required disclosures.
         </p>
-        <p className="mt-1 text-sm leading-6">AdjusterDesk does not apply fee recovery automatically. It only adds an optional separate line item when you explicitly turn it on.</p>
+        <p className="mt-1 text-sm leading-6">{brandName} does not apply fee recovery automatically. It only adds an optional separate line item when you explicitly turn it on.</p>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -1,6 +1,7 @@
 import { requireSystemOutreachContext } from "@/lib/app-context";
 import { freeClaimTrackerUrl, trialSignupUrl } from "@/lib/outreach";
 import { ButtonLink, Card, PageHeader } from "@/components/ui";
+import { brandName } from "@/lib/brand";
 
 export default async function SystemOutreachPlaybookPage() {
   await requireSystemOutreachContext();
@@ -8,7 +9,7 @@ export default async function SystemOutreachPlaybookPage() {
   return (
     <>
       <PageHeader
-        title="AdjusterDesk - Outreach Playbook"
+        title={`${brandName} - Outreach Playbook`}
         description="Simple, practical outreach for solo to 5-person public adjusting offices."
         actions={<ButtonLink href="/system/outreach" variant="secondary">Back to outreach queue</ButtonLink>}
       />
@@ -72,7 +73,7 @@ export default async function SystemOutreachPlaybookPage() {
             </p>
             <p>If you are open to it, what is one thing your office would want most in that workflow?</p>
             <p className="mt-2">Thanks,</p>
-            <p>AdjusterDesk</p>
+            <p>{brandName}</p>
           </div>
         </section>
 
@@ -95,7 +96,7 @@ export default async function SystemOutreachPlaybookPage() {
             </p>
             <p>No pressure. If now is not the right time, I can follow up later.</p>
             <p className="mt-2">Thanks,</p>
-            <p>AdjusterDesk</p>
+            <p>{brandName}</p>
           </div>
         </section>
 

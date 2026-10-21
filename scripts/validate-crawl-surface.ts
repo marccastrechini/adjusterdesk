@@ -1,11 +1,12 @@
 import { publicSitemapPaths } from "../src/lib/public-sitemap";
+import { canonicalHost, canonicalOrigin } from "@/lib/brand";
 
 type ValidationIssue = {
   level: "error" | "warn";
   message: string;
 };
 
-const defaultBaseUrl = "https://adjusterdesk.xyz";
+const defaultBaseUrl = canonicalOrigin;
 
 const expectedPublicPaths = [...publicSitemapPaths];
 const canonicalSitemapPath = "/sitemap.xml";
@@ -74,7 +75,7 @@ async function fetchNoRedirect(url: string): Promise<Response> {
     redirect: "manual",
     headers: {
       Accept: "*/*",
-      "User-Agent": "adjusterdesk-crawl-validator/1.0",
+      "User-Agent": "pa-claimboard-crawl-validator/1.0",
     },
   });
 }
@@ -151,7 +152,7 @@ async function validateSitemap({
       redirect: "manual",
       headers: {
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "User-Agent": "adjusterdesk-crawl-validator/1.0",
+        "User-Agent": "pa-claimboard-crawl-validator/1.0",
       },
     });
 
@@ -256,7 +257,7 @@ async function validate(baseUrl: string): Promise<{ issues: ValidationIssue[] }>
 
 function isProductionSite(baseUrl: string): boolean {
   const hostname = new URL(baseUrl).hostname.toLowerCase();
-  return hostname === "adjusterdesk.xyz" || hostname === "www.adjusterdesk.xyz";
+  return hostname === canonicalHost || hostname === `www.${canonicalHost}`;
 }
 
 async function validateLegacySitemapRedirect(baseUrl: string, issues: ValidationIssue[]): Promise<void> {
@@ -316,13 +317,13 @@ async function validateCanonicalHostRedirects(baseUrl: string, issues: Validatio
   }
 
   const probes = [
-    "http://adjusterdesk.xyz/",
-    "http://adjusterdesk.xyz/how-it-works",
-    "http://adjusterdesk.xyz/cookies",
-    "http://adjusterdesk.xyz/signup",
-    "http://www.adjusterdesk.xyz/",
-    "https://www.adjusterdesk.xyz/",
-    "https://www.adjusterdesk.xyz/cookies",
+    `${canonicalOrigin}/`,
+    `${canonicalOrigin}/how-it-works`,
+    `${canonicalOrigin}/cookies`,
+    `${canonicalOrigin}/signup`,
+    `http://www.${canonicalHost}/`,
+    `${canonicalOrigin}/`,
+    `${canonicalOrigin}/cookies`,
   ];
 
   for (const url of probes) {
@@ -343,7 +344,7 @@ async function validateCanonicalHostRedirects(baseUrl: string, issues: Validatio
     }
 
     const resolved = new URL(location, url);
-    const expected = new URL(expectedPath, "https://adjusterdesk.xyz");
+    const expected = new URL(expectedPath, canonicalOrigin);
     if (resolved.origin !== expected.origin || resolved.pathname !== expected.pathname) {
       issues.push({
         level: "error",

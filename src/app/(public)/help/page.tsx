@@ -1,38 +1,39 @@
 import Link from "next/link";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Help | AdjusterDesk",
-  description: "Plain answers about AdjusterDesk for solo and small public adjusting offices.",
+  title: `Help | ${brandName}`,
+  description: `Plain answers about ${brandName} for solo and small public adjusting offices.`,
   path: "/help",
 });
 
 const faqs = [
   {
-    question: "What is AdjusterDesk?",
+    question: `What is ${brandName}?`,
     answer:
-      "AdjusterDesk is a simple workspace for public adjusting offices to track claims, follow-ups, documents, settlements, checks, fees, and invoices in one place.",
+      `${brandName} is a simple workspace for public adjusting offices to track claims, follow-ups, documents, settlements, checks, fees, and invoices in one place.`,
   },
   {
-    question: "Who is AdjusterDesk for?",
+    question: `Who is ${brandName} for?`,
     answer:
       "It is built for solo public adjusters and small offices with up to about five team members who want to move beyond spreadsheets and scattered notes.",
   },
   {
     question: "Is this for public adjusters or insurance company adjusters?",
     answer:
-      "AdjusterDesk is designed for public adjusting offices working on behalf of policyholders.",
+      `${brandName} is designed for public adjusting offices working on behalf of policyholders.`,
   },
   {
-    question: "Does AdjusterDesk replace Xactimate?",
+    question: `Does ${brandName} replace Xactimate?`,
     answer:
-      "No. AdjusterDesk does not replace estimating software. It helps your office organize claim operations, communication, deadlines, and money tracking around the claim.",
+      `No. ${brandName} does not replace estimating software. It helps your office organize claim operations, communication, deadlines, and money tracking around the claim.`,
   },
   {
-    question: "Does AdjusterDesk replace QuickBooks?",
+    question: `Does ${brandName} replace QuickBooks?`,
     answer:
-      "No. AdjusterDesk helps you track claim-level fee and invoice status, but it is not a full accounting replacement.",
+      `No. ${brandName} helps you track claim-level fee and invoice status, but it is not a full accounting replacement.`,
   },
   {
     question: "Can I start from a spreadsheet?",
@@ -67,7 +68,7 @@ export default function HelpPage() {
       <PublicPageHeader
         eyebrow="Help"
         title="Common questions from small public adjusting offices"
-        description="Straight answers to help you decide if AdjusterDesk fits your office and what to do first after signup."
+        description={`Straight answers to help you decide if ${brandName} fits your office and what to do first after signup.`}
       />
 
       <PublicSection title="Frequently asked questions" tone="white">
@@ -108,7 +109,7 @@ export default function HelpPage() {
 
       <CtaBand
         title="Need a practical walkthrough for your office?"
-        description="Walk through Today, a lead turning into a claim, and follow-ups on an active claim. Questions go to hello@adjusterdesk.xyz."
+        description={`Walk through Today, a lead turning into a claim, and follow-ups on an active claim. Questions go to ${supportEmail}.`}
         primaryHref="/training"
         primaryLabel="Open the training"
         trackPrimaryClick={false}

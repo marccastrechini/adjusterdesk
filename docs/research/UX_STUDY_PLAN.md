@@ -1,8 +1,8 @@
-# AdjusterDesk Production UX Study Plan
+# PA ClaimBoard Production UX Study Plan
 
 ## Study Purpose
 
-Evaluate whether AdjusterDesk feels simple, natural, practical, and real for solo to 5-person public adjusting offices. This study is a production-facing audit using dedicated QA accounts and QA workspace data only. It does not change product behavior or strategy.
+Evaluate whether PA ClaimBoard feels simple, natural, practical, and real for solo to 5-person public adjusting offices. This study is a production-facing audit using dedicated QA accounts and QA workspace data only. It does not change product behavior or strategy.
 
 ## Source Inputs Reviewed
 
@@ -19,11 +19,11 @@ Evaluate whether AdjusterDesk feels simple, natural, practical, and real for sol
 
 ## Target User
 
-Small public adjusting offices that currently rely on spreadsheets, email, text messages, folders, QuickBooks, calendar reminders, and memory. Primary users are solo adjusters, owners, adjusters, and small-office staff who are comfortable with common business software but should not need training to understand AdjusterDesk's core workflow.
+Small public adjusting offices that currently rely on spreadsheets, email, text messages, folders, QuickBooks, calendar reminders, and memory. Primary users are solo adjusters, owners, adjusters, and small-office staff who are comfortable with common business software but should not need training to understand PA ClaimBoard's core workflow.
 
 ## Product Positioning
 
-AdjusterDesk is a simple operating workspace for public adjusting offices. Its promise is to help offices keep leads, claims, follow-ups, documents, communications, settlements, checks, fees, invoices, and receivables in one place without claiming legal advice, claim valuation, automated coverage decisions, or carrier/accounting integrations.
+PA ClaimBoard is a simple operating workspace for public adjusting offices. Its promise is to help offices keep leads, claims, follow-ups, documents, communications, settlements, checks, fees, invoices, and receivables in one place without claiming legal advice, claim valuation, automated coverage decisions, or carrier/accounting integrations.
 
 ## Core Workflows Under Study
 
@@ -83,7 +83,7 @@ Runner:
 Behavior:
 
 - Loads `.env.qa.local` locally without printing credentials.
-- Uses `AD_QA_BASE_URL`, defaulting to `https://adjusterdesk.xyz`.
+- Uses `AD_QA_BASE_URL`, defaulting to `https://paclaimboard.com`.
 - Logs in as the normal QA user and admin QA user.
 - Captures full-page screenshots and body text snapshots.
 - Captures console errors, page errors, and non-aborted network failures.
@@ -101,7 +101,7 @@ Latest study evidence used for this report:
 
 ## Success Criteria
 
-AdjusterDesk meets the MVP usability goal if:
+PA ClaimBoard meets the MVP usability goal if:
 
 - Core office workflows are discoverable without training.
 - Public-adjusting terminology is plain and familiar.

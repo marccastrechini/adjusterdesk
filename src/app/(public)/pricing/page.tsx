@@ -3,9 +3,10 @@ import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/co
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { CHECKOUT_CARD_LINE, FOUNDING_HONESTY_NOTE, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Pricing | AdjusterDesk",
+  title: `Pricing | ${brandName}`,
   description: "Simple flat pricing for solo and small public adjusting offices.",
   path: "/pricing",
 });

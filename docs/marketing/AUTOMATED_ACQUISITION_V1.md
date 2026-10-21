@@ -1,7 +1,7 @@
 # Automated Acquisition V1
 
 ## Goal
-Low-engagement automated acquisition for AdjusterDesk under $200/month, focused on qualified public adjuster traffic with minimal manual outreach.
+Low-engagement automated acquisition for PA ClaimBoard under $200/month, focused on qualified public adjuster traffic with minimal manual outreach.
 
 ## Primary Channel
 Google Search Ads micro-test.
@@ -40,7 +40,7 @@ Google Search Ads micro-test.
 - attorney
 
 ## Starting Campaign Structure
-- Campaign: AdjusterDesk - Search - Public Adjusters
+- Campaign: PA ClaimBoard - Search - Public Adjusters
 - Ad Group 1: Public Adjuster Software
 - Ad Group 2: Claim Tracker / Spreadsheet
 - Ad Group 3: Competitor Alternative (only if a competitor alternative landing page exists)
@@ -67,11 +67,11 @@ Google Search Ads micro-test.
 
 ### Descriptions
 - Keep leads, claims, documents, follow-ups, fees, and invoices in one simple workspace.
-- Still using spreadsheets? Download the free tracker or try AdjusterDesk with your first claims.
+- Still using spreadsheets? Download the free tracker or try PA ClaimBoard with your first claims.
 - Built for solo and small public adjusting offices that want simple claim organization.
 
 ## Search Console Checklist
-- Verify property for https://adjusterdesk.xyz
+- Verify property for https://paclaimboard.com
 - Submit sitemap.xml
 - Inspect homepage
 - Inspect /public-adjuster-software

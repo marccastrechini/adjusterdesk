@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { ProductOverviewVideo } from "@/components/product-overview-video";
 import { TrainingClose } from "@/components/training-walkthrough";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { trainingComingSoon, trainingModulePath, trainingModules } from "@/lib/training";
+import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Training | AdjusterDesk",
+  title: `Training | ${brandName}`,
   description:
-    "Walk through AdjusterDesk on your own. Today is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid.",
+    `Walk through ${brandName} on your own. Today is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid.`,
   path: "/training",
 });
 
@@ -18,12 +18,8 @@ export default function TrainingPage() {
       <PublicPageHeader
         eyebrow="Training"
         title="Walk through the desk on your own time."
-        description="A public walkthrough for a 1–5 person public adjusting office. AdjusterDesk is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call."
+        description={`A public walkthrough for a 1–5 person public adjusting office. ${brandName} is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call.`}
       />
-
-      <PublicSection title="Watch the overview" description="A Demo Office walkthrough with voiceover. The note under the player covers the same path." tone="slate">
-        <ProductOverviewVideo />
-      </PublicSection>
 
       <PublicSection
         title="Three modules"
@@ -64,8 +60,8 @@ export default function TrainingPage() {
             Log in
           </Link>{" "}
           and open Today. Questions go to{" "}
-          <a href="mailto:hello@adjusterdesk.xyz" className="font-medium text-teal-800 hover:text-teal-900">
-            hello@adjusterdesk.xyz
+          <a href={`mailto:${supportEmail}`} className="font-medium text-teal-800 hover:text-teal-900">
+            {supportEmail}
           </a>
           .
         </p>

@@ -16,7 +16,7 @@ Assert-LocalRuntimeSafety -Config $config -AllowProductionDatabase:$AllowProduct
 
 $buildIdPath = Join-Path $repoRoot ".next\BUILD_ID"
 
-Write-LocalRuntimeSummary -Config $config -Heading "Starting AdjusterDesk development runtime..."
+Write-LocalRuntimeSummary -Config $config -Heading "Starting PA ClaimBoard development runtime..."
 Write-Output "Repo: $repoRoot"
 Write-Output "Binding: http://${BindHost}:$Port"
 Write-Output "NODE_ENV=$($env:NODE_ENV)"

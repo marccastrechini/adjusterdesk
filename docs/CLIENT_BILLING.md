@@ -1,9 +1,9 @@
 # Client Billing
 
-AdjusterDesk has two different billing flows:
+PA ClaimBoard has two different billing flows:
 
-- SaaS billing: the office pays AdjusterDesk for its subscription.
-- Client billing: a public adjusting firm bills its own claim clients/customers through AdjusterDesk.
+- SaaS billing: the office pays PA ClaimBoard for its subscription.
+- Client billing: a public adjusting firm bills its own claim clients/customers through PA ClaimBoard.
 
 Keep these separate in the code, UI, and tests.
 
@@ -13,8 +13,8 @@ The first client-billing provider is Stripe Connect using direct charges.
 
 - Each firm connects its own Stripe account.
 - The firm is the merchant billing the client.
-- AdjusterDesk enables the workflow and stores sync state, but it does not collect the client invoice funds.
-- There is no AdjusterDesk platform fee in this implementation.
+- PA ClaimBoard enables the workflow and stores sync state, but it does not collect the client invoice funds.
+- There is no PA ClaimBoard platform fee in this implementation.
 - Hosted invoices come from Stripe's hosted invoice page for the MVP.
 - Manual invoice and payment entry stays available.
 
@@ -98,7 +98,7 @@ Before production use:
 ## Environment Matrix
 
 - `.env.development.local` = local dev.
-- `.env.production.local` = local production / public `adjusterdesk.xyz` runner.
+- `.env.production.local` = local production / public `paclaimboard.com` runner.
 - `.env.qa.local` = QA runner if used.
 - `*.example` = templates only, no secrets.
 

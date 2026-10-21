@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { canonicalRedirectStatus, canonicalRedirectTarget } from "@/lib/public-canonical";
 
 /**
- * Send plain HTTP and www.adjusterdesk.xyz to https://adjusterdesk.xyz.
+ * Send plain HTTP and the www host to the canonical https origin.
  * Runs for every path, including favicon and sitemap, so those duplicates
  * redirect too. Local and other hosts are unchanged.
  */

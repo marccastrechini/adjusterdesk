@@ -5,7 +5,7 @@
 1. Scaffold Next.js with TypeScript, App Router, Tailwind, and ESLint.
 2. Install Prisma, Zod, Lucide icons, and small utility packages.
 3. Add persistent project context and AI instruction files.
-4. Define Prisma schema for the core AdjusterDesk records.
+4. Define Prisma schema for the core PA ClaimBoard records.
 5. Seed Harbor Public Adjusting with a realistic water damage scenario.
 6. Build a responsive app shell with sidebar, top bar, firm name, and demo user menu.
 7. Build Today, Leads, Claims, Claim detail tabs, Money, Reports, Templates, Users, Import, and public Status routes.

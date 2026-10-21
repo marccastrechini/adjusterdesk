@@ -1,5 +1,5 @@
-export const canonicalHost = "adjusterdesk.xyz";
-export const canonicalOrigin = "https://adjusterdesk.xyz";
+import { canonicalHost, canonicalOrigin } from "@/lib/brand";
+
 export const canonicalRedirectStatus = 308;
 
 const wwwHost = `www.${canonicalHost}`;
@@ -92,8 +92,8 @@ function isSafeSearch(search: string): boolean {
 }
 
 /**
- * Permanent redirect target for plain HTTP and www hosts.
- * Returns null when the request is already on https://adjusterdesk.xyz,
+ * Permanent redirect target for plain HTTP and www on the canonical host.
+ * Returns null when the request is already on the canonical https origin,
  * or when the host is not one of the public site hosts (localhost, preview).
  */
 export function canonicalRedirectTarget(input: CanonicalRedirectInput): string | null {

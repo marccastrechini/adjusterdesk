@@ -85,7 +85,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     return csvResponse(
-      "adjusterdesk-leads.csv",
+      "pa-claimboard-leads.csv",
       toCsv(
         ["Client", "Property", "Source", "Referral source", "Loss type", "Status", "Assigned user", "Follow-up date"],
         filteredLeads.map((lead) => [
@@ -114,7 +114,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     return csvResponse(
-      "adjusterdesk-claims.csv",
+      "pa-claimboard-claims.csv",
       toCsv(
         ["Client", "Property", "Claim number", "Carrier", "Loss type", "Status", "Assigned user", "Updated at"],
         filteredClaims.map((claim) => [
@@ -158,7 +158,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     return csvResponse(
-      "adjusterdesk-invoices.csv",
+      "pa-claimboard-invoices.csv",
       toCsv(
         ["Invoice number", "Client", "Claim number", "Status", "Settlement amount", "Fee amount", "Amount paid", "Balance due", "Due date"],
         filteredInvoices.map((invoice) => [

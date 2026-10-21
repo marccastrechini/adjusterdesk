@@ -1,6 +1,7 @@
 import { trainingPublicPaths } from "./training";
+import { canonicalOrigin } from "@/lib/brand";
 
-export const canonicalSiteOrigin = "https://adjusterdesk.xyz";
+export const canonicalSiteOrigin = canonicalOrigin;
 export const canonicalSitemapPath = "/sitemap.xml";
 
 /**

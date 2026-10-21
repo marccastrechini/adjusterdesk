@@ -1,10 +1,11 @@
 import { Mail } from "lucide-react";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { brandName, supportMailto } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: "Talk to Us | AdjusterDesk",
-  description: "Talk with the AdjusterDesk team about setup for your office.",
+  title: `Talk to Us | ${brandName}`,
+  description: `Talk with the ${brandName} team about setup for your office.`,
   path: "/demo",
 });
 
@@ -21,8 +22,8 @@ export default function DemoPage() {
     <>
       <PublicPageHeader
         eyebrow="Talk to us"
-        title="See AdjusterDesk with a small-office workflow."
-        description="Use a walkthrough to compare AdjusterDesk against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices."
+        title={`See ${brandName} with a small-office workflow.`}
+        description={`Use a walkthrough to compare ${brandName} against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices.`}
       />
       <PublicSection title="Talk to us">
         <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">
@@ -52,7 +53,7 @@ export default function DemoPage() {
             </div>
             <div className="mt-5">
               <a
-                href="mailto:hello@adjusterdesk.xyz?subject=AdjusterDesk%20demo%20request"
+                href={supportMailto(`${brandName} demo request`)}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
               >
                 <Mail className="h-4 w-4" aria-hidden />

@@ -171,8 +171,8 @@ Invoke-Step "Check production task status" {
 
 Invoke-Step "Verify local and public URLs" {
   Test-Url "http://127.0.0.1:3000"
-  Test-Url "https://adjusterdesk.xyz/system"
-  Test-Url "https://www.adjusterdesk.xyz"
+  Test-Url "https://paclaimboard.com/system"
+  Test-Url "https://www.paclaimboard.com"
 }
 
 Invoke-Step "Verify latest production backup contains production DB/uploads" {

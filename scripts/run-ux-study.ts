@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { chromium, type Locator, type Page } from "playwright";
+import { canonicalOrigin } from "@/lib/brand";
 
 type Severity = "P0" | "P1" | "P2" | "P3";
 
@@ -342,7 +343,7 @@ async function main() {
   const repoRoot = process.cwd();
   loadEnvFile(path.join(repoRoot, ".env.qa.local"));
 
-  const baseUrl = process.env.AD_QA_BASE_URL?.trim() || "https://adjusterdesk.xyz";
+  const baseUrl = process.env.AD_QA_BASE_URL?.trim() || canonicalOrigin;
   const qaUserEmail = process.env.AD_QA_USER_EMAIL?.trim() || "";
   const qaUserPassword = process.env.AD_QA_USER_PASSWORD?.trim() || "";
   const qaAdminEmail = process.env.AD_QA_ADMIN_EMAIL?.trim() || "";

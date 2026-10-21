@@ -1,4 +1,5 @@
 import { OutreachProspectStatus } from "@/generated/prisma/client";
+import { canonicalOrigin } from "@/lib/brand";
 
 export const outreachStatusOptions: Array<{ value: OutreachProspectStatus; label: string }> = [
   { value: OutreachProspectStatus.NOT_CONTACTED, label: "Not contacted" },
@@ -28,5 +29,5 @@ export const outreachStatusGuide: Array<{ label: string; detail: string }> = [
   { label: "Bad fit", detail: "Not a fit for current product scope." },
 ];
 
-export const freeClaimTrackerUrl = "https://adjusterdesk.xyz/free-public-adjuster-claim-tracker";
-export const trialSignupUrl = "https://adjusterdesk.xyz/signup";
+export const freeClaimTrackerUrl = `${canonicalOrigin}/free-public-adjuster-claim-tracker`;
+export const trialSignupUrl = `${canonicalOrigin}/signup`;

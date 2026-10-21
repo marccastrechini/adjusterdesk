@@ -2,14 +2,14 @@
 
 For a step-by-step local setup, use docs/STRIPE_TEST_MODE_RUNBOOK.md.
 
-AdjusterDesk supports two billing modes:
+PA ClaimBoard supports two billing modes:
 
 - `manual`
 - `stripe`
 
 Current rollout posture:
 
-- Customers can start using AdjusterDesk now.
+- Customers can start using PA ClaimBoard now.
 - Billing begins only after the first full calendar month of usage.
 - Example: activation on June 18 means July is the first full month, so billing begins no earlier than August 1.
 - Live Stripe card collection is not active in this pass.
@@ -65,9 +65,9 @@ Copy each Stripe `price_...` ID into the matching environment variable.
 
 Recommended Stripe test-mode product names:
 
-- AdjusterDesk Solo
-- AdjusterDesk Small Office
-- AdjusterDesk Team
+- PA ClaimBoard Solo
+- PA ClaimBoard Small Office
+- PA ClaimBoard Team
 
 ## Webhook Endpoint
 

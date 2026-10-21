@@ -1,3 +1,4 @@
+import { canonicalOrigin } from "@/lib/brand";
 // Summarizes deployment environment mode for the in-app status card.
 // Does NOT expose secret values — only yes/no/status labels.
 
@@ -28,12 +29,12 @@ export function resolveDatabaseUrl() {
 }
 
 export function resolveAppBaseUrl() {
-  const configuredUrl = process.env.APP_BASE_URL?.trim();
+  const configuredUrl = process.env.APP_BASE_URL?.trim() || process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (configuredUrl) {
     return configuredUrl.replace(/\/+$/, "");
   }
 
-  return resolveAppEnvironment() === "production" ? "https://adjusterdesk.xyz" : "http://localhost:3000";
+  return resolveAppEnvironment() === "production" ? canonicalOrigin : "http://localhost:3000";
 }
 
 export function resolveUploadsDir() {
