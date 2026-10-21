@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import FoundingPublicAdjusterOfficesPage from "@/app/(public)/founding-public-adjuster-offices/page";
 import HomePage from "@/app/(public)/page";
 import { PublicSiteChrome } from "@/components/public-site";
-import { brandName } from "@/lib/brand";
+import { brandName, brandNameTM } from "@/lib/brand";
 
 test("home hero answers what, who, and the offer before the feature grid", () => {
   const html = renderToStaticMarkup(<HomePage />);
@@ -25,6 +25,7 @@ test("home hero answers what, who, and the offer before the feature grid", () =>
   assert.match(html, /See founding desk offer/);
   assert.match(html, /Today view/);
   assert.match(html, new RegExp(brandName));
+  assert.ok(html.includes(`${brandNameTM} is a simple office workspace`));
   assert.doesNotMatch(html, /<video|product-overview\.mp4/i);
   assert.doesNotMatch(html, /autoplay/i);
 });
@@ -57,6 +58,9 @@ test("public header points at the founding offer", () => {
   );
 
   assert.match(html, /href="\/founding-public-adjuster-offices"/);
+  assert.ok(html.includes(brandNameTM));
+  assert.ok(html.includes(`${brandNameTM} is a trademark of its owner.`));
+  assert.equal(html.includes("®"), false);
   assert.match(html, /Founding desk · \$0\/90 days/);
   assert.match(html, /href="\/signup"/);
   assert.match(html, /Start free trial/);

@@ -7,7 +7,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { exitSystemWorkspaceView } from "@/lib/actions";
 import { labelFromEnum } from "@/lib/format";
 import { UserMenu } from "@/components/user-menu";
-import { brandName } from "@/lib/brand";
+import { brandNameTM } from "@/lib/brand";
 
 export function AppShell({
   children,
@@ -57,7 +57,7 @@ export function AppShell({
           <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
             <BrandMark />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-950">{brandName}</p>
+              <p className="truncate text-sm font-semibold text-slate-950">{brandNameTM}</p>
               <p className="truncate text-xs text-slate-500">{firmName}</p>
             </div>
           </div>
