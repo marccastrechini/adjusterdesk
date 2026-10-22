@@ -31,7 +31,8 @@ test("privacy and cookies disclose live Google Analytics 4 without a consent UI"
   }
 
   assert.match(privacy, /Not attorney-reviewed/);
-  assert.match(privacy, /hello@adjusterdesk\.xyz/);
+  assert.match(privacy, /hello@paclaimboard\.com/);
+  assert.doesNotMatch(privacy, /hello@adjusterdesk\.xyz/);
   assert.doesNotMatch(privacy, /SOC 2 certified|HIPAA compliant|CCPA certified/i);
 });
 
@@ -42,7 +43,8 @@ test("terms keep published prices and state trial, cancel, Stripe, and data owne
   assert.match(html, new RegExp(publishedPricing.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(html, /Stripe is the payment processor/);
   assert.match(html, /unless the office cancels first/);
-  assert.match(html, /hello@adjusterdesk\.xyz/);
+  assert.match(html, /hello@paclaimboard\.com/);
+  assert.doesNotMatch(html, /hello@adjusterdesk\.xyz/);
   assert.match(html, /governing law for a customer agreement is not chosen yet \(TBD\)/i);
   assert.match(html, /not legal advice, estimating advice, coverage advice/);
   assert.match(html, /customer office owns the claim, client, document/i);
@@ -63,7 +65,8 @@ test("about and contact stay thin and do not invent a legal entity", () => {
   assert.match(about, /href="\/help"/);
   assert.doesNotMatch(about, /LLC|Inc\.|Castrechini|street address is/i);
 
-  assert.match(contact, /hello@adjusterdesk\.xyz/);
+  assert.match(contact, /hello@paclaimboard\.com/);
+  assert.doesNotMatch(contact, /hello@adjusterdesk\.xyz/);
   assert.match(contact, /within a few business days/);
   assert.match(contact, /href="\/demo"/);
   assert.match(contact, /href="\/help"/);

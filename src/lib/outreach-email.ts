@@ -3,7 +3,7 @@ import { sendDirectEmail } from "@/lib/email";
 import { applyOutreachEmailTaskRules } from "@/lib/outreach-tasks";
 import { prisma } from "@/lib/prisma";
 import { freeClaimTrackerUrl, trialSignupUrl } from "@/lib/outreach";
-import { adminEmail, brandName, operatorEmailDomain, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
+import { brandName, isBlockedAdminSender, isOperatorEmailAddress, operatorEmailDomain, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
 
 const outreachTemplateCatalog = [
   {
@@ -133,8 +133,7 @@ function canUseOperatorFromAddress() {
 
 function isAllowedOperatorAddress(value?: string | null) {
   if (!value) return false;
-  const email = value.trim().toLowerCase();
-  return email.endsWith(`@${operatorEmailDomain}`) && email !== adminEmail;
+  return isOperatorEmailAddress(value);
 }
 
 function formatFromName(name: string | undefined, email: string) {
@@ -317,7 +316,7 @@ export async function sendOutreachTemplateEmail(input: SendOutreachTemplateInput
   }
 
   const sender = resolveOutreachSenderPolicy({ userName: input.actor.name, userEmail: input.actor.email });
-  if (sender.fromEmail === adminEmail || sender.replyToEmail === adminEmail) {
+  if (isBlockedAdminSender(sender.fromEmail) || isBlockedAdminSender(sender.replyToEmail)) {
     return { ok: false, errorCode: "provider", errorMessage: "Outreach sender policy rejected admin mailbox usage." };
   }
 

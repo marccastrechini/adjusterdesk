@@ -1,8 +1,8 @@
 /**
  * Customer-facing brand, canonical site, and mailbox addresses.
  *
- * Change the product name or canonical domain here. Mailboxes stay on the
- * current working domain until @paclaimboard.com mail exists and can send.
+ * Change the product name or canonical domain here. Public and system mail
+ * uses hello@paclaimboard.com and admin@paclaimboard.com.
  */
 
 export const brandName = "PA ClaimBoard";
@@ -15,17 +15,37 @@ export const brandTagline = "For small public adjusting offices";
 export const canonicalHost = "paclaimboard.com";
 export const canonicalOrigin = `https://${canonicalHost}`;
 
+/** Public support mailbox. This address exists and can send. */
+export const supportEmail = "hello@paclaimboard.com";
+
+/** System admin mailbox. Not published as a public contact address. */
+export const adminEmail = "admin@paclaimboard.com";
+
+/** Previous admin mailbox. Still blocked as a From or Reply-To sender. */
+const retiredAdminEmail = "admin@adjusterdesk.xyz";
+
+const blockedAdminSenders = new Set([adminEmail, retiredAdminEmail]);
+
+export function isBlockedAdminSender(email: string) {
+  return blockedAdminSenders.has(email.trim().toLowerCase());
+}
+
+/** Outreach Reply-To may use either domain for now. */
+export const operatorEmailDomains = ["paclaimboard.com", "adjusterdesk.xyz"] as const;
+
 /**
- * Working support mailbox. Switch this to hello@paclaimboard.com once that
- * mailbox exists. Do not point sending at an address that cannot receive mail.
+ * Demo and QA mailbox domain. Outreach acceptance is isOperatorEmailAddress,
+ * which allows every domain in operatorEmailDomains.
  */
-export const supportEmail = "hello@adjusterdesk.xyz";
-
-/** Working admin mailbox. Not published as a public contact address. */
-export const adminEmail = "admin@adjusterdesk.xyz";
-
-/** Operator addresses on this domain may send outreach. Stays until mailboxes move. */
 export const operatorEmailDomain = "adjusterdesk.xyz";
+
+export function isOperatorEmailAddress(email: string) {
+  const value = email.trim().toLowerCase();
+  if (!value || isBlockedAdminSender(value)) {
+    return false;
+  }
+  return operatorEmailDomains.some((domain) => value.endsWith(`@${domain}`));
+}
 
 export const defaultSystemEmailFrom = `${brandName} <${supportEmail}>`;
 
@@ -54,7 +74,7 @@ export function resolveBrandFromHeader(configured: string | undefined | null): {
   const value = configured?.trim() || defaultSystemEmailFrom;
   const match = value.match(/^(.*?)\s*<([^>]+)>\s*$/);
   const rawEmail = (match?.[2] || value).trim().toLowerCase();
-  const fromEmail = rawEmail === adminEmail ? supportEmail : rawEmail;
+  const fromEmail = isBlockedAdminSender(rawEmail) ? supportEmail : rawEmail;
   const displayName = match?.[1]?.trim().replace(/^"|"$/g, "") ?? "";
   const name = !displayName || displayName === retiredBrandDisplayName ? brandName : displayName;
   return {
@@ -66,5 +86,5 @@ export function resolveBrandFromHeader(configured: string | undefined | null): {
 /** Reply-To falls back to support, and never to the admin mailbox. */
 export function resolveBrandReplyTo(configured: string | undefined | null) {
   const value = (configured?.trim() || supportEmail).toLowerCase();
-  return value === adminEmail ? supportEmail : value;
+  return isBlockedAdminSender(value) ? supportEmail : value;
 }

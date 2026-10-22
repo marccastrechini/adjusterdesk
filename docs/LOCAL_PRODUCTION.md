@@ -28,11 +28,11 @@ UPLOADS_DIR=storage/uploads-production
 AUTH_SECRET=replace-with-a-long-random-secret
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"
-SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
+SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@paclaimboard.com>"
+SYSTEM_EMAIL_REPLY_TO=hello@paclaimboard.com
 PASSWORD_RESET_TOKEN_MINUTES=30
 USER_INVITATION_TOKEN_MINUTES=4320
-SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
+SYSTEM_ADMIN_EMAIL=admin@paclaimboard.com
 NEXT_PUBLIC_APP_NAME="PA ClaimBoard"
 ```
 
@@ -184,7 +184,7 @@ For the fixed production demo workspace and shared owner login, see [docs/PRODUC
 
 Run `npm run prod:demo:bootstrap -- -ConfirmProductionDemo` only after setting `DEMO_OWNER_PASSWORD` at runtime or passing `--password` on the command line.
 
-The bootstrap creates or refreshes fake demo data only, requires a fresh production backup first, verifies that `admin@adjusterdesk.xyz` still remains system admin without changing that account, and refuses to run by default if the production database contains non-demo customer workspaces.
+The bootstrap creates or refreshes fake demo data only, requires a fresh production backup first, verifies that `admin@paclaimboard.com` still remains system admin without changing that account, and refuses to run by default if the production database contains non-demo customer workspaces.
 
 Confirm the public tunnel URL is serving the app:
 

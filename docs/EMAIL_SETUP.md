@@ -1,19 +1,19 @@
 # Email Setup (IONOS + GoDaddy + Resend)
 
-This document defines how email is split for PA ClaimBoard. The public site is `paclaimboard.com`. Mailboxes stay on `adjusterdesk.xyz` until `paclaimboard.com` mail exists.
+This document defines how email is split for PA ClaimBoard. The public site is `paclaimboard.com`. Public and system mail uses `hello@paclaimboard.com` and `admin@paclaimboard.com`.
 
 ## Roles And Addresses
 
-- Operator login address: `admin@adjusterdesk.xyz`
-- Outbound system email address: `hello@adjusterdesk.xyz`
+- Operator login address: `admin@paclaimboard.com`
+- Outbound system email address: `hello@paclaimboard.com`
 - App public domain: `paclaimboard.com`
-- Mailbox domain until mail moves: `adjusterdesk.xyz`
+- Mailbox domain: `paclaimboard.com`
 
 ## Service Ownership
 
-- IONOS hosts mailbox/inbound email for `admin@adjusterdesk.xyz` and `hello@adjusterdesk.xyz`.
+- IONOS hosts mailbox/inbound email for `admin@paclaimboard.com` and `hello@paclaimboard.com`.
 - GoDaddy is the DNS host where domain records are managed.
-- Resend is the transactional sender for app-generated email.
+- Resend is the transactional sender for app-generated email. The sending domain is `paclaimboard.com` in `us-east-1`, and the return path is `send.paclaimboard.com`.
 
 ## DNS Rules
 
@@ -34,11 +34,11 @@ APP_ENV=development
 APP_BASE_URL=http://localhost:3000
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"
-SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
+SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@paclaimboard.com>"
+SYSTEM_EMAIL_REPLY_TO=hello@paclaimboard.com
 PASSWORD_RESET_TOKEN_MINUTES=30
 USER_INVITATION_TOKEN_MINUTES=4320
-SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
+SYSTEM_ADMIN_EMAIL=admin@paclaimboard.com
 ```
 
 For the local production profile, change only:
@@ -56,8 +56,8 @@ UPLOADS_DIR=storage/uploads-production
 
 - Password reset links should use `APP_BASE_URL`.
 - Invitation links should use `APP_BASE_URL`.
-- App-sent system email should use `hello@adjusterdesk.xyz` as From and Reply-To.
-- Operator/admin login should use `admin@adjusterdesk.xyz`.
+- App-sent system email should use `hello@paclaimboard.com` as From and Reply-To.
+- Operator/admin login should use `admin@paclaimboard.com`.
 - All system emails should use the shared renderer in `src/lib/email-template.ts` so styling, tone, and plain-text fallback stay consistent.
 - System email templates must use inline CSS only (no external stylesheets, images, tracking pixels, or remote fonts).
 
@@ -68,8 +68,8 @@ UPLOADS_DIR=storage/uploads-production
 - Reset emails are plain-text and sent through Resend using:
 
 - Reset emails now use the shared system renderer for both HTML and plain-text output and are sent through Resend using:
-	- `SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"`
-	- `SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz`
+	- `SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@paclaimboard.com>"`
+	- `SYSTEM_EMAIL_REPLY_TO=hello@paclaimboard.com`
 
 ## Implemented Invite Flow
 
@@ -88,4 +88,4 @@ UPLOADS_DIR=storage/uploads-production
 7. Confirm old password sign-in fails.
 8. Confirm new password sign-in works.
 9. Confirm `/settings/account` password change still works after reset.
-10. Confirm system admin sign-in still works for `admin@adjusterdesk.xyz`.
+10. Confirm system admin sign-in still works for `admin@paclaimboard.com`.
