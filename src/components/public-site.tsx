@@ -20,7 +20,7 @@ import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { FOUNDING_PAGE_HREF } from "@/lib/founding-offer";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
-import { brandName, brandTagline, supportEmail } from "@/lib/brand";
+import { brandName, brandNameTM, brandTagline, supportEmail } from "@/lib/brand";
 
 export const publicNavItems = [
   { href: "/product", label: "Product" },
@@ -92,7 +92,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
           <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
             <BrandMark />
             <span className="grid">
-              <span className="text-base font-semibold">{brandName}</span>
+              <span className="text-base font-semibold">{brandNameTM}</span>
               <span className="text-xs text-slate-500">{brandTagline}</span>
             </span>
           </Link>
@@ -136,11 +136,12 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
           <div>
             <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
               <BrandMark />
-              <span className="font-semibold">{brandName}</span>
+              <span className="font-semibold">{brandNameTM}</span>
             </Link>
             <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
               A simple workspace for small public adjusting offices to keep claims, clients, documents, follow-ups, payments, fees, and invoices together.
             </p>
+            <p className="mt-3 text-xs leading-5 text-slate-500">{brandNameTM} is a trademark of its owner.</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Already using {brandName}? <TrackedLink href="/login" eventName="login_click" className="font-semibold text-teal-800 hover:text-teal-900">Log in.</TrackedLink>
             </p>

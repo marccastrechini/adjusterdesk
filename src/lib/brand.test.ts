@@ -4,6 +4,7 @@ import {
   adminEmail,
   brandFromAddress,
   brandName,
+  brandNameTM,
   canonicalOrigin,
   defaultSystemEmailFrom,
   resolveBrandFromHeader,
@@ -15,6 +16,8 @@ import {
 describe("brand config", () => {
   it("publishes the new name and canonical origin", () => {
     assert.equal(brandName, "PA ClaimBoard");
+    assert.equal(brandNameTM, "PA ClaimBoard™");
+    assert.equal(brandNameTM.includes("®"), false);
     assert.equal(canonicalOrigin, "https://paclaimboard.com");
   });
 

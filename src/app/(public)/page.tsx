@@ -3,10 +3,10 @@ import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, Step
 import { TrackedLink } from "@/components/tracked-link";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
-import { brandName } from "@/lib/brand";
+import { brandName, brandNameTM } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `${brandName} | Simple Workspace for Public Adjusters`,
+  title: `${brandNameTM} | Simple Workspace for Public Adjusters`,
   description: `${brandName} keeps claims, clients, documents, follow-ups, payments, fees, and invoices together for small public adjusting offices.`,
   path: "/",
 });
@@ -81,7 +81,7 @@ export default function HomePage() {
 
       <PublicSection
         title="One workspace for the daily claim work"
-        description={`${brandName} is a simple office workspace for tracking the pieces a small public adjusting firm already works with every day.`}
+        description={`${brandNameTM} is a simple office workspace for tracking the pieces a small public adjusting firm already works with every day.`}
       >
         <FeatureGrid features={featureHighlights} />
       </PublicSection>

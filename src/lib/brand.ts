@@ -6,6 +6,8 @@
  */
 
 export const brandName = "PA ClaimBoard";
+/** Wordmark, site title, and trademark notice only. Body copy, email, and legal text stay on brandName. */
+export const brandNameTM = `${brandName}™`;
 export const brandMonogram = "PA";
 export const brandTagline = "For small public adjusting offices";
 

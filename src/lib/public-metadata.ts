@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { brandName, canonicalOrigin } from "@/lib/brand";
+import { brandNameTM, canonicalOrigin } from "@/lib/brand";
 
 const fallbackSiteUrl = canonicalOrigin;
 
@@ -24,7 +24,7 @@ export function publicPageMetadata({ title, description, path }: { title: string
       title,
       description,
       url: path,
-      siteName: brandName,
+      siteName: brandNameTM,
       type: "website",
     },
     twitter: {
