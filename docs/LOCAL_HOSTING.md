@@ -61,11 +61,11 @@ APP_BASE_URL=http://localhost:3000
 UPLOADS_DIR=storage/uploads-development
 EMAIL_PROVIDER=resend
 RESEND_API_KEY=
-SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@adjusterdesk.xyz>"
-SYSTEM_EMAIL_REPLY_TO=hello@adjusterdesk.xyz
+SYSTEM_EMAIL_FROM="PA ClaimBoard <hello@paclaimboard.com>"
+SYSTEM_EMAIL_REPLY_TO=hello@paclaimboard.com
 PASSWORD_RESET_TOKEN_MINUTES=30
 USER_INVITATION_TOKEN_MINUTES=4320
-SYSTEM_ADMIN_EMAIL=admin@adjusterdesk.xyz
+SYSTEM_ADMIN_EMAIL=admin@paclaimboard.com
 NEXT_PUBLIC_APP_NAME="PA ClaimBoard"
 ```
 

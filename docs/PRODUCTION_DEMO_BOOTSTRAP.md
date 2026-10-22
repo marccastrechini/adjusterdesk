@@ -69,10 +69,10 @@ npm run prod:demo:readiness
 That separation matters because:
 
 - workspace owners can run the office day-to-day
-- system admin access stays reserved for `admin@adjusterdesk.xyz`
+- system admin access stays reserved for `admin@paclaimboard.com`
 - demo sign-ins should not expose the global `/system` console
 
-The bootstrap verifies that `admin@adjusterdesk.xyz` is still marked as system admin, but it does not modify that account.
+The bootstrap verifies that `admin@paclaimboard.com` is still marked as system admin, but it does not modify that account.
 
 ## How To Log In
 

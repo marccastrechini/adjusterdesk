@@ -7,6 +7,7 @@ import {
   brandNameTM,
   canonicalOrigin,
   defaultSystemEmailFrom,
+  isOperatorEmailAddress,
   resolveBrandFromHeader,
   resolveBrandReplyTo,
   supportEmail,
@@ -21,18 +22,24 @@ describe("brand config", () => {
     assert.equal(canonicalOrigin, "https://paclaimboard.com");
   });
 
-  it("keeps the working mailboxes", () => {
-    assert.equal(supportEmail, "hello@adjusterdesk.xyz");
-    assert.equal(adminEmail, "admin@adjusterdesk.xyz");
-    assert.equal(defaultSystemEmailFrom, "PA ClaimBoard <hello@adjusterdesk.xyz>");
+  it("uses the paclaimboard.com mailboxes", () => {
+    assert.equal(supportEmail, "hello@paclaimboard.com");
+    assert.equal(adminEmail, "admin@paclaimboard.com");
+    assert.equal(defaultSystemEmailFrom, "PA ClaimBoard <hello@paclaimboard.com>");
   });
 
-  it("rewrites a retired display name and does not send as the admin mailbox", () => {
-    const fromAdmin = resolveBrandFromHeader("AdjusterDesk <admin@adjusterdesk.xyz>");
-    assert.equal(fromAdmin.from, defaultSystemEmailFrom);
-    assert.equal(fromAdmin.fromEmail, supportEmail);
-    assert.equal(resolveBrandReplyTo("admin@adjusterdesk.xyz"), supportEmail);
+  it("blocks both admin mailboxes as a sender and accepts both operator domains", () => {
+    for (const admin of ["admin@paclaimboard.com", "admin@adjusterdesk.xyz"]) {
+      const fromAdmin = resolveBrandFromHeader(`AdjusterDesk <${admin}>`);
+      assert.equal(fromAdmin.from, defaultSystemEmailFrom);
+      assert.equal(fromAdmin.fromEmail, supportEmail);
+      assert.equal(resolveBrandReplyTo(admin), supportEmail);
+      assert.equal(isOperatorEmailAddress(admin), false);
+    }
     assert.equal(resolveBrandReplyTo(undefined), supportEmail);
+    assert.equal(isOperatorEmailAddress("jenn@paclaimboard.com"), true);
+    assert.equal(isOperatorEmailAddress("jenn@adjusterdesk.xyz"), true);
+    assert.equal(isOperatorEmailAddress("jenn@example.com"), false);
   });
 
   it("preserves a custom display name and encodes mailto subjects", () => {
