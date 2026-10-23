@@ -4,7 +4,29 @@ import { resolveAppBaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireStripeClient } from "@/lib/stripe";
 import { calculateClientPaymentFeeRecoveryCents } from "./fee-recovery";
+import {
+  clientBillingConnectionData,
+  clientBillingReadinessFromV1Account,
+  clientBillingReadinessFromV2Account,
+  isClientBillingReadinessActive,
+  isLegacyExpressConnectedAccount,
+  merchantAccountCreateParams,
+  v1OnboardingLinkParams,
+  v2ConnectedAccountEventTypes,
+  v2OnboardingLinkParams,
+  type ClientBillingReadiness,
+  type V2ConnectedAccountSnapshot,
+} from "./stripe-connect-account";
 import type { ClientBillingProvider } from "./types";
+
+const v2AccountInclude = ["configuration.merchant", "defaults", "requirements"] as const;
+
+const v1AccountLinkFallbackCodes = new Set([
+  "configs_must_match_to_use_account_links",
+  "account_dashboard_not_supported",
+  "not_found",
+  "resource_missing",
+]);
 
 function getStripeAccountHeader(firm: Firm) {
   if (!firm.stripeConnectAccountId) {
@@ -38,21 +60,73 @@ function connectionStatusFromFirm(firm: Firm) {
   return ClientBillingConnectionStatus.ONBOARDING;
 }
 
-async function refreshFirmStripeConnection(firm: Firm, account: Stripe.Account) {
-  const chargesEnabled = Boolean(account.charges_enabled);
-  const payoutsEnabled = Boolean(account.payouts_enabled);
-  const detailsSubmitted = Boolean(account.details_submitted);
-  const active = chargesEnabled && payoutsEnabled && detailsSubmitted;
+function isStripeError(error: unknown): error is InstanceType<typeof Stripe.errors.StripeError> {
+  return error instanceof Stripe.errors.StripeError;
+}
+
+function canFallBackToV1AccountRead(error: unknown) {
+  if (!isStripeError(error)) {
+    return false;
+  }
+
+  return error.statusCode !== 401 && error.statusCode !== 403;
+}
+
+function shouldFallBackToV1AccountLink(error: unknown) {
+  if (!isStripeError(error)) {
+    return false;
+  }
+
+  return error.statusCode === 404 || (error.code ? v1AccountLinkFallbackCodes.has(error.code) : false);
+}
+
+async function retrieveV1Readiness(stripe: Stripe, accountId: string) {
+  const account = await stripe.accounts.retrieve(accountId);
+  return {
+    accountId: account.id,
+    readiness: clientBillingReadinessFromV1Account(account),
+  };
+}
+
+async function readConnectedAccountReadiness(stripe: Stripe, accountId: string) {
+  let v2Error: unknown;
+
+  try {
+    const account = (await stripe.v2.core.accounts.retrieve(accountId, {
+      include: [...v2AccountInclude],
+    })) as V2ConnectedAccountSnapshot;
+
+    if (isLegacyExpressConnectedAccount(account)) {
+      return retrieveV1Readiness(stripe, accountId);
+    }
+
+    const readiness = clientBillingReadinessFromV2Account(account);
+    if (readiness) {
+      return { accountId: account.id || accountId, readiness };
+    }
+  } catch (error) {
+    if (!canFallBackToV1AccountRead(error)) {
+      throw error;
+    }
+
+    v2Error = error;
+  }
+
+  try {
+    return await retrieveV1Readiness(stripe, accountId);
+  } catch (error) {
+    throw v2Error ?? error;
+  }
+}
+
+async function persistFirmStripeReadiness(firm: Firm, accountId: string, readiness: ClientBillingReadiness) {
+  const active = isClientBillingReadinessActive(readiness);
 
   await prisma.firm.update({
     where: { id: firm.id },
     data: {
-      stripeConnectAccountId: account.id,
-      stripeChargesEnabled: chargesEnabled,
-      stripePayoutsEnabled: payoutsEnabled,
-      stripeDetailsSubmitted: detailsSubmitted,
-      clientBillingConnectionStatus: active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
-      clientBillingEnabled: active,
+      stripeConnectAccountId: accountId,
+      ...clientBillingConnectionData(readiness),
       clientBillingProvider: "STRIPE_CONNECT",
     },
   });
@@ -62,6 +136,112 @@ async function refreshFirmStripeConnection(firm: Firm, account: Stripe.Account) 
     connectionStatus: active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
     ready: active,
   };
+}
+
+async function createOnboardingLink(stripe: Stripe, accountId: string, useV1Link: boolean) {
+  const baseUrl = resolveAppBaseUrl();
+
+  if (useV1Link) {
+    const accountLink = await stripe.accountLinks.create(v1OnboardingLinkParams(accountId, baseUrl));
+    return accountLink.url;
+  }
+
+  try {
+    const accountLink = await stripe.v2.core.accountLinks.create(v2OnboardingLinkParams(accountId, baseUrl));
+    return accountLink.url;
+  } catch (error) {
+    if (!shouldFallBackToV1AccountLink(error)) {
+      throw error;
+    }
+
+    const accountLink = await stripe.accountLinks.create(v1OnboardingLinkParams(accountId, baseUrl));
+    return accountLink.url;
+  }
+}
+
+async function existingAccountUsesV1Onboarding(stripe: Stripe, accountId: string) {
+  try {
+    const account = (await stripe.v2.core.accounts.retrieve(accountId, {
+      include: ["defaults", "configuration.merchant"],
+    })) as V2ConnectedAccountSnapshot;
+    return isLegacyExpressConnectedAccount(account);
+  } catch (error) {
+    if (!canFallBackToV1AccountRead(error)) {
+      throw error;
+    }
+
+    return true;
+  }
+}
+
+export async function createOrResumeStripeConnectAccount(firm: Firm, stripe: Stripe = requireStripeClient()) {
+  let accountId = firm.stripeConnectAccountId;
+  let useV1Link = false;
+
+  if (!accountId) {
+    const account = await stripe.v2.core.accounts.create(merchantAccountCreateParams(firm));
+    accountId = account.id;
+
+    await prisma.firm.update({
+      where: { id: firm.id },
+      data: {
+        stripeConnectAccountId: account.id,
+        clientBillingProvider: "STRIPE_CONNECT",
+        clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
+        clientBillingEnabled: false,
+      },
+    });
+  } else {
+    useV1Link = await existingAccountUsesV1Onboarding(stripe, accountId);
+    await prisma.firm.update({
+      where: { id: firm.id },
+      data: {
+        clientBillingProvider: "STRIPE_CONNECT",
+        clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
+        clientBillingEnabled: false,
+      },
+    });
+  }
+
+  const url = await createOnboardingLink(stripe, accountId, useV1Link);
+  return { url };
+}
+
+export async function refreshStripeConnectAccount(firm: Firm, stripe: Stripe = requireStripeClient()) {
+  if (!firm.stripeConnectAccountId) {
+    return {
+      provider: "stripe_connect" as const,
+      connectionStatus: ClientBillingConnectionStatus.NOT_STARTED,
+      ready: false,
+    };
+  }
+
+  const { accountId, readiness } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
+  return persistFirmStripeReadiness(firm, accountId, readiness);
+}
+
+export async function processStripeConnectV2AccountNotification(
+  notification: { type: string; related_object?: { id?: string | null } | null },
+  stripe: Stripe = requireStripeClient(),
+) {
+  if (!v2ConnectedAccountEventTypes.has(notification.type)) {
+    return;
+  }
+
+  const accountId = notification.related_object?.id;
+  if (!accountId) {
+    return;
+  }
+
+  const firm = await prisma.firm.findFirst({
+    where: { stripeConnectAccountId: accountId },
+  });
+
+  if (!firm) {
+    return;
+  }
+
+  await refreshStripeConnectAccount(firm, stripe);
 }
 
 function buildInvoiceLineDescription(invoice: Invoice) {
@@ -117,63 +297,10 @@ const stripeConnectProvider: ClientBillingProvider = {
     };
   },
   async createOrResumeConnection(firm: Firm) {
-    const stripe = requireStripeClient();
-    let accountId = firm.stripeConnectAccountId;
-
-    if (!accountId) {
-      const account = await stripe.accounts.create({
-        type: "express",
-        email: firm.email ?? undefined,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        metadata: { firmId: firm.id },
-      });
-
-      accountId = account.id;
-
-      await prisma.firm.update({
-        where: { id: firm.id },
-        data: {
-          stripeConnectAccountId: account.id,
-          clientBillingProvider: "STRIPE_CONNECT",
-          clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
-          clientBillingEnabled: false,
-        },
-      });
-    } else {
-      await prisma.firm.update({
-        where: { id: firm.id },
-        data: {
-          clientBillingProvider: "STRIPE_CONNECT",
-          clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
-          clientBillingEnabled: false,
-        },
-      });
-    }
-
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: `${resolveAppBaseUrl()}/settings/client-payments`,
-      return_url: `${resolveAppBaseUrl()}/settings/client-payments`,
-      type: "account_onboarding",
-    });
-
-    return { url: accountLink.url };
+    return createOrResumeStripeConnectAccount(firm);
   },
   async refreshConnectionStatus(firm: Firm) {
-    const stripe = requireStripeClient();
-    if (!firm.stripeConnectAccountId) {
-      return {
-        provider: "stripe_connect",
-        connectionStatus: ClientBillingConnectionStatus.NOT_STARTED,
-        ready: false,
-      };
-    }
-
-    const account = await stripe.accounts.retrieve(firm.stripeConnectAccountId);
-    return refreshFirmStripeConnection(firm, account);
+    return refreshStripeConnectAccount(firm);
   },
   isReady(firm: Firm) {
     return Boolean(firm.clientBillingEnabled && firm.stripeConnectAccountId && firm.stripeChargesEnabled && firm.stripePayoutsEnabled && firm.stripeDetailsSubmitted);
@@ -197,6 +324,8 @@ const stripeConnectProvider: ClientBillingProvider = {
       throw new Error("Stripe customer could not be created.");
     }
 
+    // Direct charge on the connected account. No application fee: the office is the merchant,
+    // and Stripe collects card processing fees from that account.
     const createdInvoice = await stripe.invoices.create(
       {
         customer: customerId,

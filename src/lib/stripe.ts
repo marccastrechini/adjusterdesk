@@ -44,6 +44,15 @@ export function requireStripeConnectWebhookSecret() {
   return webhookSecret;
 }
 
+export function requireStripeConnectV2WebhookSecret() {
+  const webhookSecret = process.env.STRIPE_CONNECT_V2_WEBHOOK_SECRET?.trim();
+  if (!webhookSecret) {
+    throw new Error("Stripe Connect v2 webhook secret is not configured.");
+  }
+
+  return webhookSecret;
+}
+
 export function requireStripePriceId(planSlug: PublicPlanSlug, signupSource?: string | null) {
   const priceId = resolveCheckoutPrice(planSlug, signupSource).priceId;
   if (!priceId) {
