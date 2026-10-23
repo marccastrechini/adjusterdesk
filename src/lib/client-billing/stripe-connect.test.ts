@@ -6,15 +6,19 @@ import {
   clientBillingReadinessFromV1Account,
   clientBillingReadinessFromV2Account,
   clientBillingStripeErrorLogFields,
+  hostedInvoicePresentation,
   isLegacyExpressConnectedAccount,
   logClientBillingStripeError,
   merchantAccountCreateParams,
+  statementDescriptorFromBusinessName,
   v2OnboardingLinkParams,
+  v2PublicBusinessNameUpdateParams,
 } from "@/lib/client-billing/stripe-connect-account";
 import {
   createOrResumeStripeConnectAccount,
   processStripeConnectV2AccountNotification,
   refreshStripeConnectAccount,
+  sendStripeConnectInvoice,
 } from "@/lib/client-billing/stripe-connect-provider";
 
 const originalBaseUrl = process.env.APP_BASE_URL;
@@ -34,6 +38,9 @@ test("new connected accounts use Accounts v2 merchant direct charges", () => {
   assert.equal(params.configuration?.recipient, undefined);
   assert.equal(params.contact_email, "office@example.com");
   assert.equal(params.identity?.country, "us");
+  assert.equal(params.display_name, "North Office");
+  assert.equal(params.defaults?.profile?.doing_business_as, "North Office");
+  assert.equal(params.configuration?.merchant?.statement_descriptor, undefined);
   assert.deepEqual(params.metadata, { firmId: "firm_123" });
   assert.equal("type" in params, false);
 
@@ -306,6 +313,7 @@ test("refresh reads v2 merchant capabilities for a new account", async () => {
             },
             requirements: { entries: [] },
           }),
+          update: async () => ({ id: "acct_v2_new" }),
         },
       },
     },
@@ -364,6 +372,7 @@ test("refresh keeps using v1 account fields for a legacy Express account", async
         payouts_enabled: false,
         details_submitted: true,
       }),
+      update: async () => ({ id: "acct_legacy" }),
     },
   } as never;
 
@@ -409,6 +418,7 @@ test("v2 account notifications refresh the matching firm and ignore other events
               },
             };
           },
+          update: async () => ({ id: "acct_v2_new" }),
         },
       },
     },
@@ -434,5 +444,254 @@ test("v2 account notifications refresh the matching firm and ignore other events
   } finally {
     prisma.firm.findFirst = originalFindFirst;
     prisma.firm.update = originalUpdate;
+  }
+});
+
+test("statement descriptors and hosted invoice fields use the office name and app invoice number", () => {
+  assert.deepEqual(statementDescriptorFromBusinessName("North Office"), {
+    descriptor: "North Office",
+    prefix: "North Offi",
+  });
+  const longName = statementDescriptorFromBusinessName("José Public Adjusting Office Name That Is Very Long");
+  assert.equal(longName?.descriptor, "Jose Public Adjusting");
+  assert.equal((longName?.descriptor.length ?? 0) <= 22, true);
+  assert.equal(longName?.prefix, "Jose Publi");
+  assert.equal(statementDescriptorFromBusinessName("A & B <Adjusters>")?.descriptor.includes("<"), false);
+  assert.equal(statementDescriptorFromBusinessName("1234"), null);
+  assert.equal(statementDescriptorFromBusinessName("Ab"), null);
+  assert.equal(statementDescriptorFromBusinessName("sandbox.paclaimboard.com")?.descriptor, "sandbox paclaimboard c");
+
+  const update = v2PublicBusinessNameUpdateParams(
+    {
+      display_name: "sandbox.paclaimboard.c",
+      dashboard: "full",
+      defaults: { profile: { doing_business_as: null }, responsibilities: { fees_collector: "stripe", losses_collector: "stripe" } },
+      configuration: { merchant: { statement_descriptor: { descriptor: "sandbox.paclaimboard.c", prefix: "sandbox.pa" } } },
+    },
+    "North Office",
+  );
+  assert.equal(update?.display_name, "North Office");
+  assert.equal(update?.defaults?.profile?.doing_business_as, "North Office");
+  assert.equal(update?.configuration?.merchant?.statement_descriptor?.descriptor, "North Office");
+  assert.equal(update?.defaults && "responsibilities" in (update.defaults ?? {}), false);
+
+  assert.equal(
+    v2PublicBusinessNameUpdateParams(
+      {
+        display_name: "North Office",
+        defaults: { profile: { doing_business_as: "North Office" } },
+        configuration: { merchant: { statement_descriptor: { descriptor: "North Office", prefix: "North Offi" } } },
+      },
+      "North Office",
+    ),
+    null,
+  );
+
+  const presentation = hostedInvoicePresentation({
+    invoiceNumber: "TEST-001",
+    claimNumber: "CLM-1",
+    insuredName: "Pat Client",
+  });
+  assert.equal(presentation.number, "TEST-001");
+  assert.equal(presentation.description, "Client fee invoice TEST-001 · for Pat Client · claim CLM-1");
+  assert.deepEqual(presentation.custom_fields, [
+    { name: "Invoice #", value: "TEST-001" },
+    { name: "Claim #", value: "CLM-1" },
+    { name: "Insured", value: "Pat Client" },
+  ]);
+
+  const longNumber = "TEST-001-EXTRA-LONG-INVOICE-NUMBER";
+  const longPresentation = hostedInvoicePresentation({ invoiceNumber: longNumber, claimNumber: null, insuredName: null });
+  assert.equal(longPresentation.number, undefined);
+  assert.equal(longPresentation.custom_fields[0]?.value, longNumber);
+});
+
+test("sending a payment request sets the public name and app invoice number, then resumes the same draft", async () => {
+  const events: string[] = [];
+  const invoiceUpdates: Array<{ externalInvoiceId?: string; externalHostedInvoiceUrl?: string }> = [];
+  const originalInvoiceUpdate = prisma.invoice.update;
+  const originalClaimFind = prisma.claim.findUnique;
+  const originalTransaction = prisma.$transaction;
+  let storedExternalId: string | null = null;
+
+  prisma.invoice.update = (async (args: { data: { externalInvoiceId?: string; externalHostedInvoiceUrl?: string } }) => {
+    invoiceUpdates.push(args.data);
+    storedExternalId = args.data.externalInvoiceId ?? storedExternalId;
+    events.push(args.data.externalHostedInvoiceUrl ? "invoice.persisted-sent" : "invoice.persisted-draft");
+    return { id: "inv_local" };
+  }) as unknown as typeof prisma.invoice.update;
+  prisma.claim.findUnique = (async () => ({
+    id: "claim_1",
+    claimNumber: "CLM-1",
+    contactId: "contact_1",
+    contact: {
+      id: "contact_1",
+      firstName: "Pat",
+      lastName: "Client",
+      email: "pat@example.com",
+      stripeCustomerId: "cus_123",
+    },
+  })) as unknown as typeof prisma.claim.findUnique;
+  prisma.$transaction = (async (fn: (tx: { claim: { findUnique: () => Promise<{ id: string; contactId: string }> }; activity: { create: () => Promise<unknown> } }) => Promise<void>) =>
+    fn({
+      claim: { findUnique: async () => ({ id: "claim_1", contactId: "contact_1" }) },
+      activity: { create: async () => ({}) },
+    })) as unknown as typeof prisma.$transaction;
+
+  const nameUpdates: Array<Record<string, unknown>> = [];
+  const createdInvoices: Array<Record<string, unknown>> = [];
+  const stripe = {
+    v2: {
+      core: {
+        accounts: {
+          retrieve: async () => ({
+            id: "acct_v2_new",
+            display_name: "sandbox.paclaimboard.c",
+            dashboard: "full",
+            defaults: {
+              profile: { doing_business_as: null },
+              responsibilities: { fees_collector: "stripe", losses_collector: "stripe" },
+            },
+            configuration: { merchant: { statement_descriptor: { descriptor: "sandbox.paclaimboard.c" } } },
+          }),
+          update: async (_id: string, params: Record<string, unknown>) => {
+            nameUpdates.push(params);
+            if (params.configuration) {
+              throw new Stripe.errors.StripeInvalidRequestError({
+                message: "Statement descriptor does not match the business name.",
+                type: "invalid_request_error",
+                code: "invalid_statement_descriptor_business_mismatch",
+                statusCode: 400,
+                headers: {},
+              });
+            }
+            events.push("v2.update-name");
+            return { id: "acct_v2_new" };
+          },
+        },
+      },
+    },
+    invoices: {
+      create: async (params: Record<string, unknown>, options: { idempotencyKey?: string; stripeAccount?: string }) => {
+        events.push("invoices.create");
+        createdInvoices.push({ params, options });
+        return { id: "in_stripe_1", status: "draft", lines: { data: [] } };
+      },
+      retrieve: async (id: string) => {
+        events.push(`invoices.retrieve:${id}`);
+        if (id === "in_void") {
+          return { id, status: "void", lines: { data: [] } };
+        }
+        return {
+          id,
+          status: "draft",
+          lines: { data: [{ description: "Client billing fee for invoice TEST-001", amount: 15000 }] },
+        };
+      },
+      update: async (id: string, params: { number?: string }) => {
+        events.push(`invoices.update:${id}:${params.number}`);
+        return { id, status: "draft", lines: { data: [] } };
+      },
+      finalizeInvoice: async (id: string, _params: unknown, options: { idempotencyKey?: string }) => {
+        events.push(`invoices.finalize:${options.idempotencyKey}`);
+        return { id, status: "open", hosted_invoice_url: null };
+      },
+      sendInvoice: async (id: string, _params: unknown, options: { idempotencyKey?: string }) => {
+        events.push(`invoices.send:${options.idempotencyKey}`);
+        return {
+          id,
+          status: "open",
+          hosted_invoice_url: "https://pay.stripe.test/in_stripe_1",
+          invoice_pdf: "https://pay.stripe.test/in_stripe_1.pdf",
+          amount_due: 15000,
+          amount_paid: 0,
+        };
+      },
+    },
+    invoiceItems: {
+      create: async (_params: unknown, options: { idempotencyKey?: string }) => {
+        events.push(`invoiceItems.create:${options.idempotencyKey}`);
+        return { id: "ii_1" };
+      },
+    },
+    accounts: {
+      create: async () => {
+        throw new Error("v1 accounts.create must not be called");
+      },
+    },
+  } as never;
+
+  const localInvoice = {
+    id: "inv_local",
+    claimId: "claim_1",
+    invoiceNumber: "TEST-001",
+    feeAmountCents: 15000,
+    issuedAt: new Date("2026-10-23T00:00:00Z"),
+    dueAt: new Date("2026-11-06T00:00:00Z"),
+    externalInvoiceId: null,
+    externalHostedInvoiceUrl: null,
+    sentToClientAt: null,
+    status: "DRAFT",
+  };
+
+  try {
+    const sent = await sendStripeConnectInvoice(
+      firm({ stripeConnectAccountId: "acct_v2_new", clientPaymentFeeEnabled: false }),
+      localInvoice as never,
+      stripe,
+    );
+    assert.equal(sent.hostedInvoiceUrl, "https://pay.stripe.test/in_stripe_1");
+    assert.equal(createdInvoices.length, 1);
+    const created = createdInvoices[0] as {
+      params: { number?: string; description?: string; custom_fields?: Array<{ name: string; value: string }> };
+      options: { idempotencyKey?: string; stripeAccount?: string };
+    };
+    assert.equal(created.params.number, "TEST-001");
+    assert.equal(created.params.description, "Client fee invoice TEST-001 · for Pat Client · claim CLM-1");
+    assert.equal(created.params.custom_fields?.some((field) => field.name === "Invoice #" && field.value === "TEST-001"), true);
+    assert.equal(created.params.custom_fields?.some((field) => field.name === "Claim #" && field.value === "CLM-1"), true);
+    assert.equal(created.options.idempotencyKey, "client-billing-create-inv_local");
+    assert.equal(created.options.stripeAccount, "acct_v2_new");
+    assert.equal(nameUpdates[0] && "configuration" in nameUpdates[0], true);
+    assert.equal(nameUpdates[1] && "configuration" in nameUpdates[1], false);
+    assert.equal((nameUpdates[1]?.defaults as { profile?: { doing_business_as?: string } } | undefined)?.profile?.doing_business_as, "North Office");
+    assert.equal(invoiceUpdates[0]?.externalInvoiceId, "in_stripe_1");
+    assert.equal(invoiceUpdates[0]?.externalHostedInvoiceUrl, undefined);
+    const draftPersistedAt = events.indexOf("invoice.persisted-draft");
+    const finalizedAt = events.indexOf("invoices.finalize:client-billing-finalize-inv_local");
+    assert.equal(draftPersistedAt >= 0 && draftPersistedAt < finalizedAt, true);
+    assert.equal(events.includes("invoices.create"), true);
+    assert.equal(events.filter((event) => event === "invoices.create").length, 1);
+
+    events.length = 0;
+    const resumed = await sendStripeConnectInvoice(
+      firm({ stripeConnectAccountId: "acct_v2_new", clientPaymentFeeEnabled: false }),
+      { ...localInvoice, externalInvoiceId: storedExternalId } as never,
+      stripe,
+    );
+    assert.equal(resumed.invoiceId, "in_stripe_1");
+    assert.equal(events.includes("invoices.create"), false);
+    assert.equal(events.includes("invoices.retrieve:in_stripe_1"), true);
+    assert.equal(events.includes("invoices.update:in_stripe_1:TEST-001"), true);
+    assert.equal(events.includes("invoiceItems.create:client-billing-item-fee-inv_local"), false);
+    assert.equal(events.includes("invoices.finalize:client-billing-finalize-inv_local"), true);
+    assert.equal(events.includes("invoices.send:client-billing-send-inv_local"), true);
+
+    events.length = 0;
+    await assert.rejects(
+      () =>
+        sendStripeConnectInvoice(
+          firm({ stripeConnectAccountId: "acct_v2_new", clientPaymentFeeEnabled: false }),
+          { ...localInvoice, externalInvoiceId: "in_void" } as never,
+          stripe,
+        ),
+      /cannot be resent/,
+    );
+    assert.equal(events.includes("invoices.create"), false);
+    assert.equal(events.includes("invoices.retrieve:in_void"), true);
+  } finally {
+    prisma.invoice.update = originalInvoiceUpdate;
+    prisma.claim.findUnique = originalClaimFind;
+    prisma.$transaction = originalTransaction;
   }
 });

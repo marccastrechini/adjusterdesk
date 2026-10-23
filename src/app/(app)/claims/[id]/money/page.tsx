@@ -137,7 +137,7 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                           </a>
                         ) : null}
                       </div>
-                      {firm.clientBillingProvider === "STRIPE_CONNECT" && firm.clientBillingEnabled && !invoice.externalInvoiceId ? (
+                      {firm.clientBillingProvider === "STRIPE_CONNECT" && firm.clientBillingEnabled && !invoice.externalHostedInvoiceUrl && !invoice.sentToClientAt ? (
                         <form action={sendClientPaymentRequest} className="pt-1">
                           <input type="hidden" name="invoiceId" value={invoice.id} />
                           <SubmitButton>Send payment request</SubmitButton>

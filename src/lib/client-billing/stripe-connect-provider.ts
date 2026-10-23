@@ -8,12 +8,20 @@ import {
   clientBillingConnectionData,
   clientBillingReadinessFromV1Account,
   clientBillingReadinessFromV2Account,
+  hostedInvoicePresentation,
+  insuredDisplayName,
   isClientBillingReadinessActive,
   isLegacyExpressConnectedAccount,
+  logClientBillingStripeError,
   merchantAccountCreateParams,
+  stableDaysUntilDue,
+  v1BusinessProfileNameParams,
   v1OnboardingLinkParams,
+  v1PublicBusinessNameUpdateParams,
+  v2BusinessNameOnlyUpdateParams,
   v2ConnectedAccountEventTypes,
   v2OnboardingLinkParams,
+  v2PublicBusinessNameUpdateParams,
   type ClientBillingReadiness,
   type V2ConnectedAccountSnapshot,
 } from "./stripe-connect-account";
@@ -217,7 +225,9 @@ export async function refreshStripeConnectAccount(firm: Firm, stripe: Stripe = r
   }
 
   const { accountId, readiness } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
-  return persistFirmStripeReadiness(firm, accountId, readiness);
+  const result = await persistFirmStripeReadiness(firm, accountId, readiness);
+  await syncConnectedAccountPublicName(stripe, firm);
+  return result;
 }
 
 export async function processStripeConnectV2AccountNotification(
@@ -248,8 +258,101 @@ function buildInvoiceLineDescription(invoice: Invoice) {
   return `Client billing fee for invoice ${invoice.invoiceNumber}`;
 }
 
-async function createOrUpdateStripeCustomer(firm: Firm, contact: Contact) {
-  const stripe = requireStripeClient();
+const publicNameInclude = ["defaults", "configuration.merchant"] as const;
+
+async function updateV1PublicBusinessName(stripe: Stripe, accountId: string, name: string) {
+  try {
+    await stripe.accounts.update(accountId, v1PublicBusinessNameUpdateParams(name));
+  } catch (error) {
+    try {
+      await stripe.accounts.update(accountId, v1BusinessProfileNameParams(name));
+    } catch (retryError) {
+      logClientBillingStripeError("Could not update the connected account public name.", retryError);
+      return;
+    }
+
+    logClientBillingStripeError("Could not update the connected account statement descriptor.", error);
+  }
+}
+
+/**
+ * Hosted invoices snapshot the connected account's customer-facing name at
+ * creation. Update it before the next invoice when Stripe allows the change.
+ * A rejected statement descriptor is retried as a name-only update so sending
+ * still works for accounts Stripe will not let us relabel completely.
+ */
+export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm) {
+  const accountId = firm.stripeConnectAccountId;
+  const name = firm.name?.trim();
+  if (!accountId || !name) {
+    return;
+  }
+
+  try {
+    const account = (await stripe.v2.core.accounts.retrieve(accountId, {
+      include: [...publicNameInclude],
+    })) as V2ConnectedAccountSnapshot;
+
+    if (isLegacyExpressConnectedAccount(account)) {
+      await updateV1PublicBusinessName(stripe, accountId, name);
+      return;
+    }
+
+    const params = v2PublicBusinessNameUpdateParams(account, name);
+    if (!params) {
+      return;
+    }
+
+    try {
+      await stripe.v2.core.accounts.update(accountId, params);
+    } catch (error) {
+      const namesOnly = params.configuration ? v2BusinessNameOnlyUpdateParams(account, name) : null;
+      if (!namesOnly) {
+        logClientBillingStripeError(
+          params.configuration ? "Could not update the connected account statement descriptor." : "Could not update the connected account public name.",
+          error,
+        );
+        return;
+      }
+
+      logClientBillingStripeError("Could not update the connected account statement descriptor.", error);
+
+      try {
+        await stripe.v2.core.accounts.update(accountId, namesOnly);
+      } catch (retryError) {
+        logClientBillingStripeError("Could not update the connected account public name.", retryError);
+      }
+    }
+  } catch (error) {
+    if (!canFallBackToV1AccountRead(error)) {
+      logClientBillingStripeError("Could not update the connected account public name.", error);
+      return;
+    }
+
+    try {
+      await updateV1PublicBusinessName(stripe, accountId, name);
+    } catch (retryError) {
+      logClientBillingStripeError("Could not update the connected account public name.", retryError);
+    }
+  }
+}
+
+function stripeAccountOptions(firm: Firm, idempotencyKey?: string): Stripe.RequestOptions {
+  if (!firm.stripeConnectAccountId) {
+    throw new Error("Stripe Connect account is not connected.");
+  }
+
+  return {
+    stripeAccount: firm.stripeConnectAccountId,
+    ...(idempotencyKey ? { idempotencyKey } : {}),
+  };
+}
+
+function paymentIntentId(invoice: Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null }) {
+  return typeof invoice.payment_intent === "string" ? invoice.payment_intent : invoice.payment_intent?.id ?? undefined;
+}
+
+async function createOrUpdateStripeCustomer(firm: Firm, contact: Contact, stripe: Stripe) {
   if (!firm.stripeConnectAccountId) {
     throw new Error("Stripe Connect account is not connected.");
   }
@@ -288,6 +391,188 @@ async function createOrUpdateStripeCustomer(firm: Firm, contact: Contact) {
   return { customerId: customer.id, providerCustomerId: customer.id, provider: "stripe_connect" as const };
 }
 
+async function ensureInvoiceLines(stripe: Stripe, firm: Firm, invoice: Invoice, stripeInvoice: Stripe.Invoice, customerId: string) {
+  const lines = stripeInvoice.lines?.data ?? [];
+  const feeDescription = buildInvoiceLineDescription(invoice);
+  const hasFee = lines.some((line) => line.description === feeDescription && line.amount === invoice.feeAmountCents);
+
+  if (!hasFee) {
+    await stripe.invoiceItems.create(
+      {
+        customer: customerId,
+        invoice: stripeInvoice.id,
+        amount: invoice.feeAmountCents,
+        currency: "usd",
+        description: feeDescription,
+      },
+      stripeAccountOptions(firm, `client-billing-item-fee-${invoice.id}`),
+    );
+  }
+
+  const feeRecoveryCents = calculateClientPaymentFeeRecoveryCents(firm, invoice.feeAmountCents);
+  if (feeRecoveryCents <= 0) {
+    return;
+  }
+
+  const recoveryDescription = firm.clientPaymentFeeLabel ?? "Payment processing fee recovery";
+  const hasRecovery = lines.some((line) => line.description === recoveryDescription && line.amount === feeRecoveryCents);
+  if (hasRecovery) {
+    return;
+  }
+
+  await stripe.invoiceItems.create(
+    {
+      customer: customerId,
+      invoice: stripeInvoice.id,
+      amount: feeRecoveryCents,
+      currency: "usd",
+      description: recoveryDescription,
+    },
+    stripeAccountOptions(firm, `client-billing-item-recovery-${invoice.id}`),
+  );
+}
+
+async function recordInvoiceSentActivity(firm: Firm, invoice: Invoice) {
+  await prisma.$transaction(async (tx) => {
+    const claim = await tx.claim.findUnique({ where: { id: invoice.claimId }, include: { contact: true } });
+    if (!claim) {
+      return;
+    }
+
+    await tx.activity.create({
+      data: {
+        firmId: firm.id,
+        claimId: claim.id,
+        contactId: claim.contactId,
+        type: "EMAIL",
+        subject: "Invoice sent to client",
+        body: `Sent invoice ${invoice.invoiceNumber} using Stripe Connect.`,
+      },
+    });
+  });
+}
+
+export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, stripe: Stripe = requireStripeClient()) {
+  await syncConnectedAccountPublicName(stripe, firm);
+  const claim = await prisma.claim.findUnique({ where: { id: invoice.claimId }, include: { contact: true } });
+
+  if (!claim) {
+    throw new Error("Claim not found for invoice.");
+  }
+
+  const customerResult = await createOrUpdateStripeCustomer(firm, claim.contact, stripe);
+  const customerId = customerResult.customerId;
+
+  if (!customerId) {
+    throw new Error("Stripe customer could not be created.");
+  }
+
+  const presentation = hostedInvoicePresentation({
+    invoiceNumber: invoice.invoiceNumber,
+    claimNumber: claim.claimNumber,
+    insuredName: insuredDisplayName(claim.contact),
+  });
+  const daysUntilDue = stableDaysUntilDue(invoice);
+  const metadata = {
+    firmId: firm.id,
+    invoiceId: invoice.id,
+    claimId: invoice.claimId,
+    invoiceNumber: invoice.invoiceNumber,
+  };
+  const account = stripeAccountOptions(firm);
+
+  let stripeInvoice: Stripe.Invoice;
+
+  if (invoice.externalInvoiceId) {
+    stripeInvoice = await stripe.invoices.retrieve(invoice.externalInvoiceId, {}, account);
+  } else {
+    // Direct charge on the connected account. No application fee: the office is the merchant,
+    // and Stripe collects card processing fees from that account. account_name is copied from
+    // the connected account's customer-facing business name and is not settable on the invoice.
+    stripeInvoice = await stripe.invoices.create(
+      {
+        customer: customerId,
+        collection_method: "send_invoice",
+        auto_advance: false,
+        days_until_due: daysUntilDue,
+        description: presentation.description,
+        custom_fields: presentation.custom_fields,
+        metadata,
+        pending_invoice_items_behavior: "exclude",
+        ...(presentation.number ? { number: presentation.number } : {}),
+      },
+      stripeAccountOptions(firm, `client-billing-create-${invoice.id}`),
+    );
+
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        clientBillingProvider: "STRIPE_CONNECT",
+        externalInvoiceId: stripeInvoice.id,
+        externalInvoiceStatus: stripeInvoice.status ?? "draft",
+      },
+    });
+  }
+
+  if (stripeInvoice.status === "void" || stripeInvoice.status === "uncollectible") {
+    throw new Error(`Stripe invoice ${stripeInvoice.id} is ${stripeInvoice.status} and cannot be resent.`);
+  }
+
+  if (!stripeInvoice.status || stripeInvoice.status === "draft") {
+    const draftInvoice = stripeInvoice;
+    stripeInvoice = await stripe.invoices.update(
+      draftInvoice.id,
+      {
+        description: presentation.description,
+        custom_fields: presentation.custom_fields,
+        metadata,
+        days_until_due: daysUntilDue,
+        ...(presentation.number ? { number: presentation.number } : {}),
+      },
+      account,
+    );
+    await ensureInvoiceLines(stripe, firm, invoice, draftInvoice, customerId);
+    stripeInvoice = await stripe.invoices.finalizeInvoice(draftInvoice.id, {}, stripeAccountOptions(firm, `client-billing-finalize-${invoice.id}`));
+  }
+
+  const alreadyEmailed = Boolean(invoice.sentToClientAt);
+  if (stripeInvoice.status === "open" && !alreadyEmailed) {
+    stripeInvoice = await stripe.invoices.sendInvoice(stripeInvoice.id, {}, stripeAccountOptions(firm, `client-billing-send-${invoice.id}`));
+  }
+
+  const sentInvoice = stripeInvoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+  const syncedAt = new Date();
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      clientBillingProvider: "STRIPE_CONNECT",
+      externalInvoiceId: stripeInvoice.id,
+      externalInvoiceStatus: stripeInvoice.status ?? undefined,
+      externalHostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? undefined,
+      externalInvoicePdfUrl: stripeInvoice.invoice_pdf ?? undefined,
+      externalPaymentIntentId: paymentIntentId(sentInvoice),
+      externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
+      externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
+      externalSyncedAt: syncedAt,
+      sentToClientAt: invoice.sentToClientAt ?? syncedAt,
+      status: invoice.status === InvoiceStatus.PAID || stripeInvoice.status === "paid" ? InvoiceStatus.PAID : InvoiceStatus.SENT,
+    },
+  });
+
+  if (!alreadyEmailed) {
+    await recordInvoiceSentActivity(firm, invoice);
+  }
+
+  return {
+    invoiceId: stripeInvoice.id,
+    hostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? null,
+    pdfUrl: stripeInvoice.invoice_pdf ?? null,
+    status: stripeInvoice.status ?? null,
+    syncedAt,
+  };
+}
+
 const stripeConnectProvider: ClientBillingProvider = {
   getConnectionStatus(firm: Firm) {
     return {
@@ -306,119 +591,10 @@ const stripeConnectProvider: ClientBillingProvider = {
     return Boolean(firm.clientBillingEnabled && firm.stripeConnectAccountId && firm.stripeChargesEnabled && firm.stripePayoutsEnabled && firm.stripeDetailsSubmitted);
   },
   async createOrUpdateCustomer(firm: Firm, contact: Contact) {
-    return createOrUpdateStripeCustomer(firm, contact);
+    return createOrUpdateStripeCustomer(firm, contact, requireStripeClient());
   },
   async sendInvoice(firm: Firm, invoice: Invoice) {
-    const stripe = requireStripeClient();
-    const account = getStripeAccountHeader(firm);
-    const claim = await prisma.claim.findUnique({ where: { id: invoice.claimId }, include: { contact: true } });
-
-    if (!claim) {
-      throw new Error("Claim not found for invoice.");
-    }
-
-    const customerResult = await createOrUpdateStripeCustomer(firm, claim.contact);
-    const customerId = customerResult.customerId;
-
-    if (!customerId) {
-      throw new Error("Stripe customer could not be created.");
-    }
-
-    // Direct charge on the connected account. No application fee: the office is the merchant,
-    // and Stripe collects card processing fees from that account.
-    const createdInvoice = await stripe.invoices.create(
-      {
-        customer: customerId,
-        collection_method: "send_invoice",
-        auto_advance: false,
-        days_until_due: invoice.dueAt ? Math.max(Math.ceil((new Date(invoice.dueAt).getTime() - Date.now()) / 86400000), 1) : 14,
-        metadata: {
-          firmId: firm.id,
-          invoiceId: invoice.id,
-          claimId: invoice.claimId,
-        },
-      },
-      account,
-    );
-
-    const invoiceItems: Array<Promise<Stripe.Response<Stripe.InvoiceItem>>> = [];
-
-    invoiceItems.push(
-      stripe.invoiceItems.create(
-        {
-          customer: customerId,
-          invoice: createdInvoice.id,
-          amount: invoice.feeAmountCents,
-          currency: "usd",
-          description: buildInvoiceLineDescription(invoice),
-        },
-        account,
-      ),
-    );
-
-    const feeRecoveryCents = calculateClientPaymentFeeRecoveryCents(firm, invoice.feeAmountCents);
-
-    if (feeRecoveryCents > 0) {
-      invoiceItems.push(
-        stripe.invoiceItems.create(
-          {
-            customer: customerId,
-            invoice: createdInvoice.id,
-            amount: feeRecoveryCents,
-            currency: "usd",
-            description: firm.clientPaymentFeeLabel ?? "Payment processing fee recovery",
-          },
-          account,
-        ),
-      );
-    }
-
-    await Promise.all(invoiceItems);
-
-    const finalized = await stripe.invoices.finalizeInvoice(createdInvoice.id, {}, account);
-    const sent = await stripe.invoices.sendInvoice(finalized.id, {}, account);
-    const sentInvoice = sent as Stripe.Response<Stripe.Invoice> & { payment_intent?: string | Stripe.PaymentIntent | null };
-
-    await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        clientBillingProvider: "STRIPE_CONNECT",
-        externalInvoiceId: sent.id,
-        externalInvoiceStatus: sent.status ?? undefined,
-        externalHostedInvoiceUrl: sent.hosted_invoice_url ?? undefined,
-        externalInvoicePdfUrl: sent.invoice_pdf ?? undefined,
-        externalPaymentIntentId: typeof sentInvoice.payment_intent === "string" ? sentInvoice.payment_intent : sentInvoice.payment_intent?.id ?? undefined,
-        externalAmountDueCents: sent.amount_due ?? undefined,
-        externalAmountPaidCents: sent.amount_paid ?? undefined,
-        externalSyncedAt: new Date(),
-        sentToClientAt: new Date(),
-        status: InvoiceStatus.SENT,
-      },
-    });
-
-    await prisma.$transaction(async (tx) => {
-      const claim = await tx.claim.findUnique({ where: { id: invoice.claimId }, include: { contact: true } });
-      if (claim) {
-        await tx.activity.create({
-          data: {
-            firmId: firm.id,
-            claimId: claim.id,
-            contactId: claim.contactId,
-            type: "EMAIL",
-            subject: "Invoice sent to client",
-            body: `Sent invoice ${invoice.invoiceNumber} using Stripe Connect.`,
-          },
-        });
-      }
-    });
-
-    return {
-      invoiceId: sent.id,
-      hostedInvoiceUrl: sent.hosted_invoice_url ?? null,
-      pdfUrl: sent.invoice_pdf ?? null,
-      status: sent.status ?? null,
-      syncedAt: new Date(),
-    };
+    return sendStripeConnectInvoice(firm, invoice);
   },
   async syncInvoiceStatus(firm: Firm, invoice: Invoice) {
     if (!invoice.externalInvoiceId) {
@@ -440,7 +616,7 @@ const stripeConnectProvider: ClientBillingProvider = {
         externalInvoiceStatus: refreshed.status ?? undefined,
         externalHostedInvoiceUrl: refreshed.hosted_invoice_url ?? undefined,
         externalInvoicePdfUrl: refreshed.invoice_pdf ?? undefined,
-        externalPaymentIntentId: typeof refreshedInvoice.payment_intent === "string" ? refreshedInvoice.payment_intent : refreshedInvoice.payment_intent?.id ?? undefined,
+        externalPaymentIntentId: paymentIntentId(refreshedInvoice),
         externalAmountDueCents: refreshed.amount_due ?? undefined,
         externalAmountPaidCents: refreshed.amount_paid ?? undefined,
         externalSyncedAt: new Date(),
