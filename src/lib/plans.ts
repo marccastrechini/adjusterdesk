@@ -19,6 +19,8 @@ export function planLabel(plan: SubscriptionPlan) {
       return "Team";
     case SubscriptionPlan.PROFESSIONAL:
       return "Professional";
+    case SubscriptionPlan.EARLY_ADOPTER:
+      return "Early adopter";
     default:
       return "Plan";
   }
@@ -51,6 +53,8 @@ export function defaultIncludedUserLimit(plan: SubscriptionPlan) {
       return 7;
     case SubscriptionPlan.PROFESSIONAL:
       return undefined;
+    case SubscriptionPlan.EARLY_ADOPTER:
+      return 5;
     default:
       return undefined;
   }

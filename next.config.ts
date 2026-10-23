@@ -59,6 +59,7 @@ const privateRouteSources = [
   "/forgot-password",
   "/reset-password",
   "/accept-invite",
+  "/early-access",
 ];
 
 const nextConfig: NextConfig = {

@@ -68,6 +68,7 @@ const systemAdminNavItems: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/system", label: "System admin", icon: LayoutDashboard, exact: true },
       { href: "/system/workspaces", label: "System workspaces", icon: Users },
+      { href: "/system/early-adopters", label: "Early adopters", icon: Users },
       { href: "/system/outreach", label: "System outreach", icon: ListChecks },
       { href: "/system/outreach/playbook", label: "Outreach playbook", icon: MessageSquare },
       { href: "/system/emails", label: "System emails", icon: MessageSquare },

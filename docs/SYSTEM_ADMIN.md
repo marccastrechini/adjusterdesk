@@ -9,6 +9,7 @@ For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP
 - System dashboard: `/system`
 - Workspaces list: `/system/workspaces`
 - Workspace detail: `/system/workspaces/<workspace-id>`
+- Early adopter invites: `/system/early-adopters` (see `docs/EARLY_ADOPTER_INVITES.md`)
 
 This area is separate from normal office owner/admin tools in `/settings`.
 

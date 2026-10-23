@@ -36,6 +36,7 @@ export function AppShell({
     ? [
         { href: "/system", label: "System admin" },
         { href: "/system/workspaces", label: "System workspaces" },
+        { href: "/system/early-adopters", label: "Early adopters" },
         { href: "/system/users", label: "System users" },
         { href: "/system/outreach", label: "Outreach tracker" },
         { href: "/system/outreach/playbook", label: "Outreach playbook" },

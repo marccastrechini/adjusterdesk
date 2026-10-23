@@ -105,6 +105,7 @@ enum SubscriptionPlan {
   SMALL_OFFICE
   TEAM
   PROFESSIONAL
+  EARLY_ADOPTER
 }
 
 enum SubscriptionStatus {
@@ -242,6 +243,7 @@ model Firm {
   templates         Template[]
   feedbackEntries   FeedbackEntry[]
   signupIntents     SignupIntent[]
+  earlyAdopterInvites EarlyAdopterInvite[]
 
   @@index([archivedAt])
 }
@@ -393,8 +395,38 @@ model User {
   feedbackEntries   FeedbackEntry[]
   outreachActivities OutreachActivity[]
   outreachTasks     OutreachTask[]
+  earlyAdopterInvitesCreated EarlyAdopterInvite[] @relation("EarlyAdopterInviteCreatedBy")
+  earlyAdopterInvitesRedeemed EarlyAdopterInvite[] @relation("EarlyAdopterInviteRedeemedBy")
 
   @@index([firmId])
+}
+
+model EarlyAdopterInvite {
+  id               String    @id @default(cuid())
+  email            String
+  name             String?
+  note             String?
+  tokenHash        String    @unique
+  expiresInDays    Int       @default(30)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  redeemedAt       DateTime?
+  lastSentAt       DateTime?
+  firmId           String?
+  createdByUserId  String
+  redeemedByUserId String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  firm       Firm? @relation(fields: [firmId], references: [id], onDelete: SetNull)
+  createdBy  User  @relation("EarlyAdopterInviteCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  redeemedBy User? @relation("EarlyAdopterInviteRedeemedBy", fields: [redeemedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([expiresAt])
+  @@index([redeemedAt])
+  @@index([revokedAt])
+  @@index([createdByUserId])
 }
 
 model UserInvitationToken {

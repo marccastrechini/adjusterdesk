@@ -36,6 +36,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
     [SubscriptionPlan.SMALL_OFFICE]: 3,
     [SubscriptionPlan.TEAM]: 7,
     [SubscriptionPlan.PROFESSIONAL]: "Custom",
+    [SubscriptionPlan.EARLY_ADOPTER]: 5,
   } as const)[workspace.subscriptionPlan];
 
   const removalError = workspaceRemovalErrorMessage(error);
@@ -115,6 +116,9 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
         <Card className={overLimit ? "grid gap-4 border-rose-200 bg-rose-50" : atLimit ? "grid gap-4 border-amber-200 bg-amber-50" : "grid gap-4 border-teal-200 bg-teal-50"}>
           <div className="grid gap-1 text-sm leading-6 text-slate-700">
             <p><span className="font-semibold text-slate-950">Current plan:</span> {planLabel(workspace.subscriptionPlan)}</p>
+            {workspace.subscriptionPlan === SubscriptionPlan.EARLY_ADOPTER ? (
+              <p>Complimentary access. Choose another plan and status here when this office should move onto paid billing. Saving this form does not open Stripe Checkout.</p>
+            ) : null}
             <p><span className="font-semibold text-slate-950">Subscription status:</span> {subscriptionStatusLabel(workspace.subscriptionStatus)}</p>
             <p><span className="font-semibold text-slate-950">Active users:</span> {activeUserCount} of {includedUserLimit > 0 ? includedUserLimit : "custom"} included</p>
             <p><span className="font-semibold text-slate-950">Billing customer ID:</span> {workspace.billingCustomerId ?? "Not linked"}</p>
@@ -131,6 +135,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
                 <option value={SubscriptionPlan.SMALL_OFFICE}>Small Office</option>
                 <option value={SubscriptionPlan.TEAM}>Team</option>
                 <option value={SubscriptionPlan.PROFESSIONAL}>Professional</option>
+                <option value={SubscriptionPlan.EARLY_ADOPTER}>Early adopter</option>
               </select>
             </Field>
             <Field label="Subscription status">

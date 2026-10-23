@@ -14,6 +14,7 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import { formError, type ActionFormState, type FieldErrors } from "@/lib/form-state";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
+import { safeEarlyAccessReturnPath } from "@/lib/early-adopter";
 import { clearSession, createSessionForUser } from "@/lib/session";
 
 export async function loginWithPassword(_state: ActionFormState, formData: FormData): Promise<ActionFormState> {
@@ -54,6 +55,11 @@ export async function loginWithPassword(_state: ActionFormState, formData: FormD
   const sessionCreated = await createSessionForUser(user.id);
   if (!sessionCreated) {
     return formError("Sign-in is not configured on this environment yet. Add AUTH_SECRET before deployment.");
+  }
+
+  const returnTo = safeEarlyAccessReturnPath(formData.get("returnTo")?.toString());
+  if (returnTo) {
+    redirect(returnTo);
   }
 
   if (user.isOutreachOperator && !user.isSystemAdmin) {

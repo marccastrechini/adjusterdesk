@@ -16,11 +16,13 @@ test("plan labels and defaults are stable", () => {
   assert.equal(planLabel(SubscriptionPlan.SMALL_OFFICE), "Small Office");
   assert.equal(planLabel(SubscriptionPlan.TEAM), "Team");
   assert.equal(planLabel(SubscriptionPlan.PROFESSIONAL), "Professional");
+  assert.equal(planLabel(SubscriptionPlan.EARLY_ADOPTER), "Early adopter");
 
   assert.equal(defaultIncludedUserLimit(SubscriptionPlan.SOLO), 1);
   assert.equal(defaultIncludedUserLimit(SubscriptionPlan.SMALL_OFFICE), 3);
   assert.equal(defaultIncludedUserLimit(SubscriptionPlan.TEAM), 7);
   assert.equal(defaultIncludedUserLimit(SubscriptionPlan.PROFESSIONAL), undefined);
+  assert.equal(defaultIncludedUserLimit(SubscriptionPlan.EARLY_ADOPTER), 5);
 });
 
 test("subscription status labels are plain language", () => {

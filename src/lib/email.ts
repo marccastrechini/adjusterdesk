@@ -26,6 +26,13 @@ type TrialSignupAlertEmailInput = {
   offerLabel?: string;
 };
 
+type EarlyAdopterInviteEmailInput = {
+  toEmail: string;
+  recipientName: string | null;
+  inviteUrl: string;
+  expiresOn: string;
+};
+
 type WelcomeSignupEmailInput = {
   toEmail: string;
   userName: string;
@@ -206,6 +213,39 @@ export async function sendUserInvitationEmail(input: UserInvitationEmailInput): 
     subject: `${brandName} account invitation`,
     html: emailContent.html,
     text: emailContent.text,
+  });
+}
+
+export function renderEarlyAdopterInviteEmail(input: EarlyAdopterInviteEmailInput) {
+  const greetingName = input.recipientName?.trim() || "there";
+  const content = renderSystemEmailTemplate({
+    preheader: `Your ${brandName} early access invite.`,
+    title: "Your early access invite",
+    intro: `Hello ${greetingName},`,
+    bodyLines: [
+      `You are invited to use ${brandName} as an early adopter. There is no card and no Stripe checkout.`,
+      "The link is single-use. Create your office, or sign in if you already have this email on an account.",
+      `This invite expires on ${input.expiresOn}.`,
+    ],
+    ctaLabel: "Open early access",
+    ctaUrl: input.inviteUrl,
+    secondaryText: "If you were not expecting this, you can ignore the email.",
+    footer: resolveSystemEmailFooter(),
+  });
+  return {
+    subject: `Your ${brandName} early access invite`,
+    html: content.html,
+    text: content.text,
+  };
+}
+
+export async function sendEarlyAdopterInviteEmail(input: EarlyAdopterInviteEmailInput): Promise<EmailSendResult> {
+  const rendered = renderEarlyAdopterInviteEmail(input);
+  return sendSystemEmail({
+    toEmail: input.toEmail,
+    subject: rendered.subject,
+    html: rendered.html,
+    text: rendered.text,
   });
 }
 
