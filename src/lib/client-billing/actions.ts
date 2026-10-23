@@ -6,6 +6,7 @@ import { ClientBillingProvider, InvoiceStatus } from "@/generated/prisma/client"
 import { getDemoContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
+import { logClientBillingStripeError } from "./stripe-connect-account";
 import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
 
 function isCheckboxEnabled(value: FormDataEntryValue | null) {
@@ -28,7 +29,8 @@ export async function startOrResumeClientBillingConnection() {
 
   try {
     result = await createOrResumeStripeConnectClientBillingConnection(firm);
-  } catch {
+  } catch (error) {
+    logClientBillingStripeError("Stripe Connect onboarding failed.", error);
     result = null;
   }
 

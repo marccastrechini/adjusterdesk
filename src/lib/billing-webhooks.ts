@@ -1,7 +1,8 @@
 import type Stripe from "stripe";
-import { ActivityType, ClientBillingConnectionStatus, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
+import { ActivityType, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
+import { clientBillingConnectionData, clientBillingReadinessFromV1Account } from "@/lib/client-billing/stripe-connect-account";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
 
 function asDateFromUnix(value: number | null | undefined) {
@@ -350,21 +351,14 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
     }
 
     case "account.updated": {
+      // v2 merchant accounts still emit this v1 snapshot on the connected-accounts endpoint.
+      // Thin v2.core.account events are handled by /api/stripe/connect-v2-webhook.
       const account = event.data.object as Stripe.Account;
-      const chargesEnabled = Boolean(account.charges_enabled);
-      const payoutsEnabled = Boolean(account.payouts_enabled);
-      const detailsSubmitted = Boolean(account.details_submitted);
-      const active = chargesEnabled && payoutsEnabled && detailsSubmitted;
+      const readiness = clientBillingReadinessFromV1Account(account);
 
       await prisma.firm.updateMany({
         where: { stripeConnectAccountId: account.id },
-        data: {
-          stripeChargesEnabled: chargesEnabled,
-          stripePayoutsEnabled: payoutsEnabled,
-          stripeDetailsSubmitted: detailsSubmitted,
-          clientBillingConnectionStatus: active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
-          clientBillingEnabled: active,
-        },
+        data: clientBillingConnectionData(readiness),
       });
 
       return;
