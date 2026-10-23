@@ -116,6 +116,30 @@ export const noticeMessages = {
     title: "Workspace created",
     message: "The new workspace and owner user were created.",
   },
+  "early-adopter-sent": {
+    title: "Early adopter invite sent",
+    message: "The invite email was sent. The single-use link is shown on this page for a few minutes if you also want to copy it.",
+  },
+  "early-adopter-resent": {
+    title: "Early adopter invite resent",
+    message: "A new single-use link was emailed. The previous link no longer works.",
+  },
+  "early-adopter-link-only": {
+    title: "Invite saved, email not sent",
+    message: "The invite exists, but the email provider did not accept it. Copy the link from this page and send it yourself.",
+  },
+  "early-adopter-link-copied": {
+    title: "New invite link ready",
+    message: "This replaces the previous link. Copy it now. It was not emailed.",
+  },
+  "early-adopter-revoked": {
+    title: "Invite revoked",
+    message: "That invite can no longer be used.",
+  },
+  "early-adopter-ready": {
+    title: "Early access is ready",
+    message: "This office is on the Early adopter plan. There is no card and no trial end.",
+  },
   "system-user-email-updated": {
     title: "User updated",
     message: "The user email address was updated.",

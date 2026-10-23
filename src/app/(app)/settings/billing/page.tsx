@@ -29,6 +29,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
   const trialState = trialPromptState(firm);
   const trialDays = firm.trialEndsAt ? trialDaysRemaining(firm.trialEndsAt) : null;
   const isOnTrial = firm.subscriptionStatus === "TRIAL";
+  const isEarlyAdopter = firm.subscriptionPlan === "EARLY_ADOPTER";
   const canSubscribe = billingProvider === "stripe" && stripeReady && isOnTrial;
   const plans = listPublicPlans();
 
@@ -68,12 +69,12 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
         <Card className="grid gap-2">
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Billing status</p>
-          <p className="text-xl font-semibold text-slate-950">{subscriptionStatusLabel(firm.subscriptionStatus)}</p>
+          <p className="text-xl font-semibold text-slate-950">{isEarlyAdopter ? "Complimentary" : subscriptionStatusLabel(firm.subscriptionStatus)}</p>
           <div className="flex flex-wrap gap-2">
-            <Badge tone={firm.subscriptionStatus === "ACTIVE" ? "green" : firm.subscriptionStatus === "PAST_DUE" ? "amber" : "slate"}>
-              {subscriptionStatusLabel(firm.subscriptionStatus)}
+            <Badge tone={isEarlyAdopter ? "teal" : firm.subscriptionStatus === "ACTIVE" ? "green" : firm.subscriptionStatus === "PAST_DUE" ? "amber" : "slate"}>
+              {isEarlyAdopter ? "Complimentary" : subscriptionStatusLabel(firm.subscriptionStatus)}
             </Badge>
-            <Badge tone="blue">{billingProvider === "stripe" ? "Stripe" : "Manual"}</Badge>
+            {isEarlyAdopter ? null : <Badge tone="blue">{billingProvider === "stripe" ? "Stripe" : "Manual"}</Badge>}
           </div>
           {isOnTrial && firm.trialEndsAt ? (
             <p className="text-sm text-slate-500">Trial ends: {formatDate(firm.trialEndsAt)}</p>
@@ -110,18 +111,26 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
       <Section title="Billing details">
         <Card className="grid gap-3">
-          <p className="text-sm leading-6 text-slate-700">
-            {billingProvider === "stripe" && stripeReady
-              ? "Signup collects a card in Stripe Checkout. The standard path charges $0 during a 14-day trial, then the plan price. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month."
-              : "Card collection is not active in this environment. Billing starts when a plan is activated."}
-          </p>
-          <p className="text-sm leading-6 text-slate-700">
-            Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
-          </p>
+          {isEarlyAdopter ? (
+            <p className="text-sm leading-6 text-slate-700">
+              This office is on the Early adopter plan. Access stays open with no card, no trial end, and no Stripe subscription. A move onto paid billing is done by {brandName} from system admin when you are ready.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm leading-6 text-slate-700">
+                {billingProvider === "stripe" && stripeReady
+                  ? "Signup collects a card in Stripe Checkout. The standard path charges $0 during a 14-day trial, then the plan price. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month."
+                  : "Card collection is not active in this environment. Billing starts when a plan is activated."}
+              </p>
+              <p className="text-sm leading-6 text-slate-700">
+                Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
+              </p>
+            </>
+          )}
           <p className="text-sm leading-6 text-slate-700">Billing started date: {firm.billingStartedAt ? formatDate(firm.billingStartedAt) : "Not set"}</p>
           <p className="text-sm leading-6 text-slate-700">Current period end: {firm.billingCurrentPeriodEnd ? formatDate(firm.billingCurrentPeriodEnd) : "Not set"}</p>
 
-          {billingProvider === "stripe" ? (
+          {isEarlyAdopter ? null : billingProvider === "stripe" ? (
             <>
               <p className="text-sm leading-6 text-slate-700">
                 Billing provider is set to Stripe for this environment.

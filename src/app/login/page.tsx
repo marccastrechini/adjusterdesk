@@ -8,6 +8,7 @@ import { getNoticeMessage } from "@/lib/notices";
 import { getCurrentSessionUser } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName } from "@/lib/brand";
+import { safeEarlyAccessReturnPath } from "@/lib/early-adopter";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,13 @@ type PageProps = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps) {
+  const query = await searchParams;
+  const returnTo = safeEarlyAccessReturnPath(Array.isArray(query.returnTo) ? query.returnTo[0] : query.returnTo);
   const currentUser = await getCurrentSessionUser();
   if (currentUser) {
-    redirect("/today");
+    redirect(returnTo ?? "/today");
   }
 
-  const query = await searchParams;
   const notice = getNoticeMessage(query);
   const startHref = resolvePublicStartHref();
   const startLabel = resolvePublicStartLabel();
@@ -42,6 +44,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
 
         <Card className="grid gap-4">
           <ActionForm action={loginWithPassword} className="grid gap-4">
+            {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
             <Field label="Email">
               <input name="email" type="email" autoComplete="email" required className={inputClassName} />
               <FieldError name="email" />
