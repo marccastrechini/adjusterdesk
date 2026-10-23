@@ -26,6 +26,8 @@ New connected accounts are created with the Accounts v2 API (`POST /v2/core/acco
 - `defaults.responsibilities.losses_collector`: `stripe`. Stripe covers negative balances on these new accounts. Pairing platform loss liability with connected-account fee collection is not a supported v2 combination.
 - Hosted onboarding uses v2 account links for the merchant configuration.
 - Accounts created earlier with Accounts v1 Express stay on v1 account links and v1 account retrieve. Do not recreate them.
+- The name on a hosted client invoice is the connected account's customer-facing business name, snapshotted onto the invoice as `account_name` when the invoice is created. That field is `defaults.profile.doing_business_as` on v2 and `business_profile.name` on v1. `display_name` alone is the Dashboard name and the name on invoices sent to the account, so new accounts set both to the firm name. A statement descriptor derived from that name is applied in a later update when Stripe accepts it, including on accounts that already exist, so card statements do not stay on a truncated platform URL. It is not sent on account creation, because a rejected descriptor would block onboarding. An invoice that was already finalized keeps the name it was created with.
+- The hosted invoice number is the app invoice number when it is 26 characters or shorter. The hosted page and PDF also include a description plus custom fields for Invoice #, Claim #, and the insured. A failed send stores the Stripe draft id immediately. The next attempt resumes that draft instead of creating another invoice.
 
 ## Provider Abstraction
 
