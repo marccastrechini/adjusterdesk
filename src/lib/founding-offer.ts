@@ -7,9 +7,10 @@ export const FOUNDING_PAGE_HREF = "/founding-public-adjuster-offices";
 export const TRACKER_PAGE_HREF = "/free-public-adjuster-claim-tracker";
 
 export const FOUNDING_PRICE_LINE =
-  "$0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months.";
+  "Founding price: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months.";
 
-export const FOUNDING_STANDARD_COMPARE = "Standard pricing is Solo $49/month and Small Office $99/month.";
+export const FOUNDING_STANDARD_COMPARE =
+  "Founding Solo is $29/month for 12 months, then the standard Solo price of $49/month. Founding Small Office is $49/month for 12 months, then the standard Small Office price of $99/month.";
 
 export const FOUNDING_ONBOARDING =
   `Async onboarding, no sales call. Email support at ${supportEmail}.`;
@@ -30,7 +31,7 @@ export const FOUNDING_TRIAL_DUE_LINE =
 
 // Founding Checkout is live: $29 Solo / $49 Small Office after a 90-day $0 trial. The 12-month lock is a commercial promise, not an automatic Stripe price change.
 export const FOUNDING_HONESTY_NOTE =
-  "Stripe Checkout collects a card at signup. For the first 10 founding offices, $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing stays Solo $49/month, Small Office $99/month, and Team $199/month, with $0 due during a 14-day trial.";
+  "Stripe Checkout collects a card at signup. Founding price for the first 10 offices: $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months, then the standard price. Standard price is Solo $49/month, Small Office $99/month, and Team $199/month, with $0 due during a 14-day trial. The 12-month founding price is a promise to those offices. It is not an automatic Stripe price change.";
 
 export const FOUNDING_OPS_ALERT =
   "Founding office signup. Checkout charges $0 for 90 days, then Solo $29/month or Small Office $49/month. Confirm this office is within the first 10. The 12-month lock is a promise to keep, not an automatic Stripe price change.";

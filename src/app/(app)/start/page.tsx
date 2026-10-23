@@ -2,6 +2,8 @@ import { AnalyticsOnLoad } from "@/components/analytics-on-load";
 import { TrackedButtonLink } from "@/components/tracked-link";
 import { Badge, ButtonLink, Card, Notice, PageHeader, Section, StatCard } from "@/components/ui";
 import { activationProgress, buildActivationChecklist, buildOnboardingQuickActions } from "@/lib/activation";
+import { signupWelcomeMessage } from "@/lib/billing-display";
+import { brandName } from "@/lib/brand";
 import { getNoticeMessage } from "@/lib/notices";
 import { getActivationData } from "@/lib/queries";
 
@@ -56,7 +58,11 @@ export default async function StartPage({ searchParams }: PageProps) {
         }
       />
 
-      {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
+      {isSignupComplete ? (
+        <Notice title={`Welcome to ${brandName}`}>{signupWelcomeMessage(firm)}</Notice>
+      ) : notice ? (
+        <Notice title={notice.title}>{notice.message}</Notice>
+      ) : null}
 
       <Card className="grid gap-4 border-teal-200 bg-teal-50">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

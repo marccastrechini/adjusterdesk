@@ -10,7 +10,7 @@ import { PublicSiteChrome } from "@/components/public-site";
 import { publicSitemapPaths } from "@/lib/public-sitemap";
 
 const publishedPricing =
-  "Public pricing is Solo $49/month, Small Office $99/month, and Team $199/month. Signup uses Stripe Checkout and collects a card. On that path, $0 is due during the 14-day trial, then the plan price. Founding Solo and Small Office Checkout charges $0 during a 90-day trial, then $29/month or $49/month, locked for 12 months for the first 10 offices.";
+  "Public pricing is Solo $49/month, Small Office $99/month, and Team $199/month. Signup uses Stripe Checkout and collects a card. On that path, $0 is due during the 14-day trial, then the plan price. Founding Solo and Small Office Checkout charges $0 during a 90-day trial, then $29/month or $49/month for 12 months, then the standard price, for the first 10 offices.";
 
 test("privacy and cookies disclose live Google Analytics 4 without a consent UI", () => {
   const privacy = renderToStaticMarkup(<PrivacyPage />);

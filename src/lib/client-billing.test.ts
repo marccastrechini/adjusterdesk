@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { createManualClientBillingProvider } from "@/lib/client-billing/manual-provider";
 import { calculateClientPaymentFeeRecoveryCents } from "@/lib/client-billing/fee-recovery";
 import { createOrResumeStripeConnectClientBillingConnection, getClientBillingProviderName, stripeConnectClientPaymentsEnabled } from "@/lib/client-billing/provider";
-import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
+import { clientPaymentsSetupPrompt, getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 
 test("client billing defaults to manual provider", () => {
   const providerName = getClientBillingProviderName({ clientBillingProvider: "MANUAL" } as never);
@@ -260,4 +260,9 @@ test("client payments hides resume onboarding when Stripe Connect is fully activ
   assert.equal(getClientPaymentsPrimaryActionLabel(activeFirm), null);
   assert.equal(getClientPaymentsPrimaryActionLabel(restrictedFirm), "Resume onboarding");
   assert.equal(getClientPaymentsPrimaryActionLabel(manualFirm), "Connect Stripe");
+  assert.equal(clientPaymentsSetupPrompt(activeFirm), null);
+  assert.equal(clientPaymentsSetupPrompt(restrictedFirm)?.href, "/settings/client-payments");
+  assert.equal(clientPaymentsSetupPrompt(restrictedFirm)?.label, "Finish client payments setup");
+  assert.equal(clientPaymentsSetupPrompt(manualFirm)?.label, "Set up client payments");
+  assert.match(clientPaymentsSetupPrompt(manualFirm)?.message ?? "", /not set up/);
 });

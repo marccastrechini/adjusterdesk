@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClientPaymentsSetupNote } from "@/components/client-payments-setup-note";
 import { Download } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Section, StatCard, inputClassName, selectClassName, SubmitButton } from "@/components/ui";
 import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, isInvoiceOverdue, propertyAddress } from "@/lib/format";
@@ -46,7 +47,7 @@ function isDueSoonInvoice(invoice: {
 
 export default async function MoneyPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const { invoices, payments } = await getMoneyData();
+  const { firm, invoices, payments } = await getMoneyData();
   const q = firstValue(params.q)?.trim() ?? "";
   const normalizedQuery = q.toLowerCase();
   const status = firstValue(params.status)?.trim() ?? "ALL";
@@ -111,6 +112,8 @@ export default async function MoneyPage({ searchParams }: PageProps) {
         title="Money"
         description="Track settlement checks, fee invoices, and receivables across the office."
       />
+
+      <ClientPaymentsSetupNote firm={firm} />
 
       <Card className="bg-slate-50">
         <p className="text-sm font-semibold text-slate-950">How to use Money</p>

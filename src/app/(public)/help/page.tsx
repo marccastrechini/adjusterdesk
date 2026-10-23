@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "How does the free trial work?",
     answer:
-      "Stripe Checkout collects a card at signup. On the standard path, $0 is due during the 14-day trial, then the plan price. First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Founding Checkout charges that $0 trial, then the founding monthly rate.",
+      "Stripe Checkout collects a card at signup. Standard price: $0 during a 14-day trial, then Solo $49/month, Small Office $99/month, or Team $199/month. Founding price for the first 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office for 12 months, then the standard price.",
   },
   {
     question: "What should I do first after signing up?",

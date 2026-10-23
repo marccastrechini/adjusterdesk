@@ -1,6 +1,7 @@
 import { Download, Zap } from "lucide-react";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { TrackedDownloadLink } from "@/components/tracked-download-link";
+import { FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
@@ -138,7 +139,7 @@ export default function FreeClaimTrackerPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-base font-semibold text-slate-950">Start the founding desk</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">First 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Start with your first 10 active claims. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{FOUNDING_PRICE_LINE} {FOUNDING_STANDARD_COMPARE} Start with your first 10 active claims. {FOUNDING_TRIAL_DUE_LINE}</p>
             <div className="mt-4">
               <PublicButtonLink href="/founding-public-adjuster-offices" variant="primary" eventName="trial_start_click">
                 See founding desk offer
@@ -163,7 +164,7 @@ export default function FreeClaimTrackerPage() {
 
       <CtaBand
         title="When the sheet is not enough, start the desk."
-        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate."
+        description={`${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${FOUNDING_TRIAL_DUE_LINE}`}
         primaryHref="/founding-public-adjuster-offices"
         primaryLabel="See founding desk offer"
       />

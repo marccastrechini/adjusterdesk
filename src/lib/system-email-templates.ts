@@ -1,6 +1,7 @@
 import { renderSystemEmailTemplate } from "@/lib/email-template";
 import { getOutreachTemplatePreviewDescriptors } from "@/lib/outreach-email";
 import { brandName, canonicalOrigin, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
+import { FOUNDING_HONESTY_NOTE, FOUNDING_ONBOARDING, FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE } from "@/lib/founding-offer";
 
 export type EmailAudience = "customer" | "internal";
 
@@ -129,8 +130,8 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     intro: "Hello Alex Johnson,",
     bodyLines: [
       `If follow-ups, documents, and fees are slipping across email and files, start ${brandName} with your first 10 active claims.`,
-      "First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Standard pricing is Solo $49/month and Small Office $99/month.",
-      "Stripe Checkout collects a card at signup. For the first 10 founding offices, $0 is due during the 90-day trial, then $29/month Solo or $49/month Small Office, locked for 12 months. Async onboarding, no sales call.",
+      `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE}`,
+      `${FOUNDING_HONESTY_NOTE} ${FOUNDING_ONBOARDING}`,
     ],
     ctaLabel: "See founding desk offer",
     ctaUrl: `${canonicalOrigin}/founding-public-adjuster-offices`,

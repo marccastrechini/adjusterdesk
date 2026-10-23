@@ -65,7 +65,7 @@ const sections: TrustSection[] = [
   {
     title: "Billing information",
     paragraphs: [
-      `Signup uses Stripe Checkout and collects a card. Published plan and trial terms stay the ones already on the pricing and founding pages: standard Solo $49/month, Small Office $99/month, and Team $199/month, with $0 due during a 14-day trial and then the plan price; founding Solo and Small Office, for the first 10 offices, with $0 during a 90-day trial and then $29/month or $49/month, locked for 12 months. Stripe receives the payment details and billing identifiers needed to charge that subscription. ${brandName} stores the plan, subscription status, and Stripe customer and subscription identifiers needed to show billing status in the workspace.`,
+      `Signup uses Stripe Checkout and collects a card. Published plan and trial terms stay the ones already on the pricing and founding pages: standard Solo $49/month, Small Office $99/month, and Team $199/month, with $0 due during a 14-day trial and then the plan price; founding Solo and Small Office, for the first 10 offices, with $0 during a 90-day trial and then $29/month or $49/month for 12 months, then the standard price. Stripe receives the payment details and billing identifiers needed to charge that subscription. ${brandName} stores the plan, subscription status, and Stripe customer and subscription identifiers needed to show billing status in the workspace.`,
     ],
   },
   {

@@ -3,11 +3,23 @@ import { test } from "node:test";
 import {
   FOUNDING_HONESTY_NOTE,
   FOUNDING_PRICE_LINE,
+  FOUNDING_STANDARD_COMPARE,
   FOUNDING_SMALL_OFFICE_SIGNUP_HREF,
   FOUNDING_SOLO_SIGNUP_HREF,
   isFoundingOffer,
   resolveSignupSource,
 } from "@/lib/founding-offer";
+
+test("founding price is named apart from the later standard price", () => {
+  assert.match(FOUNDING_PRICE_LINE, /Founding price/);
+  assert.match(FOUNDING_STANDARD_COMPARE, /Founding Solo is \$29\/month for 12 months, then the standard Solo price of \$49\/month/);
+  assert.match(
+    FOUNDING_STANDARD_COMPARE,
+    /Founding Small Office is \$49\/month for 12 months, then the standard Small Office price of \$99\/month/,
+  );
+  assert.match(FOUNDING_HONESTY_NOTE, /then the standard price/);
+  assert.match(FOUNDING_HONESTY_NOTE, /not an automatic Stripe price change/);
+});
 
 test("founding terms stay in plain dollars", () => {
   assert.match(FOUNDING_PRICE_LINE, /\$0 for 90 days/);

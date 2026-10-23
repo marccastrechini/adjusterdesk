@@ -20,6 +20,23 @@ test("comfortable trial state renders a low-key banner", () => {
   assert.match(html, /Billing/);
 });
 
+test("a trialing Stripe subscription does not ask the office to choose a plan", () => {
+  const html = renderToStaticMarkup(
+    <TrialBanner
+      firm={{
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        trialEndsAt: new Date(Date.now() + 80 * 24 * 60 * 60 * 1000),
+        billingSubscriptionId: "sub_trialing",
+      }}
+    />,
+  );
+
+  assert.match(html, /Trialing:/);
+  assert.match(html, /Review billing/);
+  assert.match(html, /\/settings\/billing/);
+  assert.doesNotMatch(html, /Choose a plan/);
+});
+
 test("active subscription renders no trial banner", () => {
   const html = renderToStaticMarkup(
     <TrialBanner

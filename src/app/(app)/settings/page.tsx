@@ -84,6 +84,8 @@ export default async function SettingsPage() {
         <div className="flex flex-wrap gap-2">
           <ButtonLink href="/settings/users" variant="secondary">Review office users</ButtonLink>
           <ButtonLink href="/settings/templates" variant="secondary">Review templates</ButtonLink>
+          <ButtonLink href="/settings/billing" variant="secondary">Review billing</ButtonLink>
+          <ButtonLink href="/settings/client-payments" variant="secondary">Set up client payments</ButtonLink>
           <ButtonLink href="/start" variant="secondary">Open start checklist</ButtonLink>
         </div>
       </Card>

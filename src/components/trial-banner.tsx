@@ -6,6 +6,7 @@ import { brandName } from "@/lib/brand";
 type FirmTrialFields = {
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: Date | null;
+  billingSubscriptionId?: string | null;
 };
 
 function daysLabel(days: number): string {
@@ -22,6 +23,22 @@ export function TrialBanner({ firm }: { firm: FirmTrialFields }) {
   }
 
   const days = firm.trialEndsAt ? trialDaysRemaining(firm.trialEndsAt) : null;
+  const subscribed = Boolean(firm.billingSubscriptionId?.trim());
+
+  if (subscribed) {
+    const timing = days === null ? "Your subscription is trialing." : days < 0 ? "The trial end date has passed." : `Trialing: ${daysLabel(days)} left.`;
+    return (
+      <div className="flex flex-col gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900 sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          {timing} $0 is due until the trial ends, then the subscription price.{" "}
+          <Link href="/settings/billing" className="font-medium text-teal-800 hover:underline">
+            Review billing
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
 
   if (state === "comfortable") {
     return (
