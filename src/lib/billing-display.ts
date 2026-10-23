@@ -61,6 +61,45 @@ export type SignupSuccessCopy = {
   secondaryLabel: string;
 };
 
+export type SignupSuccessViewer = {
+  name: string;
+  email: string;
+};
+
+export type SignupSuccessContext = {
+  checkoutSessionId?: string;
+  currentUser?: SignupSuccessViewer | null;
+};
+
+export function signupOfficeEnterHref(sessionId: string, planSlug?: string | null) {
+  const params = new URLSearchParams({ session_id: sessionId });
+  if (planSlug) {
+    params.set("plan", planSlug);
+  }
+  return `/signup/success/enter?${params.toString()}`;
+}
+
+/**
+ * A verified Checkout return always enters through the route that can replace
+ * the session cookie. An existing sign-in for another office does not skip that.
+ * After a failed attempt, the page renders instead of redirecting in a loop.
+ */
+export function decideSignupSuccessNavigation(input: {
+  sessionId?: string;
+  planSlug?: string | null;
+  signInAttemptFailed: boolean;
+  currentUserId?: string | null;
+}) {
+  if (input.sessionId && !input.signInAttemptFailed) {
+    return {
+      type: "enter" as const,
+      href: signupOfficeEnterHref(input.sessionId, input.planSlug),
+    };
+  }
+
+  return { type: "render" as const };
+}
+
 export type WorkspaceBillingSnapshot = {
   subscriptionPlan: SubscriptionPlan;
   subscriptionStatus: SubscriptionStatus;
@@ -344,38 +383,85 @@ function chargeLabel(facts: CheckoutSuccessFacts) {
   return null;
 }
 
-export function signupSuccessCopy(facts: CheckoutSuccessFacts): SignupSuccessCopy {
+function officeEntry(facts: CheckoutSuccessFacts, context?: SignupSuccessContext) {
+  // Any return that still has a Checkout session id must open that office.
+  // /login and /today follow the browser's current session, which may be a different workspace.
+  if (context?.checkoutSessionId) {
+    return {
+      href: signupOfficeEnterHref(context.checkoutSessionId, facts.planSlug),
+      label: "Open your office",
+    };
+  }
+
+  if (context?.currentUser) {
+    return {
+      href: "/signup",
+      label: "Back to signup",
+    };
+  }
+
+  return {
+    href: facts.signedIn ? "/today" : "/login",
+    label: facts.workspaceReady || facts.signedIn ? "Open your office" : "Log in",
+  };
+}
+
+function otherOfficeParagraph(currentUser: SignupSuccessViewer | null | undefined) {
+  if (!currentUser) {
+    return null;
+  }
+
+  return `You're signed in as ${currentUser.name} (${currentUser.email}). That sign-in is for a different office. Open your new office to sign in as the owner from this checkout. That replaces the current sign-in.`;
+}
+
+export function signupSuccessCopy(facts: CheckoutSuccessFacts, context?: SignupSuccessContext): SignupSuccessCopy {
   const plan = facts.planSlug ? findPublicPlanBySlug(facts.planSlug) : null;
-  const primaryHref = facts.signedIn ? "/today" : "/login";
-  const primaryLabel = facts.workspaceReady || facts.signedIn ? "Open your office" : "Log in";
+  const entry = officeEntry(facts, context);
+  const primaryHref = entry.href;
+  const primaryLabel = entry.label;
   const supportHref = `mailto:${supportEmail}`;
+  const otherOffice = otherOfficeParagraph(context?.currentUser);
 
   if (!facts.sessionFound) {
+    const paragraphs = [
+      plan ? `Selected plan: ${plan.label}.` : "This link did not include a completed Checkout session.",
+      context?.checkoutSessionId
+        ? "If Stripe Checkout finished, open your office to sign in as the owner from this checkout."
+        : "If Stripe Checkout finished, log in with the email and password from signup. Your office opens once the workspace is created.",
+      "Founding Solo and Small Office are a 90-day trial, then the founding monthly price. Standard plans are a 14-day trial, then the standard monthly price. $0 is due during the trial.",
+      `Email ${supportEmail} if checkout finished and login does not open the office.`,
+    ];
+    if (otherOffice) {
+      paragraphs.push(otherOffice);
+    }
+
     return {
       title: "We could not confirm checkout.",
-      paragraphs: [
-        plan ? `Selected plan: ${plan.label}.` : "This link did not include a completed Checkout session.",
-        "If Stripe Checkout finished, log in with the email and password from signup. Your office opens once the workspace is created.",
-        "Founding Solo and Small Office are a 90-day trial, then the founding monthly price. Standard plans are a 14-day trial, then the standard monthly price. $0 is due during the trial.",
-        `Email ${supportEmail} if checkout finished and login does not open the office.`,
-      ],
+      paragraphs,
       primaryHref,
-      primaryLabel: "Log in",
+      primaryLabel,
       secondaryHref: "/signup",
       secondaryLabel: "Back to signup",
     };
   }
 
   if (!facts.checkoutComplete) {
+    const paragraphs = [
+      `${offerName(facts)} was selected, and Stripe Checkout has not completed.`,
+      context?.checkoutSessionId
+        ? "Return to signup to try Checkout again. If this office was already created, open your office to sign in as its owner."
+        : "Return to signup to try Checkout again, or log in if this office was already created.",
+      `Email ${supportEmail} if Stripe charged a card and this page still cannot confirm the session.`,
+    ];
+    if (otherOffice) {
+      paragraphs.push(otherOffice);
+    }
+
     return {
       title: "Checkout is not finished.",
-      paragraphs: [
-        `${offerName(facts)} was selected, and Stripe Checkout has not completed.`,
-        "Return to signup to try Checkout again, or log in if this office was already created.",
-        `Email ${supportEmail} if Stripe charged a card and this page still cannot confirm the session.`,
-      ],
+      paragraphs,
       primaryHref,
-      primaryLabel: "Log in",
+      primaryLabel,
       secondaryHref: "/signup",
       secondaryLabel: "Back to signup",
     };
@@ -410,11 +496,17 @@ export function signupSuccessCopy(facts: CheckoutSuccessFacts): SignupSuccessCop
     paragraphs.push("Checkout is complete. Subscription details are still syncing. Log in, or refresh this page in a moment.");
   }
 
-  paragraphs.push(
-    facts.workspaceReady
-      ? "Your office is ready. Open it with the email and password from signup."
-      : "Your office is still being created. Log in with the email you used at signup. If it is not ready yet, wait a moment and try again.",
-  );
+  if (otherOffice) {
+    paragraphs.push(otherOffice);
+  } else if (facts.workspaceReady) {
+    paragraphs.push(context?.checkoutSessionId
+      ? "Your office is ready. Open your office to sign in as its owner."
+      : "Your office is ready. Open it with the email and password from signup.");
+  } else {
+    paragraphs.push(context?.checkoutSessionId
+      ? "Your office is still being created. Open your office to try sign-in again. If it is not ready yet, wait a moment and try again."
+      : "Your office is still being created. Log in with the email you used at signup. If it is not ready yet, wait a moment and try again.");
+  }
 
   return {
     title: facts.workspaceReady ? "Your office is ready." : "Checkout is complete.",

@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
 import { SignupSuccessPanel } from "@/components/signup-success-panel";
 import { parsePlanSlug } from "@/lib/billing";
-import { signupSuccessCopy } from "@/lib/billing-display";
-import { rethrowIfNavigationError } from "@/lib/navigation-errors";
-import { withNotice } from "@/lib/notices";
-import { createSessionForUser } from "@/lib/session";
-import { completeStripeSignupFromSessionId } from "@/lib/signup";
+import { decideSignupSuccessNavigation, signupSuccessCopy } from "@/lib/billing-display";
+import { getCurrentSessionUser } from "@/lib/session";
 import { readSignupCheckoutFacts } from "@/lib/signup-success";
 
 export const dynamic = "force-dynamic";
@@ -22,24 +19,30 @@ export default async function SignupSuccessPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const sessionId = firstValue(query.session_id)?.trim() || undefined;
   const queryPlan = parsePlanSlug(firstValue(query.plan));
+  const signInAttemptFailed = firstValue(query.signin) === "failed";
 
-  if (sessionId) {
-    try {
-      const result = await completeStripeSignupFromSessionId(sessionId);
-      const sessionCreated = await createSessionForUser(result.ownerUserId);
-      if (sessionCreated) {
-        redirect(withNotice(queryPlan ? `/start?signup_plan=${queryPlan}` : "/start", "self-service-signup-complete"));
-      }
-    } catch (error) {
-      rethrowIfNavigationError(error);
-    }
+  const navigation = decideSignupSuccessNavigation({
+    sessionId,
+    planSlug: queryPlan,
+    signInAttemptFailed,
+  });
+
+  if (navigation.type === "enter") {
+    redirect(navigation.href);
   }
 
+  const currentUser = await getCurrentSessionUser();
   const facts = await readSignupCheckoutFacts(sessionId);
-  const copy = signupSuccessCopy({
-    ...facts,
-    planSlug: facts.planSlug ?? queryPlan,
-  });
+  const copy = signupSuccessCopy(
+    {
+      ...facts,
+      planSlug: facts.planSlug ?? queryPlan,
+    },
+    {
+      checkoutSessionId: sessionId,
+      currentUser: currentUser ? { name: currentUser.name, email: currentUser.email } : null,
+    },
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 sm:px-6 lg:px-8">

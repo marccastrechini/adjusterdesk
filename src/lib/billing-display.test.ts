@@ -1,15 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SubscriptionPlan, SubscriptionStatus } from "@/generated/prisma/client";
+import { verifySignedSessionValue } from "@/lib/auth";
 import {
   billingStartPlanOptions,
   checkoutFactsFromStripeSession,
+  decideSignupSuccessNavigation,
   describeWorkspaceBilling,
+  signupOfficeEnterHref,
   signupSuccessCopy,
   signupWelcomeMessage,
 } from "@/lib/billing-display";
 import { formatDate } from "@/lib/format";
 import { rethrowIfNavigationError } from "@/lib/navigation-errors";
+import { buildOwnerSessionCookie } from "@/lib/session";
 
 const priceEnvKeys = ["STRIPE_PRICE_SOLO_MONTHLY", "STRIPE_PRICE_FOUNDING_SOLO_MONTHLY", "STRIPE_PRICE_SMALL_OFFICE_MONTHLY", "STRIPE_PRICE_FOUNDING_SMALL_OFFICE_MONTHLY"] as const;
 
@@ -179,12 +183,13 @@ test("completed founding checkout copy uses the session trial and first charge",
       },
       { workspaceReady: true },
     );
-    const copy = signupSuccessCopy(facts);
+    const copy = signupSuccessCopy(facts, { checkoutSessionId: "cs_test_new" });
     const text = copy.paragraphs.join(" ");
 
     assert.equal(copy.title, "Your office is ready.");
-    assert.equal(copy.primaryHref, "/login");
+    assert.equal(copy.primaryHref, signupOfficeEnterHref("cs_test_new", "solo"));
     assert.equal(copy.primaryLabel, "Open your office");
+    assert.doesNotMatch(copy.primaryHref, /\/login|\/today/);
     assert.match(text, /Founding Solo/);
     assert.match(text, /Trialing until/);
     assert.match(text, /90 days/);
@@ -223,11 +228,14 @@ test("completed standard checkout copy uses the 14-day trial and standard amount
           },
         },
       }),
+      { checkoutSessionId: "cs_test_standard" },
     );
     const text = copy.paragraphs.join(" ");
 
     assert.equal(copy.title, "Checkout is complete.");
-    assert.equal(copy.primaryLabel, "Log in");
+    assert.equal(copy.primaryHref, signupOfficeEnterHref("cs_test_standard", "solo"));
+    assert.equal(copy.primaryLabel, "Open your office");
+    assert.doesNotMatch(copy.primaryHref, /\/login|\/today/);
     assert.match(text, /Solo\. Checkout is complete/);
     assert.doesNotMatch(text, /Founding Solo/);
     assert.match(text, /14 days/);
@@ -247,6 +255,105 @@ test("missing checkout session keeps a login path without claiming billing never
   assert.match(text, /14-day trial/);
   assert.doesNotMatch(text, /Billing has not started/);
   assert.doesNotMatch(text, /14-day trial\. Contact support if checkout did not finish/);
+});
+
+test("an existing session for another office still enters the checkout workspace", () => {
+  withPriceEnv({ STRIPE_PRICE_FOUNDING_SOLO_MONTHLY: "price_founding_solo" }, () => {
+    const navigation = decideSignupSuccessNavigation({
+      sessionId: "cs_test_new",
+      planSlug: "solo",
+      signInAttemptFailed: false,
+      currentUserId: "user_old",
+    });
+
+    assert.equal(navigation.type, "enter");
+    if (navigation.type === "enter") {
+      assert.equal(navigation.href, "/signup/success/enter?session_id=cs_test_new&plan=solo");
+      assert.doesNotMatch(navigation.href, /\/login|\/today/);
+    }
+
+    const afterFailure = decideSignupSuccessNavigation({
+      sessionId: "cs_test_new",
+      planSlug: "solo",
+      signInAttemptFailed: true,
+      currentUserId: "user_old",
+    });
+    assert.equal(afterFailure.type, "render");
+
+    const trialStart = new Date("2026-10-23T00:00:00.000Z");
+    const trialEnd = new Date(trialStart.getTime() + 90 * 86_400_000);
+    const copy = signupSuccessCopy(
+      checkoutFactsFromStripeSession(
+        {
+          status: "complete",
+          payment_status: "no_payment_required",
+          metadata: { planSlug: "solo", signupSource: "founding" },
+          subscription: {
+            status: "trialing",
+            trial_start: Math.floor(trialStart.getTime() / 1000),
+            trial_end: Math.floor(trialEnd.getTime() / 1000),
+            items: {
+              data: [
+                {
+                  price: {
+                    id: "price_founding_solo",
+                    unit_amount: 2900,
+                    currency: "usd",
+                    recurring: { interval: "month" },
+                  },
+                },
+              ],
+            },
+          },
+        },
+        { workspaceReady: true },
+      ),
+      {
+        checkoutSessionId: "cs_test_new",
+        currentUser: { name: "Old Owner", email: "old@example.com" },
+      },
+    );
+    const text = copy.paragraphs.join(" ");
+
+    assert.equal(copy.primaryHref, signupOfficeEnterHref("cs_test_new", "solo"));
+    assert.equal(copy.primaryLabel, "Open your office");
+    assert.match(text, /signed in as Old Owner \(old@example.com\)/);
+    assert.match(text, /replaces the current sign-in/);
+    assert.doesNotMatch(copy.primaryHref, /\/login|\/today/);
+    assert.doesNotMatch(text, /Open it with the email and password from signup/);
+  });
+});
+
+test("a signed-in visitor without a checkout session is not sent into the current office", () => {
+  const copy = signupSuccessCopy(checkoutFactsFromStripeSession(null), {
+    currentUser: { name: "Old Owner", email: "old@example.com" },
+  });
+
+  assert.equal(copy.primaryHref, "/signup");
+  assert.equal(copy.primaryLabel, "Back to signup");
+  assert.notEqual(copy.primaryHref, "/today");
+  assert.notEqual(copy.primaryHref, "/login");
+});
+
+test("the replacement session cookie belongs to the checkout owner", () => {
+  const previous = process.env.AUTH_SECRET;
+  process.env.AUTH_SECRET = "test-auth-secret";
+  try {
+    const now = 1_700_000_000_000;
+    const built = buildOwnerSessionCookie("user_new", now);
+    assert.ok(built);
+    const payload = verifySignedSessionValue(built.sessionValue, "test-auth-secret", now);
+    assert.equal(payload?.userId, "user_new");
+    assert.notEqual(payload?.userId, "user_old");
+    assert.equal(built.sessionName, "adjusterdesk_session");
+    assert.equal(built.adminOverrideName, "adjusterdesk_admin_workspace");
+  } finally {
+    if (previous === undefined) {
+      delete process.env.AUTH_SECRET;
+    } else {
+      process.env.AUTH_SECRET = previous;
+    }
+  }
 });
 
 test("signup success does not swallow the redirect into the office", () => {
