@@ -32,6 +32,7 @@ export default async function WorkspaceLayout({ children }: { children: ReactNod
         workspaceOverride={workspaceOverride}
         subscriptionStatus={firm.subscriptionStatus}
         trialEndsAt={firm.trialEndsAt}
+        billingSubscriptionId={firm.billingSubscriptionId}
       >
         {children}
       </AppShell>

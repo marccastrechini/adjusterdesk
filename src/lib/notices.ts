@@ -254,7 +254,7 @@ export const noticeMessages = {
   },
   "self-service-signup-complete": {
     title: `Welcome to ${brandName}`,
-    message: "Your workspace is ready and your 14-day trial has started. $0 is due during the trial.",
+    message: "Your workspace is ready. Checkout is complete. $0 is due until the trial ends.",
   },
   "billing-portal-unavailable": {
     title: "Billing portal unavailable",

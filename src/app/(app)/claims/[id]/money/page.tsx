@@ -1,4 +1,5 @@
 import { ClaimTabs } from "@/components/claim-tabs";
+import { ClientPaymentsSetupNote } from "@/components/client-payments-setup-note";
 import { ActionForm, FieldError } from "@/components/action-form";
 import { CopyTextButton } from "@/components/copy-text-button";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
@@ -39,6 +40,7 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
       <PageHeader title={`${fullName(claim.contact)} money`} description="Track demands, carrier offers, settlement checks, fee calculations, invoices, and receivables." actions={<ButtonLink href="/money" variant="secondary">All receivables</ButtonLink>} />
       <ClaimTabs claimId={claim.id} />
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
+      <ClientPaymentsSetupNote firm={firm} />
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="grid gap-6">

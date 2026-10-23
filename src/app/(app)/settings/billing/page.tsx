@@ -1,9 +1,10 @@
 import { openBillingPortalForCurrentWorkspace } from "@/lib/billing-actions";
-import { getStripeConfigDiagnostics, listPublicPlans, resolveBillingProvider, stripeConfigured } from "@/lib/billing";
+import { getStripeConfigDiagnostics, resolveBillingProvider, stripeConfigured } from "@/lib/billing";
 import { startSubscriptionForCurrentWorkspace } from "@/lib/billing-actions";
+import { billingStartPlanOptions, describeWorkspaceBilling } from "@/lib/billing-display";
 import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
-import { planLabel, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
+import { resolveIncludedUserLimit } from "@/lib/plans";
 import { getUsers } from "@/lib/queries";
 import { Badge, Card, Notice, PageHeader, Section, SubmitButton } from "@/components/ui";
 import { trialDaysRemaining, trialPromptState } from "@/lib/trial";
@@ -28,10 +29,11 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
   const canUsePortal = billingProvider === "stripe" && stripeReady && Boolean(firm.billingCustomerId);
   const trialState = trialPromptState(firm);
   const trialDays = firm.trialEndsAt ? trialDaysRemaining(firm.trialEndsAt) : null;
-  const isOnTrial = firm.subscriptionStatus === "TRIAL";
   const isEarlyAdopter = firm.subscriptionPlan === "EARLY_ADOPTER";
-  const canSubscribe = billingProvider === "stripe" && stripeReady && isOnTrial;
-  const plans = listPublicPlans();
+  const billingView = describeWorkspaceBilling(firm);
+  const canSubscribe = billingProvider === "stripe" && stripeReady && billingView.showStartSubscription && !isEarlyAdopter;
+  const plans = billingStartPlanOptions(billingView.offerLabel === "Founding");
+  const planTitle = isEarlyAdopter ? "Early adopter" : billingView.offerLabel === "Founding" ? `Founding ${billingView.planName}` : billingView.planName;
 
   return (
     <>
@@ -42,7 +44,7 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
 
       {notice ? <Notice title={notice.title}>{notice.message}</Notice> : null}
 
-      {trialState !== "none" && trialState !== "comfortable" ? (
+      {trialState !== "none" && trialState !== "comfortable" && !billingView.hasSubscription ? (
         <Card className={`grid gap-3 ${trialState === "expired" ? "border-red-200 bg-red-50" : trialState === "ending-imminent" ? "border-amber-200 bg-amber-50" : "border-slate-200"}`}>
           {trialState === "expired" ? (
             <>
@@ -63,22 +65,25 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="grid gap-2">
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current plan</p>
-          <p className="text-xl font-semibold text-slate-950">{planLabel(firm.subscriptionPlan)}</p>
+          <p className="text-xl font-semibold text-slate-950">{planTitle}</p>
+          {billingView.monthlyPriceLabel && !isEarlyAdopter ? (
+            <p className="text-sm text-slate-700">{billingView.offerLabel} price {billingView.monthlyPriceLabel}</p>
+          ) : null}
           <p className="text-sm text-slate-700">{activeUsers.length} active of {includedUserLimit > 0 ? includedUserLimit : "custom"} included users</p>
         </Card>
 
         <Card className="grid gap-2">
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Billing status</p>
-          <p className="text-xl font-semibold text-slate-950">{isEarlyAdopter ? "Complimentary" : subscriptionStatusLabel(firm.subscriptionStatus)}</p>
+          <p className="text-xl font-semibold text-slate-950">{isEarlyAdopter ? "Complimentary" : billingView.statusLabel}</p>
           <div className="flex flex-wrap gap-2">
             <Badge tone={isEarlyAdopter ? "teal" : firm.subscriptionStatus === "ACTIVE" ? "green" : firm.subscriptionStatus === "PAST_DUE" ? "amber" : "slate"}>
-              {isEarlyAdopter ? "Complimentary" : subscriptionStatusLabel(firm.subscriptionStatus)}
+              {isEarlyAdopter ? "Complimentary" : billingView.statusLabel}
             </Badge>
             {isEarlyAdopter ? null : <Badge tone="blue">{billingProvider === "stripe" ? "Stripe" : "Manual"}</Badge>}
           </div>
-          {isOnTrial && firm.trialEndsAt ? (
-            <p className="text-sm text-slate-500">Trial ends: {formatDate(firm.trialEndsAt)}</p>
-          ) : null}
+          {isEarlyAdopter || !billingView.detail ? null : (
+            <p className="text-sm leading-6 text-slate-700">{billingView.detail}</p>
+          )}
         </Card>
       </div>
 
@@ -86,7 +91,9 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
         <Section title="Start subscription">
           <Card className="grid gap-4">
             <p className="text-sm leading-6 text-slate-700">
-              Choose the plan that fits your office. Starting a paid subscription opens Stripe Checkout and collects a card if one is not already on file.
+              {billingView.offerLabel === "Founding"
+                ? "This office is on the founding offer. Solo is $29/month and Small Office is $49/month. Team stays at the standard $199/month. Starting a subscription opens Stripe Checkout."
+                : "Choose the plan that fits your office. Starting a paid subscription opens Stripe Checkout and collects a card if one is not already on file. Standard prices are Solo $49/month, Small Office $99/month, and Team $199/month."}
             </p>
             <form
               action={async (formData: FormData) => {
@@ -115,16 +122,23 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
             <p className="text-sm leading-6 text-slate-700">
               This office is on the Early adopter plan. Access stays open with no card, no trial end, and no Stripe subscription. A move onto paid billing is done by {brandName} from system admin when you are ready.
             </p>
+          ) : billingView.hasSubscription ? (
+            <p className="text-sm leading-6 text-slate-700">
+              {billingView.detail ? `${billingView.detail} ` : null}
+              Manage the card, invoices, and cancellation in the Stripe billing portal when it is available for this office.
+            </p>
           ) : (
             <>
               <p className="text-sm leading-6 text-slate-700">
                 {billingProvider === "stripe" && stripeReady
-                  ? "Signup collects a card in Stripe Checkout. The standard path charges $0 during a 14-day trial, then the plan price. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month."
+                  ? "Signup collects a card in Stripe Checkout. Standard plans charge $0 during a 14-day trial, then Solo $49/month, Small Office $99/month, or Team $199/month. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month for 12 months, then the standard price."
                   : "Card collection is not active in this environment. Billing starts when a plan is activated."}
               </p>
-              <p className="text-sm leading-6 text-slate-700">
-                Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
-              </p>
+              {billingView.showPendingActivationNote ? (
+                <p className="text-sm leading-6 text-slate-700">
+                  Until billing is activated, your selected plan is saved and your workspace remains on the current setup terms.
+                </p>
+              ) : null}
             </>
           )}
           <p className="text-sm leading-6 text-slate-700">Billing started date: {firm.billingStartedAt ? formatDate(firm.billingStartedAt) : "Not set"}</p>

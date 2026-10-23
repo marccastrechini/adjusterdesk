@@ -19,6 +19,7 @@ export function AppShell({
   workspaceOverride,
   subscriptionStatus,
   trialEndsAt,
+  billingSubscriptionId = null,
 }: {
   children: ReactNode;
   firmName: string;
@@ -29,6 +30,7 @@ export function AppShell({
   workspaceOverride: { firmId: string; firmName: string } | null;
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: Date | null;
+  billingSubscriptionId?: string | null;
 }) {
   const outreachOperatorOnly = isOutreachOperator && !isSystemAdmin;
   const roleLabel = isSystemAdmin ? "System Admin" : isOutreachOperator ? "Outreach Operator" : labelFromEnum(userRole);
@@ -87,7 +89,7 @@ export function AppShell({
                   </form>
                 </div>
               ) : null}
-              {!outreachOperatorOnly ? <TrialBanner firm={{ subscriptionStatus, trialEndsAt }} /> : null}
+              {!outreachOperatorOnly ? <TrialBanner firm={{ subscriptionStatus, trialEndsAt, billingSubscriptionId }} /> : null}
               {children}
             </div>
           </main>

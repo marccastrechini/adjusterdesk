@@ -15,16 +15,49 @@ function sessionCookieOptions(expires: Date) {
   };
 }
 
-export async function createSessionForUser(userId: string) {
+export function buildOwnerSessionCookie(userId: string, now = Date.now()) {
   const secret = resolveAuthSecret();
   if (!secret) {
+    return null;
+  }
+
+  return {
+    sessionName: sessionCookieName,
+    sessionValue: createSignedSessionValue(userId, secret, now),
+    adminOverrideName: adminWorkspaceOverrideCookieName,
+  };
+}
+
+export async function createSessionForUser(userId: string) {
+  const built = buildOwnerSessionCookie(userId);
+  if (!built) {
     return false;
   }
 
   const cookieStore = await cookies();
   const expires = new Date(Date.now() + sessionDurationMs);
-  const sessionValue = createSignedSessionValue(userId, secret);
-  cookieStore.set(sessionCookieName, sessionValue, sessionCookieOptions(expires));
+  cookieStore.set(built.sessionName, built.sessionValue, sessionCookieOptions(expires));
+  return true;
+}
+
+/**
+ * Signs in the checkout owner and drops any previous office session,
+ * including a system-admin workspace override. Only call this from a Route
+ * Handler or Server Action. Server Components cannot set cookies.
+ */
+export async function replaceSessionForUser(userId: string) {
+  const built = buildOwnerSessionCookie(userId);
+  if (!built) {
+    return false;
+  }
+
+  const cookieStore = await cookies();
+  const expires = new Date(Date.now() + sessionDurationMs);
+  cookieStore.set(built.sessionName, built.sessionValue, sessionCookieOptions(expires));
+  cookieStore.set(built.adminOverrideName, "", {
+    ...sessionCookieOptions(new Date(0)),
+    maxAge: 0,
+  });
   return true;
 }
 

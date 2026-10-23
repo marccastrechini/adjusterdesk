@@ -1,6 +1,6 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureCard, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
-import { FOUNDING_SOLO_SIGNUP_HREF } from "@/lib/founding-offer";
+import { FOUNDING_PRICE_LINE, FOUNDING_SOLO_SIGNUP_HREF, FOUNDING_STANDARD_COMPARE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { brandName } from "@/lib/brand";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import {
@@ -188,7 +188,7 @@ export default function PublicAdjusterSoftwarePage() {
 
       <CtaBand
         title="Ready to put claims, follow-ups, documents, and fees on one desk?"
-        description="First 10 founding offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Checkout collects a card. $0 is due during the 90-day trial, then the founding monthly rate."
+        description={`${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${FOUNDING_TRIAL_DUE_LINE}`}
         primaryHref={FOUNDING_SOLO_SIGNUP_HREF}
         primaryLabel="Start Solo founding desk"
       />

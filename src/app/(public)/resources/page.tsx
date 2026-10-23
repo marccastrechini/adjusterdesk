@@ -1,4 +1,5 @@
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
@@ -40,7 +41,7 @@ export default function ResourcesPage() {
           <div className="rounded-lg border border-teal-200 bg-teal-50 p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-normal text-teal-800">Available now</p>
             <h2 className="mt-2 text-base font-semibold text-slate-950">Founding office offer</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">First 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. Start with your first 10 active claims.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{FOUNDING_PRICE_LINE} {FOUNDING_STANDARD_COMPARE} Start with your first 10 active claims.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <PublicButtonLink href="/founding-public-adjuster-offices" variant="secondary">
                 View founding desk offer

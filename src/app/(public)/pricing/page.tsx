@@ -1,7 +1,7 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
-import { CHECKOUT_CARD_LINE, FOUNDING_HONESTY_NOTE, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
+import { CHECKOUT_CARD_LINE, FOUNDING_HONESTY_NOTE, FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
@@ -84,7 +84,7 @@ const faqs = [
   },
   {
     question: "When does billing begin?",
-    answer: "Stripe Checkout collects a card at signup. On the standard path, $0 is due during the 14-day trial, then Solo $49/month, Small Office $99/month, or Team $199/month. Founding Solo and Small Office charge $0 during a 90-day trial, then $29/month or $49/month.",
+    answer: "Stripe Checkout collects a card at signup. On the standard path, $0 is due during the 14-day trial, then Solo $49/month, Small Office $99/month, or Team $199/month. Founding Solo and Small Office charge $0 during a 90-day trial, then a founding price of $29/month or $49/month for 12 months, then the standard price.",
   },
   {
     question: "Can I change plans later?",
@@ -104,7 +104,7 @@ const faqs = [
   },
   {
     question: "Is billing automated in-app right now?",
-    answer: "Yes. Signup opens Stripe Checkout and collects a card. The standard path starts a 14-day trial with $0 due, then the plan price. Founding Solo and Small Office start a 90-day trial with $0 due, then $29/month or $49/month.",
+    answer: "Yes. Signup opens Stripe Checkout and collects a card. The standard path starts a 14-day trial with $0 due, then Solo $49/month, Small Office $99/month, or Team $199/month. Founding Solo and Small Office start a 90-day trial with $0 due, then $29/month or $49/month for 12 months, then the standard price.",
   },
   {
     question: "Is there a founding office price?",
@@ -123,7 +123,7 @@ export default function PricingPage() {
         title="Simple plans for small public adjusting offices."
         description="Choose the package that matches how your office works today."
       />
-      <PublicSection title="Packages" description="Solo, Small Office, and Team are flat monthly plans. Professional/custom setup remains available by request.">
+      <PublicSection title="Standard prices" description="Solo $49/month, Small Office $99/month, and Team $199/month are the standard prices. Founding offices pay a lower rate for 12 months, then these standard prices. Professional/custom setup remains available by request.">
         <div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
           {plans.map((plan) => (
             <div
@@ -136,7 +136,8 @@ export default function PricingPage() {
               <div className="grid min-h-full gap-5">
                 <div>
                   <h2 className="pr-28 text-lg font-semibold text-slate-950 lg:pr-0">{plan.name}</h2>
-                  <p className="mt-3 text-3xl font-semibold tracking-normal text-slate-950">{plan.price}</p>
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-slate-500">Standard price</p>
+                  <p className="mt-1 text-3xl font-semibold tracking-normal text-slate-950">{plan.price}</p>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{plan.description}</p>
                 </div>
                 <ul className="grid gap-3 text-sm leading-6 text-slate-700">
@@ -160,7 +161,7 @@ export default function PricingPage() {
             {CHECKOUT_CARD_LINE} The standard plan price begins when that trial ends.
           </p>
           <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
-            {FOUNDING_PRICE_LINE} {FOUNDING_TRIAL_DUE_LINE}
+            {FOUNDING_PRICE_LINE} {FOUNDING_STANDARD_COMPARE} {FOUNDING_TRIAL_DUE_LINE}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <PublicButtonLink href={defaultCtaHref} variant="primary" eventName="trial_start_click">
