@@ -14,11 +14,6 @@ export type TrainingModule = {
   steps: TrainingStep[];
 };
 
-export type TrainingStub = {
-  title: string;
-  summary: string;
-};
-
 export const trainingIndexPath = "/training";
 
 export function trainingModulePath(slug: string) {
@@ -101,17 +96,6 @@ export const trainingModules: TrainingModule[] = [
         imageSrc: "/training/06-claim-tasks.png",
       },
     ],
-  },
-];
-
-export const trainingComingSoon: TrainingStub[] = [
-  {
-    title: "Documents",
-    summary: "Requested and received documents on the claim, so the file is not still sitting in email.",
-  },
-  {
-    title: "Money",
-    summary: "Settlement, the fee invoice, and the balance that is still unpaid.",
   },
 ];
 

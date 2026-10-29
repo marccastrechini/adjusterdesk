@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { TrainingClose } from "@/components/training-walkthrough";
 import { PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
+import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { publicPageMetadata } from "@/lib/public-metadata";
-import { trainingComingSoon, trainingModulePath, trainingModules } from "@/lib/training";
+import { trainingModulePath, trainingModules } from "@/lib/training";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
@@ -44,15 +45,18 @@ export default function TrainingPage() {
         </div>
       </PublicSection>
 
-      <PublicSection title="Later" description="These two are not written yet. The three modules above are enough to see the daily desk." tone="slate">
-        <div className="grid gap-4 md:grid-cols-2">
-          {trainingComingSoon.map((stub) => (
-            <article key={stub.title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-normal text-teal-800">Coming soon</p>
-              <h3 className="mt-2 text-base font-semibold text-slate-950">{stub.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{stub.summary}</p>
-            </article>
-          ))}
+      <PublicSection
+        title="Use it on your own claims"
+        description={`These three modules are the public training. Start a free trial when you want ${brandName} on your office's files. Help answers common questions before you sign up. No sales call.`}
+        tone="slate"
+      >
+        <div className="flex flex-wrap gap-3">
+          <PublicButtonLink href={resolvePublicStartHref()} variant="primary" eventName="trial_start_click">
+            {resolvePublicStartLabel()}
+          </PublicButtonLink>
+          <PublicButtonLink href="/help" variant="secondary">
+            Open help
+          </PublicButtonLink>
         </div>
         <p className="mt-6 text-sm leading-6 text-slate-600">
           Already in the office?{" "}

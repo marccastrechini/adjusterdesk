@@ -3,6 +3,8 @@ import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import FoundingPublicAdjusterOfficesPage from "@/app/(public)/founding-public-adjuster-offices/page";
 import HomePage from "@/app/(public)/page";
+import ResourcesPage from "@/app/(public)/resources/page";
+import TrainingPage from "@/app/(public)/training/page";
 import { PublicSiteChrome } from "@/components/public-site";
 import { brandName, brandNameTM } from "@/lib/brand";
 
@@ -48,6 +50,37 @@ test("founding page states the product and the founders without the overview vid
   assert.doesNotMatch(html, /<video|product-overview\.mp4/i);
   assert.doesNotMatch(html, /autoplay/i);
   assert.doesNotMatch(html, /Castrechini|Castrochini/i);
+});
+
+test("resources page lists published pages and a free trial, without placeholder cards", () => {
+  const html = renderToStaticMarkup(<ResourcesPage />);
+
+  assert.match(html, /Practical resources for small public adjusting offices/);
+  assert.match(html, /Training walkthrough/);
+  assert.match(html, /href="\/training"/);
+  assert.match(html, /href="\/help"/);
+  assert.match(html, /href="\/signup"/);
+  assert.match(html, /Start free trial/);
+  assert.match(html, /href="\/founding-public-adjuster-offices"/);
+  assert.match(html, /href="\/free-public-adjuster-claim-tracker"/);
+  assert.match(html, new RegExp(brandName));
+  assert.equal(html.includes("Coming soon"), false);
+  assert.doesNotMatch(html, /Importing from spreadsheets|as the site grows/);
+});
+
+test("training page keeps the three modules and points to signup", () => {
+  const html = renderToStaticMarkup(<TrainingPage />);
+
+  assert.match(html, /Walk through the desk on your own time/);
+  assert.match(html, /Desk overview/);
+  assert.match(html, /Lead to claim/);
+  assert.match(html, /Follow-ups that don/);
+  assert.match(html, /href="\/signup"/);
+  assert.match(html, /Start free trial/);
+  assert.match(html, /href="\/help"/);
+  assert.match(html, new RegExp(brandName));
+  assert.equal(html.includes("Coming soon"), false);
+  assert.doesNotMatch(html, /not written yet/);
 });
 
 test("public header points at the founding offer", () => {

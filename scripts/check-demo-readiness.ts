@@ -58,7 +58,7 @@ const publicRoutes = [
   { path: "/features", expectedText: "Claim tracking" },
   { path: "/how-it-works", expectedText: "Bring over the basics" },
   { path: "/pricing", expectedText: "Choose the package that matches how your office works today." },
-  { path: "/resources", expectedText: "Importing from spreadsheets" },
+  { path: "/resources", expectedText: "Training walkthrough" },
   { path: "/demo", expectedText: "Email Demo Request" },
 ] as const;
 
