@@ -6,6 +6,7 @@ import { ClientBillingProvider, InvoiceStatus } from "@/generated/prisma/client"
 import { getDemoContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
+import { logClientBillingStripeError } from "./stripe-connect-account";
 import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
 
 function isCheckboxEnabled(value: FormDataEntryValue | null) {
@@ -22,13 +23,23 @@ function centsFromInput(value: FormDataEntryValue | null) {
   return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
 }
 
+function isNextRedirectError(error: unknown) {
+  if (typeof error !== "object" || error === null || !("digest" in error)) {
+    return false;
+  }
+
+  const digest = (error as { digest?: unknown }).digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
 export async function startOrResumeClientBillingConnection() {
   const { firm } = await getDemoContext();
   let result: { url?: string | null } | null = null;
 
   try {
     result = await createOrResumeStripeConnectClientBillingConnection(firm);
-  } catch {
+  } catch (error) {
+    logClientBillingStripeError("Stripe Connect onboarding failed.", error);
     result = null;
   }
 
@@ -90,24 +101,35 @@ export async function sendClientPaymentRequest(formData: FormData) {
     redirect(withNotice("/money", "client-payment-request-unavailable"));
   }
 
-  if (invoice.externalInvoiceId) {
+  if (invoice.externalHostedInvoiceUrl || invoice.sentToClientAt) {
     redirect(withNotice(`/claims/${invoice.claimId}/money`, "client-payment-request-already-sent"));
   }
 
-  const result = await sendClientBillingInvoice(firm, invoice);
-  await prisma.invoice.update({
-    where: { id: invoice.id },
-    data: {
-      externalInvoiceId: result.invoiceId ?? undefined,
-      externalHostedInvoiceUrl: result.hostedInvoiceUrl ?? undefined,
-      externalInvoicePdfUrl: result.pdfUrl ?? undefined,
-      externalInvoiceStatus: result.status ?? undefined,
-      externalSyncedAt: result.syncedAt ?? new Date(),
-      sentToClientAt: new Date(),
-      clientBillingProvider: ClientBillingProvider.STRIPE_CONNECT,
-      status: InvoiceStatus.SENT,
-    },
-  });
+  let result: Awaited<ReturnType<typeof sendClientBillingInvoice>>;
+
+  try {
+    result = await sendClientBillingInvoice(firm, invoice);
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        externalInvoiceId: result.invoiceId ?? undefined,
+        externalHostedInvoiceUrl: result.hostedInvoiceUrl ?? undefined,
+        externalInvoicePdfUrl: result.pdfUrl ?? undefined,
+        externalInvoiceStatus: result.status ?? undefined,
+        externalSyncedAt: result.syncedAt ?? new Date(),
+        sentToClientAt: new Date(),
+        clientBillingProvider: ClientBillingProvider.STRIPE_CONNECT,
+        status: result.status === "paid" ? InvoiceStatus.PAID : InvoiceStatus.SENT,
+      },
+    });
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    logClientBillingStripeError("Client payment request failed.", error);
+    redirect(withNotice(`/claims/${invoice.claimId}/money`, "client-payment-request-unavailable"));
+  }
 
   revalidatePath(`/claims/${invoice.claimId}/money`);
   revalidatePath("/money");
