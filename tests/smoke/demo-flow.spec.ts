@@ -84,7 +84,7 @@ test("public marketing pages render and workspace routes stay protected", async 
     { path: "/features", heading: "Practical tools for the work your office already does.", copy: "Claim tracking" },
     { path: "/how-it-works", heading: "Simple steps from scattered claim work to a shared office view.", copy: "Bring over the basics" },
     { path: "/pricing", heading: "Simple plans for small public adjusting offices.", copy: "Choose the package that matches how your office works today." },
-    { path: "/resources", heading: "Practical resources for small public adjusting offices.", copy: "Importing from spreadsheets" },
+    { path: "/resources", heading: "Practical resources for small public adjusting offices.", copy: "Training walkthrough" },
     { path: "/demo", heading: `See ${brandName} with a small-office workflow.`, copy: "Email Demo Request" },
   ];
 
