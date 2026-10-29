@@ -13,7 +13,7 @@ const sections: TrustSection[] = [
   {
     title: "Who this page is from",
     paragraphs: [
-      `${brandName} is an early company. The legal entity name, mailing address, and governing law are not published here yet (governing law is TBD until counsel confirms it). This page will be updated when those details are known. Until then, privacy questions go to ${supportEmail}.`,
+      `${brandName} is operated by Marc Castrechini in Massachusetts. A registered legal entity name is not published on this page, and no street or mailing address is published here. A full lawyer-reviewed agreement is not in place yet, so this page does not set a formal governing-law term. Privacy questions go to ${supportEmail}.`,
       "This page is not a CCPA, GDPR, UK GDPR, HIPAA, or SOC 2 notice, and it is not a certification under any of those frameworks.",
     ],
   },
