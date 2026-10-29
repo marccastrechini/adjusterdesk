@@ -70,6 +70,26 @@ export function isClientBillingReadinessActive(readiness: ClientBillingReadiness
   return readiness.chargesEnabled && readiness.payoutsEnabled && readiness.detailsSubmitted;
 }
 
+const clientBillingConnectionStatusValues = new Set<string>(Object.values(ClientBillingConnectionStatus));
+
+/**
+ * Firm connection status is a closed enum. Legacy or Stripe-shaped values such
+ * as `PENDING` are not members and must not be written — Prisma rejects them
+ * and the v2 webhook would fail before readiness is saved.
+ */
+export function coerceClientBillingConnectionStatus(value: string | null | undefined): ClientBillingConnectionStatus {
+  const normalized = value?.trim().toUpperCase();
+  if (normalized && clientBillingConnectionStatusValues.has(normalized)) {
+    return normalized as ClientBillingConnectionStatus;
+  }
+
+  if (normalized === "PENDING" || normalized === "INCOMPLETE" || normalized === "IN_PROGRESS") {
+    return ClientBillingConnectionStatus.ONBOARDING;
+  }
+
+  return ClientBillingConnectionStatus.RESTRICTED;
+}
+
 export function clientBillingConnectionData(readiness: ClientBillingReadiness) {
   const active = isClientBillingReadinessActive(readiness);
 
@@ -77,7 +97,9 @@ export function clientBillingConnectionData(readiness: ClientBillingReadiness) {
     stripeChargesEnabled: readiness.chargesEnabled,
     stripePayoutsEnabled: readiness.payoutsEnabled,
     stripeDetailsSubmitted: readiness.detailsSubmitted,
-    clientBillingConnectionStatus: active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
+    clientBillingConnectionStatus: coerceClientBillingConnectionStatus(
+      active ? ClientBillingConnectionStatus.ACTIVE : ClientBillingConnectionStatus.RESTRICTED,
+    ),
     clientBillingEnabled: active,
   };
 }
@@ -223,11 +245,22 @@ export function merchantAccountCreateParams(firm: { id: string; name: string; em
 }
 
 /**
+ * Full-dashboard accounts that pay Stripe's fees are onboarded with an Account
+ * Link or Account Session. Stripe rejects platform writes to
+ * `configuration.merchant.statement_descriptor` on those accounts with a 403
+ * permission error. The connected account sets that descriptor in its own Dashboard.
+ */
+export function platformCanWriteMerchantStatementDescriptor(account: V2ConnectedAccountSnapshot) {
+  const feesCollector = account.defaults?.responsibilities?.fees_collector;
+  return !(account.dashboard === connectedAccountDashboard && feesCollector === connectedAccountFeesCollector);
+}
+
+/**
  * Hosted direct-charge invoices copy `account_name` from the connected account's
  * customer-facing business name (`doing_business_as` on v2, `business_profile.name`
  * on v1). `display_name` is the Dashboard label and the name on invoices sent to
- * the account itself, so both are set. Statement descriptors are included when
- * they can be derived from the same name. Responsibilities are not resent.
+ * the account itself, so both are set. Statement descriptors are included only
+ * when the platform is allowed to write them. Responsibilities are not resent.
  */
 export function v2PublicBusinessNameUpdateParams(account: V2ConnectedAccountSnapshot, name: string): Stripe.V2.Core.AccountUpdateParams | null {
   const displayName = publicBusinessName(name);
@@ -251,7 +284,11 @@ export function v2PublicBusinessNameUpdateParams(account: V2ConnectedAccountSnap
     };
   }
 
-  if (statement && (currentDescriptor?.descriptor !== statement.descriptor || (statement.prefix ? currentDescriptor?.prefix !== statement.prefix : false))) {
+  if (
+    platformCanWriteMerchantStatementDescriptor(account) &&
+    statement &&
+    (currentDescriptor?.descriptor !== statement.descriptor || (statement.prefix ? currentDescriptor?.prefix !== statement.prefix : false))
+  ) {
     params.configuration = {
       merchant: {
         statement_descriptor: statementDescriptorParams(statement),
@@ -451,4 +488,117 @@ export function clientBillingStripeErrorLogFields(error: unknown) {
 
 export function logClientBillingStripeError(context: string, error: unknown) {
   console.error(`[client-billing] ${context}`, clientBillingStripeErrorLogFields(error));
+}
+
+export function isStatementDescriptorPermissionError(error: unknown) {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const candidate = error as { type?: string; rawType?: string; statusCode?: number; message?: string };
+  const message = candidate.message ?? "";
+  if (!message.includes("statement_descriptor")) {
+    return false;
+  }
+
+  return candidate.statusCode === 403 || candidate.type === "StripePermissionError" || candidate.rawType === "permission_error";
+}
+
+type StripeId = string | { id?: string | null } | null | undefined;
+
+function stripeId(value: StripeId) {
+  if (!value) {
+    return undefined;
+  }
+
+  return typeof value === "string" ? value : value.id ?? undefined;
+}
+
+export type InvoicePaymentSnapshot = {
+  status?: string | null;
+  is_default?: boolean | null;
+  payment?: {
+    type?: string | null;
+    payment_intent?: StripeId;
+    charge?: StripeId;
+  } | null;
+};
+
+export type InvoicePaymentRefs = {
+  paymentIntentId?: string;
+  chargeId?: string;
+};
+
+/**
+ * Current invoice API versions no longer return `payment_intent` or `charge`.
+ * Those ids live on `invoice.payments` (Invoice Payment objects).
+ */
+export function paymentRefsFromInvoicePayments(payments: { data?: InvoicePaymentSnapshot[] | null } | null | undefined): InvoicePaymentRefs {
+  const entries = [...(payments?.data ?? [])].sort((left, right) => paymentEntryRank(right) - paymentEntryRank(left));
+  let paymentIntentId: string | undefined;
+  let chargeId: string | undefined;
+
+  for (const entry of entries) {
+    paymentIntentId ??= stripeId(entry.payment?.payment_intent);
+    chargeId ??= stripeId(entry.payment?.charge);
+    if (paymentIntentId && chargeId) {
+      break;
+    }
+  }
+
+  return { paymentIntentId, chargeId };
+}
+
+function paymentEntryRank(entry: InvoicePaymentSnapshot) {
+  let rank = 0;
+  if (entry.status === "paid") {
+    rank += 4;
+  }
+  if (entry.is_default) {
+    rank += 2;
+  }
+  if (entry.payment?.type === "payment_intent" || stripeId(entry.payment?.payment_intent)) {
+    rank += 1;
+  }
+  return rank;
+}
+
+export function paymentRefsFromInvoice(invoice: {
+  payment_intent?: StripeId;
+  charge?: StripeId;
+  payments?: { data?: InvoicePaymentSnapshot[] | null } | null;
+}): InvoicePaymentRefs {
+  const fromPayments = paymentRefsFromInvoicePayments(invoice.payments);
+
+  return {
+    paymentIntentId: fromPayments.paymentIntentId ?? stripeId(invoice.payment_intent),
+    chargeId: fromPayments.chargeId ?? stripeId(invoice.charge),
+  };
+}
+
+export async function resolveInvoicePaymentRefs(
+  stripe: Stripe,
+  invoice: Stripe.Invoice,
+  options?: { stripeAccount?: string | null; listIfMissing?: boolean },
+): Promise<InvoicePaymentRefs> {
+  const inline = paymentRefsFromInvoice(invoice);
+  if (inline.paymentIntentId || !invoice.id || options?.listIfMissing === false) {
+    return inline;
+  }
+
+  try {
+    const listed = await stripe.invoicePayments.list(
+      { invoice: invoice.id, limit: 10 },
+      options?.stripeAccount ? { stripeAccount: options.stripeAccount } : undefined,
+    );
+    const fromList = paymentRefsFromInvoicePayments(listed);
+
+    return {
+      paymentIntentId: fromList.paymentIntentId ?? inline.paymentIntentId,
+      chargeId: fromList.chargeId ?? inline.chargeId,
+    };
+  } catch (error) {
+    logClientBillingStripeError("Could not list invoice payments for the PaymentIntent id.", error);
+    return inline;
+  }
 }

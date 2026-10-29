@@ -2,8 +2,9 @@ import type Stripe from "stripe";
 import { ActivityType, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { clientBillingConnectionData, clientBillingReadinessFromV1Account } from "@/lib/client-billing/stripe-connect-account";
+import { clientBillingConnectionData, clientBillingReadinessFromV1Account, paymentRefsFromInvoice, resolveInvoicePaymentRefs, type InvoicePaymentRefs } from "@/lib/client-billing/stripe-connect-account";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
+import { requireStripeClient } from "@/lib/stripe";
 
 function asDateFromUnix(value: number | null | undefined) {
   if (!value || value <= 0) {
@@ -105,17 +106,17 @@ async function recordClientBillingActivity(invoice: Awaited<ReturnType<typeof fi
   });
 }
 
-async function syncInvoicePaid(invoice: Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>, stripeInvoice: Stripe.Invoice) {
+async function syncInvoicePaid(
+  invoice: Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>,
+  stripeInvoice: Stripe.Invoice,
+  refs: InvoicePaymentRefs,
+) {
   if (!invoice) {
     return;
   }
 
-  const invoiceRecord = stripeInvoice as Stripe.Invoice & {
-    payment_intent?: string | Stripe.PaymentIntent | null;
-    charge?: string | Stripe.Charge | null;
-  };
-  const paymentIntentId = typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null;
-  const chargeId = typeof invoiceRecord.charge === "string" ? invoiceRecord.charge : invoiceRecord.charge?.id ?? null;
+  const paymentIntentId = refs.paymentIntentId ?? null;
+  const chargeId = refs.chargeId ?? null;
   const amountPaidCents = stripeInvoice.amount_paid ?? stripeInvoice.amount_due ?? invoice.feeAmountCents;
 
   const claim = await prisma.claim.findUnique({
@@ -204,7 +205,7 @@ async function syncInvoiceSent(invoice: Awaited<ReturnType<typeof findClientInvo
     return;
   }
 
-  const invoiceRecord = stripeInvoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+  const refs = paymentRefsFromInvoice(stripeInvoice);
 
   await prisma.invoice.update({
     where: { id: invoice.id },
@@ -214,7 +215,7 @@ async function syncInvoiceSent(invoice: Awaited<ReturnType<typeof findClientInvo
       externalInvoiceStatus: stripeInvoice.status ?? undefined,
       externalHostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? undefined,
       externalInvoicePdfUrl: stripeInvoice.invoice_pdf ?? undefined,
-      externalPaymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? undefined,
+      externalPaymentIntentId: refs.paymentIntentId,
       externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
       externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
       externalSyncedAt: new Date(),
@@ -223,7 +224,7 @@ async function syncInvoiceSent(invoice: Awaited<ReturnType<typeof findClientInvo
 
 }
 
-export async function processStripeWebhookEvent(event: Stripe.Event) {
+export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: Stripe) {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -339,10 +340,10 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
         },
       });
 
-      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const paymentRefs = paymentRefsFromInvoice(invoice);
       const clientInvoice = await findClientInvoiceByStripeRefs({
         invoiceId: invoice.id,
-        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+        paymentIntentId: paymentRefs.paymentIntentId ?? null,
       });
 
       await recordClientBillingActivity(clientInvoice, "Invoice payment failed", `Stripe reported a payment failure for invoice ${clientInvoice?.invoiceNumber ?? invoice.id}.`);
@@ -367,10 +368,10 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
     case "invoice.finalized":
     case "invoice.sent": {
       const invoice = event.data.object as Stripe.Invoice;
-      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const paymentRefs = paymentRefsFromInvoice(invoice);
       const clientInvoice = await findClientInvoiceByStripeRefs({
         invoiceId: invoice.id,
-        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+        paymentIntentId: paymentRefs.paymentIntentId ?? null,
       });
 
       await syncInvoiceSent(clientInvoice, invoice);
@@ -383,22 +384,28 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
 
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
-      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const inlineRefs = paymentRefsFromInvoice(invoice);
+      const paymentRefs = inlineRefs.paymentIntentId
+        ? inlineRefs
+        : await resolveInvoicePaymentRefs(stripe ?? requireStripeClient(), invoice, {
+            stripeAccount: event.account,
+            listIfMissing: true,
+          });
       const clientInvoice = await findClientInvoiceByStripeRefs({
         invoiceId: invoice.id,
-        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+        paymentIntentId: paymentRefs.paymentIntentId ?? null,
       });
 
-      await syncInvoicePaid(clientInvoice, invoice);
+      await syncInvoicePaid(clientInvoice, invoice, paymentRefs);
       return;
     }
 
     case "invoice.voided": {
       const invoice = event.data.object as Stripe.Invoice;
-      const invoiceRecord = invoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const paymentRefs = paymentRefsFromInvoice(invoice);
       const clientInvoice = await findClientInvoiceByStripeRefs({
         invoiceId: invoice.id,
-        paymentIntentId: typeof invoiceRecord.payment_intent === "string" ? invoiceRecord.payment_intent : invoiceRecord.payment_intent?.id ?? null,
+        paymentIntentId: paymentRefs.paymentIntentId ?? null,
       });
 
       if (clientInvoice) {
@@ -504,10 +511,10 @@ export async function processStripeSaasWebhookEvent(event: Stripe.Event) {
   await processStripeWebhookEvent(event);
 }
 
-export async function processStripeConnectWebhookEvent(event: Stripe.Event) {
+export async function processStripeConnectWebhookEvent(event: Stripe.Event, stripe?: Stripe) {
   if (!clientBillingWebhookEventTypes.has(event.type)) {
     return;
   }
 
-  await processStripeWebhookEvent(event);
+  await processStripeWebhookEvent(event, stripe);
 }
