@@ -32,7 +32,14 @@ test("privacy and cookies disclose live Google Analytics 4 without a consent UI"
 
   assert.match(privacy, /Not attorney-reviewed/);
   assert.match(privacy, /hello@paclaimboard\.com/);
+  assert.match(privacy, /operated by Marc Castrechini in Massachusetts/);
+  assert.match(privacy, /registered legal entity name is not published/);
+  assert.match(privacy, /no street or mailing address is published/);
+  assert.match(privacy, /full lawyer-reviewed agreement is not in place yet/);
+  assert.match(privacy, /does not set a formal governing-law term/);
   assert.doesNotMatch(privacy, /hello@adjusterdesk\.xyz/);
+  assert.doesNotMatch(privacy, /TBD/);
+  assert.doesNotMatch(privacy, /Canoe River|\bLLC\b|\bInc\./);
   assert.doesNotMatch(privacy, /SOC 2 certified|HIPAA compliant|CCPA certified/i);
 });
 
@@ -45,10 +52,16 @@ test("terms keep published prices and state trial, cancel, Stripe, and data owne
   assert.match(html, /unless the office cancels first/);
   assert.match(html, /hello@paclaimboard\.com/);
   assert.doesNotMatch(html, /hello@adjusterdesk\.xyz/);
-  assert.match(html, /governing law for a customer agreement is not chosen yet \(TBD\)/i);
+  assert.match(html, /operated by Marc Castrechini in Massachusetts/);
+  assert.match(html, /registered legal entity name is not published/);
+  assert.match(html, /no street or mailing address is published/);
+  assert.match(html, /full lawyer-reviewed agreement is not in place yet/);
+  assert.match(html, /does not set a formal governing-law term/);
+  assert.match(html, /specific dollar cap, indemnity, warranty, and formal dispute process are not set/);
   assert.match(html, /not legal advice, estimating advice, coverage advice/);
   assert.match(html, /customer office owns the claim, client, document/i);
-  assert.doesNotMatch(html, /Massachusetts/);
+  assert.doesNotMatch(html, /TBD/);
+  assert.doesNotMatch(html, /Canoe River|\bLLC\b|\bInc\./);
   assert.doesNotMatch(html, /SOC 2 certified|HIPAA compliant/i);
 });
 

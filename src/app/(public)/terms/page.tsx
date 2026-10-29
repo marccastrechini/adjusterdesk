@@ -13,8 +13,8 @@ const sections: TrustSection[] = [
   {
     title: "Who you are dealing with",
     paragraphs: [
-      `${brandName} is an early company. The legal entity name and mailing address are not published on this page yet. Governing law for a customer agreement is not chosen yet (TBD). Those details will be added after they are confirmed. Until then, questions about these terms go to ${supportEmail}.`,
-      "A lawyer has not reviewed this page. It is a practical summary so an office can see how signup, billing, data, and product limits work today. It is not the finished customer agreement.",
+      `${brandName} is operated by Marc Castrechini in Massachusetts. A registered legal entity name is not published on this page, and no street or mailing address is published here. Questions about these terms go to ${supportEmail}.`,
+      "A lawyer has not reviewed this page. It is a practical summary so an office can see how signup, billing, data, and product limits work today. It is not the finished customer agreement. A full lawyer-reviewed agreement is not in place yet, so this page does not set a formal governing-law term.",
     ],
   },
   {
@@ -63,7 +63,7 @@ const sections: TrustSection[] = [
     title: "Availability and liability",
     paragraphs: [
       `${brandName} aims to provide a reliable workspace, but the service can be interrupted, can fail, and can contain mistakes. It is offered as a software workspace for organizing office work. It is not a law firm, an estimating service, or an insurer, and it is not responsible for claim outcomes.`,
-      `A specific dollar cap, indemnity, warranty, and formal dispute process are not set on this page. They belong in a lawyer-reviewed customer agreement, which does not exist here yet. Governing law for that agreement is still TBD. Until that agreement is in place, billing and service questions go to ${supportEmail}.`,
+      `A specific dollar cap, indemnity, warranty, and formal dispute process are not set on this page. They belong in a lawyer-reviewed customer agreement, which does not exist here yet. Until that agreement is in place, billing and service questions go to ${supportEmail}.`,
     ],
   },
 ];
