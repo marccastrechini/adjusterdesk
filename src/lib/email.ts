@@ -40,6 +40,16 @@ type WelcomeSignupEmailInput = {
   helpUrl: string;
 };
 
+export type FeedbackOwnerEmailInput = {
+  firmName: string;
+  submitterName: string;
+  submitterEmail: string;
+  page?: string | null;
+  rating?: number | null;
+  message: string;
+  reviewUrl: string;
+};
+
 type EmailSendResult = {
   ok: boolean;
   error?: string;
@@ -243,6 +253,54 @@ export async function sendEarlyAdopterInviteEmail(input: EarlyAdopterInviteEmail
   const rendered = renderEarlyAdopterInviteEmail(input);
   return sendSystemEmail({
     toEmail: input.toEmail,
+    subject: rendered.subject,
+    html: rendered.html,
+    text: rendered.text,
+  });
+}
+
+export function renderFeedbackOwnerEmail(input: FeedbackOwnerEmailInput) {
+  const pageLabel = input.page?.trim() || "General feedback";
+  const ratingLabel = typeof input.rating === "number" ? `${input.rating}/5` : "No rating";
+  const messageLines = input.message.replaceAll("\r\n", "\n").split("\n");
+  const emailContent = renderSystemEmailTemplate({
+    preheader: `New ${brandName} feedback from ${input.firmName}.`,
+    title: "New office feedback",
+    intro: `A signed-in user sent feedback from a ${brandName} workspace.`,
+    bodyLines: [
+      `Firm: ${input.firmName}`,
+      `Submitted by: ${input.submitterName}`,
+      `Email: ${input.submitterEmail}`,
+      `Page or workflow: ${pageLabel}`,
+      `Rating: ${ratingLabel}`,
+      "Message:",
+      ...messageLines,
+    ],
+    ctaLabel: "Review feedback",
+    ctaUrl: input.reviewUrl,
+    secondaryText: "Feedback from every workspace is listed on the System feedback page.",
+    footer: resolveSystemEmailFooter(),
+  });
+
+  return {
+    subject: `${brandName} feedback from ${input.firmName}`,
+    html: emailContent.html,
+    text: emailContent.text,
+  };
+}
+
+export async function sendFeedbackOwnerEmail(input: FeedbackOwnerEmailInput): Promise<EmailSendResult> {
+  const toEmail = process.env.SYSTEM_ADMIN_EMAIL?.trim();
+  if (!toEmail) {
+    return {
+      ok: false,
+      error: "SYSTEM_ADMIN_EMAIL is not configured.",
+    };
+  }
+
+  const rendered = renderFeedbackOwnerEmail(input);
+  return sendSystemEmail({
+    toEmail,
     subject: rendered.subject,
     html: rendered.html,
     text: rendered.text,

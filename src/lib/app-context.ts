@@ -2,8 +2,12 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { clearAdminWorkspaceOverride, getAdminWorkspaceOverrideId, getCurrentSessionUser } from "@/lib/session";
 
+export const appSession = {
+  getCurrentSessionUser,
+};
+
 export async function getAuthenticatedAppContext() {
-  const sessionUser = await getCurrentSessionUser();
+  const sessionUser = await appSession.getCurrentSessionUser();
   if (!sessionUser) {
     return null;
   }
@@ -82,7 +86,7 @@ export async function getDemoContext() {
 }
 
 export async function requireSystemAdminContext() {
-  const sessionUser = await getCurrentSessionUser();
+  const sessionUser = await appSession.getCurrentSessionUser();
 
   if (!sessionUser) {
     redirect("/today");
@@ -99,7 +103,7 @@ export async function requireSystemAdminContext() {
 }
 
 export async function requireSystemOutreachContext() {
-  const sessionUser = await getCurrentSessionUser();
+  const sessionUser = await appSession.getCurrentSessionUser();
 
   if (!sessionUser) {
     redirect("/today");

@@ -572,6 +572,34 @@ export async function getActivationData() {
   };
 }
 
+export const systemFeedbackPageSize = 40;
+
+export async function getSystemFeedbackEntries(page = 1) {
+  await requireSystemAdminContext();
+
+  const requestedPage = Number.isInteger(page) && page > 0 ? page : 1;
+  const total = await prisma.feedbackEntry.count();
+  const pageCount = Math.max(1, Math.ceil(total / systemFeedbackPageSize));
+  const currentPage = Math.min(requestedPage, pageCount);
+  const entries = await prisma.feedbackEntry.findMany({
+    include: {
+      firm: { select: { id: true, name: true } },
+      user: { select: { name: true, email: true } },
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    skip: (currentPage - 1) * systemFeedbackPageSize,
+    take: systemFeedbackPageSize,
+  });
+
+  return {
+    entries,
+    total,
+    page: currentPage,
+    pageSize: systemFeedbackPageSize,
+    pageCount,
+  };
+}
+
 export async function getFeedbackPageData() {
   const { firm, user } = await getDemoContext();
   const recentFeedback = await prisma.feedbackEntry.findMany({

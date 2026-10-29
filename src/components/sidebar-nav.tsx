@@ -74,6 +74,7 @@ const systemAdminNavItems: { label: string; items: NavItem[] }[] = [
       { href: "/system/outreach", label: "System outreach", icon: ListChecks },
       { href: "/system/outreach/playbook", label: "Outreach playbook", icon: MessageSquare },
       { href: "/system/emails", label: "System emails", icon: MessageSquare },
+      { href: "/system/feedback", label: "Feedback", icon: MessageSquare },
     ],
   },
 ];
