@@ -6,10 +6,12 @@ import {
   clientBillingReadinessFromV1Account,
   clientBillingReadinessFromV2Account,
   clientBillingStripeErrorLogFields,
+  coerceClientBillingConnectionStatus,
   hostedInvoicePresentation,
   isLegacyExpressConnectedAccount,
   logClientBillingStripeError,
   merchantAccountCreateParams,
+  paymentRefsFromInvoice,
   statementDescriptorFromBusinessName,
   v2OnboardingLinkParams,
   v2PublicBusinessNameUpdateParams,
@@ -472,8 +474,19 @@ test("statement descriptors and hosted invoice fields use the office name and ap
   );
   assert.equal(update?.display_name, "North Office");
   assert.equal(update?.defaults?.profile?.doing_business_as, "North Office");
-  assert.equal(update?.configuration?.merchant?.statement_descriptor?.descriptor, "North Office");
+  assert.equal(update?.configuration?.merchant?.statement_descriptor, undefined);
   assert.equal(update?.defaults && "responsibilities" in (update.defaults ?? {}), false);
+
+  const platformOwned = v2PublicBusinessNameUpdateParams(
+    {
+      display_name: "sandbox.paclaimboard.c",
+      dashboard: "none",
+      defaults: { profile: { doing_business_as: null }, responsibilities: { fees_collector: "application", losses_collector: "application" } },
+      configuration: { merchant: { statement_descriptor: { descriptor: "sandbox.paclaimboard.c", prefix: "sandbox.pa" } } },
+    },
+    "North Office",
+  );
+  assert.equal(platformOwned?.configuration?.merchant?.statement_descriptor?.descriptor, "North Office");
 
   assert.equal(
     v2PublicBusinessNameUpdateParams(
@@ -556,12 +569,12 @@ test("sending a payment request sets the public name and app invoice number, the
           }),
           update: async (_id: string, params: Record<string, unknown>) => {
             nameUpdates.push(params);
-            if (params.configuration) {
-              throw new Stripe.errors.StripeInvalidRequestError({
-                message: "Statement descriptor does not match the business name.",
-                type: "invalid_request_error",
-                code: "invalid_statement_descriptor_business_mismatch",
-                statusCode: 400,
+            const configuration = params.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
+            if (configuration?.merchant?.statement_descriptor) {
+              throw new Stripe.errors.StripePermissionError({
+                message:
+                  "You do not have permission to write to configuration.merchant.statement_descriptor.descriptor. This is likely because the Account was onboarded via an Account Link or Account Session.",
+                statusCode: 403,
                 headers: {},
               });
             }
@@ -575,7 +588,7 @@ test("sending a payment request sets the public name and app invoice number, the
       create: async (params: Record<string, unknown>, options: { idempotencyKey?: string; stripeAccount?: string }) => {
         events.push("invoices.create");
         createdInvoices.push({ params, options });
-        return { id: "in_stripe_1", status: "draft", lines: { data: [] } };
+        return { id: "in_stripe_1", status: "draft", number: "TEST-001", lines: { data: [] } };
       },
       retrieve: async (id: string) => {
         events.push(`invoices.retrieve:${id}`);
@@ -585,12 +598,13 @@ test("sending a payment request sets the public name and app invoice number, the
         return {
           id,
           status: "draft",
+          number: "TEST-001",
           lines: { data: [{ description: "Client billing fee for invoice TEST-001", amount: 15000 }] },
         };
       },
       update: async (id: string, params: { number?: string }) => {
-        events.push(`invoices.update:${id}:${params.number}`);
-        return { id, status: "draft", lines: { data: [] } };
+        events.push(`invoices.update:${id}:${params.number ?? ""}`);
+        return { id, status: "draft", number: params.number ?? "TEST-001", lines: { data: [] } };
       },
       finalizeInvoice: async (id: string, _params: unknown, options: { idempotencyKey?: string }) => {
         events.push(`invoices.finalize:${options.idempotencyKey}`);
@@ -652,9 +666,14 @@ test("sending a payment request sets the public name and app invoice number, the
     assert.equal(created.params.custom_fields?.some((field) => field.name === "Claim #" && field.value === "CLM-1"), true);
     assert.equal(created.options.idempotencyKey, "client-billing-create-inv_local");
     assert.equal(created.options.stripeAccount, "acct_v2_new");
-    assert.equal(nameUpdates[0] && "configuration" in nameUpdates[0], true);
-    assert.equal(nameUpdates[1] && "configuration" in nameUpdates[1], false);
-    assert.equal((nameUpdates[1]?.defaults as { profile?: { doing_business_as?: string } } | undefined)?.profile?.doing_business_as, "North Office");
+    assert.equal(
+      nameUpdates.some((params) => {
+        const configuration = params.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
+        return Boolean(configuration?.merchant?.statement_descriptor);
+      }),
+      false,
+    );
+    assert.equal((nameUpdates[0]?.defaults as { profile?: { doing_business_as?: string } } | undefined)?.profile?.doing_business_as, "North Office");
     assert.equal(invoiceUpdates[0]?.externalInvoiceId, "in_stripe_1");
     assert.equal(invoiceUpdates[0]?.externalHostedInvoiceUrl, undefined);
     const draftPersistedAt = events.indexOf("invoice.persisted-draft");
@@ -662,6 +681,8 @@ test("sending a payment request sets the public name and app invoice number, the
     assert.equal(draftPersistedAt >= 0 && draftPersistedAt < finalizedAt, true);
     assert.equal(events.includes("invoices.create"), true);
     assert.equal(events.filter((event) => event === "invoices.create").length, 1);
+    assert.equal(events.includes("invoices.update:in_stripe_1:"), true);
+    assert.equal(events.includes("invoices.update:in_stripe_1:TEST-001"), false);
 
     events.length = 0;
     const resumed = await sendStripeConnectInvoice(
@@ -672,7 +693,8 @@ test("sending a payment request sets the public name and app invoice number, the
     assert.equal(resumed.invoiceId, "in_stripe_1");
     assert.equal(events.includes("invoices.create"), false);
     assert.equal(events.includes("invoices.retrieve:in_stripe_1"), true);
-    assert.equal(events.includes("invoices.update:in_stripe_1:TEST-001"), true);
+    assert.equal(events.includes("invoices.update:in_stripe_1:"), true);
+    assert.equal(events.includes("invoices.update:in_stripe_1:TEST-001"), false);
     assert.equal(events.includes("invoiceItems.create:client-billing-item-fee-inv_local"), false);
     assert.equal(events.includes("invoices.finalize:client-billing-finalize-inv_local"), true);
     assert.equal(events.includes("invoices.send:client-billing-send-inv_local"), true);
@@ -694,4 +716,203 @@ test("sending a payment request sets the public name and app invoice number, the
     prisma.claim.findUnique = originalClaimFind;
     prisma.$transaction = originalTransaction;
   }
+});
+
+test("legacy connection statuses are mapped onto the firm enum", () => {
+  assert.equal(coerceClientBillingConnectionStatus("PENDING"), "ONBOARDING");
+  assert.equal(coerceClientBillingConnectionStatus("pending"), "ONBOARDING");
+  assert.equal(coerceClientBillingConnectionStatus("ACTIVE"), "ACTIVE");
+  assert.equal(coerceClientBillingConnectionStatus("not-a-status"), "RESTRICTED");
+});
+
+test("invoice payment refs prefer invoice.payments over the removed payment_intent field", () => {
+  assert.deepEqual(
+    paymentRefsFromInvoice({
+      payments: {
+        data: [
+          {
+            status: "open",
+            payment: { type: "payment_intent", payment_intent: "pi_open" },
+          },
+          {
+            status: "paid",
+            is_default: true,
+            payment: { type: "payment_intent", payment_intent: "pi_paid", charge: "ch_paid" },
+          },
+        ],
+      },
+      payment_intent: "pi_legacy",
+    }),
+    { paymentIntentId: "pi_paid", chargeId: "ch_paid" },
+  );
+});
+
+test("v2 account sync skips statement descriptors the platform cannot write and still saves readiness", async () => {
+  const updates: Array<Record<string, unknown>> = [];
+  let firmUpdate: { data: Record<string, unknown> } | undefined;
+  const logged: string[] = [];
+  const originalFindFirst = prisma.firm.findFirst;
+  const originalUpdate = prisma.firm.update;
+  const originalError = console.error;
+  prisma.firm.findFirst = (async () => firm({ stripeConnectAccountId: "acct_v2_new" })) as unknown as typeof prisma.firm.findFirst;
+  prisma.firm.update = (async (args: { data: Record<string, unknown> }) => {
+    firmUpdate = args;
+    return { id: "firm_123" };
+  }) as unknown as typeof prisma.firm.update;
+  console.error = (...args: unknown[]) => {
+    logged.push(JSON.stringify(args));
+  };
+
+  const stripe = {
+    v2: {
+      core: {
+        accounts: {
+          retrieve: async () => ({
+            id: "acct_v2_new",
+            display_name: "Old Name",
+            dashboard: "full",
+            defaults: {
+              profile: { doing_business_as: "Old Name" },
+              responsibilities: { fees_collector: "stripe", losses_collector: "stripe" },
+            },
+            configuration: {
+              merchant: {
+                statement_descriptor: { descriptor: "sandbox.paclaimboard.c", prefix: "sandbox.pa" },
+                capabilities: {
+                  card_payments: { status: "active" },
+                  stripe_balance: { payouts: { status: "active" } },
+                },
+              },
+            },
+            requirements: { entries: [] },
+          }),
+          update: async (_id: string, params: Record<string, unknown>) => {
+            updates.push(params);
+            const configuration = params.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
+            if (configuration?.merchant?.statement_descriptor) {
+              throw new Stripe.errors.StripePermissionError({
+                message:
+                  "You do not have permission to write to configuration.merchant.statement_descriptor.descriptor. This is likely because the Account was onboarded via an Account Link or Account Session.",
+                statusCode: 403,
+                headers: {},
+              });
+            }
+            return { id: "acct_v2_new" };
+          },
+        },
+      },
+    },
+    accounts: {
+      retrieve: async () => {
+        throw new Error("v1 retrieve should not run");
+      },
+    },
+  } as never;
+
+  try {
+    await processStripeConnectV2AccountNotification(
+      {
+        type: "v2.core.account[configuration.merchant].updated",
+        related_object: { id: "acct_v2_new" },
+      },
+      stripe,
+    );
+  } finally {
+    prisma.firm.findFirst = originalFindFirst;
+    prisma.firm.update = originalUpdate;
+    console.error = originalError;
+  }
+
+  assert.equal(firmUpdate?.data.stripeChargesEnabled, true);
+  assert.equal(firmUpdate?.data.stripePayoutsEnabled, true);
+  assert.equal(firmUpdate?.data.stripeDetailsSubmitted, true);
+  assert.equal(firmUpdate?.data.clientBillingEnabled, true);
+  assert.equal(firmUpdate?.data.clientBillingConnectionStatus, "ACTIVE");
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0]?.display_name, "North Office");
+  const configuration = updates[0]?.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
+  assert.equal(configuration?.merchant?.statement_descriptor, undefined);
+  assert.equal(logged.some((line) => line.includes("Could not update the connected account statement descriptor.")), false);
+});
+
+test("a statement descriptor permission error does not fail account sync", async () => {
+  let firmUpdate: { data: Record<string, unknown> } | undefined;
+  const updates: Array<Record<string, unknown>> = [];
+  const logged: string[] = [];
+  const originalFindFirst = prisma.firm.findFirst;
+  const originalUpdate = prisma.firm.update;
+  const originalError = console.error;
+  prisma.firm.findFirst = (async () => firm({ stripeConnectAccountId: "acct_platform" })) as unknown as typeof prisma.firm.findFirst;
+  prisma.firm.update = (async (args: { data: Record<string, unknown> }) => {
+    firmUpdate = args;
+    return { id: "firm_123" };
+  }) as unknown as typeof prisma.firm.update;
+  console.error = (...args: unknown[]) => {
+    logged.push(JSON.stringify(args));
+  };
+
+  const stripe = {
+    v2: {
+      core: {
+        accounts: {
+          retrieve: async () => ({
+            id: "acct_platform",
+            display_name: "Old Name",
+            dashboard: "none",
+            defaults: {
+              profile: { doing_business_as: "Old Name" },
+              responsibilities: { fees_collector: "application", losses_collector: "application" },
+            },
+            configuration: {
+              merchant: {
+                statement_descriptor: { descriptor: "sandbox.paclaimboard.c" },
+                capabilities: {
+                  card_payments: { status: "pending" },
+                  stripe_balance: { payouts: { status: "pending" } },
+                },
+              },
+            },
+            requirements: {
+              entries: [{ awaiting_action_from: "user", minimum_deadline: { status: "currently_due" } }],
+            },
+          }),
+          update: async (_id: string, params: Record<string, unknown>) => {
+            updates.push(params);
+            const configuration = params.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
+            if (configuration?.merchant?.statement_descriptor) {
+              throw new Stripe.errors.StripePermissionError({
+                message:
+                  "You do not have permission to write to configuration.merchant.statement_descriptor.descriptor. This is likely because the Account was onboarded via an Account Link or Account Session.",
+                statusCode: 403,
+                headers: {},
+              });
+            }
+            return { id: "acct_platform" };
+          },
+        },
+      },
+    },
+  } as never;
+
+  try {
+    await processStripeConnectV2AccountNotification(
+      { type: "v2.core.account.updated", related_object: { id: "acct_platform" } },
+      stripe,
+    );
+  } finally {
+    prisma.firm.findFirst = originalFindFirst;
+    prisma.firm.update = originalUpdate;
+    console.error = originalError;
+  }
+
+  assert.equal(firmUpdate?.data.clientBillingConnectionStatus, "RESTRICTED");
+  assert.equal(firmUpdate?.data.clientBillingEnabled, false);
+  assert.equal(firmUpdate?.data.stripeChargesEnabled, false);
+  assert.equal(updates.length, 2);
+  assert.equal(
+    (updates[1]?.defaults as { profile?: { doing_business_as?: string } } | undefined)?.profile?.doing_business_as,
+    "North Office",
+  );
+  assert.equal("configuration" in (updates[1] ?? {}), false);
+  assert.equal(logged.some((line) => line.includes("Could not update the connected account statement descriptor.")), false);
 });

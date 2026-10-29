@@ -12,8 +12,10 @@ import {
   insuredDisplayName,
   isClientBillingReadinessActive,
   isLegacyExpressConnectedAccount,
+  isStatementDescriptorPermissionError,
   logClientBillingStripeError,
   merchantAccountCreateParams,
+  resolveInvoicePaymentRefs,
   stableDaysUntilDue,
   v1BusinessProfileNameParams,
   v1OnboardingLinkParams,
@@ -226,7 +228,11 @@ export async function refreshStripeConnectAccount(firm: Firm, stripe: Stripe = r
 
   const { accountId, readiness } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
   const result = await persistFirmStripeReadiness(firm, accountId, readiness);
-  await syncConnectedAccountPublicName(stripe, firm);
+  try {
+    await syncConnectedAccountPublicName(stripe, firm);
+  } catch (error) {
+    logClientBillingStripeError("Could not update the connected account public name.", error);
+  }
   return result;
 }
 
@@ -278,8 +284,9 @@ async function updateV1PublicBusinessName(stripe: Stripe, accountId: string, nam
 /**
  * Hosted invoices snapshot the connected account's customer-facing name at
  * creation. Update it before the next invoice when Stripe allows the change.
- * A rejected statement descriptor is retried as a name-only update so sending
- * still works for accounts Stripe will not let us relabel completely.
+ * Statement descriptors are best-effort: a permission error or rejection is
+ * never fatal, and full-dashboard accounts that Stripe bills directly skip
+ * the write entirely.
  */
 export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm) {
   const accountId = firm.stripeConnectAccountId;
@@ -306,16 +313,23 @@ export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm)
     try {
       await stripe.v2.core.accounts.update(accountId, params);
     } catch (error) {
-      const namesOnly = params.configuration ? v2BusinessNameOnlyUpdateParams(account, name) : null;
+      const descriptorWrite = Boolean(params.configuration?.merchant?.statement_descriptor);
+      const namesOnly = descriptorWrite ? v2BusinessNameOnlyUpdateParams(account, name) : null;
+      const permissionDenied = descriptorWrite && isStatementDescriptorPermissionError(error);
+
       if (!namesOnly) {
-        logClientBillingStripeError(
-          params.configuration ? "Could not update the connected account statement descriptor." : "Could not update the connected account public name.",
-          error,
-        );
+        if (!permissionDenied) {
+          logClientBillingStripeError(
+            descriptorWrite ? "Could not update the connected account statement descriptor." : "Could not update the connected account public name.",
+            error,
+          );
+        }
         return;
       }
 
-      logClientBillingStripeError("Could not update the connected account statement descriptor.", error);
+      if (!permissionDenied) {
+        logClientBillingStripeError("Could not update the connected account statement descriptor.", error);
+      }
 
       try {
         await stripe.v2.core.accounts.update(accountId, namesOnly);
@@ -346,10 +360,6 @@ function stripeAccountOptions(firm: Firm, idempotencyKey?: string): Stripe.Reque
     stripeAccount: firm.stripeConnectAccountId,
     ...(idempotencyKey ? { idempotencyKey } : {}),
   };
-}
-
-function paymentIntentId(invoice: Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null }) {
-  return typeof invoice.payment_intent === "string" ? invoice.payment_intent : invoice.payment_intent?.id ?? undefined;
 }
 
 async function createOrUpdateStripeCustomer(firm: Firm, contact: Contact, stripe: Stripe) {
@@ -520,6 +530,9 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
 
   if (!stripeInvoice.status || stripeInvoice.status === "draft") {
     const draftInvoice = stripeInvoice;
+    // Stripe rejects `number` when this draft already has it, including the
+    // invoice just created above. Only send a number that is not already set.
+    const draftNumber = draftInvoice.number ?? undefined;
     stripeInvoice = await stripe.invoices.update(
       draftInvoice.id,
       {
@@ -527,7 +540,7 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
         custom_fields: presentation.custom_fields,
         metadata,
         days_until_due: daysUntilDue,
-        ...(presentation.number ? { number: presentation.number } : {}),
+        ...(presentation.number && presentation.number !== draftNumber ? { number: presentation.number } : {}),
       },
       account,
     );
@@ -540,7 +553,10 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
     stripeInvoice = await stripe.invoices.sendInvoice(stripeInvoice.id, {}, stripeAccountOptions(firm, `client-billing-send-${invoice.id}`));
   }
 
-  const sentInvoice = stripeInvoice as Stripe.Invoice & { payment_intent?: string | Stripe.PaymentIntent | null };
+  const paymentRefs = await resolveInvoicePaymentRefs(stripe, stripeInvoice, {
+    stripeAccount: firm.stripeConnectAccountId,
+    listIfMissing: stripeInvoice.status === "paid",
+  });
   const syncedAt = new Date();
 
   await prisma.invoice.update({
@@ -551,7 +567,7 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
       externalInvoiceStatus: stripeInvoice.status ?? undefined,
       externalHostedInvoiceUrl: stripeInvoice.hosted_invoice_url ?? undefined,
       externalInvoicePdfUrl: stripeInvoice.invoice_pdf ?? undefined,
-      externalPaymentIntentId: paymentIntentId(sentInvoice),
+      externalPaymentIntentId: paymentRefs.paymentIntentId,
       externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
       externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
       externalSyncedAt: syncedAt,
@@ -608,15 +624,18 @@ const stripeConnectProvider: ClientBillingProvider = {
     }
 
     const stripe = requireStripeClient();
-    const refreshed = await stripe.invoices.retrieve(invoice.externalInvoiceId, {}, getStripeAccountHeader(firm));
-    const refreshedInvoice = refreshed as Stripe.Response<Stripe.Invoice> & { payment_intent?: string | Stripe.PaymentIntent | null };
+    const refreshed = await stripe.invoices.retrieve(invoice.externalInvoiceId, { expand: ["payments"] }, getStripeAccountHeader(firm));
+    const paymentRefs = await resolveInvoicePaymentRefs(stripe, refreshed, {
+      stripeAccount: firm.stripeConnectAccountId,
+      listIfMissing: refreshed.status === "paid",
+    });
     await prisma.invoice.update({
       where: { id: invoice.id },
       data: {
         externalInvoiceStatus: refreshed.status ?? undefined,
         externalHostedInvoiceUrl: refreshed.hosted_invoice_url ?? undefined,
         externalInvoicePdfUrl: refreshed.invoice_pdf ?? undefined,
-        externalPaymentIntentId: paymentIntentId(refreshedInvoice),
+        externalPaymentIntentId: paymentRefs.paymentIntentId,
         externalAmountDueCents: refreshed.amount_due ?? undefined,
         externalAmountPaidCents: refreshed.amount_paid ?? undefined,
         externalSyncedAt: new Date(),

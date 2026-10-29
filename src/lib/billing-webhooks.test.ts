@@ -278,6 +278,7 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
   let invoiceUpdateCalled = false;
   let paymentCreateCalled = false;
   let activityCreateCalled = false;
+  let storedPaymentIntentId: string | undefined;
   const originalInvoiceFindFirst = prisma.invoice.findFirst;
   const originalClaimFindUnique = prisma.claim.findUnique;
   const originalTransaction = prisma.$transaction;
@@ -314,8 +315,11 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
   prisma.$transaction = ((async (callback: (tx: unknown) => Promise<unknown>) => {
     const fakeTx = {
       invoice: {
-        update: async () => {
+        update: async (args: unknown) => {
           invoiceUpdateCalled = true;
+          const payload = args as { data: { externalPaymentIntentId?: string; status: string } };
+          storedPaymentIntentId = payload.data.externalPaymentIntentId;
+          assert.equal(payload.data.status, "PAID");
           return null;
         },
       },
@@ -324,10 +328,11 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
         update: async () => null,
         create: async (args: unknown) => {
           paymentCreateCalled = true;
-          const payload = args as { data: { source: string; amountCents: number; externalProvider: string } };
+          const payload = args as { data: { source: string; amountCents: number; externalProvider: string; externalPaymentId?: string } };
           assert.equal(payload.data.source, "STRIPE");
           assert.equal(payload.data.externalProvider, "stripe_connect");
           assert.equal(payload.data.amountCents, 12500);
+          assert.equal(payload.data.externalPaymentId, "pi_123");
           return null;
         },
       },
@@ -353,9 +358,16 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
           status: "paid",
           amount_due: 12500,
           amount_paid: 12500,
-          payment_intent: "pi_123",
-          charge: "ch_123",
           customer: "cus_123",
+          payments: {
+            data: [
+              {
+                status: "paid",
+                is_default: true,
+                payment: { type: "payment_intent", payment_intent: "pi_123", charge: "ch_123" },
+              },
+            ],
+          },
         },
       },
     } as never);
@@ -368,4 +380,87 @@ test("invoice.paid marks invoice paid and creates a stripe payment", async () =>
   assert.equal(invoiceUpdateCalled, true);
   assert.equal(paymentCreateCalled, true);
   assert.equal(activityCreateCalled, true);
+  assert.equal(storedPaymentIntentId, "pi_123");
+});
+
+test("invoice.paid lists invoice payments when the payload has no PaymentIntent id", async () => {
+  let storedPaymentIntentId: string | undefined;
+  const listCalls: Array<{ params: { invoice?: string }; options?: { stripeAccount?: string } }> = [];
+  const originalInvoiceFindFirst = prisma.invoice.findFirst;
+  const originalClaimFindUnique = prisma.claim.findUnique;
+  const originalTransaction = prisma.$transaction;
+
+  prisma.invoice.findFirst = (async () => ({
+    id: "invoice_123",
+    firmId: "firm_123",
+    claimId: "claim_123",
+    invoiceNumber: "AD-1001",
+    feeAmountCents: 12500,
+    claim: { contactId: "contact_123", contact: { firstName: "Pat", lastName: "Client", company: null } },
+  })) as unknown as typeof prisma.invoice.findFirst;
+  prisma.claim.findUnique = (async () => ({
+    contactId: "contact_123",
+    contact: { firstName: "Pat", lastName: "Client", company: null },
+  })) as unknown as typeof prisma.claim.findUnique;
+  prisma.$transaction = (async (callback: (tx: unknown) => Promise<unknown>) =>
+    callback({
+      invoice: {
+        update: async (args: unknown) => {
+          storedPaymentIntentId = (args as { data: { externalPaymentIntentId?: string } }).data.externalPaymentIntentId;
+          return null;
+        },
+      },
+      payment: {
+        findFirst: async () => null,
+        update: async () => null,
+        create: async (args: unknown) => {
+          assert.equal((args as { data: { externalPaymentId?: string } }).data.externalPaymentId, "pi_listed");
+          return null;
+        },
+      },
+      activity: { create: async () => null },
+    })) as unknown as typeof prisma.$transaction;
+
+  const stripe = {
+    invoicePayments: {
+      list: async (params: { invoice?: string }, options?: { stripeAccount?: string }) => {
+        listCalls.push({ params, options });
+        return {
+          data: [
+            {
+              status: "paid",
+              payment: { type: "payment_intent", payment_intent: "pi_listed" },
+            },
+          ],
+        };
+      },
+    },
+  };
+
+  try {
+    await processStripeWebhookEvent(
+      {
+        type: "invoice.paid",
+        account: "acct_connected",
+        data: {
+          object: {
+            id: "in_123",
+            status: "paid",
+            amount_due: 12500,
+            amount_paid: 12500,
+          },
+        },
+      } as never,
+      stripe as never,
+    );
+  } finally {
+    prisma.invoice.findFirst = originalInvoiceFindFirst;
+    prisma.claim.findUnique = originalClaimFindUnique;
+    prisma.$transaction = originalTransaction;
+  }
+
+  assert.equal(listCalls.length, 1);
+  assert.equal(listCalls[0]?.params.invoice, "in_123");
+  assert.equal(listCalls[0]?.options?.stripeAccount, "acct_connected");
+  assert.equal(storedPaymentIntentId, "pi_listed");
 });
