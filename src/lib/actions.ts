@@ -34,6 +34,7 @@ import {
   resolveUserInvitationTokenMinutes,
 } from "@/lib/auth";
 import { canSendSystemEmail, sendUserInvitationEmail } from "@/lib/email";
+import { feedbackOwnerReviewUrl, notifyOwnerOfNewFeedback } from "@/lib/feedback-review";
 import { isOutreachEmailTemplateKey, sendOutreachTemplateEmail } from "@/lib/outreach-email";
 import { applyOutreachStatusTaskRules } from "@/lib/outreach-tasks";
 import { validateManualActivityInput } from "@/lib/activity-log";
@@ -1684,7 +1685,7 @@ export async function createFeedbackWithState(_state: ActionFormState, formData:
     return formError("Add a short note before sending feedback.", errors);
   }
 
-  await prisma.feedbackEntry.create({
+  const entry = await prisma.feedbackEntry.create({
     data: {
       firmId: firm.id,
       userId: user.id,
@@ -1694,7 +1695,18 @@ export async function createFeedbackWithState(_state: ActionFormState, formData:
     },
   });
 
+  await notifyOwnerOfNewFeedback({
+    firmName: firm.name,
+    submitterName: user.name,
+    submitterEmail: user.email,
+    page: page || null,
+    rating: rating ?? null,
+    message,
+    reviewUrl: feedbackOwnerReviewUrl(entry.id),
+  });
+
   revalidatePath("/feedback");
+  revalidatePath("/system/feedback");
   redirect(withNotice("/feedback", "feedback-sent"));
 }
 

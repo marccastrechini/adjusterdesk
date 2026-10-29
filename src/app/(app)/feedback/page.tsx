@@ -18,7 +18,6 @@ const ratingOptions = [
   ["1", "1 - Blocks the office"],
 ] as const;
 
-// TODO: Add owner review/export and notification routing once the feedback process is defined.
 export default async function FeedbackPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const notice = getNoticeMessage(params);

@@ -1,3 +1,4 @@
+import { renderFeedbackOwnerEmail } from "@/lib/email";
 import { renderSystemEmailTemplate } from "@/lib/email-template";
 import { getOutreachTemplatePreviewDescriptors } from "@/lib/outreach-email";
 import { brandName, canonicalOrigin, resolveBrandFromHeader, resolveBrandReplyTo } from "@/lib/brand";
@@ -74,6 +75,16 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
     ],
     secondaryText: "Sign in to system workspaces to review the new office and follow up.",
     footer: footer(),
+  });
+
+  const feedbackOwner = renderFeedbackOwnerEmail({
+    firmName: "Sample Adjusting Co",
+    submitterName: "Alex Johnson",
+    submitterEmail: "alex@example.com",
+    page: "Claim documents",
+    rating: 3,
+    message: "The document request list is hard to scan on a phone.",
+    reviewUrl: `${canonicalOrigin}/system/feedback`,
   });
 
   const welcomeSignup = renderSystemEmailTemplate({
@@ -189,6 +200,25 @@ export function getSystemEmailTemplates(): SystemEmailTemplateDescriptor[] {
       },
       html: trialSignupAlert.html,
       text: trialSignupAlert.text,
+    },
+    {
+      id: "feedback_owner",
+      name: "Office feedback",
+      description: "Sent to the system admin when someone submits workspace feedback.",
+      audience: "internal",
+      from,
+      replyTo,
+      subject: feedbackOwner.subject,
+      sampleDataLabels: {
+        firmName: "Sample Adjusting Co",
+        submitterName: "Alex Johnson",
+        submitterEmail: "alex@example.com",
+        page: "Claim documents",
+        rating: "3/5",
+        reviewUrl: `${canonicalOrigin}/system/feedback`,
+      },
+      html: feedbackOwner.html,
+      text: feedbackOwner.text,
     },
     {
       id: "welcome_signup",

@@ -11,6 +11,7 @@ describe("system email templates", () => {
     assert.ok(ids.includes("password_reset"));
     assert.ok(ids.includes("user_invitation"));
     assert.ok(ids.includes("trial_signup_alert"));
+    assert.ok(ids.includes("feedback_owner"));
     assert.ok(ids.includes("welcome_signup"));
     assert.ok(ids.includes("tracker_nurture_email_1"));
     assert.ok(ids.includes("tracker_nurture_email_2"));
@@ -49,6 +50,17 @@ describe("system email templates", () => {
 
     assert.ok(alert, "trial_signup_alert not found");
     assert.equal(alert.audience, "internal");
+  });
+
+  it("office feedback alert is an internal system admin email", () => {
+    const templates = getSystemEmailTemplates();
+    const feedback = templates.find((t) => t.id === "feedback_owner");
+
+    assert.ok(feedback, "feedback_owner not found");
+    assert.equal(feedback.audience, "internal");
+    assert.match(feedback.subject, new RegExp(brandName));
+    assert.match(feedback.text, /Sample Adjusting Co/);
+    assert.match(feedback.text, /\/system\/feedback/);
   });
 
   it("templates contain sample data values in rendered html", () => {

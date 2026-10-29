@@ -43,6 +43,7 @@ export function AppShell({
         { href: "/system/outreach", label: "Outreach tracker" },
         { href: "/system/outreach/playbook", label: "Outreach playbook" },
         { href: "/system/emails", label: "System emails" },
+        { href: "/system/feedback", label: "Feedback" },
         { href: "/settings/account", label: "Account settings" },
       ]
     : isOutreachOperator
