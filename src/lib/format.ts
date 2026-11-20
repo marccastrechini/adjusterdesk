@@ -84,12 +84,21 @@ export function isInvoiceOverdue(invoice: {
   return !["PAID", "WRITTEN_OFF"].includes(invoice.status) && invoiceAmountDue(invoice) > 0 && isPastDue(invoice.dueAt);
 }
 
+export function isInvoicePaymentPending(invoice: { status: string; externalPaymentStatus?: string | null }) {
+  return invoice.externalPaymentStatus === "processing" && invoice.status !== "PAID" && invoice.status !== "WRITTEN_OFF";
+}
+
 export function invoiceDisplayStatus(invoice: {
   status: string;
   dueAt?: Date | string | null;
   feeAmountCents: number;
   amountPaidCents: number;
+  externalPaymentStatus?: string | null;
 }) {
+  if (isInvoicePaymentPending(invoice)) {
+    return isInvoiceOverdue(invoice) ? "Payment pending, overdue" : "Payment pending";
+  }
+
   const status = labelFromEnum(invoice.status);
   if (invoice.status === "OVERDUE") return status;
   return isInvoiceOverdue(invoice) ? `${status}, overdue` : status;
@@ -100,8 +109,10 @@ export function invoiceStatusTone(invoice: {
   dueAt?: Date | string | null;
   feeAmountCents: number;
   amountPaidCents: number;
+  externalPaymentStatus?: string | null;
 }) {
   if (invoice.status === "PAID") return "green";
+  if (isInvoicePaymentPending(invoice) && !isInvoiceOverdue(invoice)) return "amber";
   if (isInvoiceOverdue(invoice) || invoice.status === "OVERDUE") return "red";
   if (invoice.status === "DRAFT") return "slate";
   return "amber";

@@ -460,7 +460,12 @@ export function WorkspacePreview() {
   );
 }
 
-/** Client fee payments today: Stripe only, card only, ACH next. Keep this honest; no BNPL or surcharge claims. */
+/**
+ * Public copy still says bank payments are coming soon. Product invoices can
+ * offer ACH once a connected account's capability is active; change this list
+ * and the help-page answer "Can clients pay their fee invoices online?" together
+ * when that should be announced. Keep this honest; no BNPL or surcharge claims.
+ */
 export const clientPaymentsPoints = [
   `Collect PA fees from clients through your own Stripe account. Stripe's standard fees apply; ${brandName} takes no cut.`,
   "Bank (ACH) payments are coming soon. On Stripe's standard pricing they cost at most $5 per payment, versus about 2.9% + 30¢ for cards.",

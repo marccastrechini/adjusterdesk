@@ -7,12 +7,18 @@ import {
   clientBillingReadinessFromV2Account,
   clientBillingStripeErrorLogFields,
   coerceClientBillingConnectionStatus,
+  achDebitCapabilityRequestNeeded,
+  achPaymentsStatusFromV1Account,
+  achPaymentsStatusFromV2Account,
+  hostedInvoicePaymentSettings,
   hostedInvoicePresentation,
   isLegacyExpressConnectedAccount,
   logClientBillingStripeError,
   merchantAccountCreateParams,
   paymentRefsFromInvoice,
   statementDescriptorFromBusinessName,
+  v1AchDebitCapabilityUpdateParams,
+  v2AchDebitCapabilityUpdateParams,
   v2OnboardingLinkParams,
   v2PublicBusinessNameUpdateParams,
 } from "@/lib/client-billing/stripe-connect-account";
@@ -20,6 +26,7 @@ import {
   createOrResumeStripeConnectAccount,
   processStripeConnectV2AccountNotification,
   refreshStripeConnectAccount,
+  requestConnectedAccountAchCapability,
   sendStripeConnectInvoice,
 } from "@/lib/client-billing/stripe-connect-provider";
 
@@ -36,6 +43,7 @@ test("new connected accounts use Accounts v2 merchant direct charges", () => {
   assert.equal(params.defaults?.responsibilities?.fees_collector, "stripe");
   assert.equal(params.defaults?.responsibilities?.losses_collector, "stripe");
   assert.equal(params.configuration?.merchant?.capabilities?.card_payments?.requested, true);
+  assert.equal(params.configuration?.merchant?.capabilities?.ach_debit_payments?.requested, true);
   assert.equal(params.configuration?.customer, undefined);
   assert.equal(params.configuration?.recipient, undefined);
   assert.equal(params.contact_email, "office@example.com");
@@ -96,6 +104,32 @@ test("v2 capability status maps charges, payouts, and submitted details", () => 
   });
   assert.equal(reviewing?.detailsSubmitted, true);
   assert.equal(reviewing?.chargesEnabled, false);
+});
+
+test("hosted invoices offer a US bank account only when ACH is active", () => {
+  assert.deepEqual(hostedInvoicePaymentSettings(false), { payment_method_types: ["card"] });
+
+  const withBank = hostedInvoicePaymentSettings(true);
+  const bankOptions = withBank.payment_method_options?.us_bank_account;
+  const bankSettings = bankOptions && typeof bankOptions === "object" ? bankOptions : undefined;
+  assert.deepEqual(withBank.payment_method_types, ["card", "us_bank_account"]);
+  assert.equal(bankSettings?.verification_method, "automatic");
+  assert.deepEqual(bankSettings?.financial_connections?.permissions, ["payment_method"]);
+  assert.equal(achDebitCapabilityRequestNeeded("active"), false);
+  assert.equal(achDebitCapabilityRequestNeeded("pending"), false);
+  assert.equal(achDebitCapabilityRequestNeeded("restricted"), false);
+  assert.equal(achDebitCapabilityRequestNeeded("unsupported"), false);
+  assert.equal(achDebitCapabilityRequestNeeded(null), true);
+  assert.equal(achDebitCapabilityRequestNeeded("inactive"), true);
+  assert.equal(
+    achPaymentsStatusFromV2Account({
+      configuration: { merchant: { capabilities: { ach_debit_payments: { status: "active" } } } },
+    }),
+    "active",
+  );
+  assert.equal(achPaymentsStatusFromV1Account({ capabilities: { us_bank_account_ach_payments: "pending" } }), "pending");
+  assert.equal(v2AchDebitCapabilityUpdateParams().configuration?.merchant?.capabilities?.ach_debit_payments?.requested, true);
+  assert.equal(v1AchDebitCapabilityUpdateParams().capabilities?.us_bank_account_ach_payments?.requested, true);
 });
 
 test("legacy Express accounts stay on the v1 readiness fields", () => {
@@ -666,6 +700,7 @@ test("sending a payment request sets the public name and app invoice number, the
     assert.equal(created.params.custom_fields?.some((field) => field.name === "Claim #" && field.value === "CLM-1"), true);
     assert.equal(created.options.idempotencyKey, "client-billing-create-inv_local");
     assert.equal(created.options.stripeAccount, "acct_v2_new");
+    assert.deepEqual((created.params as { payment_settings?: { payment_method_types?: string[] } }).payment_settings?.payment_method_types, ["card"]);
     assert.equal(
       nameUpdates.some((params) => {
         const configuration = params.configuration as { merchant?: { statement_descriptor?: unknown } } | undefined;
@@ -780,6 +815,7 @@ test("v2 account sync skips statement descriptors the platform cannot write and 
                 statement_descriptor: { descriptor: "sandbox.paclaimboard.c", prefix: "sandbox.pa" },
                 capabilities: {
                   card_payments: { status: "active" },
+                  ach_debit_payments: { status: "active" },
                   stripe_balance: { payouts: { status: "active" } },
                 },
               },
@@ -868,6 +904,7 @@ test("a statement descriptor permission error does not fail account sync", async
                 statement_descriptor: { descriptor: "sandbox.paclaimboard.c" },
                 capabilities: {
                   card_payments: { status: "pending" },
+                  ach_debit_payments: { status: "pending" },
                   stripe_balance: { payouts: { status: "pending" } },
                 },
               },
@@ -915,4 +952,174 @@ test("a statement descriptor permission error does not fail account sync", async
   );
   assert.equal("configuration" in (updates[1] ?? {}), false);
   assert.equal(logged.some((line) => line.includes("Could not update the connected account statement descriptor.")), false);
+});
+
+test("requesting ACH for an existing account updates Stripe once", async () => {
+  const stripeUpdates: Array<Record<string, unknown>> = [];
+  let reads = 0;
+  const originalUpdate = prisma.firm.update;
+  prisma.firm.update = (async () => ({ id: "firm_123" })) as unknown as typeof prisma.firm.update;
+
+  const stripe = {
+    v2: {
+      core: {
+        accounts: {
+          retrieve: async () => {
+            reads += 1;
+            const ach = reads >= 3 ? { status: "active" } : undefined;
+            return {
+              id: "acct_v2_new",
+              dashboard: "full",
+              defaults: { responsibilities: { fees_collector: "stripe", losses_collector: "stripe" } },
+              configuration: {
+                merchant: {
+                  capabilities: {
+                    card_payments: { status: "active" },
+                    ...(ach ? { ach_debit_payments: ach } : {}),
+                    stripe_balance: { payouts: { status: "active" } },
+                  },
+                },
+              },
+              requirements: { entries: [] },
+            };
+          },
+          update: async (_id: string, params: Record<string, unknown>) => {
+            stripeUpdates.push(params);
+            return {
+              id: "acct_v2_new",
+              configuration: { merchant: { capabilities: { ach_debit_payments: { status: "pending" } } } },
+            };
+          },
+        },
+      },
+    },
+    accounts: {
+      retrieve: async () => {
+        throw new Error("v1 retrieve should not run");
+      },
+      update: async () => {
+        throw new Error("v1 update should not run");
+      },
+    },
+  } as never;
+
+  try {
+    const preview = await requestConnectedAccountAchCapability(firm({ stripeConnectAccountId: "acct_v2_new" }), stripe, { dryRun: true });
+    const requested = await requestConnectedAccountAchCapability(firm({ stripeConnectAccountId: "acct_v2_new" }), stripe);
+    const again = await requestConnectedAccountAchCapability(firm({ stripeConnectAccountId: "acct_v2_new", stripeAchPaymentsStatus: "active" }), stripe);
+
+    assert.equal(preview.dryRun, true);
+    assert.equal(preview.requested, false);
+    assert.equal(preview.status, "unrequested");
+    assert.equal(requested.requested, true);
+    assert.equal(requested.status, "pending");
+    assert.equal(again.requested, false);
+    assert.equal(again.status, "active");
+    assert.equal(stripeUpdates.length, 1);
+    const capabilities = (stripeUpdates[0]?.configuration as { merchant?: { capabilities?: { ach_debit_payments?: { requested?: boolean } } } } | undefined)?.merchant
+      ?.capabilities;
+    assert.equal(capabilities?.ach_debit_payments?.requested, true);
+  } finally {
+    prisma.firm.update = originalUpdate;
+  }
+});
+
+test("an active ACH capability adds us_bank_account to the hosted invoice", async () => {
+  const originalInvoiceUpdate = prisma.invoice.update;
+  const originalClaimFind = prisma.claim.findUnique;
+  const originalTransaction = prisma.$transaction;
+  const created: Array<{ payment_method_types?: string[]; verification?: string }> = [];
+  const lineItems: Array<{ description?: string; amount?: number }> = [];
+
+  prisma.invoice.update = (async () => ({ id: "inv_local" })) as unknown as typeof prisma.invoice.update;
+  prisma.claim.findUnique = (async () => ({
+    id: "claim_1",
+    claimNumber: "CLM-1",
+    contactId: "contact_1",
+    contact: { id: "contact_1", firstName: "Pat", lastName: "Client", email: "pat@example.com", stripeCustomerId: "cus_123" },
+  })) as unknown as typeof prisma.claim.findUnique;
+  prisma.$transaction = (async (fn: (tx: { claim: { findUnique: () => Promise<unknown> }; activity: { create: () => Promise<unknown> } }) => Promise<void>) =>
+    fn({
+      claim: { findUnique: async () => ({ id: "claim_1", contactId: "contact_1" }) },
+      activity: { create: async () => ({}) },
+    })) as unknown as typeof prisma.$transaction;
+
+  const stripe = {
+    v2: {
+      core: {
+        accounts: {
+          retrieve: async () => ({
+            id: "acct_v2_new",
+            display_name: "North Office",
+            dashboard: "full",
+            defaults: {
+              profile: { doing_business_as: "North Office" },
+              responsibilities: { fees_collector: "stripe", losses_collector: "stripe" },
+            },
+            configuration: {
+              merchant: {
+                capabilities: {
+                  card_payments: { status: "active" },
+                  ach_debit_payments: { status: "active" },
+                },
+              },
+            },
+          }),
+          update: async () => ({ id: "acct_v2_new" }),
+        },
+      },
+    },
+    invoices: {
+      create: async (params: { payment_settings?: { payment_method_types?: string[]; payment_method_options?: { us_bank_account?: { verification_method?: string } } } }) => {
+        created.push({
+          payment_method_types: params.payment_settings?.payment_method_types,
+          verification: params.payment_settings?.payment_method_options?.us_bank_account?.verification_method,
+        });
+        return { id: "in_ach", status: "draft", number: "TEST-001", lines: { data: [] } };
+      },
+      update: async (id: string) => ({ id, status: "draft", number: "TEST-001", lines: { data: [] } }),
+      finalizeInvoice: async (id: string) => ({ id, status: "open", hosted_invoice_url: "https://pay.stripe.test/in_ach" }),
+      sendInvoice: async (id: string) => ({ id, status: "open", hosted_invoice_url: "https://pay.stripe.test/in_ach", amount_due: 15000, amount_paid: 0 }),
+    },
+    invoiceItems: {
+      create: async (params: { description?: string; amount?: number }) => {
+        lineItems.push(params);
+        return { id: "ii_1" };
+      },
+    },
+  } as never;
+
+  try {
+    await sendStripeConnectInvoice(
+      firm({
+        stripeConnectAccountId: "acct_v2_new",
+        clientPaymentFeeEnabled: true,
+        clientPaymentFeeAcknowledgedAt: new Date("2026-01-01T00:00:00Z"),
+        clientPaymentFeeBasisPoints: 300,
+        clientPaymentFeeFixedCents: 0,
+        clientPaymentFeeLabel: "Client payment fee recovery",
+      }),
+      {
+        id: "inv_local",
+        claimId: "claim_1",
+        invoiceNumber: "TEST-001",
+        feeAmountCents: 15000,
+        issuedAt: new Date("2026-10-23T00:00:00Z"),
+        dueAt: new Date("2026-11-06T00:00:00Z"),
+        externalInvoiceId: null,
+        sentToClientAt: null,
+        status: "DRAFT",
+      } as never,
+      stripe,
+    );
+  } finally {
+    prisma.invoice.update = originalInvoiceUpdate;
+    prisma.claim.findUnique = originalClaimFind;
+    prisma.$transaction = originalTransaction;
+  }
+
+  assert.deepEqual(created[0]?.payment_method_types, ["card", "us_bank_account"]);
+  assert.equal(created[0]?.verification, "automatic");
+  assert.equal(lineItems.some((line) => line.description === "Client billing fee for invoice TEST-001" && line.amount === 15000), true);
+  assert.equal(lineItems.some((line) => line.description === "Client payment fee recovery" && line.amount === 450), true);
 });

@@ -62,7 +62,23 @@ export const noticeMessages = {
   },
   "client-billing-status-refreshed": {
     title: "Client billing status refreshed",
-    message: "The workspace billing connection status was updated.",
+    message: "The workspace billing connection status was updated. Bank payment status is included when this office has a connected Stripe account.",
+  },
+  "client-billing-ach-requested": {
+    title: "Bank payments requested",
+    message: "US bank account (ACH) was requested for this connected account. Invoices offer bank payments only after Stripe marks the capability active.",
+  },
+  "client-billing-ach-already-active": {
+    title: "Bank payments already enabled",
+    message: "This connected account can already accept US bank account payments. No new request was sent.",
+  },
+  "client-billing-ach-unavailable": {
+    title: "No connected Stripe account",
+    message: "Connect Stripe for this office before requesting bank payments.",
+  },
+  "client-billing-ach-failed": {
+    title: "Bank payment request failed",
+    message: "Stripe did not accept the US bank account capability request. Card payments for this office were left unchanged.",
   },
   "client-billing-fee-updated": {
     title: "Fee recovery settings saved",

@@ -215,6 +215,7 @@ model Firm {
   stripeChargesEnabled Boolean @default(false)
   stripePayoutsEnabled Boolean @default(false)
   stripeDetailsSubmitted Boolean @default(false)
+  stripeAchPaymentsStatus String?
   clientPaymentFeeEnabled Boolean @default(false)
   clientPaymentFeeLabel String?
   clientPaymentFeeBasisPoints Int?
@@ -781,6 +782,7 @@ model Invoice {
   externalPaymentIntentId  String?
   externalAmountDueCents   Int?
   externalAmountPaidCents  Int?
+  externalPaymentStatus    String?
   externalSyncedAt         DateTime?
   sentToClientAt           DateTime?
   createdAt                DateTime      @default(now())

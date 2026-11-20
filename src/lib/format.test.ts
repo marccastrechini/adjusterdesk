@@ -20,6 +20,24 @@ describe("invoice helpers", () => {
     assert.equal(invoiceStatusTone(invoice), "red");
   });
 
+  it("shows a processing bank payment as pending and still unpaid", () => {
+    const pending = {
+      status: "SENT",
+      dueAt: new Date("2099-01-01T12:00:00Z"),
+      feeAmountCents: 100000,
+      amountPaidCents: 0,
+      externalPaymentStatus: "processing",
+    };
+
+    assert.equal(invoiceDisplayStatus(pending), "Payment pending");
+    assert.equal(invoiceStatusTone(pending), "amber");
+    assert.equal(
+      invoiceDisplayStatus({ ...pending, dueAt: new Date("2024-01-01T12:00:00Z") }),
+      "Payment pending, overdue",
+    );
+    assert.equal(invoiceDisplayStatus({ ...pending, status: "PAID", amountPaidCents: 100000 }), "Paid");
+  });
+
   it("turns stored enum values into plain labels", () => {
     assert.equal(labelFromEnum("WAITING_ON_CARRIER"), "Waiting On Carrier");
     assert.equal(labelFromEnum(null), "Not set");

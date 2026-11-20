@@ -5,9 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { requireStripeClient } from "@/lib/stripe";
 import { calculateClientPaymentFeeRecoveryCents } from "./fee-recovery";
 import {
+  achDebitCapabilityRequestNeeded,
+  achPaymentsActive,
+  achPaymentsStatusFromV1Account,
+  achPaymentsStatusFromV2Account,
   clientBillingConnectionData,
   clientBillingReadinessFromV1Account,
   clientBillingReadinessFromV2Account,
+  hostedInvoicePaymentSettings,
   hostedInvoicePresentation,
   insuredDisplayName,
   isClientBillingReadinessActive,
@@ -15,11 +20,14 @@ import {
   isStatementDescriptorPermissionError,
   logClientBillingStripeError,
   merchantAccountCreateParams,
+  normalizeAchPaymentsStatus,
   resolveInvoicePaymentRefs,
   stableDaysUntilDue,
+  v1AchDebitCapabilityUpdateParams,
   v1BusinessProfileNameParams,
   v1OnboardingLinkParams,
   v1PublicBusinessNameUpdateParams,
+  v2AchDebitCapabilityUpdateParams,
   v2BusinessNameOnlyUpdateParams,
   v2ConnectedAccountEventTypes,
   v2OnboardingLinkParams,
@@ -90,11 +98,20 @@ function shouldFallBackToV1AccountLink(error: unknown) {
   return error.statusCode === 404 || (error.code ? v1AccountLinkFallbackCodes.has(error.code) : false);
 }
 
+type ConnectedAccountAchSnapshot = {
+  legacy: boolean;
+  status: string | null;
+};
+
 async function retrieveV1Readiness(stripe: Stripe, accountId: string) {
   const account = await stripe.accounts.retrieve(accountId);
   return {
     accountId: account.id,
     readiness: clientBillingReadinessFromV1Account(account),
+    ach: {
+      legacy: true,
+      status: achPaymentsStatusFromV1Account(account),
+    } satisfies ConnectedAccountAchSnapshot,
   };
 }
 
@@ -112,7 +129,14 @@ async function readConnectedAccountReadiness(stripe: Stripe, accountId: string) 
 
     const readiness = clientBillingReadinessFromV2Account(account);
     if (readiness) {
-      return { accountId: account.id || accountId, readiness };
+      return {
+        accountId: account.id || accountId,
+        readiness,
+        ach: {
+          legacy: false,
+          status: achPaymentsStatusFromV2Account(account),
+        } satisfies ConnectedAccountAchSnapshot,
+      };
     }
   } catch (error) {
     if (!canFallBackToV1AccountRead(error)) {
@@ -129,7 +153,7 @@ async function readConnectedAccountReadiness(stripe: Stripe, accountId: string) 
   }
 }
 
-async function persistFirmStripeReadiness(firm: Firm, accountId: string, readiness: ClientBillingReadiness) {
+async function persistFirmStripeReadiness(firm: Firm, accountId: string, readiness: ClientBillingReadiness, achStatus?: string | null) {
   const active = isClientBillingReadinessActive(readiness);
 
   await prisma.firm.update({
@@ -137,6 +161,7 @@ async function persistFirmStripeReadiness(firm: Firm, accountId: string, readine
     data: {
       stripeConnectAccountId: accountId,
       ...clientBillingConnectionData(readiness),
+      ...(achStatus ? { stripeAchPaymentsStatus: achStatus } : {}),
       clientBillingProvider: "STRIPE_CONNECT",
     },
   });
@@ -191,6 +216,7 @@ export async function createOrResumeStripeConnectAccount(firm: Firm, stripe: Str
   if (!accountId) {
     const account = await stripe.v2.core.accounts.create(merchantAccountCreateParams(firm));
     accountId = account.id;
+    const createdAchStatus = achPaymentsStatusFromV2Account(account as V2ConnectedAccountSnapshot);
 
     await prisma.firm.update({
       where: { id: firm.id },
@@ -199,6 +225,7 @@ export async function createOrResumeStripeConnectAccount(firm: Firm, stripe: Str
         clientBillingProvider: "STRIPE_CONNECT",
         clientBillingConnectionStatus: ClientBillingConnectionStatus.ONBOARDING,
         clientBillingEnabled: false,
+        stripeAchPaymentsStatus: createdAchStatus && createdAchStatus !== "unrequested" ? createdAchStatus : "pending",
       },
     });
   } else {
@@ -217,6 +244,80 @@ export async function createOrResumeStripeConnectAccount(firm: Firm, stripe: Str
   return { url };
 }
 
+async function requestAchDebitCapability(stripe: Stripe, accountId: string, legacy: boolean) {
+  if (legacy) {
+    const account = await stripe.accounts.update(accountId, v1AchDebitCapabilityUpdateParams());
+    const status = achPaymentsStatusFromV1Account(account);
+    return { status: status ?? "pending", requested: true };
+  }
+
+  const updated = (await stripe.v2.core.accounts.update(accountId, v2AchDebitCapabilityUpdateParams())) as V2ConnectedAccountSnapshot;
+  const status = achPaymentsStatusFromV2Account(updated);
+  return { status: status ?? "pending", requested: true };
+}
+
+async function ensureConnectedAccountAchCapability(
+  stripe: Stripe,
+  accountId: string,
+  ach: ConnectedAccountAchSnapshot,
+) {
+  const current = ach.status ?? "unrequested";
+  if (!achDebitCapabilityRequestNeeded(current)) {
+    return { status: current, requested: false };
+  }
+
+  try {
+    return await requestAchDebitCapability(stripe, accountId, ach.legacy);
+  } catch (error) {
+    logClientBillingStripeError("Could not request US bank account payments for the connected account.", error);
+    return { status: current, requested: false };
+  }
+}
+
+export type ConnectedAccountAchRequest = {
+  accountId: string;
+  status: string;
+  requested: boolean;
+  dryRun: boolean;
+};
+
+/**
+ * Idempotent request for the ACH capability on one connected account.
+ * Active, pending, restricted, and unsupported accounts are left as they are.
+ */
+export async function requestConnectedAccountAchCapability(
+  firm: Firm,
+  stripe: Stripe = requireStripeClient(),
+  options?: { dryRun?: boolean },
+): Promise<ConnectedAccountAchRequest> {
+  if (!firm.stripeConnectAccountId) {
+    throw new Error("Stripe Connect account is not connected.");
+  }
+
+  const dryRun = Boolean(options?.dryRun);
+  const { accountId, ach } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
+  const current = ach.status ?? "unrequested";
+
+  if (dryRun || !achDebitCapabilityRequestNeeded(current)) {
+    if (!dryRun && current !== firm.stripeAchPaymentsStatus) {
+      await prisma.firm.update({
+        where: { id: firm.id },
+        data: { stripeAchPaymentsStatus: current },
+      });
+    }
+
+    return { accountId, status: current, requested: false, dryRun };
+  }
+
+  const requested = await requestAchDebitCapability(stripe, accountId, ach.legacy);
+  await prisma.firm.update({
+    where: { id: firm.id },
+    data: { stripeAchPaymentsStatus: requested.status },
+  });
+
+  return { accountId, status: requested.status, requested: true, dryRun: false };
+}
+
 export async function refreshStripeConnectAccount(firm: Firm, stripe: Stripe = requireStripeClient()) {
   if (!firm.stripeConnectAccountId) {
     return {
@@ -226,8 +327,9 @@ export async function refreshStripeConnectAccount(firm: Firm, stripe: Stripe = r
     };
   }
 
-  const { accountId, readiness } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
-  const result = await persistFirmStripeReadiness(firm, accountId, readiness);
+  const { accountId, readiness, ach } = await readConnectedAccountReadiness(stripe, firm.stripeConnectAccountId);
+  const achResult = await ensureConnectedAccountAchCapability(stripe, accountId, ach);
+  const result = await persistFirmStripeReadiness(firm, accountId, readiness, normalizeAchPaymentsStatus(achResult.status));
   try {
     await syncConnectedAccountPublicName(stripe, firm);
   } catch (error) {
@@ -288,11 +390,11 @@ async function updateV1PublicBusinessName(stripe: Stripe, accountId: string, nam
  * never fatal, and full-dashboard accounts that Stripe bills directly skip
  * the write entirely.
  */
-export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm) {
+export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm): Promise<string | null> {
   const accountId = firm.stripeConnectAccountId;
   const name = firm.name?.trim();
   if (!accountId || !name) {
-    return;
+    return null;
   }
 
   try {
@@ -302,12 +404,13 @@ export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm)
 
     if (isLegacyExpressConnectedAccount(account)) {
       await updateV1PublicBusinessName(stripe, accountId, name);
-      return;
+      return null;
     }
 
+    const achStatus = achPaymentsStatusFromV2Account(account);
     const params = v2PublicBusinessNameUpdateParams(account, name);
     if (!params) {
-      return;
+      return achStatus;
     }
 
     try {
@@ -317,14 +420,14 @@ export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm)
       const namesOnly = descriptorWrite ? v2BusinessNameOnlyUpdateParams(account, name) : null;
       const permissionDenied = descriptorWrite && isStatementDescriptorPermissionError(error);
 
-      if (!namesOnly) {
+        if (!namesOnly) {
         if (!permissionDenied) {
           logClientBillingStripeError(
             descriptorWrite ? "Could not update the connected account statement descriptor." : "Could not update the connected account public name.",
             error,
           );
         }
-        return;
+        return achStatus;
       }
 
       if (!permissionDenied) {
@@ -337,10 +440,12 @@ export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm)
         logClientBillingStripeError("Could not update the connected account public name.", retryError);
       }
     }
+
+    return achStatus;
   } catch (error) {
     if (!canFallBackToV1AccountRead(error)) {
       logClientBillingStripeError("Could not update the connected account public name.", error);
-      return;
+      return null;
     }
 
     try {
@@ -348,6 +453,8 @@ export async function syncConnectedAccountPublicName(stripe: Stripe, firm: Firm)
     } catch (retryError) {
       logClientBillingStripeError("Could not update the connected account public name.", retryError);
     }
+
+    return null;
   }
 }
 
@@ -463,7 +570,8 @@ async function recordInvoiceSentActivity(firm: Firm, invoice: Invoice) {
 }
 
 export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, stripe: Stripe = requireStripeClient()) {
-  await syncConnectedAccountPublicName(stripe, firm);
+  const observedAchStatus = await syncConnectedAccountPublicName(stripe, firm);
+  const paymentSettings = hostedInvoicePaymentSettings(achPaymentsActive(observedAchStatus ?? firm.stripeAchPaymentsStatus));
   const claim = await prisma.claim.findUnique({ where: { id: invoice.claimId }, include: { contact: true } });
 
   if (!claim) {
@@ -507,6 +615,7 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
         days_until_due: daysUntilDue,
         description: presentation.description,
         custom_fields: presentation.custom_fields,
+        payment_settings: paymentSettings,
         metadata,
         pending_invoice_items_behavior: "exclude",
         ...(presentation.number ? { number: presentation.number } : {}),
@@ -538,6 +647,7 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
       {
         description: presentation.description,
         custom_fields: presentation.custom_fields,
+        payment_settings: paymentSettings,
         metadata,
         days_until_due: daysUntilDue,
         ...(presentation.number && presentation.number !== draftNumber ? { number: presentation.number } : {}),
@@ -546,6 +656,12 @@ export async function sendStripeConnectInvoice(firm: Firm, invoice: Invoice, str
     );
     await ensureInvoiceLines(stripe, firm, invoice, draftInvoice, customerId);
     stripeInvoice = await stripe.invoices.finalizeInvoice(draftInvoice.id, {}, stripeAccountOptions(firm, `client-billing-finalize-${invoice.id}`));
+  } else if (stripeInvoice.status === "open") {
+    try {
+      stripeInvoice = await stripe.invoices.update(stripeInvoice.id, { payment_settings: paymentSettings }, account);
+    } catch (error) {
+      logClientBillingStripeError("Could not update hosted invoice payment methods.", error);
+    }
   }
 
   const alreadyEmailed = Boolean(invoice.sentToClientAt);

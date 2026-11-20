@@ -16,6 +16,16 @@ export const connectedAccountDashboard = "full" as const;
 export const connectedAccountFeesCollector = "stripe" as const;
 export const connectedAccountLossesCollector = "stripe" as const;
 
+/**
+ * ACH Direct Debit on Accounts v2. The v1 capability name is
+ * `us_bank_account_ach_payments`; invoices still offer the payment method as
+ * `us_bank_account`.
+ */
+export const v2AchDebitCapability = "ach_debit_payments" as const;
+export const v1AchDebitCapability = "us_bank_account_ach_payments" as const;
+
+const achPaymentsStatuses = new Set(["active", "pending", "restricted", "inactive", "unsupported", "unrequested"]);
+
 export type ClientBillingReadiness = {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
@@ -43,6 +53,7 @@ export type V2ConnectedAccountSnapshot = {
       } | null;
       capabilities?: {
         card_payments?: { status?: string | null } | null;
+        ach_debit_payments?: { status?: string | null } | null;
         stripe_balance?: {
           payouts?: { status?: string | null } | null;
         } | null;
@@ -146,6 +157,99 @@ export function clientBillingReadinessFromV2Account(account: V2ConnectedAccountS
   return { chargesEnabled, payoutsEnabled, detailsSubmitted };
 }
 
+export function normalizeAchPaymentsStatus(status: string | null | undefined) {
+  const normalized = status?.trim().toLowerCase();
+  if (normalized && achPaymentsStatuses.has(normalized)) {
+    return normalized;
+  }
+
+  return "unrequested";
+}
+
+export function achPaymentsActive(status: string | null | undefined) {
+  return normalizeAchPaymentsStatus(status) === "active";
+}
+
+/**
+ * Request again only when Stripe has not been asked, or the capability was
+ * turned off. Pending, restricted, active, and unsupported are already decided.
+ */
+export function achDebitCapabilityRequestNeeded(status: string | null | undefined) {
+  const normalized = normalizeAchPaymentsStatus(status);
+  return normalized === "unrequested" || normalized === "inactive";
+}
+
+export function achPaymentsStatusFromV2Account(account: V2ConnectedAccountSnapshot) {
+  const capabilities = account.configuration?.merchant?.capabilities;
+  if (!capabilities) {
+    return null;
+  }
+
+  return normalizeAchPaymentsStatus(capabilities.ach_debit_payments?.status);
+}
+
+export function achPaymentsStatusFromV1Account(account: {
+  capabilities?: { us_bank_account_ach_payments?: string | null } | null;
+}) {
+  const status = account.capabilities?.us_bank_account_ach_payments;
+  if (!status) {
+    return null;
+  }
+
+  return normalizeAchPaymentsStatus(status);
+}
+
+export function v2AchDebitCapabilityUpdateParams(): Stripe.V2.Core.AccountUpdateParams {
+  return {
+    configuration: {
+      merchant: {
+        capabilities: {
+          ach_debit_payments: {
+            requested: true,
+          },
+        },
+      },
+    },
+    include: ["configuration.merchant", "defaults", "requirements"],
+  };
+}
+
+export function v1AchDebitCapabilityUpdateParams(): Stripe.AccountUpdateParams {
+  return {
+    capabilities: {
+      us_bank_account_ach_payments: {
+        requested: true,
+      },
+    },
+  };
+}
+
+/**
+ * Hosted invoices have no excluded_payment_method_types field. The invoice
+ * payment_settings list is the supported way to offer bank and card on one
+ * connected account and card only on another. `automatic` is instant
+ * Financial Connections verification with a microdeposit fallback.
+ */
+export function hostedInvoicePaymentSettings(achActive: boolean): Stripe.InvoiceCreateParams.PaymentSettings {
+  if (!achActive) {
+    return {
+      payment_method_types: ["card"],
+    };
+  }
+
+  return {
+    payment_method_types: ["card", "us_bank_account"],
+    payment_method_options: {
+      us_bank_account: {
+        verification_method: "automatic",
+        financial_connections: {
+          permissions: ["payment_method"],
+        },
+      },
+    },
+  };
+}
+
 export function isLegacyExpressConnectedAccount(account: V2ConnectedAccountSnapshot) {
   const feesCollector = account.defaults?.responsibilities?.fees_collector;
   return account.dashboard === "express" || feesCollector === "application_express" || feesCollector === "application_custom";
@@ -232,6 +336,9 @@ export function merchantAccountCreateParams(firm: { id: string; name: string; em
       merchant: {
         capabilities: {
           card_payments: {
+            requested: true,
+          },
+          ach_debit_payments: {
             requested: true,
           },
         },
