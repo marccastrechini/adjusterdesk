@@ -11,15 +11,17 @@ import { brandName, brandNameTM } from "@/lib/brand";
 test("home hero answers what, who, and the offer before the feature grid", () => {
   const html = renderToStaticMarkup(<HomePage />);
   const eyebrow = html.indexOf("For 1–5 person public adjusting offices");
-  const title = html.indexOf("The desk for small public adjusting offices");
+  const title = html.indexOf("Know what needs attention. Keep every claim moving.");
   const subhead = html.indexOf(
-    "Leads, claims, documents, follow-ups, settlements, and fees—on one desk instead of email, memory, and folders.",
+    "A straightforward office workspace for small public adjusting firms. Track claims, follow-ups, settlements, invoices, and unpaid fees—all in one place.",
   );
+  const points = html.indexOf("Track settlement checks, PA fees, and the money still owed on every claim.");
   const offer = html.indexOf("$0 for 90 days, then $29/month Solo or $49/month Small Office");
   const featureGrid = html.indexOf("Fee and invoice tracking");
 
   assert.ok(eyebrow >= 0 && title > eyebrow);
   assert.ok(subhead > title);
+  assert.ok(points > subhead && points < featureGrid);
   assert.ok(offer > subhead && offer < featureGrid);
   assert.ok(featureGrid > 0);
   assert.equal(html.indexOf("See the desk in 60 seconds"), -1);
@@ -30,6 +32,9 @@ test("home hero answers what, who, and the offer before the feature grid", () =>
   assert.ok(html.includes(`${brandNameTM} is a simple office workspace`));
   assert.doesNotMatch(html, /<video|product-overview\.mp4/i);
   assert.doesNotMatch(html, /autoplay/i);
+  assert.match(html, /PA ClaimBoard takes no cut/);
+  assert.match(html, /Tell us, and we&#x27;ll work with you on connecting it/);
+  assert.doesNotMatch(html, /Klarna|Affirm|buy now, pay later|surcharge-ready|works with any/i);
 });
 
 test("founding page states the product and the founders without the overview video", () => {

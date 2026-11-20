@@ -1,5 +1,5 @@
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
-import { CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, featureHighlights } from "@/components/public-site";
+import { CheckList, CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, clientPaymentsPoints, featureHighlights } from "@/components/public-site";
 import { TrackedLink } from "@/components/tracked-link";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
@@ -12,6 +12,12 @@ export const metadata = publicPageMetadata({
 });
 
 const scatteredItems = ["Spreadsheets", "Email folders", "Text messages", "Scattered documents", "Calendar reminders", "QuickBooks notes"];
+
+const heroPoints = [
+  "See what's due today and what's overdue, without digging through email or a spreadsheet.",
+  "Keep everyone in the office working from the same claim information.",
+  "Track settlement checks, PA fees, and the money still owed on every claim.",
+];
 
 const howItWorksSteps = [
   {
@@ -37,8 +43,9 @@ export default function HomePage() {
     <>
       <PublicHero
         eyebrow="For 1–5 person public adjusting offices"
-        title="The desk for small public adjusting offices"
-        description="Leads, claims, documents, follow-ups, settlements, and fees—on one desk instead of email, memory, and folders."
+        title="Know what needs attention. Keep every claim moving."
+        description="A straightforward office workspace for small public adjusting firms. Track claims, follow-ups, settlements, invoices, and unpaid fees—all in one place."
+        points={heroPoints}
         primaryHref={FOUNDING_PAGE_HREF}
         primaryLabel="See founding desk offer"
         assurance={
@@ -84,6 +91,14 @@ export default function HomePage() {
         description={`${brandNameTM} is a simple office workspace for tracking the pieces a small public adjusting firm already works with every day.`}
       >
         <FeatureGrid features={featureHighlights} />
+      </PublicSection>
+
+      <PublicSection
+        title="Get paid without changing how you work"
+        description="PA fees come in as checks land, often in pieces. Track each one against the claim, and send the client a payment link when the fee is due."
+        tone="slate"
+      >
+        <CheckList items={clientPaymentsPoints} />
       </PublicSection>
 
       <PublicSection title="Built for solo adjusters and small offices" tone="white">

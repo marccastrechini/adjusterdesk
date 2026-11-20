@@ -43,7 +43,7 @@ const sections: TrustSection[] = [
       "Measure acquisition and product use with Google Analytics 4 when a measurement ID is configured, as described below.",
       "Help troubleshoot issues and improve the product for small public adjusting offices.",
       "Protect the service, prevent misuse, and keep demo and production work separated.",
-      "Process subscription payments through Stripe.",
+      "Process subscription payments through Stripe, and client invoice payments through Stripe when an office turns on client payments.",
     ],
   },
   {
@@ -58,7 +58,7 @@ const sections: TrustSection[] = [
   {
     title: "Service providers",
     paragraphs: [
-      `${brandName} relies on service providers to run the product. Stripe is the payment processor for Checkout and subscription billing. ${brandName} does not store full card numbers. Other providers may handle hosting, database or file storage, email delivery, and error logging. Google provides Google Analytics 4 when the measurement ID above is set.`,
+      `${brandName} relies on service providers to run the product. Stripe is the payment processor for Checkout and subscription billing. When an office turns on client payments, its clients' fee invoice payments are processed by Stripe on that office's own connected Stripe account. ${brandName} does not store card numbers; it stores the invoice and the payment status Stripe reports back. Other providers may handle hosting, database or file storage, email delivery, and error logging. Google provides Google Analytics 4 when the measurement ID above is set.`,
       "The public site does not use advertising pixels or retargeting scripts. The cookie page describes the cookies those providers can set.",
     ],
   },
@@ -72,7 +72,7 @@ const sections: TrustSection[] = [
     title: "Retention and customer ownership",
     paragraphs: [
       `Customer offices own the claim, client, document, and business information they enter. ${brandName} keeps information while it is needed to provide the service, support the account, meet ordinary business and backup needs, or resolve a billing or security question. This page does not set a fixed deletion calendar.`,
-      `Export and deletion are not fully self-serve yet. While those tools are still growing, send export, deletion, and other privacy-rights requests to ${supportEmail}. We will handle the request for that workspace. Canceling a subscription does not by itself delete claim records.`,
+      `Your office's data is yours. Signed-in users can download leads, claims, and invoices as CSV files from those pages at any time. For a full export of the workspace, including documents, email ${supportEmail} and we will provide it. Deletion and other privacy-rights requests go to the same address, and we will handle the request for that workspace. Canceling a subscription does not by itself delete claim records.`,
     ],
   },
   {

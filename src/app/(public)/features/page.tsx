@@ -1,4 +1,4 @@
-import { CtaBand, FeatureGrid, PublicPageHeader, PublicSection, extendedFeatureHighlights } from "@/components/public-site";
+import { CheckList, CtaBand, FeatureGrid, PublicPageHeader, PublicSection, clientPaymentsPoints, extendedFeatureHighlights } from "@/components/public-site";
 import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
@@ -18,6 +18,9 @@ export default function FeaturesPage() {
       />
       <PublicSection title="Core features">
         <FeatureGrid features={extendedFeatureHighlights} />
+      </PublicSection>
+      <PublicSection title="Client payments" description="Send the client a payment link for the PA fee and see it marked paid on the claim." tone="white">
+        <CheckList items={clientPaymentsPoints} />
       </PublicSection>
       <CtaBand title="Want to see how these pieces fit together?" description="Request a demo and walk through a claim from intake to settlement payment and fee invoice tracking." />
     </>
