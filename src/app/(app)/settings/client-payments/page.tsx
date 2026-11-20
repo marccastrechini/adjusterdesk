@@ -21,8 +21,16 @@ export default async function ClientPaymentsSettingsPage() {
       <Card className="border-amber-200 bg-amber-50 text-amber-950">
         <p className="text-sm font-semibold">Fee recovery stays off by default.</p>
         <p className="mt-1 text-sm leading-6">
-          Payment processing surcharges, convenience fees, and fee recovery are restricted in some states and by card-network rules. If you enable them, this firm is responsible for compliance, notices, and required disclosures.
+          Payment processing surcharges, convenience fees, and fee recovery are restricted by card-network rules and state law. If you enable fee recovery, this firm is responsible for compliance, notices, and required disclosures.
         </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6">
+          <li>
+            The fee line is added to the invoice no matter how the client pays, including debit cards and, once available, bank (ACH) payments. Card networks do not allow surcharges on debit cards.
+          </li>
+          <li>Some states ban surcharges outright, including Connecticut, Maine, and Massachusetts. Connecticut&apos;s ban covers a fee on any payment method, not only cards.</li>
+          <li>In states that cap public adjuster fees, a processing fee the client pays may count toward the capped fee.</li>
+          <li>Check with your attorney before turning this on.</li>
+        </ul>
         <p className="mt-1 text-sm leading-6">{brandName} does not apply fee recovery automatically. It only adds an optional separate line item when you explicitly turn it on.</p>
       </Card>
 

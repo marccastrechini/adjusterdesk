@@ -46,6 +46,21 @@ const faqs = [
       "Yes. You can record settlement rounds, track fee amounts, and monitor invoice and payment status by claim.",
   },
   {
+    question: "Can clients pay their fee invoices online?",
+    answer:
+      `Yes. Connect your office's own Stripe account in Client Payments settings, then send the client a secure payment link for the fee invoice. Stripe's standard fees apply, and ${brandName} takes no cut. Clients pay by card today. Bank (ACH) payments are coming soon; on Stripe's standard pricing they cost at most $5 per payment, versus about 2.9% + 30¢ for cards.`,
+  },
+  {
+    question: "Do I have to switch payment processors?",
+    answer:
+      "We integrate with Stripe today. Already use QuickBooks Payments or another processor? Tell us, and we'll work with you on connecting it. You can also keep collecting fees the way you do now and just record the payments on the claim.",
+  },
+  {
+    question: "Can I get my data out?",
+    answer:
+      `Yes. Your office's data is yours. You can download your leads, claims, and invoices as CSV files from those pages at any time. For a full export of your workspace, including documents, email ${supportEmail} and we'll provide it.`,
+  },
+  {
     question: "Can clients upload documents?",
     answer:
       "You can track requested and received documents in the claim file. Keep using your current document collection process while your office workflow is being set up.",

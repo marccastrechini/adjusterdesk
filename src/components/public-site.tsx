@@ -73,7 +73,7 @@ export const featureHighlights = [
   },
   {
     title: "Fee and invoice tracking",
-    description: "Track public adjuster fees, invoices, balances due, issued dates, due dates, and receivables.",
+    description: "Track public adjuster fees, invoices, balances due, and the money still owed on each claim, then send clients a secure payment link.",
     icon: ReceiptText,
   },
 ];
@@ -239,10 +239,12 @@ export function PublicHero({
   assurance,
   primaryHref,
   primaryLabel,
+  points,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  points?: string[];
   children?: ReactNode;
   assurance?: ReactNode;
   primaryHref?: string;
@@ -255,6 +257,16 @@ export function PublicHero({
           <p className="text-sm font-semibold uppercase tracking-normal text-teal-800">{eyebrow}</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">{title}</h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">{description}</p>
+          {points?.length ? (
+            <ul className="mt-5 grid gap-2">
+              {points.map((point) => (
+                <li key={point} className="flex gap-2 text-base leading-7 text-slate-700">
+                  <CheckCircle2 className="mt-1 h-5 w-5 flex-none text-emerald-700" aria-hidden />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div className="mt-6 flex flex-wrap gap-3">
             <PublicButtonLink href={primaryHref ?? startHref} variant="primary" eventName="trial_start_click">
               {primaryLabel ?? startLabel}
@@ -448,6 +460,13 @@ export function WorkspacePreview() {
   );
 }
 
+/** Client fee payments today: Stripe only, card only, ACH next. Keep this honest; no BNPL or surcharge claims. */
+export const clientPaymentsPoints = [
+  `Collect PA fees from clients through your own Stripe account. Stripe's standard fees apply; ${brandName} takes no cut.`,
+  "Bank (ACH) payments are coming soon. On Stripe's standard pricing they cost at most $5 per payment, versus about 2.9% + 30¢ for cards.",
+  "We integrate with Stripe today. Already use QuickBooks Payments or another processor? Tell us, and we'll work with you on connecting it.",
+];
+
 export function CheckList({ items }: { items: string[] }) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -470,7 +489,7 @@ export const extendedFeatureHighlights = [
   },
   {
     title: "Spreadsheet import and onboarding",
-    description: "Bring in basic lead and claim spreadsheets now, with guided onboarding planned for offices moving from older files.",
+    description: "Bring in basic lead and claim spreadsheets, and download your leads, claims, and invoices as CSV whenever you need them.",
     icon: Upload,
   },
 ];

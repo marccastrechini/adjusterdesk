@@ -19,7 +19,8 @@ const sections: TrustSection[] = [
   {
     title: "Workspace separation",
     paragraphs: [
-      "Authenticated app routes require a valid workspace. Records are scoped by firm where practical so one office works inside its own claim, client, document, task, money, and report data.",
+      "Every claim, client, document, task, money, and report record belongs to one office, and the app only shows an office its own records. Each signed-in page, document download, and CSV export checks the user's office before it loads or changes a record.",
+      `A client status link shows only that one claim's status to the person the office sends it to. ${brandName} system admins can open an office's workspace to give support.`,
     ],
   },
   {

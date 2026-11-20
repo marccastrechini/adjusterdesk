@@ -33,7 +33,7 @@ const sections: TrustSection[] = [
     title: "Customer data ownership",
     paragraphs: [
       `The customer office owns the claim, client, document, and other business records it enters into ${brandName}. ${brandName} does not claim ownership of that content. ${brandName} uses it to provide the workspace, support the account, and keep the service reliable.`,
-      `Export and deletion are not fully self-serve yet. While those tools are still growing, email ${supportEmail} to ask for an export or deletion of workspace data. We keep information while it is needed to provide the service, support the account, keep ordinary backups, or handle a billing or security question. This page does not set a fixed retention calendar. Canceling a subscription does not by itself delete claim records.`,
+      `Your office's data is yours. You can download leads, claims, and invoices as CSV files from those pages at any time. Email ${supportEmail} to ask for a full export of the workspace, including documents, or for deletion of workspace data, and we will provide it. We keep information while it is needed to provide the service, support the account, keep ordinary backups, or handle a billing or security question. This page does not set a fixed retention calendar. Canceling a subscription does not by itself delete claim records.`,
     ],
   },
   {
