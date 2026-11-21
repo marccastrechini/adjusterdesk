@@ -1,5 +1,7 @@
 import { SubscriptionPlan, SubscriptionStatus } from "@/generated/prisma/client";
 import { enterSystemWorkspaceView, resendSystemUserInvite, setSystemUserActive, setSystemUserOutreachOperator, updateSystemUserEmail, updateSystemWorkspaceSubscription } from "@/lib/actions";
+import { requestWorkspaceBankPayments } from "@/lib/client-billing/actions";
+import { clientBankPaymentsStatus } from "@/lib/client-billing/ui";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { planLabel, planLimitMessage, resolveIncludedUserLimit, subscriptionStatusLabel } from "@/lib/plans";
@@ -39,6 +41,7 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
     [SubscriptionPlan.EARLY_ADOPTER]: 5,
   } as const)[workspace.subscriptionPlan];
 
+  const bankPayments = clientBankPaymentsStatus(workspace.stripeAchPaymentsStatus);
   const removalError = workspaceRemovalErrorMessage(error);
   const errorMessage =
     removalError ??
@@ -213,6 +216,25 @@ export default async function SystemWorkspaceDetailPage({ params, searchParams }
             </Card>
           ))}
         </div>
+      </Section>
+
+      <Section
+        title="Client bank payments"
+        description="Request US bank account (ACH) on this office's connected Stripe account. Running it again does not create a second request when the capability is already active or pending."
+      >
+        <Card className="grid gap-3">
+          <p className="text-sm text-slate-700">Stripe account: {workspace.stripeConnectAccountId ?? "Not connected"}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm text-slate-700">Bank payments (ACH):</p>
+            <Badge tone={bankPayments.tone}>{bankPayments.label}</Badge>
+          </div>
+          <p className="text-sm leading-6 text-slate-700">{bankPayments.detail}</p>
+          {workspace.stripeConnectAccountId ? (
+            <form action={requestWorkspaceBankPayments.bind(null, workspace.id)}>
+              <SubmitButton variant="secondary">Request bank payments</SubmitButton>
+            </form>
+          ) : null}
+        </Card>
       </Section>
 
       <Section

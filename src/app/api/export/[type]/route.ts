@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { toCsv } from "@/lib/csv";
 import { getAuthenticatedAppContext } from "@/lib/app-context";
-import { formatDate, formatMoney, fullName, invoiceAmountDue, isInvoiceOverdue, labelFromEnum, propertyAddress } from "@/lib/format";
+import { formatDate, formatMoney, fullName, invoiceAmountDue, invoiceDisplayStatus, isInvoiceOverdue, labelFromEnum, propertyAddress } from "@/lib/format";
 import { getClaims, getLeads, getMoneyData } from "@/lib/queries";
 
 type RouteContext = { params: Promise<{ type: string }> };
@@ -165,7 +165,7 @@ export async function GET(request: Request, context: RouteContext) {
           invoice.invoiceNumber,
           fullName(invoice.claim.contact),
           invoice.claim.claimNumber,
-          labelFromEnum(invoice.status),
+          invoiceDisplayStatus(invoice),
           formatMoney(invoice.settlementAmountCents),
           formatMoney(invoice.feeAmountCents),
           formatMoney(invoice.amountPaidCents),

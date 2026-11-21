@@ -1,5 +1,10 @@
 import type { Firm } from "@/generated/prisma/client";
 
+/**
+ * Optional invoice line for processing-cost recovery. It is calculated from the
+ * fee amount and added before the client chooses a payment method, so the same
+ * total applies to card, debit, and ACH. It is not a card surcharge.
+ */
 export function calculateClientPaymentFeeRecoveryCents(firm: Pick<Firm, "clientPaymentFeeEnabled" | "clientPaymentFeeAcknowledgedAt" | "clientPaymentFeeBasisPoints" | "clientPaymentFeeFixedCents">, baseAmountCents: number) {
   if (!firm.clientPaymentFeeEnabled || !firm.clientPaymentFeeAcknowledgedAt) {
     return 0;

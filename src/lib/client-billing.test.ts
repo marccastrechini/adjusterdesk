@@ -3,12 +3,21 @@ import { test } from "node:test";
 import { createManualClientBillingProvider } from "@/lib/client-billing/manual-provider";
 import { calculateClientPaymentFeeRecoveryCents } from "@/lib/client-billing/fee-recovery";
 import { createOrResumeStripeConnectClientBillingConnection, getClientBillingProviderName, stripeConnectClientPaymentsEnabled } from "@/lib/client-billing/provider";
-import { clientPaymentsSetupPrompt, getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
+import { clientBankPaymentsStatus, clientPaymentsSetupPrompt, getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 
 test("client billing defaults to manual provider", () => {
   const providerName = getClientBillingProviderName({ clientBillingProvider: "MANUAL" } as never);
   assert.equal(providerName, "manual");
   assert.equal(createManualClientBillingProvider().isReady({} as never), false);
+});
+
+test("bank payment settings describe the capability without treating ACH as a surcharge", () => {
+  assert.equal(clientBankPaymentsStatus("active").label, "Enabled");
+  assert.equal(clientBankPaymentsStatus("pending").label, "Pending");
+  assert.equal(clientBankPaymentsStatus("restricted").label, "Action needed");
+  assert.equal(clientBankPaymentsStatus(null).label, "Not enabled");
+  assert.match(clientBankPaymentsStatus("active").detail, /card or US bank account/);
+  assert.match(clientBankPaymentsStatus("pending").detail, /cards-only/);
 });
 
 test("fee recovery defaults off until enabled and acknowledged", () => {

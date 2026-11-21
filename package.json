@@ -37,6 +37,7 @@
     "restore:local": "powershell -ExecutionPolicy Bypass -File scripts/restore-local.ps1",
     "demo:reset:local": "powershell -ExecutionPolicy Bypass -File scripts/demo-reset-local.ps1",
     "demo:readiness": "tsx scripts/check-demo-readiness.ts --profile development",
+    "admin:request-ach": "tsx scripts/request-client-billing-ach.ts",
     "admin:create-workspace": "tsx scripts/create-workspace-owner.ts",
     "admin:reset-password": "tsx scripts/reset-user-password.ts",
     "postinstall": "prisma generate"

@@ -2,7 +2,7 @@ import { Badge, ButtonLink, Card, Field, PageHeader, Section, SubmitButton, inpu
 import { getDemoContext } from "@/lib/app-context";
 import { formatDate, labelFromEnum } from "@/lib/format";
 import { startOrResumeClientBillingConnection, refreshClientBillingStatus, saveClientPaymentFeeSettings } from "@/lib/client-billing/actions";
-import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
+import { clientBankPaymentsStatus, getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 import { brandName } from "@/lib/brand";
 
 export default async function ClientPaymentsSettingsPage() {
@@ -10,6 +10,7 @@ export default async function ClientPaymentsSettingsPage() {
   const providerLabel = labelFromEnum(firm.clientBillingProvider);
   const connectionStatusLabel = labelFromEnum(firm.clientBillingConnectionStatus);
   const connectActionLabel = getClientPaymentsPrimaryActionLabel(firm);
+  const bankPayments = clientBankPaymentsStatus(firm.stripeAchPaymentsStatus);
 
   return (
     <>
@@ -25,7 +26,7 @@ export default async function ClientPaymentsSettingsPage() {
         </p>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6">
           <li>
-            The fee line is added to the invoice no matter how the client pays, including debit cards and, once available, bank (ACH) payments. Card networks do not allow surcharges on debit cards.
+            The fee line is added to the invoice before the client chooses how to pay. It applies to the whole invoice, including card, debit card, and US bank account (ACH) payments. It is not a card surcharge. Card networks do not allow surcharges on debit cards.
           </li>
           <li>Some states ban surcharges outright, including Connecticut, Maine, and Massachusetts. Connecticut&apos;s ban covers a fee on any payment method, not only cards.</li>
           <li>In states that cap public adjuster fees, a processing fee the client pays may count toward the capped fee.</li>
@@ -46,6 +47,11 @@ export default async function ClientPaymentsSettingsPage() {
           <p className="text-sm text-slate-700">Charges enabled: {firm.stripeChargesEnabled ? "Yes" : "No"}</p>
           <p className="text-sm text-slate-700">Payouts enabled: {firm.stripePayoutsEnabled ? "Yes" : "No"}</p>
           <p className="text-sm text-slate-700">Details submitted: {firm.stripeDetailsSubmitted ? "Yes" : "No"}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm text-slate-700">Bank payments (ACH):</p>
+            <Badge tone={bankPayments.tone}>{bankPayments.label}</Badge>
+          </div>
+          <p className="text-sm leading-6 text-slate-700">{bankPayments.detail}</p>
           <div className="flex flex-wrap gap-2 pt-2">
             {connectActionLabel ? (
               <form action={startOrResumeClientBillingConnection}>
@@ -75,7 +81,7 @@ export default async function ClientPaymentsSettingsPage() {
                 <span>
                   Enable fee recovery on client invoices.
                   <span className="mt-1 block text-xs leading-5 text-slate-500">
-                    This adds an optional separate line item when sending hosted invoices. It is not a default charge.
+                    This adds an optional separate line item when sending hosted invoices. The line is part of the invoice total for card, debit, and bank payments. It is not a default charge and it is not a card surcharge.
                   </span>
                 </span>
               </label>

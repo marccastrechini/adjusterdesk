@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ClientBillingProvider, InvoiceStatus } from "@/generated/prisma/client";
-import { getDemoContext } from "@/lib/app-context";
+import { getDemoContext, requireSystemAdminContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { logClientBillingStripeError } from "./stripe-connect-account";
+import { requestConnectedAccountAchCapability } from "./stripe-connect-provider";
 import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
 
 function isCheckboxEnabled(value: FormDataEntryValue | null) {
@@ -48,6 +49,30 @@ export async function startOrResumeClientBillingConnection() {
   }
 
   redirect(result.url);
+}
+
+export async function requestWorkspaceBankPayments(workspaceId: string) {
+  await requireSystemAdminContext();
+  const firm = await prisma.firm.findUnique({ where: { id: workspaceId } });
+  const returnPath = `/system/workspaces/${workspaceId}`;
+
+  if (!firm?.stripeConnectAccountId) {
+    redirect(withNotice(returnPath, "client-billing-ach-unavailable"));
+  }
+
+  try {
+    const result = await requestConnectedAccountAchCapability(firm);
+    revalidatePath(returnPath);
+    revalidatePath("/settings/client-payments");
+    redirect(withNotice(returnPath, result.status === "active" && !result.requested ? "client-billing-ach-already-active" : "client-billing-ach-requested"));
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    logClientBillingStripeError("Could not request US bank account payments for the connected account.", error);
+    redirect(withNotice(returnPath, "client-billing-ach-failed"));
+  }
 }
 
 export async function refreshClientBillingStatus() {

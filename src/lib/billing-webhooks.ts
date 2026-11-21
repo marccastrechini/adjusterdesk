@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { ActivityType, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { clientBillingConnectionData, clientBillingReadinessFromV1Account, paymentRefsFromInvoice, resolveInvoicePaymentRefs, type InvoicePaymentRefs } from "@/lib/client-billing/stripe-connect-account";
+import { achPaymentsStatusFromV1Account, clientBillingConnectionData, clientBillingReadinessFromV1Account, logClientBillingStripeError, paymentRefsFromInvoice, resolveInvoicePaymentRefs, stripeInvoiceIdFromInvoicePayments, type InvoicePaymentRefs } from "@/lib/client-billing/stripe-connect-account";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
 import { requireStripeClient } from "@/lib/stripe";
 
@@ -141,6 +141,7 @@ async function syncInvoicePaid(
         externalPaymentIntentId: paymentIntentId ?? undefined,
         externalAmountDueCents: stripeInvoice.amount_due ?? undefined,
         externalAmountPaidCents: stripeInvoice.amount_paid ?? undefined,
+        externalPaymentStatus: "succeeded",
         externalSyncedAt: new Date(),
       },
     });
@@ -197,6 +198,208 @@ async function syncInvoicePaid(
         body: `Invoice ${invoice.invoiceNumber} was marked paid by Stripe.`,
       },
     });
+  });
+}
+
+type ClientInvoice = Awaited<ReturnType<typeof findClientInvoiceByStripeRefs>>;
+
+function paymentIntentIdFromUnknown(value: unknown) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object" && value !== null && "id" in value && typeof value.id === "string") {
+    return value.id;
+  }
+
+  return null;
+}
+
+async function findClientInvoiceByLocalId(localInvoiceId: string | null | undefined) {
+  if (!localInvoiceId) {
+    return null;
+  }
+
+  return prisma.invoice.findFirst({
+    where: { id: localInvoiceId },
+    include: { claim: { include: { contact: true } } },
+  });
+}
+
+async function findClientInvoiceForPaymentIntent(paymentIntent: {
+  id: string;
+  invoice?: string | { id?: string | null } | null;
+  metadata?: Stripe.Metadata | null;
+}) {
+  const found = await findClientInvoiceByStripeRefs({
+    paymentIntentId: paymentIntent.id,
+    invoiceId: paymentIntentIdFromUnknown(paymentIntent.invoice),
+  });
+
+  if (found) {
+    return found;
+  }
+
+  return findClientInvoiceByLocalId(paymentIntent.metadata?.invoiceId);
+}
+
+/**
+ * Hosted-invoice PaymentIntents on current API versions have `invoice: null`
+ * and do not copy our invoice metadata. The link is an InvoicePayment on the
+ * connected account, listed by `payment.payment_intent`.
+ */
+async function findClientInvoiceForProcessingPaymentIntent(
+  paymentIntent: {
+    id: string;
+    invoice?: string | { id?: string | null } | null;
+    metadata?: Stripe.Metadata | null;
+  },
+  options: { stripe?: Stripe; stripeAccount?: string | null },
+) {
+  const direct = await findClientInvoiceForPaymentIntent(paymentIntent);
+  if (direct) {
+    return direct;
+  }
+
+  let stripeInvoiceId: string | undefined;
+  try {
+    const stripe = options.stripe ?? requireStripeClient();
+    const listed = await stripe.invoicePayments.list(
+      {
+        limit: 10,
+        payment: {
+          type: "payment_intent",
+          payment_intent: paymentIntent.id,
+        },
+      },
+      options.stripeAccount ? { stripeAccount: options.stripeAccount } : undefined,
+    );
+    stripeInvoiceId = stripeInvoiceIdFromInvoicePayments(listed);
+  } catch (error) {
+    logClientBillingStripeError("Could not list invoice payments for a processing PaymentIntent.", error);
+    throw error;
+  }
+
+  if (!stripeInvoiceId) {
+    return null;
+  }
+
+  return findClientInvoiceByStripeRefs({ invoiceId: stripeInvoiceId });
+}
+
+/**
+ * ACH debits stay in processing for several business days. Keep the invoice
+ * unpaid and do not write a collected payment until invoice.paid.
+ */
+async function markClientInvoicePaymentPending(invoice: ClientInvoice, paymentIntentId: string) {
+  if (!invoice || invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.WRITTEN_OFF) {
+    return;
+  }
+
+  if (invoice.externalPaymentStatus === "processing" && invoice.externalPaymentIntentId === paymentIntentId) {
+    return;
+  }
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      externalPaymentStatus: "processing",
+      externalPaymentIntentId: paymentIntentId,
+      externalSyncedAt: new Date(),
+    },
+  });
+
+  await recordClientBillingActivity(
+    invoice,
+    "Payment pending",
+    `A bank payment for invoice ${invoice.invoiceNumber} is processing. The fee stays unpaid until Stripe marks the invoice paid.`,
+  );
+}
+
+async function resetClientInvoicePayment(
+  invoice: ClientInvoice,
+  input: { paymentIntentId?: string | null; subject: string; body: string; notifyWhenUnchanged?: boolean },
+) {
+  if (!invoice || invoice.status === InvoiceStatus.WRITTEN_OFF) {
+    if (invoice && input.notifyWhenUnchanged) {
+      await recordClientBillingActivity(invoice, input.subject, input.body);
+    }
+    return;
+  }
+
+  const wasProcessing = invoice.externalPaymentStatus === "processing";
+  const wasCollected = invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID;
+
+  await prisma.$transaction(async (tx) => {
+    const stripePayments = await tx.payment.findMany({
+      where: {
+        invoiceId: invoice.id,
+        source: ClientPaymentSource.STRIPE,
+        ...(input.paymentIntentId ? { externalPaymentId: input.paymentIntentId } : {}),
+      },
+    });
+
+    if (stripePayments.length > 0) {
+      await tx.payment.deleteMany({
+        where: { id: { in: stripePayments.map((payment) => payment.id) } },
+      });
+    }
+
+    const remaining = await tx.payment.findMany({
+      where: { invoiceId: invoice.id },
+    });
+    const amountPaidCents = remaining.reduce((sum, payment) => sum + payment.amountCents, 0);
+    const nextStatus =
+      amountPaidCents <= 0
+        ? invoice.status === InvoiceStatus.DRAFT
+          ? InvoiceStatus.DRAFT
+          : InvoiceStatus.SENT
+        : amountPaidCents >= invoice.feeAmountCents
+          ? InvoiceStatus.PAID
+          : InvoiceStatus.PARTIALLY_PAID;
+    const changed =
+      wasProcessing ||
+      wasCollected ||
+      stripePayments.length > 0 ||
+      invoice.externalPaymentStatus !== "failed" ||
+      nextStatus !== invoice.status ||
+      amountPaidCents !== invoice.amountPaidCents;
+
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: nextStatus,
+        amountPaidCents,
+        paidAt: nextStatus === InvoiceStatus.PAID ? invoice.paidAt : null,
+        externalPaymentStatus: "failed",
+        externalPaymentIntentId: input.paymentIntentId ?? invoice.externalPaymentIntentId ?? undefined,
+        externalSyncedAt: new Date(),
+      },
+    });
+
+    if (changed || input.notifyWhenUnchanged) {
+      const claim = await tx.claim.findUnique({
+        where: { id: invoice.claimId },
+        select: { contactId: true },
+      });
+
+      if (claim) {
+        await tx.activity.create({
+          data: {
+            firmId: invoice.firmId,
+            claimId: invoice.claimId,
+            contactId: claim.contactId,
+            type: ActivityType.EMAIL,
+            subject: input.subject,
+            body: input.body,
+          },
+        });
+      }
+    }
   });
 }
 
@@ -332,13 +535,16 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
         null;
       const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
 
-      await updateFirmBySubscriptionOrCustomer({
-        subscriptionId,
-        customerId,
-        data: {
-          subscriptionStatus: SubscriptionStatus.PAST_DUE,
-        },
-      });
+      // Connected-account invoice failures are client fees. They must not mark the firm's SaaS subscription past due.
+      if (!event.account) {
+        await updateFirmBySubscriptionOrCustomer({
+          subscriptionId,
+          customerId,
+          data: {
+            subscriptionStatus: SubscriptionStatus.PAST_DUE,
+          },
+        });
+      }
 
       const paymentRefs = paymentRefsFromInvoice(invoice);
       const clientInvoice = await findClientInvoiceByStripeRefs({
@@ -346,7 +552,11 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
         paymentIntentId: paymentRefs.paymentIntentId ?? null,
       });
 
-      await recordClientBillingActivity(clientInvoice, "Invoice payment failed", `Stripe reported a payment failure for invoice ${clientInvoice?.invoiceNumber ?? invoice.id}.`);
+      await resetClientInvoicePayment(clientInvoice, {
+        paymentIntentId: paymentRefs.paymentIntentId ?? null,
+        subject: "Invoice payment failed",
+        body: `Stripe reported a payment failure for invoice ${clientInvoice?.invoiceNumber ?? invoice.id}. The fee is unpaid until a later payment succeeds.`,
+      });
 
       return;
     }
@@ -356,10 +566,14 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
       // Thin v2.core.account events are handled by /api/stripe/connect-v2-webhook.
       const account = event.data.object as Stripe.Account;
       const readiness = clientBillingReadinessFromV1Account(account);
+      const achStatus = achPaymentsStatusFromV1Account(account);
 
       await prisma.firm.updateMany({
         where: { stripeConnectAccountId: account.id },
-        data: clientBillingConnectionData(readiness),
+        data: {
+          ...clientBillingConnectionData(readiness),
+          ...(achStatus ? { stripeAchPaymentsStatus: achStatus } : {}),
+        },
       });
 
       return;
@@ -424,13 +638,29 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
       return;
     }
 
+    case "payment_intent.processing": {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string | Stripe.Invoice | null };
+      const clientInvoice = await findClientInvoiceForProcessingPaymentIntent(paymentIntent, {
+        stripe,
+        stripeAccount: event.account,
+      });
+      await markClientInvoicePaymentPending(clientInvoice, paymentIntent.id);
+      return;
+    }
+
     case "payment_intent.succeeded":
     case "payment_intent.payment_failed": {
       const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string | Stripe.Invoice | null };
-      const clientInvoice = await findClientInvoiceByStripeRefs({
-        paymentIntentId: paymentIntent.id,
-        invoiceId: typeof paymentIntent.invoice === "string" ? paymentIntent.invoice : paymentIntent.invoice?.id ?? null,
-      });
+      const clientInvoice = await findClientInvoiceForPaymentIntent(paymentIntent);
+
+      if (event.type === "payment_intent.payment_failed") {
+        await resetClientInvoicePayment(clientInvoice, {
+          paymentIntentId: paymentIntent.id,
+          subject: "Payment failed",
+          body: `Stripe payment intent ${paymentIntent.id} failed. The fee is unpaid until a later payment succeeds.`,
+        });
+        return;
+      }
 
       if (clientInvoice) {
         await prisma.invoice.update({
@@ -441,12 +671,23 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
           },
         });
 
-        if (event.type === "payment_intent.succeeded") {
-          await recordClientBillingActivity(clientInvoice, "Payment received", `Stripe payment intent ${paymentIntent.id} succeeded.`);
-        } else {
-          await recordClientBillingActivity(clientInvoice, "Payment failed", `Stripe payment intent ${paymentIntent.id} failed.`);
-        }
+        await recordClientBillingActivity(clientInvoice, "Payment received", `Stripe payment intent ${paymentIntent.id} succeeded.`);
       }
+
+      return;
+    }
+
+    case "charge.failed": {
+      const charge = event.data.object as Stripe.Charge & { payment_intent?: string | Stripe.PaymentIntent | null };
+      const paymentIntentId = paymentIntentIdFromUnknown(charge.payment_intent);
+      const clientInvoice =
+        (await findClientInvoiceByStripeRefs({ paymentIntentId })) ?? (await findClientInvoiceByLocalId(charge.metadata?.invoiceId));
+
+      await resetClientInvoicePayment(clientInvoice, {
+        paymentIntentId,
+        subject: "Payment failed",
+        body: `Stripe reported a failed charge ${charge.id}. The fee is unpaid until a later payment succeeds.`,
+      });
 
       return;
     }
@@ -454,9 +695,19 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
     case "charge.refunded":
     case "charge.dispute.created": {
       const charge = event.data.object as Stripe.Charge & { payment_intent?: string | Stripe.PaymentIntent | null };
-      const clientInvoice = await findClientInvoiceByStripeRefs({
-        paymentIntentId: typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id ?? null,
-      });
+      const paymentIntentId = paymentIntentIdFromUnknown(charge.payment_intent);
+      const clientInvoice =
+        (await findClientInvoiceByStripeRefs({ paymentIntentId })) ?? (await findClientInvoiceByLocalId(charge.metadata?.invoiceId));
+
+      if (event.type === "charge.dispute.created") {
+        await resetClientInvoicePayment(clientInvoice, {
+          paymentIntentId,
+          subject: "Charge dispute created",
+          body: `Stripe reported a dispute for charge ${charge.id}. Invoice ${clientInvoice?.invoiceNumber ?? "payment"} is unpaid until a later payment succeeds.`,
+          notifyWhenUnchanged: true,
+        });
+        return;
+      }
 
       if (clientInvoice) {
         await prisma.invoice.update({
@@ -466,13 +717,7 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
           },
         });
 
-        await recordClientBillingActivity(
-          clientInvoice,
-          event.type === "charge.refunded" ? "Charge refunded" : "Charge dispute created",
-          event.type === "charge.refunded"
-            ? `Stripe reported a refund for charge ${charge.id}.`
-            : `Stripe reported a dispute for charge ${charge.id}.`,
-        );
+        await recordClientBillingActivity(clientInvoice, "Charge refunded", `Stripe reported a refund for charge ${charge.id}.`);
       }
 
       return;
@@ -496,9 +741,12 @@ const clientBillingWebhookEventTypes = new Set([
   "invoice.finalized",
   "invoice.sent",
   "invoice.paid",
+  "invoice.payment_failed",
   "invoice.voided",
+  "payment_intent.processing",
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
+  "charge.failed",
   "charge.refunded",
   "charge.dispute.created",
 ]);

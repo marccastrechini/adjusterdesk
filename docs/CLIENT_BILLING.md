@@ -21,7 +21,7 @@ The first client-billing provider is Stripe Connect using direct charges.
 New connected accounts are created with the Accounts v2 API (`POST /v2/core/accounts`), not `POST /v1/accounts` with `type: express`.
 
 - Dashboard: `full`. An Express dashboard cannot be combined with the fee collector below.
-- Merchant configuration with `card_payments` requested. Invoices are still created on the connected account.
+- Merchant configuration with `card_payments` and `ach_debit_payments` requested. `ach_debit_payments` is the Accounts v2 name for ACH Direct Debit (`us_bank_account_ach_payments` on Accounts v1). Invoices are still created on the connected account.
 - `defaults.responsibilities.fees_collector`: `stripe`. The connected account pays card processing fees, matching legacy Express `application_express` pricing and the optional fee-recovery line item. The platform does not add an application fee.
 - `defaults.responsibilities.losses_collector`: `stripe`. Stripe covers negative balances on these new accounts. Pairing platform loss liability with connected-account fee collection is not a supported v2 combination.
 - Hosted onboarding uses v2 account links for the merchant configuration.
@@ -29,6 +29,22 @@ New connected accounts are created with the Accounts v2 API (`POST /v2/core/acco
 - The name on a hosted client invoice is the connected account's customer-facing business name, snapshotted onto the invoice as `account_name` when the invoice is created. That field is `defaults.profile.doing_business_as` on v2 and `business_profile.name` on v1. `display_name` alone is the Dashboard name and the name on invoices sent to the account, so new accounts set both to the firm name. The platform does not write `configuration.merchant.statement_descriptor` on these accounts: they use the full Stripe Dashboard, `fees_collector: stripe`, and an Account Link, and Stripe rejects that write. The office sets the card statement descriptor in its own Dashboard. An invoice that was already finalized keeps the name it was created with.
 - The hosted invoice number is the app invoice number when it is 26 characters or shorter. It is sent when the draft is created. A later update of that same draft omits `number` when it already matches, because Stripe treats a repeat of the current number as a duplicate. The hosted page and PDF also include a description plus custom fields for Invoice #, Claim #, and the insured. A failed send stores the Stripe draft id immediately. The next attempt resumes that draft instead of creating another invoice.
 - Paid client invoices store the PaymentIntent id from `invoice.payments` or `invoicePayments.list`. Current invoice objects no longer include `payment_intent`.
+- Hosted invoices offer `card` and `us_bank_account` only when that connected account's ACH capability status is `active`. Otherwise the invoice is cards-only. `payment_settings.payment_method_options.us_bank_account.verification_method` is `automatic` (Financial Connections instant verification, microdeposit fallback) with the `payment_method` Financial Connections permission. Invoices do not use dynamic payment methods for this choice: each firm's capability is different, and invoice `payment_settings` has no `excluded_payment_method_types`.
+- ACH debits stay `processing` for several business days. The office sees "Payment pending" and the fee is not collected. `payment_intent.processing` finds the office invoice from the PaymentIntent's `invoice`, then `metadata.invoiceId`, then `invoicePayments.list` filtered by `payment.payment_intent` on the connected account (`Stripe-Account`). Current invoice PaymentIntents leave `invoice` null. `invoice.paid` marks the invoice paid and writes the payment. `invoice.payment_failed`, `payment_intent.payment_failed`, `charge.failed`, and `charge.dispute.created` clear a collected Stripe payment for that PaymentIntent, set the invoice back to unpaid (or partially paid if a manual payment remains), and add a claim activity. A later successful `invoice.paid` collects it again.
+- Existing connected accounts get the capability from Settings → Client Payments → Refresh status, from System → workspace → Request bank payments, or from `npm run admin:request-ach`. All three are idempotent: active, pending, restricted, and unsupported accounts are not requested again. Pass `--dry-run` to read status without updating Stripe. Pass `--firm-id <id>` to limit the script to one office. Legacy Express accounts are requested with the v1 capability name.
+- `Firm.stripeAchPaymentsStatus` stores `active`, `pending`, `restricted`, `inactive`, `unsupported`, or `unrequested`. `Invoice.externalPaymentStatus` stores `processing`, `failed`, or `succeeded`.
+- The optional fee-recovery line is still one invoice line, calculated before the client chooses a method. It applies to card, debit, and ACH. It is not a card surcharge. Public marketing copy that says ACH is "coming soon" is unchanged until launch.
+
+## Stripe Dashboard settings for ACH
+
+Do these in test mode and again in live mode. No new environment variables are required. Keep using `STRIPE_SECRET_KEY`, `STRIPE_CONNECT_WEBHOOK_SECRET`, and `STRIPE_CONNECT_V2_WEBHOOK_SECRET`.
+
+1. On the platform account, turn on ACH Direct Debit / US bank account under Settings → Payment methods, and allow it for connected accounts. A full-dashboard connected account can still turn the method off in its own Dashboard.
+2. Activate Financial Connections for the platform (Settings → Financial Connections) so hosted invoices can verify a bank instantly. `verification_method: automatic` falls back to microdeposits when instant verification is not available. Live mode needs Financial Connections approved before instant verification works.
+3. The platform's own `us_bank_account_ach_payments` capability must be active. Connected accounts use `ach_debit_payments` (v2) or `us_bank_account_ach_payments` (legacy v1). This app requests the connected-account capability; it does not request the platform capability.
+4. New connected accounts are created with `identity.country: us`. ACH Direct Debit is only offered for accounts Stripe can enable it on.
+5. On the Connect webhook endpoint (`/api/stripe/connect-webhook`, events from connected accounts), subscribe to `payment_intent.processing`, `invoice.payment_failed`, and `charge.failed` in addition to the existing client-billing events: `account.updated`, `invoice.finalized`, `invoice.sent`, `invoice.paid`, `invoice.voided`, `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`, and `charge.dispute.created`.
+6. Apply the schema (`stripeAchPaymentsStatus`, `externalPaymentStatus`) before using the new fields. `npm run db:push` locally, or the deployment checklist's guarded `prisma db push` path in production.
 
 ## Provider Abstraction
 
@@ -90,11 +106,12 @@ Use Stripe test mode before production.
 5. Confirm the Accounts v2 thin-event endpoint is configured at `/api/stripe/connect-v2-webhook` with `STRIPE_CONNECT_V2_WEBHOOK_SECRET`. Its events come from the platform account, not from connected accounts.
 6. Create a claim invoice and send a hosted payment request.
 7. Confirm the invoice link and PDF are stored on the internal invoice record.
-8. Pay the hosted invoice in Stripe test mode and confirm the internal invoice becomes paid.
-9. Verify the payment row is created or updated from the Stripe Connect webhook.
-10. Verify manual payment entry still works for the same claim.
-11. If fee recovery is enabled, confirm it appears as a separate hosted invoice line item.
-12. Confirm webhook retries do not duplicate the internal paid invoice state.
+8. Pay a hosted invoice by card in Stripe test mode and confirm the internal invoice becomes paid.
+9. With ACH active on the test connected account, pay a second invoice by US bank account. Confirm the office sees "Payment pending" while the PaymentIntent is `processing`, and that no collected payment exists yet. Confirm `invoice.paid` marks it paid. Confirm a test failure or dispute returns the invoice to unpaid and adds a claim activity.
+10. Verify the payment row is created or updated from the Stripe Connect webhook only after the invoice is paid.
+11. Verify manual payment entry still works for the same claim.
+12. If fee recovery is enabled, confirm it appears as a separate hosted invoice line item on both card and ACH invoices. It is not removed for bank payments.
+13. Confirm webhook retries do not duplicate the internal paid invoice state or the payment-pending activity.
 
 ## Production Setup
 
@@ -109,6 +126,7 @@ Before production use:
 7. Configure the Accounts v2 thin-event endpoint at `/api/stripe/connect-v2-webhook` for events from your account.
 8. Keep client billing disabled until the connected account is fully ready.
 9. Re-run the sandbox checklist against Stripe test mode before switching the firm to live keys.
+10. Subscribe the Connect webhook to `payment_intent.processing`, `invoice.payment_failed`, and `charge.failed`, and run `npm run admin:request-ach` for existing connected accounts. Enable ACH and Financial Connections in the live Dashboard as well as test mode.
 
 ## Environment Matrix
 
