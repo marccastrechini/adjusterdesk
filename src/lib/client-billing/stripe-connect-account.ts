@@ -670,6 +670,27 @@ function paymentEntryRank(entry: InvoicePaymentSnapshot) {
   return rank;
 }
 
+/**
+ * Recent invoice PaymentIntents leave `invoice` null. The Stripe invoice id
+ * is on the InvoicePayment (`invoice_payments`) for that PaymentIntent.
+ * An open payment is the in-flight ACH debit; a paid one is the fallback.
+ */
+export function stripeInvoiceIdFromInvoicePayments(
+  payments: { data?: Array<{ status?: string | null; invoice?: StripeId }> | null } | null | undefined,
+) {
+  const rank = (status?: string | null) => (status === "open" ? 2 : status === "paid" ? 1 : 0);
+  const entries = [...(payments?.data ?? [])].sort((left, right) => rank(right.status) - rank(left.status));
+
+  for (const entry of entries) {
+    const invoiceId = stripeId(entry.invoice);
+    if (invoiceId) {
+      return invoiceId;
+    }
+  }
+
+  return undefined;
+}
+
 export function paymentRefsFromInvoice(invoice: {
   payment_intent?: StripeId;
   charge?: StripeId;

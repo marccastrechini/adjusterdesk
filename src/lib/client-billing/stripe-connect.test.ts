@@ -16,6 +16,7 @@ import {
   logClientBillingStripeError,
   merchantAccountCreateParams,
   paymentRefsFromInvoice,
+  stripeInvoiceIdFromInvoicePayments,
   statementDescriptorFromBusinessName,
   v1AchDebitCapabilityUpdateParams,
   v2AchDebitCapabilityUpdateParams,
@@ -758,6 +759,21 @@ test("legacy connection statuses are mapped onto the firm enum", () => {
   assert.equal(coerceClientBillingConnectionStatus("pending"), "ONBOARDING");
   assert.equal(coerceClientBillingConnectionStatus("ACTIVE"), "ACTIVE");
   assert.equal(coerceClientBillingConnectionStatus("not-a-status"), "RESTRICTED");
+});
+
+test("invoice payment list resolves the Stripe invoice when the PaymentIntent invoice is null", () => {
+  assert.equal(
+    stripeInvoiceIdFromInvoicePayments({
+      data: [
+        { status: "canceled", invoice: "in_canceled" },
+        { status: "paid", invoice: { id: "in_paid" } },
+        { status: "open", invoice: "in_processing" },
+      ],
+    }),
+    "in_processing",
+  );
+  assert.equal(stripeInvoiceIdFromInvoicePayments({ data: [{ status: "paid", invoice: "in_paid" }] }), "in_paid");
+  assert.equal(stripeInvoiceIdFromInvoicePayments({ data: [] }), undefined);
 });
 
 test("invoice payment refs prefer invoice.payments over the removed payment_intent field", () => {

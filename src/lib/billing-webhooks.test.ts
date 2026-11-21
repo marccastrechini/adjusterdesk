@@ -538,6 +538,83 @@ test("payment_intent.processing keeps the fee uncollected and notifies once", as
   assert.equal(paymentWrites, 0);
 });
 
+test("payment_intent.processing lists invoice payments when the PaymentIntent has no invoice", async () => {
+  const listCalls: Array<{ params: { payment?: { type?: string; payment_intent?: string } }; options?: { stripeAccount?: string } }> = [];
+  let storedStatus: string | null = null;
+  let storedPaymentIntentId: string | null = null;
+  let activityCount = 0;
+  let paymentWrites = 0;
+  const originalFind = prisma.invoice.findFirst;
+  const originalClaimFind = prisma.claim.findUnique;
+  const originalUpdate = prisma.invoice.update;
+  const originalActivity = prisma.activity.create;
+  const originalPaymentCreate = prisma.payment.create;
+
+  prisma.invoice.findFirst = (async (args: { where: { id?: string; OR?: Array<Record<string, string>> } }) => {
+    const matchesStripeInvoice = args.where.OR?.some((entry) => entry.externalInvoiceId === "in_ach");
+    const matchesStoredIntent = Boolean(storedPaymentIntentId) && args.where.OR?.some((entry) => entry.externalPaymentIntentId === storedPaymentIntentId);
+    if (!matchesStripeInvoice && !matchesStoredIntent) {
+      return null;
+    }
+
+    return clientInvoice({
+      externalInvoiceId: "in_ach",
+      externalPaymentStatus: storedStatus,
+      externalPaymentIntentId: storedPaymentIntentId,
+    });
+  }) as unknown as typeof prisma.invoice.findFirst;
+  prisma.claim.findUnique = (async () => ({ contactId: "contact_123" })) as unknown as typeof prisma.claim.findUnique;
+  prisma.invoice.update = (async (args: { data: { externalPaymentStatus?: string; externalPaymentIntentId?: string; status?: string } }) => {
+    storedStatus = args.data.externalPaymentStatus ?? storedStatus;
+    storedPaymentIntentId = args.data.externalPaymentIntentId ?? storedPaymentIntentId;
+    assert.equal(args.data.status, undefined);
+    return null;
+  }) as unknown as typeof prisma.invoice.update;
+  prisma.activity.create = (async (args: { data: { subject: string } }) => {
+    activityCount += 1;
+    assert.equal(args.data.subject, "Payment pending");
+    return null;
+  }) as unknown as typeof prisma.activity.create;
+  prisma.payment.create = (async () => {
+    paymentWrites += 1;
+    return null;
+  }) as unknown as typeof prisma.payment.create;
+
+  const stripe = {
+    invoicePayments: {
+      list: async (params: { payment?: { type?: string; payment_intent?: string } }, options?: { stripeAccount?: string }) => {
+        listCalls.push({ params, options });
+        return { data: [{ status: "open", invoice: "in_ach", payment: { type: "payment_intent", payment_intent: "pi_ach" } }] };
+      },
+    },
+  };
+  const event = {
+    type: "payment_intent.processing",
+    account: "acct_connected",
+    data: { object: { id: "pi_ach", status: "processing", invoice: null, metadata: {} } },
+  } as never;
+
+  try {
+    await processStripeConnectWebhookEvent(event, stripe as never);
+    await processStripeConnectWebhookEvent(event, stripe as never);
+  } finally {
+    prisma.invoice.findFirst = originalFind;
+    prisma.claim.findUnique = originalClaimFind;
+    prisma.invoice.update = originalUpdate;
+    prisma.activity.create = originalActivity;
+    prisma.payment.create = originalPaymentCreate;
+  }
+
+  assert.equal(listCalls.length, 1);
+  assert.equal(listCalls[0]?.params.payment?.type, "payment_intent");
+  assert.equal(listCalls[0]?.params.payment?.payment_intent, "pi_ach");
+  assert.equal(listCalls[0]?.options?.stripeAccount, "acct_connected");
+  assert.equal(storedStatus, "processing");
+  assert.equal(storedPaymentIntentId, "pi_ach");
+  assert.equal(activityCount, 1);
+  assert.equal(paymentWrites, 0);
+});
+
 test("ACH failures and disputes uncollect the fee and notify the office", async () => {
   const originalFind = prisma.invoice.findFirst;
   const originalTransaction = prisma.$transaction;

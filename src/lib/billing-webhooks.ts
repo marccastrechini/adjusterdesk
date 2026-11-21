@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { ActivityType, ClientPaymentSource, InvoiceStatus, SubscriptionStatus } from "@/generated/prisma/client";
 import { defaultLimitForPlan, findPublicPlanBySlug, mapStripeSubscriptionStatus, parsePlanSlug, resolveStripePriceId } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
-import { achPaymentsStatusFromV1Account, clientBillingConnectionData, clientBillingReadinessFromV1Account, paymentRefsFromInvoice, resolveInvoicePaymentRefs, type InvoicePaymentRefs } from "@/lib/client-billing/stripe-connect-account";
+import { achPaymentsStatusFromV1Account, clientBillingConnectionData, clientBillingReadinessFromV1Account, logClientBillingStripeError, paymentRefsFromInvoice, resolveInvoicePaymentRefs, stripeInvoiceIdFromInvoicePayments, type InvoicePaymentRefs } from "@/lib/client-billing/stripe-connect-account";
 import { completeStripeSignupFromSessionId } from "@/lib/signup";
 import { requireStripeClient } from "@/lib/stripe";
 
@@ -245,6 +245,50 @@ async function findClientInvoiceForPaymentIntent(paymentIntent: {
   }
 
   return findClientInvoiceByLocalId(paymentIntent.metadata?.invoiceId);
+}
+
+/**
+ * Hosted-invoice PaymentIntents on current API versions have `invoice: null`
+ * and do not copy our invoice metadata. The link is an InvoicePayment on the
+ * connected account, listed by `payment.payment_intent`.
+ */
+async function findClientInvoiceForProcessingPaymentIntent(
+  paymentIntent: {
+    id: string;
+    invoice?: string | { id?: string | null } | null;
+    metadata?: Stripe.Metadata | null;
+  },
+  options: { stripe?: Stripe; stripeAccount?: string | null },
+) {
+  const direct = await findClientInvoiceForPaymentIntent(paymentIntent);
+  if (direct) {
+    return direct;
+  }
+
+  let stripeInvoiceId: string | undefined;
+  try {
+    const stripe = options.stripe ?? requireStripeClient();
+    const listed = await stripe.invoicePayments.list(
+      {
+        limit: 10,
+        payment: {
+          type: "payment_intent",
+          payment_intent: paymentIntent.id,
+        },
+      },
+      options.stripeAccount ? { stripeAccount: options.stripeAccount } : undefined,
+    );
+    stripeInvoiceId = stripeInvoiceIdFromInvoicePayments(listed);
+  } catch (error) {
+    logClientBillingStripeError("Could not list invoice payments for a processing PaymentIntent.", error);
+    throw error;
+  }
+
+  if (!stripeInvoiceId) {
+    return null;
+  }
+
+  return findClientInvoiceByStripeRefs({ invoiceId: stripeInvoiceId });
 }
 
 /**
@@ -596,7 +640,10 @@ export async function processStripeWebhookEvent(event: Stripe.Event, stripe?: St
 
     case "payment_intent.processing": {
       const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string | Stripe.Invoice | null };
-      const clientInvoice = await findClientInvoiceForPaymentIntent(paymentIntent);
+      const clientInvoice = await findClientInvoiceForProcessingPaymentIntent(paymentIntent, {
+        stripe,
+        stripeAccount: event.account,
+      });
       await markClientInvoicePaymentPending(clientInvoice, paymentIntent.id);
       return;
     }
