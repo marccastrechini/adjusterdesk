@@ -74,7 +74,27 @@ export const noticeMessages = {
   },
   "client-payment-request-unavailable": {
     title: "Client billing not available",
-    message: "Connect Stripe before sending hosted payment requests.",
+    message: "Finish client payments setup before sending a payment request.",
+  },
+  "client-payment-email-required": {
+    title: "Client email required",
+    message: "Add an email address on the client contact before QuickBooks can email the invoice.",
+  },
+  "client-billing-provider-saved": {
+    title: "Invoice provider saved",
+    message: "This office will use the selected provider for new client fee invoices.",
+  },
+  "quickbooks-connected": {
+    title: "QuickBooks connected",
+    message: "This office can email fee invoices from QuickBooks. Clients pay with the QuickBooks pay link.",
+  },
+  "quickbooks-disconnected": {
+    title: "QuickBooks disconnected",
+    message: "Stored QuickBooks tokens were removed. Connect again before sending a QuickBooks invoice.",
+  },
+  "quickbooks-connection-failed": {
+    title: "QuickBooks connection failed",
+    message: "QuickBooks could not be connected. Try again from Client Payments.",
   },
   "client-payment-request-already-sent": {
     title: "Payment request already sent",

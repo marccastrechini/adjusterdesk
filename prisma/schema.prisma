@@ -119,12 +119,14 @@ enum SubscriptionStatus {
 enum ClientBillingProvider {
   MANUAL
   STRIPE_CONNECT
+  QUICKBOOKS
 }
 
 enum ClientPaymentSource {
   MANUAL
   STRIPE
   FUTURE_EXTERNAL
+  QUICKBOOKS
 }
 
 enum ClientBillingConnectionStatus {
@@ -215,6 +217,16 @@ model Firm {
   stripeChargesEnabled Boolean @default(false)
   stripePayoutsEnabled Boolean @default(false)
   stripeDetailsSubmitted Boolean @default(false)
+  quickbooksRealmId String?
+  quickbooksCompanyName String?
+  quickbooksAccessTokenEnc String?
+  quickbooksRefreshTokenEnc String?
+  quickbooksAccessTokenExpiresAt DateTime?
+  quickbooksRefreshTokenExpiresAt DateTime?
+  quickbooksScope String?
+  quickbooksEnvironment String?
+  quickbooksFeeItemId String?
+  quickbooksConnectedAt DateTime?
   clientPaymentFeeEnabled Boolean @default(false)
   clientPaymentFeeLabel String?
   clientPaymentFeeBasisPoints Int?
@@ -246,6 +258,7 @@ model Firm {
   earlyAdopterInvites EarlyAdopterInvite[]
 
   @@index([archivedAt])
+  @@index([quickbooksRealmId])
 }
 
 model SignupIntent {

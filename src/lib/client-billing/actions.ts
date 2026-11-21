@@ -7,7 +7,11 @@ import { getDemoContext } from "@/lib/app-context";
 import { withNotice } from "@/lib/notices";
 import { prisma } from "@/lib/prisma";
 import { logClientBillingStripeError } from "./stripe-connect-account";
-import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, isClientBillingReady } from "./provider";
+import { quickbooksClientPaymentsEnabled } from "./quickbooks/config";
+import { beginQuickBooksConnection, disconnectQuickBooks } from "./quickbooks/connection";
+import { QuickBooksError } from "./quickbooks/errors";
+import { clientBillingProviderSelection } from "./provider-choice";
+import { createOrResumeStripeConnectClientBillingConnection, refreshClientBillingConnectionStatus, sendClientBillingInvoice, syncClientBillingInvoiceStatus, isClientBillingReady } from "./provider";
 
 function isCheckboxEnabled(value: FormDataEntryValue | null) {
   return value === "on" || value === "true" || value === "1";
@@ -52,9 +56,83 @@ export async function startOrResumeClientBillingConnection() {
 
 export async function refreshClientBillingStatus() {
   const { firm } = await getDemoContext();
-  await refreshClientBillingConnectionStatus(firm);
+  try {
+    await refreshClientBillingConnectionStatus(firm);
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    if (firm.clientBillingProvider === ClientBillingProvider.QUICKBOOKS) {
+      console.error("[client-billing] QuickBooks status refresh failed.", error instanceof Error ? error.message : "unknown");
+      redirect(withNotice("/settings/client-payments", "quickbooks-connection-failed"));
+    }
+
+    throw error;
+  }
   revalidatePath("/settings/client-payments");
   redirect(withNotice("/settings/client-payments", "client-billing-status-refreshed"));
+}
+
+export async function saveClientBillingProviderChoice(formData: FormData) {
+  const { firm } = await getDemoContext();
+  const choice = formData.get("provider")?.toString();
+  if (choice !== "stripe" && choice !== "quickbooks") {
+    redirect(withNotice("/settings/client-payments", "client-payment-request-unavailable"));
+  }
+
+  if (choice === "quickbooks" && !quickbooksClientPaymentsEnabled()) {
+    redirect(withNotice("/settings/client-payments", "quickbooks-connection-failed"));
+  }
+
+  await prisma.firm.update({
+    where: { id: firm.id },
+    data: clientBillingProviderSelection(firm, choice),
+  });
+
+  revalidatePath("/settings/client-payments");
+  revalidatePath("/money");
+  redirect(withNotice("/settings/client-payments", "client-billing-provider-saved"));
+}
+
+export async function startQuickBooksConnection() {
+  const { firm } = await getDemoContext();
+  if (!quickbooksClientPaymentsEnabled()) {
+    redirect(withNotice("/settings/client-payments", "quickbooks-connection-failed"));
+  }
+
+  try {
+    const result = await beginQuickBooksConnection(firm);
+    redirect(result.url);
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    console.error("[client-billing] QuickBooks connect failed.", error instanceof Error ? error.message : "unknown");
+    redirect(withNotice("/settings/client-payments", "quickbooks-connection-failed"));
+  }
+}
+
+export async function disconnectQuickBooksConnection() {
+  const { firm } = await getDemoContext();
+  if (firm.clientBillingProvider !== ClientBillingProvider.QUICKBOOKS) {
+    redirect(withNotice("/settings/client-payments", "client-payment-request-unavailable"));
+  }
+
+  try {
+    await disconnectQuickBooks(firm);
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    console.error("[client-billing] QuickBooks disconnect failed.", error instanceof Error ? error.message : "unknown");
+    redirect(withNotice("/settings/client-payments", "quickbooks-connection-failed"));
+  }
+
+  revalidatePath("/settings/client-payments");
+  redirect(withNotice("/settings/client-payments", "quickbooks-disconnected"));
 }
 
 export async function saveClientPaymentFeeSettings(formData: FormData) {
@@ -88,7 +166,7 @@ export async function sendClientPaymentRequest(formData: FormData) {
   const { firm } = await getDemoContext();
   const invoiceId = textOrUndefined(formData.get("invoiceId"));
 
-  if (!invoiceId || firm.clientBillingProvider !== ClientBillingProvider.STRIPE_CONNECT || !isClientBillingReady(firm)) {
+  if (!invoiceId || !isClientBillingReady(firm) || (firm.clientBillingProvider !== ClientBillingProvider.STRIPE_CONNECT && firm.clientBillingProvider !== ClientBillingProvider.QUICKBOOKS)) {
     redirect(withNotice("/money", "client-payment-request-unavailable"));
   }
 
@@ -118,13 +196,18 @@ export async function sendClientPaymentRequest(formData: FormData) {
         externalInvoiceStatus: result.status ?? undefined,
         externalSyncedAt: result.syncedAt ?? new Date(),
         sentToClientAt: new Date(),
-        clientBillingProvider: ClientBillingProvider.STRIPE_CONNECT,
-        status: result.status === "paid" ? InvoiceStatus.PAID : InvoiceStatus.SENT,
+        clientBillingProvider: firm.clientBillingProvider,
+        status: result.status === "paid" ? InvoiceStatus.PAID : result.status === "partial" ? InvoiceStatus.PARTIALLY_PAID : InvoiceStatus.SENT,
       },
     });
   } catch (error) {
     if (isNextRedirectError(error)) {
       throw error;
+    }
+
+    if (firm.clientBillingProvider === ClientBillingProvider.QUICKBOOKS) {
+      console.error("[client-billing] QuickBooks invoice send failed.", error instanceof Error ? error.message : "unknown");
+      redirect(withNotice(`/claims/${invoice.claimId}/money`, error instanceof QuickBooksError && error.code === "missing_email" ? "client-payment-email-required" : "client-payment-request-unavailable"));
     }
 
     logClientBillingStripeError("Client payment request failed.", error);
@@ -134,4 +217,35 @@ export async function sendClientPaymentRequest(formData: FormData) {
   revalidatePath(`/claims/${invoice.claimId}/money`);
   revalidatePath("/money");
   redirect(withNotice(`/claims/${invoice.claimId}/money`, "client-payment-request-sent"));
+}
+
+export async function refreshClientInvoicePaymentStatus(formData: FormData) {
+  const { firm } = await getDemoContext();
+  const invoiceId = textOrUndefined(formData.get("invoiceId"));
+  if (!invoiceId || firm.clientBillingProvider !== ClientBillingProvider.QUICKBOOKS) {
+    redirect(withNotice("/money", "client-payment-request-unavailable"));
+  }
+
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, firmId: firm.id },
+  });
+  if (!invoice) {
+    redirect(withNotice("/money", "client-payment-request-unavailable"));
+  }
+
+  const returnPath = `/claims/${invoice.claimId}/money`;
+  try {
+    await syncClientBillingInvoiceStatus(firm, invoice);
+  } catch (error) {
+    if (isNextRedirectError(error)) {
+      throw error;
+    }
+
+    console.error("[client-billing] QuickBooks invoice refresh failed.", error instanceof Error ? error.message : "unknown");
+    redirect(withNotice(returnPath, "client-payment-request-unavailable"));
+  }
+
+  revalidatePath(returnPath);
+  revalidatePath("/money");
+  redirect(withNotice(returnPath, "client-billing-status-refreshed"));
 }

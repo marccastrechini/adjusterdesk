@@ -5,7 +5,8 @@ import { CopyTextButton } from "@/components/copy-text-button";
 import { Badge, ButtonLink, Card, EmptyState, Field, inputClassName, Notice, PageHeader, Section, selectClassName, SubmitButton, textareaClassName } from "@/components/ui";
 import { createInvoiceWithState, createSettlementRoundWithState, recordPaymentWithState } from "@/lib/actions";
 import { formatDate, formatMoney, formatPercentFromBasisPoints, fullName, invoiceAmountDue, invoiceDisplayStatus, invoiceStatusTone, labelFromEnum } from "@/lib/format";
-import { sendClientPaymentRequest } from "@/lib/client-billing/actions";
+import { refreshClientInvoicePaymentStatus, sendClientPaymentRequest } from "@/lib/client-billing/actions";
+import { isClientBillingReady } from "@/lib/client-billing/provider";
 import { getNoticeMessage } from "@/lib/notices";
 import { invoiceStatusOptions } from "@/lib/options";
 import { getClaim } from "@/lib/queries";
@@ -121,7 +122,7 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                     <div className="mt-4 grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-slate-950">Provider</p>
-                        <Badge tone={invoice.clientBillingProvider === "STRIPE_CONNECT" ? "blue" : "slate"}>{invoice.clientBillingProvider ?? firm.clientBillingProvider}</Badge>
+                        <Badge tone={invoice.clientBillingProvider === "STRIPE_CONNECT" || (invoice.clientBillingProvider ?? firm.clientBillingProvider) === "QUICKBOOKS" ? "blue" : "slate"}>{(invoice.clientBillingProvider ?? firm.clientBillingProvider) === "QUICKBOOKS" ? "QuickBooks" : invoice.clientBillingProvider ?? firm.clientBillingProvider}</Badge>
                         {invoice.externalInvoiceStatus ? <Badge tone="amber">{labelFromEnum(invoice.externalInvoiceStatus)}</Badge> : <Badge tone="slate">Not sent</Badge>}
                       </div>
                       <p>External status: {invoice.externalInvoiceStatus ?? "Not sent"}</p>
@@ -139,10 +140,19 @@ export default async function ClaimMoneyPage({ params, searchParams }: PageProps
                           </a>
                         ) : null}
                       </div>
-                      {firm.clientBillingProvider === "STRIPE_CONNECT" && firm.clientBillingEnabled && !invoice.externalHostedInvoiceUrl && !invoice.sentToClientAt ? (
+                      {((firm.clientBillingProvider === "STRIPE_CONNECT" && firm.clientBillingEnabled) || (firm.clientBillingProvider === "QUICKBOOKS" && isClientBillingReady(firm))) && !invoice.externalHostedInvoiceUrl && !invoice.sentToClientAt ? (
                         <form action={sendClientPaymentRequest} className="pt-1">
                           <input type="hidden" name="invoiceId" value={invoice.id} />
                           <SubmitButton>Send payment request</SubmitButton>
+                        </form>
+                      ) : null}
+                      {firm.clientBillingProvider === "QUICKBOOKS" && invoice.sentToClientAt && !invoice.externalHostedInvoiceUrl ? (
+                        <p>QuickBooks was asked to email this invoice. The pay-online link shows here after QuickBooks Payments is enabled for the connected company. Refresh payment status to check again.</p>
+                      ) : null}
+                      {firm.clientBillingProvider === "QUICKBOOKS" && invoice.externalInvoiceId && invoice.status !== "PAID" && invoice.status !== "WRITTEN_OFF" ? (
+                        <form action={refreshClientInvoicePaymentStatus} className="pt-1">
+                          <input type="hidden" name="invoiceId" value={invoice.id} />
+                          <SubmitButton variant="secondary">Refresh payment status</SubmitButton>
                         </form>
                       ) : null}
                     </div>

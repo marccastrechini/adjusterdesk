@@ -38,10 +38,12 @@ Supported providers now:
 
 - `manual`
 - `stripe_connect`
+- `quickbooks`
+
+Stripe is the default choice on Client Payments. A firm stays on its current provider until someone saves a different one. QuickBooks is hidden until the Intuit app credentials below are set.
 
 Future providers should fit the same flow where possible:
 
-- QuickBooks
 - Square
 - PayPal
 - Other external billing systems
@@ -116,6 +118,60 @@ Before production use:
 - `.env.production.local` = local production / public `paclaimboard.com` runner.
 - `.env.qa.local` = QA runner if used.
 - `*.example` = templates only, no secrets.
+
+## QuickBooks Online
+
+QuickBooks is a second client-invoice provider. The firm connects its own QuickBooks Online company. PA ClaimBoard creates the customer and the fee invoice, then asks QuickBooks to email it. QuickBooks Payments collects the card or ACH payment on Intuit's side. PA ClaimBoard does not take the funds and does not call the QuickBooks Payments charge API.
+
+The feature stays off when `INTUIT_CLIENT_ID` or `INTUIT_CLIENT_SECRET` is empty. `INTUIT_ENVIRONMENT` defaults to `sandbox`. Only `production` selects the production API host.
+
+### Intuit app
+
+Create an app at [developer.intuit.com](https://developer.intuit.com). Use the Accounting scope. Do not request the Payments scope (`com.intuit.quickbooks.payment`). Invoice, customer, and payment records are Accounting API entities. Online card and ACH stay inside QuickBooks Payments when the emailed invoice includes a pay link.
+
+Register these redirect URIs on the app. Intuit matches them exactly, including `https` and the path. Add the localhost URI only for a local sandbox test.
+
+- `https://sandbox.paclaimboard.com/api/integrations/quickbooks/callback`
+- `https://paclaimboard.com/api/integrations/quickbooks/callback`
+- `http://localhost:3000/api/integrations/quickbooks/callback`
+
+Set the webhook URL separately for the sandbox app and the production app. Subscribe to Invoice and Payment create, update, void, and delete events. Emailed is useful too. Copy that environment's verifier token into `INTUIT_WEBHOOK_VERIFIER_TOKEN`.
+
+- Sandbox webhook: `https://sandbox.paclaimboard.com/api/integrations/quickbooks/webhook`
+- Production webhook: `https://paclaimboard.com/api/integrations/quickbooks/webhook`
+
+The endpoint checks the `intuit-signature` header, an HMAC-SHA256 of the raw body keyed with the verifier token. It accepts both the legacy `eventNotifications` body and the CloudEvents array. Intuit's notification does not include the invoice balance, so the handler reads the Invoice or Payment from the Accounting API. Refresh payment status on the claim, or Refresh status on Client Payments, polls open QuickBooks invoices when a webhook is missed.
+
+### Environment
+
+```bash
+INTUIT_CLIENT_ID=
+INTUIT_CLIENT_SECRET=
+INTUIT_REDIRECT_URI=https://sandbox.paclaimboard.com/api/integrations/quickbooks/callback
+INTUIT_ENVIRONMENT=sandbox
+INTUIT_WEBHOOK_VERIFIER_TOKEN=
+# Optional. Encrypts stored tokens. When unset, the client secret is the encryption key.
+# Changing this value, or the client secret while this is unset, means each firm must reconnect.
+INTUIT_TOKEN_ENCRYPTION_KEY=
+```
+
+`INTUIT_REDIRECT_URI` must be the callback for the host that starts the connection. Tokens are stored per firm with AES-256-GCM. Disconnect revokes the refresh token and deletes the stored tokens.
+
+Accounting requests use minor version 75. Sandbox calls go to `https://sandbox-quickbooks.api.intuit.com`. Production calls go to `https://quickbooks.api.intuit.com`.
+
+### Sandbox end-to-end test
+
+1. Set the variables above for the sandbox keys. Leave `INTUIT_ENVIRONMENT` unset or set it to `sandbox`.
+2. Apply the schema (`npm run db:generate`, then the usual schema apply) so the firm can store the QuickBooks connection.
+3. Restart the app. Open `/settings/client-payments`, choose QuickBooks Online, and connect a sandbox company.
+4. In that sandbox company, turn on QuickBooks Payments. Without it, QuickBooks can still email an invoice, but the pay-online link and card/ACH buttons stay empty until Payments is enabled. Refresh payment status after it is enabled to store the link.
+5. Open a claim whose client contact has an email address. Create a fee invoice and send the payment request.
+6. Confirm the QuickBooks invoice id and pay link are stored on the invoice. The sandbox company should show the customer and the emailed invoice.
+7. Record a payment in the sandbox company, or pay the link with a sandbox payment method.
+8. Confirm the claim invoice becomes paid and a QuickBooks payment row is stored. If the webhook does not arrive, use Refresh payment status on the claim.
+9. Disconnect from Client Payments and confirm the office can connect again.
+
+A QuickBooks invoice needs an income account in the company. The first send finds or creates a service item named `Public adjusting fee` on that account. The client contact needs an email address because QuickBooks emails the invoice. Fee recovery, when the office has turned it on and acknowledged it, is a second line on the QuickBooks invoice.
 
 ## Notes
 

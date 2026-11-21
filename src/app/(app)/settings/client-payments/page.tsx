@@ -1,15 +1,21 @@
 import { Badge, ButtonLink, Card, Field, PageHeader, Section, SubmitButton, inputClassName } from "@/components/ui";
 import { getDemoContext } from "@/lib/app-context";
 import { formatDate, labelFromEnum } from "@/lib/format";
-import { startOrResumeClientBillingConnection, refreshClientBillingStatus, saveClientPaymentFeeSettings } from "@/lib/client-billing/actions";
+import { disconnectQuickBooksConnection, refreshClientBillingStatus, saveClientBillingProviderChoice, saveClientPaymentFeeSettings, startOrResumeClientBillingConnection, startQuickBooksConnection } from "@/lib/client-billing/actions";
+import { selectedClientInvoiceProvider } from "@/lib/client-billing/provider-choice";
+import { quickbooksClientPaymentsEnabled } from "@/lib/client-billing/quickbooks/config";
 import { getClientPaymentsPrimaryActionLabel } from "@/lib/client-billing/ui";
 import { brandName } from "@/lib/brand";
 
 export default async function ClientPaymentsSettingsPage() {
   const { firm } = await getDemoContext();
-  const providerLabel = labelFromEnum(firm.clientBillingProvider);
+  const quickbooksAvailable = quickbooksClientPaymentsEnabled();
+  const providerChoice = selectedClientInvoiceProvider(firm);
+  const quickbooksSelected = providerChoice === "quickbooks";
+  const showQuickBooksCard = quickbooksSelected && quickbooksAvailable;
+  const providerLabel = firm.clientBillingProvider === "QUICKBOOKS" ? "QuickBooks" : labelFromEnum(firm.clientBillingProvider);
   const connectionStatusLabel = labelFromEnum(firm.clientBillingConnectionStatus);
-  const connectActionLabel = getClientPaymentsPrimaryActionLabel(firm);
+  const connectActionLabel = showQuickBooksCard ? getClientPaymentsPrimaryActionLabel(firm) : quickbooksSelected ? null : getClientPaymentsPrimaryActionLabel(firm);
 
   return (
     <>
@@ -34,7 +40,66 @@ export default async function ClientPaymentsSettingsPage() {
         <p className="mt-1 text-sm leading-6">{brandName} does not apply fee recovery automatically. It only adds an optional separate line item when you explicitly turn it on.</p>
       </Card>
 
+      {quickbooksAvailable ? (
+        <Section title="Invoice provider" description="Stripe is the default. Choose QuickBooks Online when this office already bills clients from QuickBooks. Switching providers keeps the other connection in place.">
+          <Card>
+            <form action={saveClientBillingProviderChoice} className="grid gap-3">
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input type="radio" name="provider" value="stripe" defaultChecked={providerChoice === "stripe"} className="mt-1 h-4 w-4 border-slate-300 text-teal-700 focus:ring-teal-700" />
+                <span>Stripe. Hosted invoices are sent from this office&apos;s connected Stripe account.</span>
+              </label>
+              <label className="flex items-start gap-3 text-sm text-slate-700">
+                <input type="radio" name="provider" value="quickbooks" defaultChecked={providerChoice === "quickbooks"} className="mt-1 h-4 w-4 border-slate-300 text-teal-700 focus:ring-teal-700" />
+                <span>QuickBooks Online. QuickBooks emails the fee invoice. Card and ACH payments are collected by QuickBooks Payments.</span>
+              </label>
+              <div>
+                <SubmitButton>Save invoice provider</SubmitButton>
+              </div>
+            </form>
+          </Card>
+        </Section>
+      ) : null}
+
+      {quickbooksSelected && !quickbooksAvailable ? (
+        <Card className="grid gap-3">
+          <p className="text-sm leading-6 text-slate-700">This office is set to QuickBooks, but QuickBooks credentials are not configured in this environment.</p>
+          <form action={saveClientBillingProviderChoice}>
+            <input type="hidden" name="provider" value="stripe" />
+            <SubmitButton>Use Stripe for client invoices</SubmitButton>
+          </form>
+        </Card>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
+        {showQuickBooksCard ? (
+          <Card className="grid gap-2">
+            <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current provider</p>
+            <p className="text-xl font-semibold text-slate-950">{providerLabel}</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge tone={firm.clientBillingEnabled ? "green" : "amber"}>{firm.clientBillingEnabled ? "Enabled" : "Not enabled"}</Badge>
+              <Badge tone={firm.clientBillingConnectionStatus === "ACTIVE" ? "green" : firm.clientBillingConnectionStatus === "RESTRICTED" ? "amber" : "slate"}>{connectionStatusLabel}</Badge>
+            </div>
+            <p className="text-sm text-slate-700">QuickBooks company: {firm.quickbooksCompanyName ?? "Not connected"}</p>
+            <p className="text-sm text-slate-700">Company id: {firm.quickbooksRealmId ?? "Not connected"}</p>
+            <p className="text-sm text-slate-700">Environment: {firm.quickbooksRealmId ? (firm.quickbooksEnvironment === "production" ? "Production" : "Sandbox") : "Not connected"}</p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {connectActionLabel ? (
+                <form action={startQuickBooksConnection}>
+                  <SubmitButton>{connectActionLabel}</SubmitButton>
+                </form>
+              ) : null}
+              {firm.quickbooksRefreshTokenEnc ? (
+                <form action={disconnectQuickBooksConnection}>
+                  <SubmitButton variant="danger">Disconnect QuickBooks</SubmitButton>
+                </form>
+              ) : null}
+              <form action={refreshClientBillingStatus}>
+                <SubmitButton variant="secondary">Refresh status</SubmitButton>
+              </form>
+              <ButtonLink href="/settings/billing" variant="secondary">Back to SaaS billing</ButtonLink>
+            </div>
+          </Card>
+        ) : (
         <Card className="grid gap-2">
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Current provider</p>
           <p className="text-xl font-semibold text-slate-950">{providerLabel}</p>
@@ -58,10 +123,15 @@ export default async function ClientPaymentsSettingsPage() {
             <ButtonLink href="/settings/billing" variant="secondary">Back to SaaS billing</ButtonLink>
           </div>
         </Card>
+        )}
 
         <Card className="grid gap-2">
           <p className="text-xs font-medium uppercase tracking-normal text-slate-500">Last sync</p>
-          <p className="text-sm leading-6 text-slate-700">Use this page after connecting Stripe to confirm the account has permission to create direct charges and send hosted invoices.</p>
+          <p className="text-sm leading-6 text-slate-700">
+            {showQuickBooksCard
+              ? "QuickBooks emails the client a pay-online link. Card and bank payments are collected by QuickBooks Payments. Refresh status to pull paid invoices back into this office."
+              : "Use this page after connecting Stripe to confirm the account has permission to create direct charges and send hosted invoices."}
+          </p>
           <p className="text-sm leading-6 text-slate-700">Updated: {formatDate(firm.updatedAt)}</p>
         </Card>
       </div>
