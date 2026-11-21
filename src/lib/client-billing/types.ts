@@ -1,7 +1,7 @@
 import type { Contact, Firm, Invoice, ClientBillingConnectionStatus } from "@/generated/prisma/client";
 
-export type ClientBillingProviderName = "manual" | "stripe_connect";
-export type ClientPaymentSourceName = "manual" | "stripe" | "future_external";
+export type ClientBillingProviderName = "manual" | "stripe_connect" | "quickbooks";
+export type ClientPaymentSourceName = "manual" | "stripe" | "quickbooks" | "future_external";
 
 export type ClientBillingProviderResult = {
   provider: ClientBillingProviderName;

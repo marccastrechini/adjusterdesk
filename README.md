@@ -30,6 +30,7 @@ For a guided demo walkthrough, see `docs/DEMO_RUNBOOK.md`.
 For a concise demo readiness checklist, see `docs/DEMO_READINESS.md`.
 For staged self-service launch guidance, see `docs/SELF_SERVICE_READINESS.md`.
 For billing mode and Stripe setup, see `docs/BILLING_SETUP.md`.
+For client fee invoices through Stripe or QuickBooks Online, see `docs/CLIENT_BILLING.md`.
 For local workspace and owner provisioning, see `docs/WORKSPACE_ADMIN.md`.
 For local global system admin console usage, see `docs/SYSTEM_ADMIN.md`.
 For domain/email configuration (IONOS + GoDaddy + Resend), see `docs/EMAIL_SETUP.md`.
@@ -131,11 +132,27 @@ Lead columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `st
 
 Claim columns: `firstName`, `lastName`, `email`, `phone`, `address1`, `city`, `state`, `postalCode`, `carrierName`, `policyNumber`, `claimNumber`, `lossType`, `dateOfLoss`, `reportedDate`, `inspectionDate`, `deadlineDate`, `notes`.
 
+## QuickBooks Online client invoices
+
+Firms choose Stripe or QuickBooks Online for client fee invoices. Stripe stays the default, and QuickBooks stays hidden until Intuit credentials are set. `INTUIT_ENVIRONMENT` defaults to `sandbox`.
+
+Register these redirect URIs on the Intuit app:
+
+- `https://sandbox.paclaimboard.com/api/integrations/quickbooks/callback`
+- `https://paclaimboard.com/api/integrations/quickbooks/callback`
+
+Webhook URLs:
+
+- Sandbox: `https://sandbox.paclaimboard.com/api/integrations/quickbooks/webhook`
+- Production: `https://paclaimboard.com/api/integrations/quickbooks/webhook`
+
+Use the Accounting scope (`com.intuit.quickbooks.accounting`). The sandbox test checklist, verifier token, and environment variables are in `docs/CLIENT_BILLING.md`.
+
 ## MVP Boundaries
 
 PA ClaimBoard does not provide legal advice, automated coverage determinations, claim valuation advice, or autonomous adjusting. It is an office workspace and tracking system.
 
-Production authentication, billing, carrier integrations, QuickBooks sync, email/SMS sending, and advanced permissions are intentionally outside this local MVP pass.
+Production authentication, carrier integrations, email/SMS sending, a full QuickBooks accounting sync, and advanced permissions are intentionally outside this local MVP pass. Client fee invoices can use Stripe or QuickBooks Online.
 
 ## Demo and Deployment Readiness
 

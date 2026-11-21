@@ -1,16 +1,24 @@
 import { ClientBillingConnectionStatus, ClientBillingProvider as ClientBillingProviderEnum, type Contact, type Firm, type Invoice } from "@/generated/prisma/client";
 import { createManualClientBillingProvider } from "./manual-provider";
+import { createQuickBooksClientBillingProvider } from "./quickbooks-provider";
 import type { ClientBillingProvider, ClientBillingProviderName } from "./types";
 import { createStripeConnectClientBillingProvider } from "./stripe-connect-provider";
 
 const providers: Record<ClientBillingProviderName, ClientBillingProvider> = {
   manual: createManualClientBillingProvider(),
   stripe_connect: createStripeConnectClientBillingProvider(),
+  quickbooks: createQuickBooksClientBillingProvider(),
 };
 
 function normalizeProvider(value: string | null | undefined): ClientBillingProviderName {
   const normalized = value?.trim().toLowerCase();
-  return normalized === "stripe_connect" ? "stripe_connect" : "manual";
+  if (normalized === "stripe_connect") {
+    return "stripe_connect";
+  }
+  if (normalized === "quickbooks") {
+    return "quickbooks";
+  }
+  return "manual";
 }
 
 function envBool(value: string | undefined) {
