@@ -33,6 +33,8 @@ test("home hero answers what, who, and the offer before the feature grid", () =>
   assert.doesNotMatch(html, /<video|product-overview\.mp4/i);
   assert.doesNotMatch(html, /autoplay/i);
   assert.match(html, /PA ClaimBoard takes no cut/);
+  assert.match(html, /card or bank transfer \(ACH\)/);
+  assert.doesNotMatch(html, /coming soon/i);
   assert.match(html, /Tell us, and we&#x27;ll work with you on connecting it/);
   assert.doesNotMatch(html, /Klarna|Affirm|buy now, pay later|surcharge-ready|works with any/i);
 });

@@ -48,7 +48,7 @@ const faqs = [
   {
     question: "Can clients pay their fee invoices online?",
     answer:
-      `Yes. Connect your office's own Stripe account in Client Payments settings, then send the client a secure payment link for the fee invoice. Stripe's standard fees apply, and ${brandName} takes no cut. Clients pay by card today. Bank (ACH) payments are coming soon; on Stripe's standard pricing they cost at most $5 per payment, versus about 2.9% + 30¢ for cards.`,
+      `Yes. Connect your office's own Stripe account in Client Payments settings, then send the client a secure payment link for the fee invoice. Stripe's standard fees apply, and ${brandName} takes no cut. Clients can pay by card or bank transfer (ACH) through the office's Stripe account. On Stripe's standard pricing, bank payments cost at most $5 per payment, versus about 2.9% + 30¢ for cards.`,
   },
   {
     question: "Do I have to switch payment processors?",
