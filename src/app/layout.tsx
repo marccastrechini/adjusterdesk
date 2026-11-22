@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Geist } from "next/font/google";
-import { brandNameTM } from "@/lib/brand";
-import { publicSiteUrl } from "@/lib/public-metadata";
+import { JsonLd } from "@/components/json-ld";
+import { analyticsBootstrapScript, gaMeasurementId } from "@/lib/analytics";
+import { brandName, brandNameTM } from "@/lib/brand";
+import { publicSiteUrl, socialImageAlt, socialImagePath } from "@/lib/public-metadata";
+import { isProductionAnalyticsHost, isSandboxHost, NOINDEX_ROBOTS, requestHostname } from "@/lib/site-host";
+import { organizationJsonLd } from "@/lib/structured-data";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,34 +15,36 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-function buildMetadata(): Metadata {
+const socialDescription = "Public adjuster CRM and claims management software for small offices. Track claims, follow-ups, settlements, and fee invoices.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const headerList = await headers();
+  const hostname = requestHostname(headerList.get("host"), headerList.get("x-forwarded-host"));
   const metadata: Metadata = {
     metadataBase: publicSiteUrl,
-    applicationName: brandNameTM,
+    applicationName: brandName,
     title: {
       default: brandNameTM,
       template: "%s",
     },
-    description: "A simple workspace for small public adjusting offices.",
+    description: socialDescription,
     openGraph: {
-      title: brandNameTM,
-      description: "A simple workspace for small public adjusting offices.",
+      title: brandName,
+      description: socialDescription,
       url: "/",
-      siteName: brandNameTM,
+      siteName: brandName,
       type: "website",
+      images: [{ url: socialImagePath, width: 1200, height: 630, alt: socialImageAlt }],
     },
     twitter: {
-      card: "summary",
-      title: brandNameTM,
-      description: "A simple workspace for small public adjusting offices.",
+      card: "summary_large_image",
+      title: brandName,
+      description: socialDescription,
+      images: [socialImagePath],
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: isSandboxHost(hostname) ? NOINDEX_ROBOTS : { index: true, follow: true },
   };
 
-  // Add Google Search Console verification if configured
   if (process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION) {
     metadata.verification = {
       google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -47,14 +54,15 @@ function buildMetadata(): Metadata {
   return metadata;
 }
 
-export const metadata = buildMetadata();
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const headerList = await headers();
+  const hostname = requestHostname(headerList.get("host"), headerList.get("x-forwarded-host"));
+  const gaId = gaMeasurementId();
+  const loadAnalytics = Boolean(gaId) && isProductionAnalyticsHost(hostname);
 
   return (
     <html
@@ -63,29 +71,17 @@ export default function RootLayout({
     >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon" />
-        {/* Google Analytics */}
-        {gaId && (
+        {loadAnalytics && gaId ? (
           <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-              strategy="afterInteractive"
-            />
-            <Script
-              id="ga-init"
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', '${gaId}');
-                `,
-              }}
-            />
+            <script dangerouslySetInnerHTML={{ __html: analyticsBootstrapScript(gaId) }} />
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
           </>
-        )}
+        ) : null}
       </head>
-      <body className="min-h-full bg-slate-50">{children}</body>
+      <body className="min-h-full bg-slate-50">
+        <JsonLd data={organizationJsonLd()} />
+        {children}
+      </body>
     </html>
   );
 }

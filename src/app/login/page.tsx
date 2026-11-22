@@ -9,8 +9,11 @@ import { getCurrentSessionUser } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName } from "@/lib/brand";
 import { safeEarlyAccessReturnPath } from "@/lib/early-adopter";
+import { privatePageMetadata } from "@/lib/private-metadata";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Sign in", "Sign in to a PA ClaimBoard office workspace.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

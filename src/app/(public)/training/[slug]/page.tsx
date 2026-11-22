@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return publicPageMetadata({
-    title: `${trainingModule.title} | ${brandName}`,
+    title: `${trainingModule.title}: Public Adjuster CRM Training | ${brandName}`,
     description: trainingModule.summary,
     path: trainingModulePath(trainingModule.slug),
   });
@@ -41,7 +41,7 @@ export default async function TrainingModulePage({ params }: PageProps) {
 
   return (
     <>
-      <PublicPageHeader eyebrow="Training" title={trainingModule.title} description={trainingModule.summary} />
+      <PublicPageHeader eyebrow="Training" title={`${trainingModule.title} for public adjuster CRM`} description={trainingModule.summary} />
       <PublicSection
         title="Follow these steps"
         description="These screens are from Demo Office. The caption says what to look at on each one."

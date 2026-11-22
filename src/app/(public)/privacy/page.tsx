@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Privacy | ${brandName}`,
-  description: `Plain-language privacy information for ${brandName} public pages and workspace users, including Google Analytics 4.`,
+  title: `Privacy Policy | ${brandName}`,
+  description: `Privacy policy for ${brandName} public pages and workspaces, including Google Analytics 4 on paclaimboard.com, Stripe billing, and client card or ACH payments.`,
   path: "/privacy",
 });
 
@@ -49,8 +49,8 @@ const sections: TrustSection[] = [
   {
     title: "Google Analytics 4",
     paragraphs: [
-      `When the site is configured with a Google Analytics 4 measurement ID (the environment variable NEXT_PUBLIC_GA_MEASUREMENT_ID), ${brandName} loads Google’s gtag script from googletagmanager.com and sends analytics. The live site uses measurement ID G-QM2L44CMB2. If that variable is unset, the script does not load.`,
-      `We use Google Analytics for acquisition and product analytics: which public pages people open, and product actions such as trial, pricing, signup, login, and demo clicks. It is not used for ads, remarketing, or retargeting. ${brandName} does not run advertising pixels.`,
+      `When the site is configured with a Google Analytics 4 measurement ID (the environment variable NEXT_PUBLIC_GA_MEASUREMENT_ID) and the browser host is paclaimboard.com or www.paclaimboard.com, ${brandName} loads Google’s gtag script from googletagmanager.com and sends analytics. The live site uses measurement ID G-QM2L44CMB2. The script does not load on a sandbox host. If that variable is unset, the script does not load.`,
+      `We use Google Analytics for acquisition and product analytics: which public pages people open, and product actions such as trial_start_click, sign_up, trial_created, first_claim_created, claim_tracker_download, and purchase. It is not used for ads, remarketing, or retargeting. Those events do not include email addresses or names. ${brandName} does not run advertising pixels.`,
       `Google may set first-party cookies in the _ga and _gid style, including a measurement cookie such as _ga_QM2L44CMB2. Those cookies can include a client identifier. Google may also receive the page address, approximate location, and device or browser details that come with a normal analytics hit, plus the event names ${brandName} sends.`,
       "There is currently no cookie-consent banner or other consent UI before Google Analytics loads. The script can run on the first page view whenever the measurement ID is set. Counsel may require consent before non-essential analytics cookies for visitors in some jurisdictions. This page does not claim that loading analytics before a consent choice meets those rules.",
     ],
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
       <NotAttorneyReviewedBanner />
       <PublicPageHeader
         eyebrow="Privacy"
-        title={`How ${brandName} handles information.`}
+        title={`Privacy policy for ${brandName}`}
         description={`A practical summary of the information ${brandName} may collect, including Google Analytics 4 when it is turned on, and how that information is used to provide the service.`}
       />
       <PublicSection title="Privacy basics">

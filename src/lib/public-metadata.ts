@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
-import { brandNameTM, canonicalOrigin } from "@/lib/brand";
+import { brandName, canonicalOrigin } from "@/lib/brand";
+
+export const socialImagePath = "/og.png";
+export const socialImageAlt = "PA ClaimBoard, public adjuster CRM and claims management software";
+
+const socialImage = {
+  url: socialImagePath,
+  width: 1200,
+  height: 630,
+  alt: socialImageAlt,
+};
 
 const fallbackSiteUrl = canonicalOrigin;
 
@@ -24,13 +34,15 @@ export function publicPageMetadata({ title, description, path }: { title: string
       title,
       description,
       url: path,
-      siteName: brandNameTM,
+      siteName: brandName,
       type: "website",
+      images: [socialImage],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [socialImagePath],
     },
   };
 }

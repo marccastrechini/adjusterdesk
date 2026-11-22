@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportMailto } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Talk to Us | ${brandName}`,
-  description: `Talk with the ${brandName} team about setup for your office.`,
+  title: `Public Adjuster Software Walkthrough | ${brandName}`,
+  description: `Request a public adjuster software walkthrough for a small office. Email the ${brandName} team about your current claim tracking setup.`,
   path: "/demo",
 });
 
@@ -22,7 +22,7 @@ export default function DemoPage() {
     <>
       <PublicPageHeader
         eyebrow="Talk to us"
-        title={`See ${brandName} with a small-office workflow.`}
+        title="Public adjuster software walkthrough"
         description={`Use a walkthrough to compare ${brandName} against the way your office currently tracks leads, claims, documents, deadlines, settlement payments, fees, and invoices.`}
       />
       <PublicSection title="Talk to us">

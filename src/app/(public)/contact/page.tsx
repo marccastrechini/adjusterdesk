@@ -5,8 +5,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Contact | ${brandName}`,
-  description: `Email ${supportEmail} for setup, billing, privacy, and product questions.`,
+  title: `Contact ${brandName} | Public Adjuster Software`,
+  description: `Contact ${brandName} at ${supportEmail} for setup, billing, privacy, and public adjuster software questions.`,
   path: "/contact",
 });
 
@@ -41,7 +41,7 @@ export default function ContactPage() {
     <>
       <PublicPageHeader
         eyebrow="Contact"
-        title={`Email ${supportEmail}.`}
+        title={`Contact ${brandName}`}
         description="We try to reply within a few business days. Include your office name and what you need so the note can be answered directly."
       />
       <PublicSection title={`How to reach ${brandName}`}>

@@ -36,7 +36,7 @@ export default async function ClaimOverviewPage({ params, searchParams }: PagePr
         <AnalyticsOnLoad
           eventName="first_claim_created"
           dedupeKey={`claim:${claim.id}:first-claim-created`}
-          eventData={{ claimId: claim.id }}
+          eventData={{ source: "claim_form" }}
         />
       ) : null}
 

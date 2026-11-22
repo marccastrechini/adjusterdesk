@@ -5,8 +5,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Resources | ${brandName}`,
-  description: `Training, help, the founding desk offer, and a free claim tracker for small public adjusting offices using ${brandName}.`,
+  title: `Public Adjuster Software Resources | ${brandName}`,
+  description: `Public adjuster software resources: CRM training, help, founding office pricing, a free claim tracker, and a ClaimWizard alternative for small offices.`,
   path: "/resources",
 });
 
@@ -35,6 +35,12 @@ const availableResources = [
     href: TRACKER_PAGE_HREF,
     label: "Open the free tracker",
   },
+  {
+    title: "ClaimWizard alternative",
+    description: `How ${brandName} compares for a small public adjusting office that wants a lighter claims workspace than an enterprise system.`,
+    href: "/claimwizard-alternative",
+    label: "Compare with ClaimWizard",
+  },
 ];
 
 export default function ResourcesPage() {
@@ -42,7 +48,7 @@ export default function ResourcesPage() {
     <>
       <PublicPageHeader
         eyebrow="Resources"
-        title="Practical resources for small public adjusting offices."
+        title="Public adjuster software resources"
         description={`Published here: the training walkthrough, help answers, the founding desk offer, and a free claim tracker. ${brandName} is self-serve. Start a free trial when you want the desk itself.`}
       />
       <PublicSection title="Available now" description="These pages are live. Open the one that matches what you need next.">

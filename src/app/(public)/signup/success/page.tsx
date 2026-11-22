@@ -2,8 +2,11 @@ import { redirect } from "next/navigation";
 import { SignupSuccessPanel } from "@/components/signup-success-panel";
 import { parsePlanSlug } from "@/lib/billing";
 import { decideSignupSuccessNavigation, signupSuccessCopy } from "@/lib/billing-display";
+import { privatePageMetadata } from "@/lib/private-metadata";
 import { getCurrentSessionUser } from "@/lib/session";
 import { readSignupCheckoutFacts } from "@/lib/signup-success";
+
+export const metadata = privatePageMetadata("Checkout status", "Checkout status for a PA ClaimBoard signup.");
 
 export const dynamic = "force-dynamic";
 

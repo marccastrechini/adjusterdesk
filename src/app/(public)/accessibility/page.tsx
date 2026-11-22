@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Accessibility | ${brandName}`,
-  description: `Accessibility commitment and contact information for ${brandName}.`,
+  title: `Accessibility Statement | ${brandName}`,
+  description: `Accessibility statement for ${brandName} public pages, and how to report a barrier to ${supportEmail}.`,
   path: "/accessibility",
 });
 
@@ -45,7 +45,7 @@ export default function AccessibilityPage() {
     <>
       <PublicPageHeader
         eyebrow="Accessibility"
-        title="A practical commitment to accessible public pages."
+        title="Accessibility statement"
         description={`${brandName} should be clear, keyboard-friendly, and usable for low-tech solo and small-office teams.`}
       />
       <PublicSection title="Accessibility baseline">

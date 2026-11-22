@@ -152,6 +152,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
               items={[
                 ...publicNavItems.slice(0, 3),
                 { href: "/public-adjuster-software", label: "Public Adjuster Software" },
+                { href: "/claimwizard-alternative", label: "ClaimWizard alternative" },
                 { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
               ]}
             />

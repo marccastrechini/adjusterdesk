@@ -1,7 +1,8 @@
+import { AnalyticsOnLoad } from "@/components/analytics-on-load";
 import { openBillingPortalForCurrentWorkspace } from "@/lib/billing-actions";
-import { getStripeConfigDiagnostics, resolveBillingProvider, stripeConfigured } from "@/lib/billing";
+import { findPublicPlanBySubscriptionPlan, getStripeConfigDiagnostics, monthlyPriceDollars, resolveBillingProvider, stripeConfigured } from "@/lib/billing";
 import { startSubscriptionForCurrentWorkspace } from "@/lib/billing-actions";
-import { billingStartPlanOptions, describeWorkspaceBilling } from "@/lib/billing-display";
+import { billingStartPlanOptions, describeWorkspaceBilling, officeOnFoundingOffer } from "@/lib/billing-display";
 import { formatDate } from "@/lib/format";
 import { getNoticeMessage } from "@/lib/notices";
 import { resolveIncludedUserLimit } from "@/lib/plans";
@@ -18,6 +19,7 @@ type PageProps = {
 export default async function BillingSettingsPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const notice = getNoticeMessage(query);
+  const noticeKey = Array.isArray(query.notice) ? query.notice[0] : query.notice;
 
   const { firm, users } = await getUsers();
   const activeUsers = users.filter((user) => user.active);
@@ -34,9 +36,25 @@ export default async function BillingSettingsPage({ searchParams }: PageProps) {
   const canSubscribe = billingProvider === "stripe" && stripeReady && billingView.showStartSubscription && !isEarlyAdopter;
   const plans = billingStartPlanOptions(billingView.offerLabel === "Founding");
   const planTitle = isEarlyAdopter ? "Early adopter" : billingView.offerLabel === "Founding" ? `Founding ${billingView.planName}` : billingView.planName;
+  const purchasePlan = findPublicPlanBySubscriptionPlan(firm.subscriptionPlan);
+  const purchaseFounding = officeOnFoundingOffer(firm);
+  const purchaseValue = purchasePlan ? monthlyPriceDollars(purchasePlan.slug, purchaseFounding) : 0;
 
   return (
     <>
+      {noticeKey === "subscription-activated" && purchaseValue > 0 && purchasePlan ? (
+        <AnalyticsOnLoad
+          eventName="purchase"
+          dedupeKey={`billing:subscription-activated:${purchasePlan.slug}:${purchaseFounding ? "founding" : "standard"}`}
+          eventData={{
+            currency: "USD",
+            value: purchaseValue,
+            plan: purchasePlan.slug,
+            item_category: "subscription",
+            item_variant: purchaseFounding ? "founding" : "standard",
+          }}
+        />
+      ) : null}
       <PageHeader
         title="Billing"
         description="Current plan, active users included, billing status, and billing timing for this workspace."

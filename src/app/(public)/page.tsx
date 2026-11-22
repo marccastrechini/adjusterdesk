@@ -1,13 +1,15 @@
+import { JsonLd } from "@/components/json-ld";
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CheckList, CtaBand, FeatureGrid, PublicButtonLink, PublicHero, PublicSection, StepList, WorkspacePreview, clientPaymentsPoints, featureHighlights } from "@/components/public-site";
 import { TrackedLink } from "@/components/tracked-link";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { softwareApplicationJsonLd } from "@/lib/structured-data";
 import { brandName, brandNameTM } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `${brandNameTM} | Simple Workspace for Public Adjusters`,
-  description: `${brandName} keeps claims, clients, documents, follow-ups, payments, fees, and invoices together for small public adjusting offices.`,
+  title: `Public Adjuster CRM & Claims Management Software | ${brandName}`,
+  description: `${brandName} is public adjuster CRM and claims management software for small offices. Track claims, follow-ups, settlements, and fee invoices. Client fees can be paid by Stripe card or ACH.`,
   path: "/",
 });
 
@@ -41,9 +43,10 @@ const howItWorksSteps = [
 export default function HomePage() {
   return (
     <>
+      <JsonLd data={softwareApplicationJsonLd()} />
       <PublicHero
         eyebrow="For 1–5 person public adjusting offices"
-        title="Know what needs attention. Keep every claim moving."
+        title="Public adjuster CRM and claims management software"
         description="A straightforward office workspace for small public adjusting firms. Track claims, follow-ups, settlements, invoices, and unpaid fees—all in one place."
         points={heroPoints}
         primaryHref={FOUNDING_PAGE_HREF}

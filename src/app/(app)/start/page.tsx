@@ -2,6 +2,7 @@ import { AnalyticsOnLoad } from "@/components/analytics-on-load";
 import { TrackedButtonLink } from "@/components/tracked-link";
 import { Badge, ButtonLink, Card, Notice, PageHeader, Section, StatCard } from "@/components/ui";
 import { activationProgress, buildActivationChecklist, buildOnboardingQuickActions } from "@/lib/activation";
+import { parsePlanSlug } from "@/lib/billing";
 import { signupWelcomeMessage } from "@/lib/billing-display";
 import { brandName } from "@/lib/brand";
 import { getNoticeMessage } from "@/lib/notices";
@@ -24,16 +25,16 @@ export default async function StartPage({ searchParams }: PageProps) {
   const onboardingProgress = activationProgress(onboardingActions);
   const notice = getNoticeMessage(query);
   const noticeKey = firstValue(query.notice);
-  const signupPlan = firstValue(query.signup_plan);
+  const signupPlan = parsePlanSlug(firstValue(query.signup_plan)) ?? "unknown";
   const isSignupComplete = noticeKey === "self-service-signup-complete";
 
   return (
     <>
       {isSignupComplete ? (
         <>
-          <AnalyticsOnLoad eventName="sign_up" dedupeKey="start:self-service-signup-complete:sign_up" eventData={{ source: "public-signup" }} />
-          <AnalyticsOnLoad eventName="trial_created" dedupeKey="start:self-service-signup-complete:trial_created" eventData={{ source: "public-signup" }} />
-          <AnalyticsOnLoad eventName="workspace_created" dedupeKey="start:self-service-signup-complete:workspace_created" eventData={{ source: "public-signup" }} />
+          <AnalyticsOnLoad eventName="sign_up" dedupeKey="start:self-service-signup-complete:sign_up" eventData={{ source: "public-signup", method: "checkout", plan: signupPlan }} />
+          <AnalyticsOnLoad eventName="trial_created" dedupeKey="start:self-service-signup-complete:trial_created" eventData={{ source: "public-signup", plan: signupPlan }} />
+          <AnalyticsOnLoad eventName="workspace_created" dedupeKey="start:self-service-signup-complete:workspace_created" eventData={{ source: "public-signup", plan: signupPlan }} />
           <AnalyticsOnLoad
             eventName="trial_account_created"
             dedupeKey="start:self-service-signup-complete:trial_account_created"

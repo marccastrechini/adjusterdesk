@@ -4,6 +4,7 @@ import { ActionForm, FieldError } from "@/components/action-form";
 import { BrandMark } from "@/components/brand-mark";
 import { Card, Field, SubmitButton, inputClassName } from "@/components/ui";
 import { brandName } from "@/lib/brand";
+import { privatePageMetadata } from "@/lib/private-metadata";
 import { redeemEarlyAdopterInviteAction, signOutForEarlyAccess } from "@/lib/early-adopter-actions";
 import { loadEarlyAccess } from "@/lib/early-adopter-db";
 import {
@@ -16,6 +17,8 @@ import {
 import { getCurrentSessionUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Early access", "Redeem a PA ClaimBoard early access invite.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

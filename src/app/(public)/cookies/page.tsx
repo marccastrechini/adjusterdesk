@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Cookies | ${brandName}`,
-  description: `Plain-language cookie information for ${brandName}, including Google Analytics 4 cookies when a measurement ID is set.`,
+  title: `Cookie Policy | ${brandName}`,
+  description: `Cookie policy for ${brandName}, including strictly necessary session cookies and Google Analytics 4 cookies on paclaimboard.com.`,
   path: "/cookies",
 });
 
@@ -25,7 +25,7 @@ const sections: TrustSection[] = [
   {
     title: "Analytics cookies",
     paragraphs: [
-      `When NEXT_PUBLIC_GA_MEASUREMENT_ID is set, the site loads Google Analytics 4 through the gtag script for acquisition and product analytics. The live measurement ID is G-QM2L44CMB2. If the measurement ID is not set, that script does not load and these analytics cookies are not set by ${brandName}.`,
+      `When NEXT_PUBLIC_GA_MEASUREMENT_ID is set and the host is paclaimboard.com or www.paclaimboard.com, the site loads Google Analytics 4 through the gtag script for acquisition and product analytics. The live measurement ID is G-QM2L44CMB2. Sandbox hosts do not load that script. If the measurement ID is not set, that script does not load and these analytics cookies are not set by ${brandName}.`,
       "Google Analytics may set first-party cookies in the _ga and _gid style, including a measurement cookie such as _ga_QM2L44CMB2. They help measure visits and in-product actions such as trial, pricing, signup, login, and demo clicks. They are not used for ads or retargeting.",
       "There is currently no cookie-consent UI before that script loads. Analytics cookies can be set on the first page view whenever the measurement ID is configured. Counsel may require a consent choice before non-essential analytics cookies for visitors in some jurisdictions. This page does not claim the current load-on-visit setup satisfies those rules.",
     ],
@@ -50,7 +50,7 @@ export default function CookiesPage() {
     <>
       <PublicPageHeader
         eyebrow="Cookies"
-        title={`How ${brandName} uses cookies.`}
+        title={`Cookie policy for ${brandName}`}
         description="Session cookies keep you signed in. Google Analytics 4 cookies can load for acquisition and product measurement when a measurement ID is set. There is no ads or retargeting cookie."
       />
       <PublicSection title="Cookie details">

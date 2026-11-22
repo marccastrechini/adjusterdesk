@@ -22,8 +22,10 @@ export function AnalyticsOnLoad({
       return;
     }
 
-    trackConversionEvent(eventName, eventData);
-    window.sessionStorage.setItem(storageKey, "1");
+    const sent = trackConversionEvent(eventName, eventData);
+    if (sent) {
+      window.sessionStorage.setItem(storageKey, "1");
+    }
   }, [dedupeKey, eventData, eventName]);
 
   return null;

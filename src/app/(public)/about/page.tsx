@@ -5,8 +5,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `About | ${brandName}`,
-  description: `${brandName} is an early company building a workspace for small public adjusting offices.`,
+  title: `About ${brandName} | Public Adjuster CRM`,
+  description: `About ${brandName}, public adjuster CRM for small offices. Marc builds the product. Jenn works with customers. A legal entity name and mailing address are not published yet.`,
   path: "/about",
 });
 
@@ -39,7 +39,7 @@ export default function AboutPage() {
     <>
       <PublicPageHeader
         eyebrow="About"
-        title="A desk for small public adjusting offices."
+        title={`About ${brandName}`}
         description={`${brandName} is early. Marc builds the product. Jenn works with customers. The legal entity and mailing address will be added when they are confirmed.`}
       />
       <PublicSection title={`About ${brandName}`}>
