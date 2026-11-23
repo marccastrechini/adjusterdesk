@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Terms | ${brandName}`,
-  description: `Plain-language terms for using ${brandName}, including trial, paid billing, cancellation, and customer data.`,
+  title: `Terms of Use | ${brandName}`,
+  description: `Terms of use for ${brandName}: trial and paid billing, cancellation, customer data, and the limits of this public adjuster software.`,
   path: "/terms",
 });
 
@@ -74,7 +74,7 @@ export default function TermsPage() {
       <NotAttorneyReviewedBanner />
       <PublicPageHeader
         eyebrow="Terms"
-        title={`Plain terms for using ${brandName}.`}
+        title={`Terms of use for ${brandName}`}
         description="A practical summary of service use, trial and paid billing through Stripe, cancellation, customer data, and product limits. A lawyer has not reviewed this page."
       />
       <PublicSection title="Service terms">

@@ -3,8 +3,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Product | ${brandName}`,
-  description: `See how ${brandName} supports the daily claim workflow for small public adjusting offices.`,
+  title: `Public Adjuster Claims Management Software | ${brandName}`,
+  description: `Public adjuster claims management software for the daily file: intake, documents, follow-ups, carrier offers, settlements, and fee invoices.`,
   path: "/product",
 });
 
@@ -48,7 +48,7 @@ export default function ProductPage() {
     <>
       <PublicPageHeader
         eyebrow="Product"
-        title="A daily operating workspace for public adjusting offices."
+        title="Public adjuster claims management software"
         description={`${brandName} follows the way a small office works: intake, claim setup, documents, follow-ups, carrier offers, settlement payments, fees, invoices, and the Today view.`}
       />
       <PublicSection title="The workflow from lead to Today">

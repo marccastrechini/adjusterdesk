@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Card } from "@/components/ui";
+import { privatePageMetadata } from "@/lib/private-metadata";
 import { markSignupIntentCanceled } from "@/lib/signup";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Signup canceled", "Signup checkout was canceled. No PA ClaimBoard workspace was created.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

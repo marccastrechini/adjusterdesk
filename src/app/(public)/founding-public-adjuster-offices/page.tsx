@@ -16,9 +16,9 @@ import { CheckCircle2 } from "lucide-react";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Founding Office Desk | ${brandName}`,
+  title: `Founding Public Adjuster Office Pricing | ${brandName}`,
   description:
-    "First 10 founding public adjusting offices: $0 for 90 days, then $29/month Solo or $49/month Small Office, locked for 12 months. A desk for claims, follow-ups, documents, and fees.",
+    "Founding public adjuster office pricing for the first 10 offices: $0 for 90 days, then $29/month Solo or $49/month Small Office for 12 months, then the standard price.",
   path: "/founding-public-adjuster-offices",
 });
 
@@ -68,8 +68,11 @@ export default function FoundingPublicAdjusterOfficesPage() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-normal text-teal-800">First 10 founding offices</p>
           <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-normal text-slate-950 sm:text-4xl">
-            Claims, follow-ups, documents, and fees are slipping.
+            Founding public adjuster office pricing
           </h1>
+          <p className="mt-4 max-w-3xl text-lg font-medium leading-7 text-slate-950">
+            Claims, follow-ups, documents, and fees are slipping.
+          </p>
           <p className="mt-4 max-w-3xl text-lg font-medium leading-7 text-slate-950">
             One workspace: leads, claims, documents, follow-ups, settlements, fees.
           </p>

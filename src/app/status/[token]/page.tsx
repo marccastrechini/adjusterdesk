@@ -1,6 +1,9 @@
 import { ClientStatusView } from "@/components/client-status-view";
 import { Card, Notice } from "@/components/ui";
+import { privatePageMetadata } from "@/lib/private-metadata";
 import { getStatusPage } from "@/lib/queries";
+
+export const metadata = privatePageMetadata("Claim status", "A private claim status link for one public adjusting office.");
 
 type PageProps = {
   params: Promise<{ token: string }>;

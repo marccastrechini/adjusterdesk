@@ -15,6 +15,8 @@ test("checked-in sitemap matches the public marketing paths", () => {
   assert.ok(publicSitemapPaths.includes("/training/lead-to-claim"));
   assert.ok(publicSitemapPaths.includes("/training/follow-ups"));
   assert.ok(publicSitemapPaths.includes("/founding-public-adjuster-offices"));
+  assert.ok(publicSitemapPaths.includes("/claimwizard-alternative"));
+  assert.ok(xml.includes("https://paclaimboard.com/claimwizard-alternative"));
   assert.equal(xml.includes("/login"), false);
   assert.equal(xml.includes("/claims"), false);
   assert.equal(xml.includes("google-sitemap"), false);
@@ -214,6 +216,19 @@ test("unsafe paths are not turned into redirects", () => {
     }),
     null,
   );
+});
+
+test("sandbox hosts are noindex and are not redirected to production", () => {
+  const request = new NextRequest("https://sandbox.paclaimboard.com/pricing", {
+    headers: {
+      host: "sandbox.paclaimboard.com",
+      "x-forwarded-proto": "https",
+    },
+  });
+  const response = proxy(request);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("location"), null);
+  assert.equal(response.headers.get("x-robots-tag"), "noindex,nofollow");
 });
 
 test("proxy redirects public duplicates and leaves localhost alone", () => {

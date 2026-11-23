@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { canonicalRedirectStatus, canonicalRedirectTarget } from "@/lib/public-canonical";
+import { isSandboxHost, NOINDEX_ROBOTS, requestHostname } from "@/lib/site-host";
 
 /**
  * Send plain HTTP and the www host to the canonical https origin.
@@ -18,7 +19,12 @@ export function proxy(request: NextRequest) {
   });
 
   if (!target) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    const hostname = requestHostname(request.headers.get("host"), request.headers.get("x-forwarded-host"));
+    if (isSandboxHost(hostname)) {
+      response.headers.set("X-Robots-Tag", NOINDEX_ROBOTS);
+    }
+    return response;
   }
 
   return NextResponse.redirect(target, canonicalRedirectStatus);

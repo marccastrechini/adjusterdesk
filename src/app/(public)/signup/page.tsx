@@ -24,8 +24,8 @@ import { brandName, supportEmail } from "@/lib/brand";
 export const dynamic = "force-dynamic";
 
 export const metadata = publicPageMetadata({
-  title: `Sign Up | ${brandName}`,
-  description: "Create your workspace and choose the plan that fits your office.",
+  title: `Start a Public Adjuster Software Trial | ${brandName}`,
+  description: `Start a public adjuster software trial. Stripe Checkout collects a card. $0 is due during the trial, then the Solo, Small Office, or Team price.`,
   path: "/signup",
 });
 
@@ -62,7 +62,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
         <div className="mx-auto grid max-w-2xl gap-6">
           <div className="text-center">
             <p className="text-sm font-medium text-teal-800">{brandName} signup</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your {brandName} workspace</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Start a public adjuster software trial</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Self-service signup is not available right now. Contact us to get started.
             </p>
@@ -97,7 +97,7 @@ export default async function SignupPage({ searchParams }: PageProps) {
       <div className="mx-auto grid max-w-3xl gap-6">
         <div className="text-center">
           <p className="text-sm font-medium text-teal-800">{brandName} signup</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Create your {brandName} workspace</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Start a public adjuster software trial</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {founding
               ? `${FOUNDING_PRICE_LINE} ${FOUNDING_STANDARD_COMPARE} ${FOUNDING_TRIAL_DUE_LINE}`

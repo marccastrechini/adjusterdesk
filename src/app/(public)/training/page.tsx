@@ -7,9 +7,8 @@ import { trainingModulePath, trainingModules } from "@/lib/training";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Training | ${brandName}`,
-  description:
-    `Walk through ${brandName} on your own. Today is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid.`,
+  title: `Public Adjuster CRM Training | ${brandName}`,
+  description: `Public adjuster CRM training you can walk through on your own time. Today is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid.`,
   path: "/training",
 });
 
@@ -18,8 +17,8 @@ export default function TrainingPage() {
     <>
       <PublicPageHeader
         eyebrow="Training"
-        title="Walk through the desk on your own time."
-        description={`A public walkthrough for a 1–5 person public adjusting office. ${brandName} is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call.`}
+        title="Public adjuster CRM training"
+        description={`A public walkthrough you can do on your own time for a 1–5 person public adjusting office. ${brandName} is the daily command center: what to follow up, what is waiting, what is due, and what is still unpaid. The screens are Demo Office. No sales call.`}
       />
 
       <PublicSection

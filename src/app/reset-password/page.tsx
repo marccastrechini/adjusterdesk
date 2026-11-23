@@ -6,8 +6,11 @@ import { resetPasswordWithTokenWithState } from "@/lib/auth-actions";
 import { getCurrentSessionUser } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName } from "@/lib/brand";
+import { privatePageMetadata } from "@/lib/private-metadata";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Reset password", "Set a new PA ClaimBoard sign-in password.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

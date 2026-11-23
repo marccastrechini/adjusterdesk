@@ -7,7 +7,7 @@ import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
   title: `Free Public Adjuster Claim Tracker | ${brandName}`,
-  description: "Download a free claim tracker spreadsheet template to organize leads, clients, properties, carriers, claims, follow-ups, settlements, fees, and invoices.",
+  description: "Download a free public adjuster claim tracker spreadsheet for leads, claims, follow-ups, settlements, fees, and invoices. No login required.",
   path: "/free-public-adjuster-claim-tracker",
 });
 

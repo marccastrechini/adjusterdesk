@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `ClaimWizard Alternative | ${brandName} for Small Public Adjusters`,
-  description: `${brandName} is a simpler, lighter-weight workspace alternative for small public adjusting offices that want practical claim tracking without enterprise complexity.`,
+  title: `ClaimWizard Alternative for Public Adjusters | ${brandName}`,
+  description: `A ClaimWizard alternative for small public adjusters. ${brandName} is a lighter claims workspace with flat Solo, Small Office, and Team pricing.`,
   path: "/claimwizard-alternative",
 });
 
@@ -76,7 +76,7 @@ export default function ClaimWizardAlternativePage() {
     <>
       <PublicPageHeader
         eyebrow="Software comparison"
-        title="ClaimWizard Alternative for Small Public Adjusters"
+        title="ClaimWizard alternative for public adjusters"
         description={`ClaimWizard is a strong enterprise option, but if you run a solo or small office, ${brandName} is a simpler, lighter-weight solution built specifically for your workflow.`}
       />
 

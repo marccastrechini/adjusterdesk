@@ -7,8 +7,11 @@ import { getNoticeMessage } from "@/lib/notices";
 import { getCurrentSessionUser } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName } from "@/lib/brand";
+import { privatePageMetadata } from "@/lib/private-metadata";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Forgot password", "Request a PA ClaimBoard password reset link.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

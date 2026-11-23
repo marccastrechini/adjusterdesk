@@ -1,13 +1,15 @@
+import { JsonLd } from "@/components/json-ld";
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { resolvePublicStartHref, resolvePublicStartLabel, type PublicPlanSlug } from "@/lib/billing";
 import { CHECKOUT_CARD_LINE, FOUNDING_HONESTY_NOTE, FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { softwareApplicationJsonLd } from "@/lib/structured-data";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Pricing | ${brandName}`,
-  description: "Simple flat pricing for solo and small public adjusting offices.",
+  title: `Public Adjuster Software Pricing | ${brandName}`,
+  description: "Public adjuster software pricing: Solo $49/month, Small Office $99/month, Team $199/month after a 14-day trial. Founding offices: $29 or $49/month after 90 days. Checkout collects a card.",
   path: "/pricing",
 });
 
@@ -119,9 +121,10 @@ export default function PricingPage() {
 
   return (
     <>
+      <JsonLd data={softwareApplicationJsonLd()} />
       <PublicPageHeader
         eyebrow="Pricing"
-        title="Simple plans for small public adjusting offices."
+        title="Public adjuster software pricing"
         description="Choose the package that matches how your office works today."
       />
       <PublicSection title="Standard prices" description="Solo $49/month, Small Office $99/month, and Team $199/month are the standard prices. Founding offices pay a lower rate for 12 months, then these standard prices. Professional/custom setup remains available by request.">

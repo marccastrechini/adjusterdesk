@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FoundingOfferSummary } from "@/components/founding-offer-summary";
 import { CtaBand, FeatureCard, PublicButtonLink, PublicPageHeader, PublicSection } from "@/components/public-site";
 import { FOUNDING_PRICE_LINE, FOUNDING_SOLO_SIGNUP_HREF, FOUNDING_STANDARD_COMPARE, FOUNDING_TRIAL_DUE_LINE } from "@/lib/founding-offer";
@@ -15,8 +16,8 @@ import {
 } from "lucide-react";
 
 export const metadata = publicPageMetadata({
-  title: `Public Adjuster Software for Small Offices | ${brandName}`,
-  description: `${brandName} keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices organized for small public adjusting offices.`,
+  title: `Public Adjuster Software | ${brandName}`,
+  description: `Public adjuster software for solo and 2–5 person offices. Keep leads, claims, documents, follow-ups, settlements, and invoices in one workspace.`,
   path: "/public-adjuster-software",
 });
 
@@ -88,7 +89,7 @@ export default function PublicAdjusterSoftwarePage() {
     <>
       <PublicPageHeader
         eyebrow="Office management software"
-        title="Public Adjuster Software for Small Offices"
+        title="Public adjuster software"
         description={`Built for solo adjusters and 2-5 person public adjusting offices. ${brandName} keeps leads, claims, documents, follow-ups, client updates, settlements, fees, and invoices in one simple workspace instead of spreadsheets, inboxes, and memory.`}
       />
 
@@ -163,6 +164,16 @@ export default function PublicAdjusterSoftwarePage() {
             </div>
           ))}
         </div>
+      </PublicSection>
+
+      <PublicSection title="Comparing ClaimWizard" description="A lighter workspace for a small public adjusting office." tone="white">
+        <p className="max-w-3xl text-sm leading-6 text-slate-700">
+          If you are comparing ClaimWizard for a solo or small office, read the{" "}
+          <Link href="/claimwizard-alternative" className="font-medium text-teal-800 hover:text-teal-900">
+            ClaimWizard alternative
+          </Link>{" "}
+          page for how {brandName} handles claims, follow-ups, documents, and fees.
+        </p>
       </PublicSection>
 
       <PublicSection title="Founding office offer" description="First 10 offices. Start the desk with your first 10 active claims." tone="slate">

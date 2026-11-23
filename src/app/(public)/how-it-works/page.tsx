@@ -3,8 +3,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `How It Works | ${brandName}`,
-  description: `A plain-language workflow for small public adjusting offices using ${brandName}.`,
+  title: `How Public Adjuster Claims Management Works | ${brandName}`,
+  description: `How public adjuster claims management works in ${brandName}: bring in claims, keep the file together, and work follow-ups, settlements, and fees from one desk.`,
   path: "/how-it-works",
 });
 
@@ -43,7 +43,7 @@ export default function HowItWorksPage() {
     <>
       <PublicPageHeader
         eyebrow="How it works"
-        title="Simple steps from scattered claim work to a shared office view."
+        title="How public adjuster claims management works"
         description={`${brandName} is meant to fit into the daily rhythm of a small public adjusting office, not replace the judgment of the adjuster.`}
       />
       <PublicSection title="The office flow">

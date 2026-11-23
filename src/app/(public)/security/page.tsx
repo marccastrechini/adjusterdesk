@@ -4,8 +4,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Security | ${brandName}`,
-  description: `Honest security and trust practices for ${brandName}.`,
+  title: `Security Practices | ${brandName}`,
+  description: `Security practices for ${brandName}: HTTPS, signed-in workspace access, and the limits of what this public adjuster software claims.`,
   path: "/security",
 });
 
@@ -51,7 +51,7 @@ export default function SecurityPage() {
     <>
       <PublicPageHeader
         eyebrow="Security"
-        title={`Practical security notes for ${brandName}.`}
+        title="Security practices"
         description="A clear summary of current safeguards without claiming certifications that are not in place."
       />
       <PublicSection title="Security baseline">

@@ -6,8 +6,11 @@ import { acceptInviteWithTokenWithState } from "@/lib/auth-actions";
 import { getCurrentSessionUser } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName } from "@/lib/brand";
+import { privatePageMetadata } from "@/lib/private-metadata";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = privatePageMetadata("Accept invite", "Set a password for a PA ClaimBoard office invite.");
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

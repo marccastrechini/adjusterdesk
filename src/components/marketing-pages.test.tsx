@@ -11,7 +11,7 @@ import { brandName, brandNameTM } from "@/lib/brand";
 test("home hero answers what, who, and the offer before the feature grid", () => {
   const html = renderToStaticMarkup(<HomePage />);
   const eyebrow = html.indexOf("For 1–5 person public adjusting offices");
-  const title = html.indexOf("Know what needs attention. Keep every claim moving.");
+  const title = html.indexOf("Public adjuster CRM and claims management software");
   const subhead = html.indexOf(
     "A straightforward office workspace for small public adjusting firms. Track claims, follow-ups, settlements, invoices, and unpaid fees—all in one place.",
   );
@@ -62,7 +62,8 @@ test("founding page states the product and the founders without the overview vid
 test("resources page lists published pages and a free trial, without placeholder cards", () => {
   const html = renderToStaticMarkup(<ResourcesPage />);
 
-  assert.match(html, /Practical resources for small public adjusting offices/);
+  assert.match(html, /Public adjuster software resources/);
+  assert.match(html, /href="\/claimwizard-alternative"/);
   assert.match(html, /Training walkthrough/);
   assert.match(html, /href="\/training"/);
   assert.match(html, /href="\/help"/);
@@ -78,7 +79,8 @@ test("resources page lists published pages and a free trial, without placeholder
 test("training page keeps the three modules and points to signup", () => {
   const html = renderToStaticMarkup(<TrainingPage />);
 
-  assert.match(html, /Walk through the desk on your own time/);
+  assert.match(html, /Public adjuster CRM training/);
+  assert.match(html, /on your own time/);
   assert.match(html, /Desk overview/);
   assert.match(html, /Lead to claim/);
   assert.match(html, /Follow-ups that don/);
@@ -104,4 +106,5 @@ test("public header points at the founding offer", () => {
   assert.match(html, /Founding desk · \$0\/90 days/);
   assert.match(html, /href="\/signup"/);
   assert.match(html, /Start free trial/);
+  assert.match(html, /href="\/claimwizard-alternative"/);
 });

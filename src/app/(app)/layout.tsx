@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { requireAuthenticatedAppContext } from "@/lib/app-context";
+import { NOINDEX_ROBOTS } from "@/lib/site-host";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
+  robots: NOINDEX_ROBOTS,
 };
 
 export default async function WorkspaceLayout({ children }: { children: ReactNode }) {

@@ -66,6 +66,21 @@ export function listPublicPlans() {
   return publicPlans;
 }
 
+/** Published monthly dollars. Founding applies to Solo and Small Office only. */
+export function monthlyPriceDollars(slug: PublicPlanSlug, founding: boolean): number {
+  if (founding && slug === "solo") {
+    return 29;
+  }
+
+  if (founding && slug === "small-office") {
+    return 49;
+  }
+
+  const label = findPublicPlanBySlug(slug)?.priceLabel ?? "";
+  const amount = Number(label.replace(/[^0-9]/g, ""));
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+}
+
 export function findPublicPlanBySlug(slug: string | undefined | null) {
   const normalized = parsePlanSlug(slug);
   if (!normalized) {

@@ -3,8 +3,8 @@ import { publicPageMetadata } from "@/lib/public-metadata";
 import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
-  title: `Features | ${brandName}`,
-  description: "Simple claim tracking, contacts, documents, follow-ups, payments, fees, invoices, templates, and spreadsheet import for small public adjusting offices.",
+  title: `Claim Tracker for Public Adjusters | ${brandName}`,
+  description: "A claim tracker for public adjusters. Follow claims, contacts, documents, deadlines, settlements, and fee invoices. Clients pay fees by Stripe card or ACH.",
   path: "/features",
 });
 
@@ -13,7 +13,7 @@ export default function FeaturesPage() {
     <>
       <PublicPageHeader
         eyebrow="Features"
-        title="Practical tools for the work your office already does."
+        title="Claim tracker for public adjusters"
         description={`${brandName} keeps the important claim details together without asking a small public adjusting office to learn a heavy system.`}
       />
       <PublicSection title="Core features">

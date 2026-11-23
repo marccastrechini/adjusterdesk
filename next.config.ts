@@ -38,7 +38,7 @@ const privateRouteHeaders = [
   },
   {
     key: "X-Robots-Tag",
-    value: "noindex, nofollow",
+    value: "noindex,nofollow",
   },
 ];
 
