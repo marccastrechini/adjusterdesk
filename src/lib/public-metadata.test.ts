@@ -17,7 +17,7 @@ import { metadata as pricing } from "@/app/(public)/pricing/page";
 import { metadata as privacy } from "@/app/(public)/privacy/page";
 import { metadata as product } from "@/app/(public)/product/page";
 import { metadata as software } from "@/app/(public)/public-adjuster-software/page";
-import { metadata as resourceArticle } from "@/app/(public)/resources/keep-improve-or-choose-a-provider/page";
+import { metadata as resourceArticle } from "@/app/(public)/resources/ai-and-your-claims-software/page";
 import { metadata as resources } from "@/app/(public)/resources/page";
 import { metadata as security } from "@/app/(public)/security/page";
 import { metadata as signup } from "@/app/(public)/signup/page";
@@ -61,6 +61,12 @@ test("public titles target the search phrases", () => {
   assert.equal(titleOf(accessibility), "Accessibility Statement | PA ClaimBoard");
   assert.equal(titleOf(security), "Security Practices | PA ClaimBoard");
 
+  const aboutSocial = about as { description?: string; openGraph?: { description?: string }; twitter?: { description?: string } };
+  assert.match(String(aboutSocial.description), /You will hear from the PA ClaimBoard team\./);
+  assert.equal(aboutSocial.openGraph?.description, aboutSocial.description);
+  assert.equal(aboutSocial.twitter?.description, aboutSocial.description);
+  assert.doesNotMatch(String(aboutSocial.description), /Marc|Jenn/);
+
   for (const metadata of [home, product, features, pricing, help, software]) {
     const social = metadata as { openGraph?: { images?: unknown }; twitter?: { card?: string; images?: unknown } };
     assert.equal(social.twitter?.card, "summary_large_image");
@@ -72,25 +78,27 @@ test("public titles target the search phrases", () => {
 test("resource article metadata names the piece and points at the canonical URL", () => {
   assert.equal(
     titleOf(resourceArticle),
-    "Keep It, Improve It, or Choose a Provider? Three Sensible Paths for Your PA Office",
+    "AI and Your Claims Software: Four Honest Options for Small PA Offices",
   );
   const article = resourceArticle as {
     description?: string;
     alternates?: { canonical?: string };
     openGraph?: { type?: string; url?: string; title?: string; description?: string; publishedTime?: string; authors?: string[]; images?: unknown };
-    twitter?: { card?: string; images?: unknown };
+    twitter?: { card?: string; title?: string; description?: string; images?: unknown };
   };
   assert.equal(
     article.description,
-    "Choose between keeping your current system, building improvements with AI, or working with a provider.",
+    "Four honest options for small PA offices: keep your claims system, use AI to tune it, build your own, or use a provider.",
   );
-  assert.equal(article.alternates?.canonical, "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider");
+  assert.equal(article.alternates?.canonical, "https://paclaimboard.com/resources/ai-and-your-claims-software");
   assert.equal(article.openGraph?.type, "article");
-  assert.equal(article.openGraph?.url, "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider");
+  assert.equal(article.openGraph?.url, "https://paclaimboard.com/resources/ai-and-your-claims-software");
   assert.equal(article.openGraph?.title, titleOf(resourceArticle));
   assert.equal(article.openGraph?.description, article.description);
   assert.equal(article.openGraph?.publishedTime, "2026-11");
-  assert.deepEqual(article.openGraph?.authors, ["Marc Castrechini"]);
+  assert.deepEqual(article.openGraph?.authors, ["PA ClaimBoard"]);
+  assert.equal(article.twitter?.title, titleOf(resourceArticle));
+  assert.equal(article.twitter?.description, article.description);
   assert.ok(article.openGraph?.images);
   assert.equal(article.twitter?.card, "summary_large_image");
   assert.ok(article.twitter?.images);

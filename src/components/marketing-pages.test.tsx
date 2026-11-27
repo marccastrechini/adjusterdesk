@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import FoundingPublicAdjusterOfficesPage from "@/app/(public)/founding-public-adjuster-offices/page";
 import HomePage from "@/app/(public)/page";
-import KeepImproveOrChoosePage from "@/app/(public)/resources/keep-improve-or-choose-a-provider/page";
+import AiAndYourClaimsSoftwarePage from "@/app/(public)/resources/ai-and-your-claims-software/page";
 import ResourcesPage from "@/app/(public)/resources/page";
 import TrainingPage from "@/app/(public)/training/page";
 import { PublicSiteChrome } from "@/components/public-site";
@@ -40,11 +40,11 @@ test("home hero answers what, who, and the offer before the feature grid", () =>
   assert.doesNotMatch(html, /Klarna|Affirm|buy now, pay later|surcharge-ready|works with any/i);
 });
 
-test("founding page states the product and the founders without the overview video", () => {
+test("founding page states the product and the team without the overview video", () => {
   const html = renderToStaticMarkup(<FoundingPublicAdjusterOfficesPage />);
   const title = html.indexOf("Claims, follow-ups, documents, and fees are slipping.");
   const product = html.indexOf("One workspace: leads, claims, documents, follow-ups, settlements, fees.");
-  const byline = html.indexOf("Built by Marc (Product) and Jenn (Customers)");
+  const byline = html.indexOf("Built by the PA ClaimBoard team.");
   const pain = html.indexOf("Where the work slips");
   const value = html.indexOf("What you get on the desk");
 
@@ -68,7 +68,8 @@ test("resources page lists published pages and a free trial, without placeholder
   assert.match(html, /Training walkthrough/);
   assert.match(html, /href="\/training"/);
   assert.match(html, /href="\/help"/);
-  assert.match(html, /href="\/resources\/keep-improve-or-choose-a-provider"/);
+  assert.match(html, /AI and your claims software/);
+  assert.match(html, /href="\/resources\/ai-and-your-claims-software"/);
   assert.match(html, /Read the article/);
   assert.match(html, /href="\/signup"/);
   assert.match(html, /Start free trial/);
@@ -113,20 +114,22 @@ test("public header points at the founding offer", () => {
   assert.match(html, /href="\/signup"/);
   assert.match(html, /Start free trial/);
   assert.match(html, /href="\/claimwizard-alternative"/);
-  assert.match(html, /href="\/resources\/keep-improve-or-choose-a-provider"/);
-  assert.match(html, /Keep, improve, or choose/);
+  assert.match(html, /href="\/resources\/ai-and-your-claims-software"/);
+  assert.match(html, /AI and your claims software/);
 });
 
-test("resource article stays a fair reading and does not pitch the product", () => {
-  const html = renderToStaticMarkup(<KeepImproveOrChoosePage />);
+test("resource article states four options and discloses the sponsor", () => {
+  const html = renderToStaticMarkup(<AiAndYourClaimsSoftwarePage />);
 
-  assert.match(html, /Keep It, Improve It, or Choose a Provider\? Three Sensible Paths for Your PA Office/);
-  assert.match(html, /Marc Castrechini, founder of PA ClaimBoard/);
+  assert.match(html, /AI and Your Claims Software: Four Honest Options for Small PA Offices/);
+  assert.match(html, /Sponsored content/);
+  assert.match(html, /PA ClaimBoard[\s\S]{0,120}<time dateTime="2026-11">November 2026<\/time>/);
   assert.match(html, /<time dateTime="2026-11">November 2026<\/time>/);
-  assert.match(html, /Written by the founder of PA ClaimBoard\. We tried to give each option a fair shake\./);
-  assert.match(html, /If it ain’t broke, don’t fix it\./);
-  assert.match(html, /What needs attention today\?/);
-  assert.match(html, /Choose for the work your office actually does and the responsibilities you are willing to carry\./);
+  assert.match(html, /Written by the team behind PA ClaimBoard\. We’ve tried to describe every path fairly, including the ones that don’t involve us\./);
+  assert.match(html, /Option 1: Stick with what you have/);
+  assert.match(html, /Option 4: Use a provider whose software uses AI for you/);
+  assert.match(html, /The real decision: 3 or 4/);
+  assert.match(html, /Choose for the work your office actually does and the responsibilities you’re willing to carry\./);
   assert.match(html, /href="https:\/\/docs\.github\.com\/en\/copilot\/tutorials\/review-ai-generated-code"/);
   assert.match(html, /href="https:\/\/www\.nist\.gov\/itl\/smallbusinesscyber\/cybersecurity-basics"/);
   assert.match(html, />GitHub Docs</);
@@ -134,15 +137,15 @@ test("resource article stays a fair reading and does not pitch the product", () 
   assert.equal(html.match(/target="_blank"/g)?.length, 2);
   assert.equal(html.match(/rel="noopener noreferrer"/g)?.length, 2);
   assert.match(html, /"@type":"Article"/);
-  assert.match(html, /Sponsor note: Marc Castrechini is the founder of PA ClaimBoard/);
-  assert.match(html, /responds quickly to feedback\./);
+  assert.match(html, /"dateModified":"2026-11-27"/);
+  assert.match(html, /"author":\{"@type":"Organization","name":"PA ClaimBoard"\}/);
+  assert.match(html, /Sponsor note: This article was written by the team behind PA ClaimBoard, a claims CRM for small public adjusting offices, which is an option-4 provider\./);
+  assert.match(html, /Learn more at <a href="https:\/\/paclaimboard\.com"/);
   assert.match(html, /href="\/resources"/);
-  assert.doesNotMatch(html, /Learn more at/);
-  assert.doesNotMatch(html, /href="https:\/\/paclaimboard\.com/);
-  assert.doesNotMatch(html, /SPONSORED CONTENT/);
   assert.doesNotMatch(html, /Pitch email|Article submission|May I submit/);
   assert.doesNotMatch(html, /utm_/i);
   assert.doesNotMatch(html, /adjusterdesk/i);
+  assert.doesNotMatch(html, /Marc|Jenn|Castrechini|Castrochini/);
   assert.doesNotMatch(html, /href="\/signup"|href="\/pricing"|Start free trial|\$49/);
   assert.doesNotMatch(html, /street address|Street|Avenue|Boulevard/i);
 });

@@ -16,9 +16,11 @@ test("checked-in sitemap matches the public marketing paths", () => {
   assert.ok(publicSitemapPaths.includes("/training/follow-ups"));
   assert.ok(publicSitemapPaths.includes("/founding-public-adjuster-offices"));
   assert.ok(publicSitemapPaths.includes("/claimwizard-alternative"));
-  assert.ok(publicSitemapPaths.includes("/resources/keep-improve-or-choose-a-provider"));
+  assert.ok(publicSitemapPaths.includes("/resources/ai-and-your-claims-software"));
+  assert.equal(publicSitemapPaths.includes("/resources/keep-improve-or-choose-a-provider"), false);
   assert.ok(xml.includes("https://paclaimboard.com/claimwizard-alternative"));
-  assert.ok(xml.includes("https://paclaimboard.com/resources/keep-improve-or-choose-a-provider"));
+  assert.ok(xml.includes("https://paclaimboard.com/resources/ai-and-your-claims-software"));
+  assert.equal(xml.includes("keep-improve-or-choose-a-provider"), false);
   assert.equal(xml.includes("/login"), false);
   assert.equal(xml.includes("/claims"), false);
   assert.equal(xml.includes("google-sitemap"), false);

@@ -86,6 +86,7 @@ export function articleJsonLd(input: {
   description: string;
   url: string;
   datePublished: string;
+  dateModified: string;
   authorName: string;
 }) {
   return {
@@ -94,8 +95,9 @@ export function articleJsonLd(input: {
     headline: input.headline,
     description: input.description,
     datePublished: input.datePublished,
+    dateModified: input.dateModified,
     author: {
-      "@type": "Person",
+      "@type": "Organization",
       name: input.authorName,
     },
     publisher: {

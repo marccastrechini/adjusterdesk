@@ -80,6 +80,11 @@ const nextConfig: NextConfig = {
         destination: "/sitemap.xml",
         permanent: true,
       },
+      {
+        source: "/resources/keep-improve-or-choose-a-provider",
+        destination: "/resources/ai-and-your-claims-software",
+        permanent: true,
+      },
     ];
   },
   async headers() {

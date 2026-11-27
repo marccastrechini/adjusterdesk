@@ -1,19 +1,22 @@
 import { canonicalOrigin } from "@/lib/brand";
 
-export const resourceArticlePath = "/resources/keep-improve-or-choose-a-provider" as const;
+export const resourceArticlePath = "/resources/ai-and-your-claims-software" as const;
 
 export const resourceArticleTitle =
-  "Keep It, Improve It, or Choose a Provider? Three Sensible Paths for Your PA Office";
+  "AI and Your Claims Software: Four Honest Options for Small PA Offices";
 
 /** One sentence for the page description and social cards. */
 export const resourceArticleDescription =
-  "Choose between keeping your current system, building improvements with AI, or working with a provider.";
+  "Four honest options for small PA offices: keep your claims system, use AI to tune it, build your own, or use a provider.";
 
 export const resourceArticleCanonicalUrl = `${canonicalOrigin}${resourceArticlePath}`;
 
 /** Month precision matches the published byline, November 2026. */
 export const resourceArticlePublished = "2026-11";
 
-export const resourceArticleAuthorName = "Marc Castrechini";
+/** Full date for Article JSON-LD dateModified. */
+export const resourceArticleModified = "2026-11-27";
 
-export const resourceArticleNavLabel = "Keep, improve, or choose";
+export const resourceArticleAuthorName = "PA ClaimBoard";
+
+export const resourceArticleNavLabel = "AI and your claims software";

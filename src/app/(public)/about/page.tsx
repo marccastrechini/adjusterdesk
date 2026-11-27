@@ -6,7 +6,7 @@ import { brandName } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
   title: `About ${brandName} | Public Adjuster CRM`,
-  description: `About ${brandName}, public adjuster CRM for small offices. Marc builds the product. Jenn works with customers. A legal entity name and mailing address are not published yet.`,
+  description: `About ${brandName}, public adjuster CRM for small offices. You will hear from the ${brandName} team. A legal entity name and mailing address are not published yet.`,
   path: "/about",
 });
 
@@ -20,10 +20,7 @@ const sections: TrustSection[] = [
   },
   {
     title: "Who you will hear from",
-    paragraphs: [
-      "Marc works on the product. Jenn works with customers.",
-      "Those are first names only.",
-    ],
+    paragraphs: [`You will hear from the ${brandName} team.`],
   },
   {
     title: "What the product is, and is not",
@@ -40,7 +37,7 @@ export default function AboutPage() {
       <PublicPageHeader
         eyebrow="About"
         title={`About ${brandName}`}
-        description={`${brandName} is early. Marc builds the product. Jenn works with customers. The legal entity and mailing address will be added when they are confirmed.`}
+        description={`${brandName} is early. You will hear from the ${brandName} team. The legal entity and mailing address will be added when they are confirmed.`}
       />
       <PublicSection title={`About ${brandName}`}>
         <TrustPageContent sections={sections} />
