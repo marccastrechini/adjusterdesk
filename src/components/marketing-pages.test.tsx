@@ -107,6 +107,9 @@ test("public header points at the founding offer", () => {
   assert.ok(html.includes(`${brandNameTM} is a trademark of its owner.`));
   assert.equal(html.includes("®"), false);
   assert.match(html, /Founding desk · \$0\/90 days/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /aria-controls=/);
+  assert.match(html, />Menu</);
   assert.match(html, /href="\/signup"/);
   assert.match(html, /Start free trial/);
   assert.match(html, /href="\/claimwizard-alternative"/);

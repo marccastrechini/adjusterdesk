@@ -43,6 +43,15 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [socialImagePath],
     },
     robots: isSandboxHost(hostname) ? NOINDEX_ROBOTS : { index: true, follow: true },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+        { url: "/icon.svg", type: "image/svg+xml" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
   };
 
   if (process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION) {
@@ -70,7 +79,6 @@ export default async function RootLayout({
       className={`${geistSans.variable} h-full antialiased`}
     >
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon" />
         {loadAnalytics && gaId ? (
           <>
             <script dangerouslySetInnerHTML={{ __html: analyticsBootstrapScript(gaId) }} />
