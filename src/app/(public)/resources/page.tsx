@@ -2,11 +2,12 @@ import { CtaBand, PublicButtonLink, PublicPageHeader, PublicSection } from "@/co
 import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { FOUNDING_PAGE_HREF, FOUNDING_PRICE_LINE, FOUNDING_STANDARD_COMPARE, TRACKER_PAGE_HREF } from "@/lib/founding-offer";
 import { publicPageMetadata } from "@/lib/public-metadata";
+import { resourceArticlePath } from "@/lib/resource-article";
 import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
   title: `Public Adjuster Software Resources | ${brandName}`,
-  description: `Public adjuster software resources: CRM training, help, founding office pricing, a free claim tracker, and a ClaimWizard alternative for small offices.`,
+  description: `Public adjuster software resources: an article on keeping, improving, or choosing a system, CRM training, help, founding office pricing, a free claim tracker, and a ClaimWizard alternative for small offices.`,
   path: "/resources",
 });
 
@@ -30,6 +31,12 @@ const availableResources = [
     label: "Open help",
   },
   {
+    title: "Keep it, improve it, or choose a provider",
+    description: "Three sensible paths for a PA office: keep a working system, improve it with AI, or choose a provider.",
+    href: resourceArticlePath,
+    label: "Read the article",
+  },
+  {
     title: "Free claim tracker",
     description: "A spreadsheet for leads, follow-ups, documents, settlements, and fees, if you want a file before the desk.",
     href: TRACKER_PAGE_HREF,
@@ -49,7 +56,7 @@ export default function ResourcesPage() {
       <PublicPageHeader
         eyebrow="Resources"
         title="Public adjuster software resources"
-        description={`Published here: the training walkthrough, help answers, the founding desk offer, and a free claim tracker. ${brandName} is self-serve. Start a free trial when you want the desk itself.`}
+        description={`Published here: an article on keeping, improving, or choosing a system, the training walkthrough, help answers, the founding desk offer, and a free claim tracker. ${brandName} is self-serve. Start a free trial when you want the desk itself.`}
       />
       <PublicSection title="Available now" description="These pages are live. Open the one that matches what you need next.">
         <div className="grid gap-4 md:grid-cols-2">

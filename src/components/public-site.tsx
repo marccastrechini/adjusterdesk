@@ -18,6 +18,7 @@ import { TrackedLink } from "@/components/tracked-link";
 import type { CTAEventName } from "@/lib/analytics";
 import { resolvePublicStartHref, resolvePublicStartLabel } from "@/lib/billing";
 import { FOUNDING_PAGE_HREF } from "@/lib/founding-offer";
+import { resourceArticleNavLabel, resourceArticlePath } from "@/lib/resource-article";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
 import { brandName, brandNameTM, brandTagline, supportEmail } from "@/lib/brand";
@@ -156,7 +157,7 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
                 { href: "/free-public-adjuster-claim-tracker", label: "Free Claim Tracker" },
               ]}
             />
-            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: "/training", label: "Training" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
+            <FooterLinks title="Plan" items={[{ href: "/pricing", label: "Pricing" }, { href: "/founding-public-adjuster-offices", label: "Founding offices" }, { href: "/resources", label: "Resources" }, { href: resourceArticlePath, label: resourceArticleNavLabel }, { href: "/training", label: "Training" }, { href: "/help", label: "Help" }, { href: startHref, label: startLabel }]} />
             <FooterLinks title="App" items={[{ href: "/login", label: "Log in" }, { href: `mailto:${supportEmail}`, label: "Email us" }]} />
             <FooterLinks title="Trust" items={trustNavItems} />
           </div>

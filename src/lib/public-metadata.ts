@@ -23,7 +23,49 @@ function resolvePublicSiteUrl() {
 
 export const publicSiteUrl = resolvePublicSiteUrl();
 
-export function publicPageMetadata({ title, description, path }: { title: string; description: string; path: string }): Metadata {
+export function publicPageMetadata({
+  title,
+  description,
+  path,
+  article,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  article?: {
+    publishedTime: string;
+    authors: string[];
+  };
+}): Metadata {
+  const twitter = {
+    card: "summary_large_image" as const,
+    title,
+    description,
+    images: [socialImagePath],
+  };
+
+  if (article) {
+    const canonical = new URL(path, canonicalOrigin).toString();
+    return {
+      title,
+      description,
+      alternates: {
+        canonical,
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        siteName: brandName,
+        type: "article",
+        publishedTime: article.publishedTime,
+        authors: article.authors,
+        images: [socialImage],
+      },
+      twitter,
+    };
+  }
+
   return {
     title,
     description,
@@ -38,11 +80,6 @@ export function publicPageMetadata({ title, description, path }: { title: string
       type: "website",
       images: [socialImage],
     },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [socialImagePath],
-    },
+    twitter,
   };
 }
