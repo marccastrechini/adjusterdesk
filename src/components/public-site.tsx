@@ -21,6 +21,7 @@ import { FOUNDING_PAGE_HREF } from "@/lib/founding-offer";
 import { resourceArticleNavLabel, resourceArticlePath } from "@/lib/resource-article";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand-mark";
+import { PublicMobileHeader } from "@/components/public-mobile-header";
 import { brandName, brandNameTM, brandTagline, supportEmail } from "@/lib/brand";
 
 export const publicNavItems = [
@@ -89,7 +90,14 @@ export function PublicSiteChrome({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <PublicMobileHeader
+          navItems={publicNavItems}
+          brandNameTM={brandNameTM}
+          brandTagline={brandTagline}
+          foundingHref={FOUNDING_PAGE_HREF}
+          supportEmail={supportEmail}
+        />
+        <div className="mx-auto hidden max-w-7xl flex-col gap-4 px-4 py-4 sm:flex sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
             <BrandMark />
             <span className="grid">

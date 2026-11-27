@@ -91,4 +91,29 @@ test("home and pricing render the software application offers", () => {
 test("brand images are the social and logo sizes", () => {
   assert.deepEqual(pngSize("../../public/logo.png"), { width: 512, height: 512 });
   assert.deepEqual(pngSize("../../public/og.png"), { width: 1200, height: 630 });
+  assert.deepEqual(pngSize("../../public/icon-192.png"), { width: 192, height: 192 });
+  assert.deepEqual(pngSize("../../public/icon-512.png"), { width: 512, height: 512 });
+  assert.deepEqual(pngSize("../../public/apple-touch-icon.png"), { width: 180, height: 180 });
+  assert.deepEqual(pngSize("../../public/brand/paclaimboard-lockup.png"), pngSize("../../public/brand/paclaimboard-lockup-white.png"));
+
+  const icon = readFileSync(new URL("../../public/icon.svg", import.meta.url), "utf8");
+  assert.match(icon, /<path /);
+  assert.doesNotMatch(icon, /<text|font-family|Inter/);
+  assert.match(icon, /#00786f/);
+
+  const lockup = readFileSync(new URL("../../public/brand/paclaimboard-lockup.svg", import.meta.url), "utf8");
+  assert.match(lockup, /<path /);
+  assert.doesNotMatch(lockup, /<text|font-family|Inter/);
+  const lockupOnWhite = readFileSync(new URL("../../public/brand/paclaimboard-lockup-white.svg", import.meta.url), "utf8");
+  assert.match(lockupOnWhite, /fill="#ffffff"/);
+
+  const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  assert.match(layout, /\/icon\.svg/);
+  assert.match(layout, /\/apple-touch-icon\.png/);
+  assert.match(layout, /\/icon-192\.png/);
+  assert.match(layout, /\/icon-512\.png/);
+  const manifest = readFileSync(new URL("../app/manifest.ts", import.meta.url), "utf8");
+  assert.match(manifest, /\/icon-192\.png/);
+  assert.match(manifest, /\/icon-512\.png/);
+  assert.match(manifest, /\/apple-touch-icon\.png/);
 });
