@@ -7,7 +7,7 @@ import { brandName, supportEmail } from "@/lib/brand";
 
 export const metadata = publicPageMetadata({
   title: `Public Adjuster Software Resources | ${brandName}`,
-  description: `Public adjuster software resources: an article on keeping, improving, or choosing a system, CRM training, help, founding office pricing, a free claim tracker, and a ClaimWizard alternative for small offices.`,
+  description: `Public adjuster software resources: an article on AI and your claims software, CRM training, help, founding office pricing, a free claim tracker, and a ClaimWizard alternative for small offices.`,
   path: "/resources",
 });
 
@@ -31,8 +31,8 @@ const availableResources = [
     label: "Open help",
   },
   {
-    title: "Keep it, improve it, or choose a provider",
-    description: "Three sensible paths for a PA office: keep a working system, improve it with AI, or choose a provider.",
+    title: "AI and your claims software",
+    description: "Four honest options for a small PA office: stick with your claims system, tune it with AI, build your own, or use a provider.",
     href: resourceArticlePath,
     label: "Read the article",
   },
@@ -56,7 +56,7 @@ export default function ResourcesPage() {
       <PublicPageHeader
         eyebrow="Resources"
         title="Public adjuster software resources"
-        description={`Published here: an article on keeping, improving, or choosing a system, the training walkthrough, help answers, the founding desk offer, and a free claim tracker. ${brandName} is self-serve. Start a free trial when you want the desk itself.`}
+        description={`Published here: an article on AI and your claims software, the training walkthrough, help answers, the founding desk offer, and a free claim tracker. ${brandName} is self-serve. Start a free trial when you want the desk itself.`}
       />
       <PublicSection title="Available now" description="These pages are live. Open the one that matches what you need next.">
         <div className="grid gap-4 md:grid-cols-2">

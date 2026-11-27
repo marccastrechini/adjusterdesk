@@ -13,7 +13,7 @@ const sections: TrustSection[] = [
   {
     title: "Who you are dealing with",
     paragraphs: [
-      `${brandName} is operated by Marc Castrechini in Massachusetts. A registered legal entity name is not published on this page, and no street or mailing address is published here. Questions about these terms go to ${supportEmail}.`,
+      `${brandName}, Massachusetts. A registered legal entity name is not published on this page, and no street or mailing address is published here. Questions about these terms go to ${supportEmail}.`,
       "A lawyer has not reviewed this page. It is a practical summary so an office can see how signup, billing, data, and product limits work today. It is not the finished customer agreement. A full lawyer-reviewed agreement is not in place yet, so this page does not set a formal governing-law term.",
     ],
   },

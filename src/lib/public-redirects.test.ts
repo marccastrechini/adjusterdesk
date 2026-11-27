@@ -24,4 +24,13 @@ test("short public paths permanently redirect to the canonical pages", async () 
     destination: "/sitemap.xml",
     permanent: true,
   });
+  assert.deepEqual(bySource.get("/resources/keep-improve-or-choose-a-provider"), {
+    source: "/resources/keep-improve-or-choose-a-provider",
+    destination: "/resources/ai-and-your-claims-software",
+    permanent: true,
+  });
+  for (const redirect of redirects) {
+    assert.equal(redirect.destination.includes("adjusterdesk"), false);
+    assert.equal(redirect.destination.startsWith("http"), false);
+  }
 });

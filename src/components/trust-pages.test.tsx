@@ -32,7 +32,8 @@ test("privacy and cookies disclose live Google Analytics 4 without a consent UI"
 
   assert.match(privacy, /Not attorney-reviewed/);
   assert.match(privacy, /hello@paclaimboard\.com/);
-  assert.match(privacy, /operated by Marc Castrechini in Massachusetts/);
+  assert.match(privacy, /PA ClaimBoard, Massachusetts\./);
+  assert.doesNotMatch(privacy, /Marc|Castrechini|operated by/);
   assert.match(privacy, /registered legal entity name is not published/);
   assert.match(privacy, /no street or mailing address is published/);
   assert.match(privacy, /full lawyer-reviewed agreement is not in place yet/);
@@ -52,7 +53,8 @@ test("terms keep published prices and state trial, cancel, Stripe, and data owne
   assert.match(html, /unless the office cancels first/);
   assert.match(html, /hello@paclaimboard\.com/);
   assert.doesNotMatch(html, /hello@adjusterdesk\.xyz/);
-  assert.match(html, /operated by Marc Castrechini in Massachusetts/);
+  assert.match(html, /PA ClaimBoard, Massachusetts\./);
+  assert.doesNotMatch(html, /Marc|Castrechini|operated by/);
   assert.match(html, /registered legal entity name is not published/);
   assert.match(html, /no street or mailing address is published/);
   assert.match(html, /full lawyer-reviewed agreement is not in place yet/);
@@ -69,9 +71,8 @@ test("about and contact stay thin and do not invent a legal entity", () => {
   const about = renderToStaticMarkup(<AboutPage />);
   const contact = renderToStaticMarkup(<ContactPage />);
 
-  assert.match(about, /Marc works on the product/);
-  assert.match(about, /Jenn works with customers/);
-  assert.match(about, /first names only/);
+  assert.match(about, /You will hear from the PA ClaimBoard team\./);
+  assert.doesNotMatch(about, /Marc|Jenn|first names only/);
   assert.match(about, /legal entity name and mailing address are not published/);
   assert.match(about, /href="\/contact"/);
   assert.match(about, /href="\/demo"/);

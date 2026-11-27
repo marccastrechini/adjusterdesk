@@ -60,22 +60,25 @@ test("help FAQ structured data is the same copy as the page", () => {
 
 test("article structured data names the piece without an address", () => {
   const article = articleJsonLd({
-    headline: "Keep It, Improve It, or Choose a Provider? Three Sensible Paths for Your PA Office",
-    description: "Choose between keeping your current system, building improvements with AI, or working with a provider.",
-    url: "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider",
+    headline: "AI and Your Claims Software: Four Honest Options for Small PA Offices",
+    description: "Four honest options for small PA offices: keep your claims system, use AI to tune it, build your own, or use a provider.",
+    url: "https://paclaimboard.com/resources/ai-and-your-claims-software",
     datePublished: "2026-11",
-    authorName: "Marc Castrechini",
+    dateModified: "2026-11-27",
+    authorName: "PA ClaimBoard",
   });
 
   assert.equal(article["@type"], "Article");
-  assert.equal(article.author.name, "Marc Castrechini");
+  assert.equal(article.author["@type"], "Organization");
+  assert.equal(article.author.name, "PA ClaimBoard");
   assert.equal(article.datePublished, "2026-11");
+  assert.equal(article.dateModified, "2026-11-27");
   assert.equal(article.publisher.name, "PA ClaimBoard");
   assert.equal(article.publisher.logo.url, "https://paclaimboard.com/logo.png");
-  assert.equal(article.url, "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider");
+  assert.equal(article.url, "https://paclaimboard.com/resources/ai-and-your-claims-software");
   assert.equal(article.mainEntityOfPage["@id"], article.url);
   assert.equal("address" in article.publisher, false);
-  assert.doesNotMatch(JSON.stringify(article), /adjusterdesk|streetAddress/i);
+  assert.doesNotMatch(JSON.stringify(article), /adjusterdesk|streetAddress|Marc|Castrechini/i);
 });
 
 test("home and pricing render the software application offers", () => {

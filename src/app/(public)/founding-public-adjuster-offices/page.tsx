@@ -90,7 +90,7 @@ export default function FoundingPublicAdjusterOfficesPage() {
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
             {FOUNDING_PRICE_LINE} {FOUNDING_STANDARD_COMPARE}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Built by Marc (Product) and Jenn (Customers)</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{`Built by the ${brandName} team.`}</p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             <Link href={TRACKER_PAGE_HREF} className="font-medium text-teal-800 hover:text-teal-900">
               Prefer a sheet for now?

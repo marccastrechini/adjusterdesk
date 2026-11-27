@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { brandName, canonicalOrigin, supportEmail } from "@/lib/brand";
 
 const trustPages = [
-  { path: "/about", heading: "A desk for small public adjusting offices.", copy: "Marc works on the product. Jenn works with customers." },
+  { path: "/about", heading: "Who you will hear from", copy: "You will hear from the PA ClaimBoard team." },
   { path: "/contact", heading: `Email ${supportEmail}.`, copy: "We try to reply within a few business days." },
   { path: "/privacy", heading: `How ${brandName} handles information.`, copy: "Information from workspace setup, demo, and contact requests" },
   { path: "/terms", heading: `Plain terms for using ${brandName}.`, copy: "Professional judgment and advice" },
