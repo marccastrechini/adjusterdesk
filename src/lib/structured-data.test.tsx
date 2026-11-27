@@ -8,7 +8,7 @@ import PricingPage from "@/app/(public)/pricing/page";
 import { monthlyPriceDollars } from "@/lib/billing";
 import { FOUNDING_PRICE_LINE } from "@/lib/founding-offer";
 import { helpFaqs } from "@/lib/help-faqs";
-import { faqPageJsonLd, organizationJsonLd, softwareApplicationJsonLd } from "@/lib/structured-data";
+import { articleJsonLd, faqPageJsonLd, organizationJsonLd, softwareApplicationJsonLd } from "@/lib/structured-data";
 
 function pngSize(path: string) {
   const bytes = readFileSync(new URL(path, import.meta.url));
@@ -56,6 +56,26 @@ test("help FAQ structured data is the same copy as the page", () => {
   for (const item of helpFaqs) {
     assert.ok(html.includes(item.question));
   }
+});
+
+test("article structured data names the piece without an address", () => {
+  const article = articleJsonLd({
+    headline: "Keep It, Improve It, or Choose a Provider? Three Sensible Paths for Your PA Office",
+    description: "Choose between keeping your current system, building improvements with AI, or working with a provider.",
+    url: "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider",
+    datePublished: "2026-11",
+    authorName: "Marc Castrechini",
+  });
+
+  assert.equal(article["@type"], "Article");
+  assert.equal(article.author.name, "Marc Castrechini");
+  assert.equal(article.datePublished, "2026-11");
+  assert.equal(article.publisher.name, "PA ClaimBoard");
+  assert.equal(article.publisher.logo.url, "https://paclaimboard.com/logo.png");
+  assert.equal(article.url, "https://paclaimboard.com/resources/keep-improve-or-choose-a-provider");
+  assert.equal(article.mainEntityOfPage["@id"], article.url);
+  assert.equal("address" in article.publisher, false);
+  assert.doesNotMatch(JSON.stringify(article), /adjusterdesk|streetAddress/i);
 });
 
 test("home and pricing render the software application offers", () => {

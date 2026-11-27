@@ -81,6 +81,40 @@ export function faqPageJsonLd(faqs: HelpFaq[]) {
   };
 }
 
+export function articleJsonLd(input: {
+  headline: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  authorName: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.headline,
+    description: input.description,
+    datePublished: input.datePublished,
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: brandName,
+      url: canonicalOrigin,
+      logo: {
+        "@type": "ImageObject",
+        url: `${canonicalOrigin}/logo.png`,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": input.url,
+    },
+    url: input.url,
+  };
+}
+
 export function softwareOfferPrice(name: string): string | null {
   const match = softwareApplicationJsonLd().offers.find((entry) => entry.name === name);
   return match?.price ?? null;

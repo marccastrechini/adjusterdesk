@@ -1,5 +1,6 @@
 import { trainingPublicPaths } from "./training";
 import { canonicalOrigin } from "@/lib/brand";
+import { resourceArticlePath } from "@/lib/resource-article";
 
 export const canonicalSiteOrigin = canonicalOrigin;
 export const canonicalSitemapPath = "/sitemap.xml";
@@ -17,6 +18,7 @@ export const publicSitemapPaths = [
   "/pricing",
   "/signup",
   "/resources",
+  resourceArticlePath,
   "/help",
   ...trainingPublicPaths,
   "/demo",
